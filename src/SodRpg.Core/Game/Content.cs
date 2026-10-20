@@ -4388,258 +4388,258 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.c_vanguard_necklace", "charm.iron_seal", new Txt("前衛の首飾り", "Vanguard Seal"),
                 new Txt("最前線に立つ者は、護りが厚い。", "The one in the front line carries the thicker ward."),
                 Power.VanguardsOath, EquipmentItemsBalanceValues.Unique_unique_c_vanguard_necklace_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_c_vanguard_necklace_Power1),
-            new UniqueDef("unique.c_vanguard_retaliation", "charm.ironknot_ring", new Txt("矢面の鉄結び", "Brunt Ironknot"),
-                new Txt("矢面に立てば、返す力も増す。", "Stand where arrows fall, and the answering strength grows."),
+            new UniqueDef("unique.c_vanguard_retaliation", "charm.ironknot_ring", new Txt("矢面の鉄結び", "Brunt Ironknot", "矢雨铁结"),
+                new Txt("矢面に立てば、返す力も増す。", "Stand where arrows fall, and the answering strength grows.", "站在箭雨落下之处，反击之力也随之增长。"),
                 Power.VanguardsOath, EquipmentItemsBalanceValues.Unique_unique_c_vanguard_retaliation_Power0, Power.Retaliation, EquipmentItemsBalanceValues.Unique_unique_c_vanguard_retaliation_Power1),
-            new UniqueDef("unique.c_medley_ring", "charm.skirmish_ring", new Txt("連奏の指輪", "Medley Ring"),
-                new Txt("三つの音が揃って、はじめて曲になる。", "Only when three notes sound together does it become a tune."),
+            new UniqueDef("unique.c_medley_ring", "charm.skirmish_ring", new Txt("連奏の指輪", "Medley Ring", "连奏指环"),
+                new Txt("三つの音が揃って、はじめて曲になる。", "Only when three notes sound together does it become a tune.", "三个音聚齐，才算得上一首曲子。"),
                 Power.Medley, EquipmentItemsBalanceValues.Unique_unique_c_medley_ring_Power0, Power.Vigor, EquipmentItemsBalanceValues.Unique_unique_c_medley_ring_Power1),
-            new UniqueDef("unique.c_medley_horn", "charm.war_drum", new Txt("三連奏の戦太鼓", "Three-Beat War Drum"),
-                new Txt("違う拍子を叩き分ける者が、場を支配する。", "Whoever beats different rhythms commands the field."),
+            new UniqueDef("unique.c_medley_horn", "charm.war_drum", new Txt("三連奏の戦太鼓", "Three-Beat War Drum", "三连奏战鼓"),
+                new Txt("違う拍子を叩き分ける者が、場を支配する。", "Whoever beats different rhythms commands the field.", "能分开敲出不同节拍的人，掌控全场。"),
                 Power.Medley, EquipmentItemsBalanceValues.Unique_unique_c_medley_horn_Power0, Power.UltimateSurge, EquipmentItemsBalanceValues.Unique_unique_c_medley_horn_Power1),
-            new UniqueDef("unique.c_barehand_ring", "charm.stormcloud_locket", new Txt("素手の誇りの指輪", "Bare-Hand Pride Ring"),
-                new Txt("技が尽きても、拳には自信がある。", "Even with the skills spent, the fists have confidence."),
+            new UniqueDef("unique.c_barehand_ring", "charm.stormcloud_locket", new Txt("素手の誇りの指輪", "Bare-Hand Pride Ring", "空手之傲指环"),
+                new Txt("技が尽きても、拳には自信がある。", "Even with the skills spent, the fists have confidence.", "技能用尽之时，这双拳头依然有底气。"),
                 Power.BareHandedPride, EquipmentItemsBalanceValues.Unique_unique_c_barehand_ring_Power0, Power.Frenzy, EquipmentItemsBalanceValues.Unique_unique_c_barehand_ring_Power1),
-            new UniqueDef("unique.c_ace_hand_locket", "charm.garnet_ring", new Txt("切り札入れの指輪", "Ace-Holder Ring"),
-                new Txt("最後の一枚は、袖の内側に。", "The last card stays up the sleeve."),
+            new UniqueDef("unique.c_ace_hand_locket", "charm.garnet_ring", new Txt("切り札入れの指輪", "Ace-Holder Ring", "王牌指环"),
+                new Txt("最後の一枚は、袖の内側に。", "The last card stays up the sleeve.", "最后一张牌，藏在袖子内侧。"),
                 Power.AceInHand, EquipmentItemsBalanceValues.Unique_unique_c_ace_hand_locket_Power0, Power.Overload, EquipmentItemsBalanceValues.Unique_unique_c_ace_hand_locket_Power1),
-            new UniqueDef("unique.c_ace_finale_pendant", "charm.talon_pendant", new Txt("切り札の終曲飾り", "Ace Finale Pendant"),
-                new Txt("終曲の前に、手札はすべて整っている。", "Before the finale, the whole hand is in order."),
+            new UniqueDef("unique.c_ace_finale_pendant", "charm.talon_pendant", new Txt("切り札の終曲飾り", "Ace Finale Pendant", "王牌终曲坠饰"),
+                new Txt("終曲の前に、手札はすべて整っている。", "Before the finale, the whole hand is in order.", "终曲奏响之前，手牌已然齐备。"),
                 Power.AceInHand, EquipmentItemsBalanceValues.Unique_unique_c_ace_finale_pendant_Power0, Power.Finale, EquipmentItemsBalanceValues.Unique_unique_c_ace_finale_pendant_Power1),
-            new UniqueDef("unique.c_ace_executioner", "charm.fang_necklace", new Txt("切り札の処刑牙", "Trump Fang"),
-                new Txt("奥の手を残した者は、容赦がない。", "One who keeps a hidden hand shows no mercy."),
+            new UniqueDef("unique.c_ace_executioner", "charm.fang_necklace", new Txt("切り札の処刑牙", "Trump Fang", "王牌处刑獠牙"),
+                new Txt("奥の手を残した者は、容赦がない。", "One who keeps a hidden hand shows no mercy.", "留着底牌的人，从不留情。"),
                 Power.AceInHand, EquipmentItemsBalanceValues.Unique_unique_c_ace_executioner_Power0, Power.Executioner, EquipmentItemsBalanceValues.Unique_unique_c_ace_executioner_Power1),
-            new UniqueDef("unique.c_crystal_circuit_ring", "charm.dream_lens", new Txt("結晶循環の水晶", "Crystal Circuit Lens"),
-                new Txt("エッセンスを使うたび、時間の流れが軽くなる。", "Each use of an essence makes time flow lighter."),
+            new UniqueDef("unique.c_crystal_circuit_ring", "charm.dream_lens", new Txt("結晶循環の水晶", "Crystal Circuit Lens", "结晶循环水晶镜"),
+                new Txt("エッセンスを使うたび、時間の流れが軽くなる。", "Each use of an essence makes time flow lighter.", "每用一次精华，时间的流动就轻快一分。"),
                 Power.CrystalCircuit, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_ring_Power0, Power.Overload, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_ring_Power1),
-            new UniqueDef("unique.c_crystal_circuit_stone", "charm.ink_stone", new Txt("結晶巡りの墨石", "Circuitstone Inkstone"),
-                new Txt("砕いた結晶は、墨の中で再び巡る。", "A shattered crystal circulates again within the ink."),
+            new UniqueDef("unique.c_crystal_circuit_stone", "charm.ink_stone", new Txt("結晶巡りの墨石", "Circuitstone Inkstone", "循环结晶墨石"),
+                new Txt("砕いた結晶は、墨の中で再び巡る。", "A shattered crystal circulates again within the ink.", "粉碎的结晶，在墨里再度循环。"),
                 Power.CrystalCircuit, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_stone_Power0, Power.CrystalResonance, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_stone_Power1),
-            new UniqueDef("unique.c_crystal_circuit_clock", "charm.clockwork_charm", new Txt("巡り結晶の歯車", "Circuit Cog"),
-                new Txt("歯車が噛み合うたび、結晶が一つ溶ける。", "With every meshing cog, a crystal melts."),
+            new UniqueDef("unique.c_crystal_circuit_clock", "charm.clockwork_charm", new Txt("巡り結晶の歯車", "Circuit Cog", "循环结晶齿轮"),
+                new Txt("歯車が噛み合うたび、結晶が一つ溶ける。", "With every meshing cog, a crystal melts.", "齿轮每咬合一次，便熔去一颗结晶。"),
                 Power.CrystalCircuit, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_clock_Power0, Power.Finale, EquipmentItemsBalanceValues.Unique_unique_c_crystal_circuit_clock_Power1),
-            new UniqueDef("unique.c_shard_pendant", "charm.hearthstone", new Txt("欠片拾いの竈石", "Shardgleaner Hearthstone"),
-                new Txt("拾った欠片が、体の芯を温める。", "Gathered shards warm the core of the body."),
+            new UniqueDef("unique.c_shard_pendant", "charm.hearthstone", new Txt("欠片拾いの竈石", "Shardgleaner Hearthstone", "拾碎灶石"),
+                new Txt("拾った欠片が、体の芯を温める。", "Gathered shards warm the core of the body.", "拾来的碎片，焐热身体的内核。"),
                 Power.ShardBoon, EquipmentItemsBalanceValues.Unique_unique_c_shard_pendant_Power0, Power.Lifesteal, EquipmentItemsBalanceValues.Unique_unique_c_shard_pendant_Power1),
-            new UniqueDef("unique.c_shard_soulring", "charm.shadow_ring", new Txt("欠片喰いの指輪", "Shardeater Ring"),
-                new Txt("砕けたものを食べて、命に変える。", "Eat what is broken and turn it into life."),
+            new UniqueDef("unique.c_shard_soulring", "charm.shadow_ring", new Txt("欠片喰いの指輪", "Shardeater Ring", "食碎指环"),
+                new Txt("砕けたものを食べて、命に変える。", "Eat what is broken and turn it into life.", "把破碎之物吃下，化作生命。"),
                 Power.ShardBoon, EquipmentItemsBalanceValues.Unique_unique_c_shard_soulring_Power0, Power.SoulSiphon, EquipmentItemsBalanceValues.Unique_unique_c_shard_soulring_Power1),
-            new UniqueDef("unique.c_lifeline_lotus", "charm.lotus_seal", new Txt("継ぎの命の蓮", "Lifeline Lotus"),
-                new Txt("溢れた命は、群れの牙に宿る。", "Overflowing life lodges in the pack's fangs."),
+            new UniqueDef("unique.c_lifeline_lotus", "charm.lotus_seal", new Txt("継ぎの命の蓮", "Lifeline Lotus", "生命线莲华"),
+                new Txt("溢れた命は、群れの牙に宿る。", "Overflowing life lodges in the pack's fangs.", "满溢的生命，栖于兽群獠牙。"),
                 Power.Lifeline, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_lotus_Power0, Power.OverflowingLife, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_lotus_Power1),
-            new UniqueDef("unique.c_lifeline_barrier", "charm.deeproot_charm", new Txt("命綱の根守り", "Lifeline Rootcharm"),
-                new Txt("護りが張られるたび、群れの牙が研がれる。", "With every ward raised, the pack's fangs are sharpened."),
+            new UniqueDef("unique.c_lifeline_barrier", "charm.deeproot_charm", new Txt("命綱の根守り", "Lifeline Rootcharm", "生命线根守"),
+                new Txt("護りが張られるたび、群れの牙が研がれる。", "With every ward raised, the pack's fangs are sharpened.", "每当架起护盾，兽群的獠牙便被磨利。"),
                 Power.Lifeline, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_barrier_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_barrier_Power1),
-            new UniqueDef("unique.c_lifeline_secondwind", "charm.oak_amulet", new Txt("命綱の樫札", "Lifeline Oak Token"),
-                new Txt("倒れかけた命は、群れに引き継がれる。", "A failing life is handed on to the pack."),
+            new UniqueDef("unique.c_lifeline_secondwind", "charm.oak_amulet", new Txt("命綱の樫札", "Lifeline Oak Token", "生命线橡符"),
+                new Txt("倒れかけた命は、群れに引き継がれる。", "A failing life is handed on to the pack.", "濒倒的生命，交由兽群接手。"),
                 Power.Lifeline, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_secondwind_Power0, Power.SecondWind, EquipmentItemsBalanceValues.Unique_unique_c_lifeline_secondwind_Power1),
-            new UniqueDef("unique.c_omen_charm", "charm.dawnsilk_band", new Txt("夢見の前兆の腕輪", "Dreamomen Band"),
-                new Txt("夢が揺れる前に、腕輪が先に知らせる。", "The band warns you before the dream trembles."),
+            new UniqueDef("unique.c_omen_charm", "charm.dawnsilk_band", new Txt("夢見の前兆の腕輪", "Dreamomen Band", "梦兆腕环"),
+                new Txt("夢が揺れる前に、腕輪が先に知らせる。", "The band warns you before the dream trembles.", "梦境摇晃之前，腕环先行示警。"),
                 Power.DreamOmen, EquipmentItemsBalanceValues.Unique_unique_c_omen_charm_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_c_omen_charm_Power1),
-            new UniqueDef("unique.c_omen_devout", "charm.stardust_pendant", new Txt("予兆の祈り飾り", "Omen Devotion Pendant"),
-                new Txt("出来事の前触れに、祈りが自然と重なる。", "Prayers pile up naturally at the harbingers of events."),
+            new UniqueDef("unique.c_omen_devout", "charm.stardust_pendant", new Txt("予兆の祈り飾り", "Omen Devotion Pendant", "预兆祈愿坠饰"),
+                new Txt("出来事の前触れに、祈りが自然と重なる。", "Prayers pile up naturally at the harbingers of events.", "在事件的前兆里，祈祷自然叠上。"),
                 Power.DreamOmen, EquipmentItemsBalanceValues.Unique_unique_c_omen_devout_Power0, Power.Devotion, EquipmentItemsBalanceValues.Unique_unique_c_omen_devout_Power1),
-            new UniqueDef("unique.c_omen_lucid", "charm.comet_pendant", new Txt("明晰な予兆の彗星", "Lucid Omen Comet"),
-                new Txt("悪い夢ほど、明るく光って教えてくれる。", "The worse the dream, the brighter it glows to warn you."),
+            new UniqueDef("unique.c_omen_lucid", "charm.comet_pendant", new Txt("明晰な予兆の彗星", "Lucid Omen Comet", "清明预兆彗星"),
+                new Txt("悪い夢ほど、明るく光って教えてくれる。", "The worse the dream, the brighter it glows to warn you.", "越是噩梦，越会发亮提醒你。"),
                 Power.DreamOmen, EquipmentItemsBalanceValues.Unique_unique_c_omen_lucid_Power0, Power.LucidBoon, EquipmentItemsBalanceValues.Unique_unique_c_omen_lucid_Power1),
-            new UniqueDef("unique.c_rearguard_charm", "charm.longshot_charm", new Txt("後衛の遠矢札", "Rearguard Longshot Charm"),
-                new Txt("遠くにいる者ほど、狙いは正確だ。", "The farther away, the more precise the aim."),
+            new UniqueDef("unique.c_rearguard_charm", "charm.longshot_charm", new Txt("後衛の遠矢札", "Rearguard Longshot Charm", "后卫远矢符"),
+                new Txt("遠くにいる者ほど、狙いは正確だ。", "The farther away, the more precise the aim.", "站得越远，瞄得越准。"),
                 Power.RearguardsWay, EquipmentItemsBalanceValues.Unique_unique_c_rearguard_charm_Power0, Power.Overload, EquipmentItemsBalanceValues.Unique_unique_c_rearguard_charm_Power1),
-            new UniqueDef("unique.c_rearguard_ring", "charm.windchime_charm", new Txt("後衛の鈴", "Rearguard Chime"),
-                new Txt("後ろで鳴らす鈴が、前の者を導く。", "A chime rung at the back guides those in front."),
+            new UniqueDef("unique.c_rearguard_ring", "charm.windchime_charm", new Txt("後衛の鈴", "Rearguard Chime", "后卫之铃"),
+                new Txt("後ろで鳴らす鈴が、前の者を導く。", "A chime rung at the back guides those in front.", "后方摇响的铃，指引前方的人。"),
                 Power.RearguardsWay, EquipmentItemsBalanceValues.Unique_unique_c_rearguard_ring_Power0, Power.Resonance, EquipmentItemsBalanceValues.Unique_unique_c_rearguard_ring_Power1),
-            new UniqueDef("unique.c_ready_charm", "charm.bulwark_seal", new Txt("備えの札", "Ready Token"),
-                new Txt("備えのある者は、最初の一手を笑って受け取る。", "The prepared receive the first move with a smile."),
+            new UniqueDef("unique.c_ready_charm", "charm.bulwark_seal", new Txt("備えの札", "Ready Token", "戒备之符"),
+                new Txt("備えのある者は、最初の一手を笑って受け取る。", "The prepared receive the first move with a smile.", "有备之人，笑着接下开局第一手。"),
                 Power.ReadyGuard, EquipmentItemsBalanceValues.Unique_unique_c_ready_charm_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_c_ready_charm_Power1),
-            new UniqueDef("unique.c_ready_aegis", "charm.tidewarden_brooch", new Txt("待ち受けの守り針", "Waiting Ward Pin"),
-                new Txt("休んでいた時間が、そのまま鎧になる。", "Rested time becomes armor."),
+            new UniqueDef("unique.c_ready_aegis", "charm.tidewarden_brooch", new Txt("待ち受けの守り針", "Waiting Ward Pin", "守候护针"),
+                new Txt("休んでいた時間が、そのまま鎧になる。", "Rested time becomes armor.", "歇息过的时间，原样化作铠甲。"),
                 Power.ReadyGuard, EquipmentItemsBalanceValues.Unique_unique_c_ready_aegis_Power0, Power.Aegis, EquipmentItemsBalanceValues.Unique_unique_c_ready_aegis_Power1),
-            new UniqueDef("unique.c_apothecary_charm", "charm.mender_locket", new Txt("薬師のお守り", "Apothecary Charm"),
-                new Txt("瓶を空にするたび、時は少し前に進む。", "Each emptied bottle moves time a little forward."),
+            new UniqueDef("unique.c_apothecary_charm", "charm.mender_locket", new Txt("薬師のお守り", "Apothecary Charm", "药师护符"),
+                new Txt("瓶を空にするたび、時は少し前に進む。", "Each emptied bottle moves time a little forward.", "每当药瓶见底，时间便向前挪一步。"),
                 Power.Apothecary, EquipmentItemsBalanceValues.Unique_unique_c_apothecary_charm_Power0, Power.Lifesteal, EquipmentItemsBalanceValues.Unique_unique_c_apothecary_charm_Power1),
-            new UniqueDef("unique.c_apothecary_wind", "charm.zephyr_ring", new Txt("薬師の風輪", "Apothecary Windring"),
-                new Txt("薬を分けた手は、冷えていない。", "The hand that shared the medicine is not cold."),
+            new UniqueDef("unique.c_apothecary_wind", "charm.zephyr_ring", new Txt("薬師の風輪", "Apothecary Windring", "药师风轮"),
+                new Txt("薬を分けた手は、冷えていない。", "The hand that shared the medicine is not cold.", "分药的手，不会冰凉。"),
                 Power.Apothecary, EquipmentItemsBalanceValues.Unique_unique_c_apothecary_wind_Power0, Power.SecondWind, EquipmentItemsBalanceValues.Unique_unique_c_apothecary_wind_Power1),
-            new UniqueDef("unique.c_spillover_charm", "charm.skirmish_ring", new Txt("溢れ返しの指輪", "Spillover Ring"),
-                new Txt("倒しきれなかった力は、誰かの傷になる。", "Force left over from a kill becomes someone else's wound."),
+            new UniqueDef("unique.c_spillover_charm", "charm.skirmish_ring", new Txt("溢れ返しの指輪", "Spillover Ring", "外溢指环"),
+                new Txt("倒しきれなかった力は、誰かの傷になる。", "Force left over from a kill becomes someone else's wound.", "没能杀尽的力量，会变成谁的伤。"),
                 Power.SpilloverStrike, EquipmentItemsBalanceValues.Unique_unique_c_spillover_charm_Power0, Power.Retaliation, EquipmentItemsBalanceValues.Unique_unique_c_spillover_charm_Power1),
-            new UniqueDef("unique.c_spillover_talon", "charm.talon_pendant", new Txt("余り爪の首飾り", "Spare-Talon Pendant"),
-                new Txt("余った爪が、次の獲物を掴む。", "The spare claw grabs the next prey."),
+            new UniqueDef("unique.c_spillover_talon", "charm.talon_pendant", new Txt("余り爪の首飾り", "Spare-Talon Pendant", "余爪项链"),
+                new Txt("余った爪が、次の獲物を掴む。", "The spare claw grabs the next prey.", "剩余的爪，抓住下一个猎物。"),
                 Power.SpilloverStrike, EquipmentItemsBalanceValues.Unique_unique_c_spillover_talon_Power0, Power.Shatter, EquipmentItemsBalanceValues.Unique_unique_c_spillover_talon_Power1),
-            new UniqueDef("set.shardknight.armor", "armor.guardian_plate", new Txt("砕盾騎士の胸甲", "Shardshield Knight Plate"), "set.shardknight"),
-            new UniqueDef("set.shardknight.head", "head.knight_helm", new Txt("砕盾騎士の兜", "Shardshield Greathelm"), "set.shardknight"),
-            new UniqueDef("set.shardknight.feet", "feet.knight_sabatons", new Txt("砕盾騎士の鉄靴", "Shardshield Sabatons"), "set.shardknight"),
-            new UniqueDef("set.shardknight.weapon", "weapon.shield_maul", new Txt("砕盾騎士の大槌", "Shardshield Maul"), "set.shardknight"),
-            new UniqueDef("set.shardknight.hands", "hands.oathpalm_gloves", new Txt("砕盾騎士の籠手", "Shardshield Gauntlets"), "set.shardknight"),
-            new UniqueDef("set.shardknight.charm", "charm.snowbloom_charm", new Txt("砕盾騎士の雪華御守", "Shardshield Snowbloom Charm"), "set.shardknight"),
-            new UniqueDef("set.bashbound.weapon", "weapon.shield_maul", new Txt("盾誓いの大槌", "Bashbound Maul"), "set.bashbound"),
-            new UniqueDef("set.bashbound.hands", "hands.oath_gauntlets", new Txt("盾誓いの籠手", "Bashbound Gauntlets"), "set.bashbound"),
-            new UniqueDef("set.bashbound.charm", "charm.guardian_seal", new Txt("盾誓いの護符", "Bashbound Seal"), "set.bashbound"),
-            new UniqueDef("set.bashbound.head", "head.warden_visor", new Txt("盾誓いの面頬", "Bashbound Visor"), "set.bashbound"),
-            new UniqueDef("set.bashbound.armor", "armor.wardsigil_vest", new Txt("盾誓いの加護胴衣", "Bashbound Wardvest"), "set.bashbound"),
-            new UniqueDef("set.bashbound.feet", "feet.wardstep_sandals", new Txt("盾誓いの草鞋", "Bashbound Sandals"), "set.bashbound"),
-            new UniqueDef("set.vanguardline.armor", "armor.citadel_plate", new Txt("陣頭の砦胸甲", "Frontline Citadel Plate"), "set.vanguardline"),
-            new UniqueDef("set.vanguardline.head", "head.fortress_coif", new Txt("陣頭の頭巾", "Frontline Coif"), "set.vanguardline"),
-            new UniqueDef("set.vanguardline.feet", "feet.bastion_sabatons", new Txt("陣頭の堅脛", "Frontline Greaves"), "set.vanguardline"),
-            new UniqueDef("set.vanguardline.weapon", "weapon.gatehouse_maul", new Txt("陣頭の城門槌", "Frontline Gatemaul"), "set.vanguardline"),
-            new UniqueDef("set.vanguardline.hands", "hands.bulwark_wraps", new Txt("陣頭の壁手巻", "Frontline Wallwraps"), "set.vanguardline"),
-            new UniqueDef("set.vanguardline.charm", "charm.bulwark_seal", new Txt("陣頭の壁印章", "Frontline Wallseal"), "set.vanguardline"),
-            new UniqueDef("set.rearmarks.weapon", "weapon.starsinger_bow", new Txt("後陣の星弓", "Rearline Starbow"), "set.rearmarks"),
-            new UniqueDef("set.rearmarks.head", "head.longshot_cap", new Txt("後陣の遠矢帽", "Rearline Cap"), "set.rearmarks"),
-            new UniqueDef("set.rearmarks.armor", "armor.star_cloak", new Txt("後陣の星外套", "Rearline Starcloak"), "set.rearmarks"),
-            new UniqueDef("set.rearmarks.hands", "hands.bowmaster_bracers", new Txt("後陣の弓手腕当", "Rearline Bowbracers"), "set.rearmarks"),
-            new UniqueDef("set.rearmarks.feet", "feet.starlit_moccasins", new Txt("後陣の星履", "Rearline Starmoccasins"), "set.rearmarks"),
-            new UniqueDef("set.rearmarks.charm", "charm.longshot_charm", new Txt("後陣の遠当て御守", "Rearline Longshot Charm"), "set.rearmarks"),
-            new UniqueDef("set.watchcircle.armor", "armor.lampkeeper_mantle", new Txt("輪守りの外套", "Ringwarden Mantle"), "set.watchcircle"),
-            new UniqueDef("set.watchcircle.hands", "hands.mender_palms", new Txt("輪守りの手巻き", "Ringwarden Palms"), "set.watchcircle"),
-            new UniqueDef("set.watchcircle.charm", "charm.mender_locket", new Txt("輪守りの首飾り", "Ringwarden Locket"), "set.watchcircle"),
-            new UniqueDef("set.watchcircle.weapon", "weapon.dewclear_wand", new Txt("輪守りの細杖", "Ringwarden Wand"), "set.watchcircle"),
-            new UniqueDef("set.watchcircle.head", "head.kindly_circlet", new Txt("輪守りの額冠", "Ringwarden Circlet"), "set.watchcircle"),
-            new UniqueDef("set.watchcircle.feet", "feet.mender_shoes", new Txt("輪守りの靴", "Ringwarden Shoes"), "set.watchcircle"),
-            new UniqueDef("set.relaychoir.hands", "hands.swiftpalm_gloves", new Txt("継ぎ歌の手袋", "Relaysong Gloves"), "set.relaychoir"),
-            new UniqueDef("set.relaychoir.head", "head.healer_band", new Txt("合唱長の鉢巻", "Choirmaster Band"), "set.relaychoir"),
-            new UniqueDef("set.relaychoir.charm", "charm.war_horn", new Txt("継ぎ歌の角笛", "Relaysong Horn"), "set.relaychoir"),
-            new UniqueDef("set.relaychoir.weapon", "weapon.dream_wand", new Txt("継ぎ歌の細杖", "Relaysong Wand"), "set.relaychoir"),
-            new UniqueDef("set.relaychoir.armor", "armor.healing_sash", new Txt("継ぎ歌の飾り帯", "Relaysong Sash"), "set.relaychoir"),
-            new UniqueDef("set.relaychoir.feet", "feet.cometstride_shoes", new Txt("継ぎ歌の靴", "Relaysong Shoes"), "set.relaychoir"),
-            new UniqueDef("set.packfeast.head", "head.beastcaller_antlers", new Txt("宴の角冠", "Feastpack Antlers"), "set.packfeast"),
-            new UniqueDef("set.packfeast.armor", "armor.summoners_vest", new Txt("宴の群れ胴衣", "Feastpack Vest"), "set.packfeast"),
-            new UniqueDef("set.packfeast.charm", "charm.beasttongue_charm", new Txt("宴の群れ護符", "Feastpack Totem"), "set.packfeast"),
-            new UniqueDef("set.packfeast.weapon", "weapon.bone_flute", new Txt("宴の骨笛", "Feastpack Flute"), "set.packfeast"),
-            new UniqueDef("set.packfeast.hands", "hands.summoner_bands", new Txt("宴の群れ腕輪", "Feastpack Bands"), "set.packfeast"),
-            new UniqueDef("set.packfeast.feet", "feet.beastpaw_boots", new Txt("宴の群れ獣靴", "Feastpack Pawboots"), "set.packfeast"),
-            new UniqueDef("set.lastblooms.weapon", "weapon.bone_flute", new Txt("弔い花の骨笛", "Funeral-Bloom Flute"), "set.lastblooms"),
-            new UniqueDef("set.lastblooms.hands", "hands.summoner_bands", new Txt("弔い花の腕輪", "Funeral-Bloom Bands"), "set.lastblooms"),
-            new UniqueDef("set.lastblooms.feet", "feet.beastpaw_boots", new Txt("弔い花の獣靴", "Funeral-Bloom Pawboots"), "set.lastblooms"),
-            new UniqueDef("set.lastblooms.head", "head.leaf_wreath", new Txt("弔い花の花冠", "Funeral-Bloom Wreath"), "set.lastblooms"),
-            new UniqueDef("set.lastblooms.armor", "armor.summoners_vest", new Txt("弔い花の胸衣", "Funeral-Bloom Vest"), "set.lastblooms"),
-            new UniqueDef("set.lastblooms.charm", "charm.beasttongue_charm", new Txt("弔い花の獣語護符", "Funeral-Bloom Beastcharm"), "set.lastblooms"),
-            new UniqueDef("set.pinpoint.weapon", "weapon.longspike_bow", new Txt("一点狙いの長弓", "Single-Mark Longbow"), "set.pinpoint"),
-            new UniqueDef("set.pinpoint.head", "head.eye_patch", new Txt("狙い澄ます眼帯", "Steady-Aim Eyepatch"), "set.pinpoint"),
-            new UniqueDef("set.pinpoint.hands", "hands.precise_fingerless", new Txt("照準の指なし手袋", "Aimpoint Fingerless Gloves"), "set.pinpoint"),
-            new UniqueDef("set.pinpoint.armor", "armor.hunter_vest", new Txt("一点狙いの胴衣", "Single-Mark Vest"), "set.pinpoint"),
-            new UniqueDef("set.pinpoint.feet", "feet.deadeye_leggings", new Txt("一点狙いの脚絆", "Single-Mark Leggings"), "set.pinpoint"),
-            new UniqueDef("set.pinpoint.charm", "charm.keeneye_charm", new Txt("一点狙いの鋭眼御守", "Single-Mark Keeneye Charm"), "set.pinpoint"),
-            new UniqueDef("set.wanderblades.weapon", "weapon.lightning_pair", new Txt("渡り雷の双刃", "Driftbolt Twinblades"), "set.wanderblades"),
-            new UniqueDef("set.wanderblades.hands", "hands.thief_gloves", new Txt("渡り鳥の細手袋", "Migrant Fine Gloves"), "set.wanderblades"),
-            new UniqueDef("set.wanderblades.feet", "feet.wolfstride_boots", new Txt("渡り鳥の長靴", "Migrant Longboots"), "set.wanderblades"),
-            new UniqueDef("set.wanderblades.head", "head.gale_hood", new Txt("渡り鳥の疾風頭巾", "Migrant Galehood"), "set.wanderblades"),
-            new UniqueDef("set.wanderblades.armor", "armor.dancer_garb", new Txt("渡り鳥の舞衣", "Migrant Dancewear"), "set.wanderblades"),
-            new UniqueDef("set.wanderblades.charm", "charm.skirmish_ring", new Txt("渡り鳥の遊撃指輪", "Migrant Skirmish Ring"), "set.wanderblades"),
-            new UniqueDef("set.fortuneedge.weapon", "weapon.twin_fang", new Txt("運刃の双牙", "Fortune-Edge Fangs"), "set.fortuneedge"),
-            new UniqueDef("set.fortuneedge.head", "head.hawkeye_band", new Txt("運刃の鷹目帯", "Fortune-Edge Band"), "set.fortuneedge"),
-            new UniqueDef("set.fortuneedge.hands", "hands.duelist_gloves", new Txt("運刃の勝負手袋", "Fortune-Edge Gloves"), "set.fortuneedge"),
-            new UniqueDef("set.fortuneedge.armor", "armor.ambush_vest", new Txt("運刃の奇襲胴衣", "Fortune-Edge Ambushvest"), "set.fortuneedge"),
-            new UniqueDef("set.fortuneedge.feet", "feet.hunter_striders", new Txt("運刃の追撃脚当", "Fortune-Edge Striders"), "set.fortuneedge"),
-            new UniqueDef("set.fortuneedge.charm", "charm.garnet_ring", new Txt("運刃の紅玉指輪", "Fortune-Edge Garnet Ring"), "set.fortuneedge"),
-            new UniqueDef("set.runupcharge.weapon", "weapon.tower_lance", new Txt("突撃隊の長槍", "Charge-Corps Lance"), "set.runupcharge"),
-            new UniqueDef("set.runupcharge.hands", "hands.reach_bracers", new Txt("突撃隊の腕当て", "Charge-Corps Bracers"), "set.runupcharge"),
-            new UniqueDef("set.runupcharge.feet", "feet.storm_boots", new Txt("突撃隊の嵐靴", "Charge-Corps Stormboots"), "set.runupcharge"),
-            new UniqueDef("set.runupcharge.head", "head.horned_helm", new Txt("突撃隊の角兜", "Charge-Corps Horned Helm"), "set.runupcharge"),
-            new UniqueDef("set.runupcharge.armor", "armor.stormfront_vest", new Txt("突撃隊の嵐胴衣", "Charge-Corps Stormvest"), "set.runupcharge"),
-            new UniqueDef("set.runupcharge.charm", "charm.skirmish_ring", new Txt("突撃隊の遊撃指輪", "Charge-Corps Skirmish Ring"), "set.runupcharge"),
-            new UniqueDef("set.medleyband.weapon", "weapon.star_harp", new Txt("楽団の竪琴", "Ensemble Harp"), "set.medleyband"),
-            new UniqueDef("set.medleyband.head", "head.sage_hat", new Txt("楽団長の帽子", "Conductor's Hat"), "set.medleyband"),
-            new UniqueDef("set.medleyband.charm", "charm.windchime_charm", new Txt("楽団の風鈴", "Ensemble Chime"), "set.medleyband"),
-            new UniqueDef("set.medleyband.armor", "armor.ink_robe", new Txt("楽団の墨染め衣", "Ensemble Inkrobe"), "set.medleyband"),
-            new UniqueDef("set.medleyband.hands", "hands.manuscript_gloves", new Txt("楽団の楽譜手袋", "Ensemble Scorekeeper Gloves"), "set.medleyband"),
-            new UniqueDef("set.medleyband.feet", "feet.star_slippers", new Txt("楽団の舞台靴", "Ensemble Stagesteps"), "set.medleyband"),
-            new UniqueDef("set.gamblertrump.weapon", "weapon.dream_wand", new Txt("勝負師の細杖", "Gambler's Wand"), "set.gamblertrump"),
-            new UniqueDef("set.gamblertrump.head", "head.dream_circlet", new Txt("勝負師の額冠", "Gambler's Circlet"), "set.gamblertrump"),
-            new UniqueDef("set.gamblertrump.charm", "charm.clockwork_charm", new Txt("勝負師の懐中時計", "Gambler's Pocket Watch"), "set.gamblertrump"),
-            new UniqueDef("set.gamblertrump.armor", "armor.traveler_coat", new Txt("勝負師の旅外套", "Gambler's Travelcoat"), "set.gamblertrump"),
-            new UniqueDef("set.gamblertrump.hands", "hands.spell_gloves", new Txt("勝負師の呪文手袋", "Gambler's Spellgloves"), "set.gamblertrump"),
-            new UniqueDef("set.gamblertrump.feet", "feet.star_slippers", new Txt("勝負師の星靴", "Gambler's Starshoes"), "set.gamblertrump"),
-            new UniqueDef("set.barehand.weapon", "weapon.tortoise_bokken", new Txt("無手の誇りの木刀", "Bare-Hand Bokken"), "set.barehand"),
-            new UniqueDef("set.barehand.hands", "hands.monk_wraps", new Txt("無手の誇りの巻き布", "Bare-Hand Wraps"), "set.barehand"),
-            new UniqueDef("set.barehand.charm", "charm.hunters_seal", new Txt("無手の誇りの印", "Bare-Hand Seal"), "set.barehand"),
-            new UniqueDef("set.barehand.head", "head.berserker_mask", new Txt("無手の誇りの面", "Bare-Hand Mask"), "set.barehand"),
-            new UniqueDef("set.barehand.armor", "armor.monk_garb", new Txt("無手の誇りの道着", "Bare-Hand Gi"), "set.barehand"),
-            new UniqueDef("set.barehand.feet", "feet.stalker_boots", new Txt("無手の誇りの足袋", "Bare-Hand Tabi"), "set.barehand"),
-            new UniqueDef("set.crystalcircuit.head", "head.meditation_band", new Txt("回路の瞑想帯", "Circuit Meditation Band"), "set.crystalcircuit"),
-            new UniqueDef("set.crystalcircuit.hands", "hands.alchemist_gloves", new Txt("回路の調合手袋", "Circuit Compounder Gloves"), "set.crystalcircuit"),
-            new UniqueDef("set.crystalcircuit.charm", "charm.dream_lens", new Txt("回路の水晶玉", "Circuit Crystal Lens"), "set.crystalcircuit"),
-            new UniqueDef("set.crystalcircuit.weapon", "weapon.windhowl_staff", new Txt("回路の導杖", "Circuit Conductor Staff"), "set.crystalcircuit"),
-            new UniqueDef("set.crystalcircuit.armor", "armor.mirrorsilk_robe", new Txt("回路の鏡絹衣", "Circuit Mirrorsilk"), "set.crystalcircuit"),
-            new UniqueDef("set.crystalcircuit.feet", "feet.whisperweave_shoes", new Txt("回路の囁き靴", "Circuit Whisperweave Shoes"), "set.crystalcircuit"),
-            new UniqueDef("set.dreamvigil.head", "head.dream_veil", new Txt("寝ずの番の面紗", "Vigil Veil"), "set.dreamvigil"),
-            new UniqueDef("set.dreamvigil.armor", "armor.morningdew_robe", new Txt("寝ずの番の朝露衣", "Vigil Dewrobe"), "set.dreamvigil"),
-            new UniqueDef("set.dreamvigil.charm", "charm.stardust_pendant", new Txt("寝ずの番の星飾り", "Vigil Stardust"), "set.dreamvigil"),
-            new UniqueDef("set.dreamvigil.weapon", "weapon.pilgrim_staff", new Txt("寝ずの番の巡礼杖", "Vigil Pilgrim Staff"), "set.dreamvigil"),
-            new UniqueDef("set.dreamvigil.hands", "hands.healer_hands", new Txt("寝ずの番の手袋", "Vigil Gloves"), "set.dreamvigil"),
-            new UniqueDef("set.dreamvigil.feet", "feet.pilgrim_boots", new Txt("寝ずの番の巡礼靴", "Vigil Pilgrim Boots"), "set.dreamvigil"),
-            new UniqueDef("set.tithebound.weapon", "weapon.war_axe", new Txt("供犠の戦斧", "Tithe Hatchet"), "set.tithebound"),
-            new UniqueDef("set.tithebound.armor", "armor.spiked_plate", new Txt("供犠の棘甲", "Tithe Spikeplate"), "set.tithebound"),
-            new UniqueDef("set.tithebound.charm", "charm.blaze_brooch", new Txt("供犠の炎針", "Tithe Flamepin"), "set.tithebound"),
-            new UniqueDef("set.tithebound.head", "head.thorn_circlet", new Txt("供犠の茨冠", "Tithe Thorn Crown"), "set.tithebound"),
-            new UniqueDef("set.tithebound.hands", "hands.thorn_wraps", new Txt("供犠の棘手巻", "Tithe Barbwraps"), "set.tithebound"),
-            new UniqueDef("set.tithebound.feet", "feet.chain_greaves", new Txt("供犠の鎖脛当", "Tithe Chaingreaves"), "set.tithebound"),
-            new UniqueDef("set.prismdance.hands", "hands.star_rings", new Txt("舞い星の環", "Dancing-Star Rings"), "set.prismdance"),
-            new UniqueDef("set.prismdance.head", "head.star_diadem", new Txt("舞い星の冠", "Dancing-Star Diadem"), "set.prismdance"),
-            new UniqueDef("set.prismdance.feet", "feet.dancer_shoes", new Txt("舞い星の踊り靴", "Dancing-Star Shoes"), "set.prismdance"),
-            new UniqueDef("set.prismdance.weapon", "weapon.evening_fan", new Txt("舞い星の夕扇", "Dancing-Star Fan"), "set.prismdance"),
-            new UniqueDef("set.prismdance.armor", "armor.aurora_wrap", new Txt("舞い星の羽衣", "Dancing-Star Aurora"), "set.prismdance"),
-            new UniqueDef("set.prismdance.charm", "charm.halo_charm", new Txt("舞い星の光環御守", "Dancing-Star Halo Charm"), "set.prismdance"),
-            new UniqueDef("unique.a_frostembrace_coat", "armor.frost_coat", new Txt("寒気抱きの外衣", "Chillembrace Coat"),
-                new Txt("氷を抱いた腕の中では、盾が先に砕ける。", "In arms that embrace ice, the shield breaks first."),
+            new UniqueDef("set.shardknight.armor", "armor.guardian_plate", new Txt("砕盾騎士の胸甲", "Shardshield Knight Plate", "碎盾骑士胸甲"), "set.shardknight"),
+            new UniqueDef("set.shardknight.head", "head.knight_helm", new Txt("砕盾騎士の兜", "Shardshield Greathelm", "碎盾骑士重盔"), "set.shardknight"),
+            new UniqueDef("set.shardknight.feet", "feet.knight_sabatons", new Txt("砕盾騎士の鉄靴", "Shardshield Sabatons", "碎盾骑士铁靴"), "set.shardknight"),
+            new UniqueDef("set.shardknight.weapon", "weapon.shield_maul", new Txt("砕盾騎士の大槌", "Shardshield Maul", "碎盾骑士巨锤"), "set.shardknight"),
+            new UniqueDef("set.shardknight.hands", "hands.oathpalm_gloves", new Txt("砕盾騎士の籠手", "Shardshield Gauntlets", "碎盾骑士笼手"), "set.shardknight"),
+            new UniqueDef("set.shardknight.charm", "charm.snowbloom_charm", new Txt("砕盾騎士の雪華御守", "Shardshield Snowbloom Charm", "碎盾骑士雪华护符"), "set.shardknight"),
+            new UniqueDef("set.bashbound.weapon", "weapon.shield_maul", new Txt("盾誓いの大槌", "Bashbound Maul", "盾誓巨锤"), "set.bashbound"),
+            new UniqueDef("set.bashbound.hands", "hands.oath_gauntlets", new Txt("盾誓いの籠手", "Bashbound Gauntlets", "盾誓笼手"), "set.bashbound"),
+            new UniqueDef("set.bashbound.charm", "charm.guardian_seal", new Txt("盾誓いの護符", "Bashbound Seal", "盾誓护符"), "set.bashbound"),
+            new UniqueDef("set.bashbound.head", "head.warden_visor", new Txt("盾誓いの面頬", "Bashbound Visor", "盾誓面颊甲"), "set.bashbound"),
+            new UniqueDef("set.bashbound.armor", "armor.wardsigil_vest", new Txt("盾誓いの加護胴衣", "Bashbound Wardvest", "盾誓庇护胸衣"), "set.bashbound"),
+            new UniqueDef("set.bashbound.feet", "feet.wardstep_sandals", new Txt("盾誓いの草鞋", "Bashbound Sandals", "盾誓草鞋"), "set.bashbound"),
+            new UniqueDef("set.vanguardline.armor", "armor.citadel_plate", new Txt("陣頭の砦胸甲", "Frontline Citadel Plate", "阵头堡垒胸甲"), "set.vanguardline"),
+            new UniqueDef("set.vanguardline.head", "head.fortress_coif", new Txt("陣頭の頭巾", "Frontline Coif", "阵头头巾"), "set.vanguardline"),
+            new UniqueDef("set.vanguardline.feet", "feet.bastion_sabatons", new Txt("陣頭の堅脛", "Frontline Greaves", "阵头坚胫甲"), "set.vanguardline"),
+            new UniqueDef("set.vanguardline.weapon", "weapon.gatehouse_maul", new Txt("陣頭の城門槌", "Frontline Gatemaul", "阵头城门锤"), "set.vanguardline"),
+            new UniqueDef("set.vanguardline.hands", "hands.bulwark_wraps", new Txt("陣頭の壁手巻", "Frontline Wallwraps", "阵头壁垒缠手"), "set.vanguardline"),
+            new UniqueDef("set.vanguardline.charm", "charm.bulwark_seal", new Txt("陣頭の壁印章", "Frontline Wallseal", "阵头壁垒印章"), "set.vanguardline"),
+            new UniqueDef("set.rearmarks.weapon", "weapon.starsinger_bow", new Txt("後陣の星弓", "Rearline Starbow", "后阵星弓"), "set.rearmarks"),
+            new UniqueDef("set.rearmarks.head", "head.longshot_cap", new Txt("後陣の遠矢帽", "Rearline Cap", "后阵远矢帽"), "set.rearmarks"),
+            new UniqueDef("set.rearmarks.armor", "armor.star_cloak", new Txt("後陣の星外套", "Rearline Starcloak", "后阵星纹披风"), "set.rearmarks"),
+            new UniqueDef("set.rearmarks.hands", "hands.bowmaster_bracers", new Txt("後陣の弓手腕当", "Rearline Bowbracers", "后阵弓手护腕"), "set.rearmarks"),
+            new UniqueDef("set.rearmarks.feet", "feet.starlit_moccasins", new Txt("後陣の星履", "Rearline Starmoccasins", "后阵星履"), "set.rearmarks"),
+            new UniqueDef("set.rearmarks.charm", "charm.longshot_charm", new Txt("後陣の遠当て御守", "Rearline Longshot Charm", "后阵远击护符"), "set.rearmarks"),
+            new UniqueDef("set.watchcircle.armor", "armor.lampkeeper_mantle", new Txt("輪守りの外套", "Ringwarden Mantle", "环守披风"), "set.watchcircle"),
+            new UniqueDef("set.watchcircle.hands", "hands.mender_palms", new Txt("輪守りの手巻き", "Ringwarden Palms", "环守缠手"), "set.watchcircle"),
+            new UniqueDef("set.watchcircle.charm", "charm.mender_locket", new Txt("輪守りの首飾り", "Ringwarden Locket", "环守项链"), "set.watchcircle"),
+            new UniqueDef("set.watchcircle.weapon", "weapon.dewclear_wand", new Txt("輪守りの細杖", "Ringwarden Wand", "环守细杖"), "set.watchcircle"),
+            new UniqueDef("set.watchcircle.head", "head.kindly_circlet", new Txt("輪守りの額冠", "Ringwarden Circlet", "环守额冠"), "set.watchcircle"),
+            new UniqueDef("set.watchcircle.feet", "feet.mender_shoes", new Txt("輪守りの靴", "Ringwarden Shoes", "环守之靴"), "set.watchcircle"),
+            new UniqueDef("set.relaychoir.hands", "hands.swiftpalm_gloves", new Txt("継ぎ歌の手袋", "Relaysong Gloves", "接力歌手套"), "set.relaychoir"),
+            new UniqueDef("set.relaychoir.head", "head.healer_band", new Txt("合唱長の鉢巻", "Choirmaster Band", "合唱长头带"), "set.relaychoir"),
+            new UniqueDef("set.relaychoir.charm", "charm.war_horn", new Txt("継ぎ歌の角笛", "Relaysong Horn", "接力歌号角"), "set.relaychoir"),
+            new UniqueDef("set.relaychoir.weapon", "weapon.dream_wand", new Txt("継ぎ歌の細杖", "Relaysong Wand", "接力歌细杖"), "set.relaychoir"),
+            new UniqueDef("set.relaychoir.armor", "armor.healing_sash", new Txt("継ぎ歌の飾り帯", "Relaysong Sash", "接力歌饰带"), "set.relaychoir"),
+            new UniqueDef("set.relaychoir.feet", "feet.cometstride_shoes", new Txt("継ぎ歌の靴", "Relaysong Shoes", "接力歌之靴"), "set.relaychoir"),
+            new UniqueDef("set.packfeast.head", "head.beastcaller_antlers", new Txt("宴の角冠", "Feastpack Antlers", "狼宴角冠"), "set.packfeast"),
+            new UniqueDef("set.packfeast.armor", "armor.summoners_vest", new Txt("宴の群れ胴衣", "Feastpack Vest", "狼宴兽群背心"), "set.packfeast"),
+            new UniqueDef("set.packfeast.charm", "charm.beasttongue_charm", new Txt("宴の群れ護符", "Feastpack Totem", "狼宴兽群图腾"), "set.packfeast"),
+            new UniqueDef("set.packfeast.weapon", "weapon.bone_flute", new Txt("宴の骨笛", "Feastpack Flute", "狼宴骨笛"), "set.packfeast"),
+            new UniqueDef("set.packfeast.hands", "hands.summoner_bands", new Txt("宴の群れ腕輪", "Feastpack Bands", "狼宴兽群腕环"), "set.packfeast"),
+            new UniqueDef("set.packfeast.feet", "feet.beastpaw_boots", new Txt("宴の群れ獣靴", "Feastpack Pawboots", "狼宴兽爪靴"), "set.packfeast"),
+            new UniqueDef("set.lastblooms.weapon", "weapon.bone_flute", new Txt("弔い花の骨笛", "Funeral-Bloom Flute", "葬花骨笛"), "set.lastblooms"),
+            new UniqueDef("set.lastblooms.hands", "hands.summoner_bands", new Txt("弔い花の腕輪", "Funeral-Bloom Bands", "葬花腕环"), "set.lastblooms"),
+            new UniqueDef("set.lastblooms.feet", "feet.beastpaw_boots", new Txt("弔い花の獣靴", "Funeral-Bloom Pawboots", "葬花兽爪靴"), "set.lastblooms"),
+            new UniqueDef("set.lastblooms.head", "head.leaf_wreath", new Txt("弔い花の花冠", "Funeral-Bloom Wreath", "葬花花冠"), "set.lastblooms"),
+            new UniqueDef("set.lastblooms.armor", "armor.summoners_vest", new Txt("弔い花の胸衣", "Funeral-Bloom Vest", "葬花背心"), "set.lastblooms"),
+            new UniqueDef("set.lastblooms.charm", "charm.beasttongue_charm", new Txt("弔い花の獣語護符", "Funeral-Bloom Beastcharm", "葬花兽语护符"), "set.lastblooms"),
+            new UniqueDef("set.pinpoint.weapon", "weapon.longspike_bow", new Txt("一点狙いの長弓", "Single-Mark Longbow", "单点锁定长弓"), "set.pinpoint"),
+            new UniqueDef("set.pinpoint.head", "head.eye_patch", new Txt("狙い澄ます眼帯", "Steady-Aim Eyepatch", "凝准眼罩"), "set.pinpoint"),
+            new UniqueDef("set.pinpoint.hands", "hands.precise_fingerless", new Txt("照準の指なし手袋", "Aimpoint Fingerless Gloves", "瞄准露指手套"), "set.pinpoint"),
+            new UniqueDef("set.pinpoint.armor", "armor.hunter_vest", new Txt("一点狙いの胴衣", "Single-Mark Vest", "单点锁定背心"), "set.pinpoint"),
+            new UniqueDef("set.pinpoint.feet", "feet.deadeye_leggings", new Txt("一点狙いの脚絆", "Single-Mark Leggings", "单点锁定绑腿"), "set.pinpoint"),
+            new UniqueDef("set.pinpoint.charm", "charm.keeneye_charm", new Txt("一点狙いの鋭眼御守", "Single-Mark Keeneye Charm", "单点锁定锐眼护符"), "set.pinpoint"),
+            new UniqueDef("set.wanderblades.weapon", "weapon.lightning_pair", new Txt("渡り雷の双刃", "Driftbolt Twinblades", "游雷双刃"), "set.wanderblades"),
+            new UniqueDef("set.wanderblades.hands", "hands.thief_gloves", new Txt("渡り鳥の細手袋", "Migrant Fine Gloves", "候鸟细手套"), "set.wanderblades"),
+            new UniqueDef("set.wanderblades.feet", "feet.wolfstride_boots", new Txt("渡り鳥の長靴", "Migrant Longboots", "候鸟长靴"), "set.wanderblades"),
+            new UniqueDef("set.wanderblades.head", "head.gale_hood", new Txt("渡り鳥の疾風頭巾", "Migrant Galehood", "候鸟疾风兜帽"), "set.wanderblades"),
+            new UniqueDef("set.wanderblades.armor", "armor.dancer_garb", new Txt("渡り鳥の舞衣", "Migrant Dancewear", "候鸟舞衣"), "set.wanderblades"),
+            new UniqueDef("set.wanderblades.charm", "charm.skirmish_ring", new Txt("渡り鳥の遊撃指輪", "Migrant Skirmish Ring", "候鸟游击指环"), "set.wanderblades"),
+            new UniqueDef("set.fortuneedge.weapon", "weapon.twin_fang", new Txt("運刃の双牙", "Fortune-Edge Fangs", "运刃双牙"), "set.fortuneedge"),
+            new UniqueDef("set.fortuneedge.head", "head.hawkeye_band", new Txt("運刃の鷹目帯", "Fortune-Edge Band", "运刃鹰目带"), "set.fortuneedge"),
+            new UniqueDef("set.fortuneedge.hands", "hands.duelist_gloves", new Txt("運刃の勝負手袋", "Fortune-Edge Gloves", "运刃决胜手套"), "set.fortuneedge"),
+            new UniqueDef("set.fortuneedge.armor", "armor.ambush_vest", new Txt("運刃の奇襲胴衣", "Fortune-Edge Ambushvest", "运刃奇袭背心"), "set.fortuneedge"),
+            new UniqueDef("set.fortuneedge.feet", "feet.hunter_striders", new Txt("運刃の追撃脚当", "Fortune-Edge Striders", "运刃追击胫甲"), "set.fortuneedge"),
+            new UniqueDef("set.fortuneedge.charm", "charm.garnet_ring", new Txt("運刃の紅玉指輪", "Fortune-Edge Garnet Ring", "运刃红玉指环"), "set.fortuneedge"),
+            new UniqueDef("set.runupcharge.weapon", "weapon.tower_lance", new Txt("突撃隊の長槍", "Charge-Corps Lance", "突击队长枪"), "set.runupcharge"),
+            new UniqueDef("set.runupcharge.hands", "hands.reach_bracers", new Txt("突撃隊の腕当て", "Charge-Corps Bracers", "突击队护腕"), "set.runupcharge"),
+            new UniqueDef("set.runupcharge.feet", "feet.storm_boots", new Txt("突撃隊の嵐靴", "Charge-Corps Stormboots", "突击队风暴靴"), "set.runupcharge"),
+            new UniqueDef("set.runupcharge.head", "head.horned_helm", new Txt("突撃隊の角兜", "Charge-Corps Horned Helm", "突击队角盔"), "set.runupcharge"),
+            new UniqueDef("set.runupcharge.armor", "armor.stormfront_vest", new Txt("突撃隊の嵐胴衣", "Charge-Corps Stormvest", "突击队风暴背心"), "set.runupcharge"),
+            new UniqueDef("set.runupcharge.charm", "charm.skirmish_ring", new Txt("突撃隊の遊撃指輪", "Charge-Corps Skirmish Ring", "突击队游击指环"), "set.runupcharge"),
+            new UniqueDef("set.medleyband.weapon", "weapon.star_harp", new Txt("楽団の竪琴", "Ensemble Harp", "乐团竖琴"), "set.medleyband"),
+            new UniqueDef("set.medleyband.head", "head.sage_hat", new Txt("楽団長の帽子", "Conductor's Hat", "乐团长之帽"), "set.medleyband"),
+            new UniqueDef("set.medleyband.charm", "charm.windchime_charm", new Txt("楽団の風鈴", "Ensemble Chime", "乐团风铃"), "set.medleyband"),
+            new UniqueDef("set.medleyband.armor", "armor.ink_robe", new Txt("楽団の墨染め衣", "Ensemble Inkrobe", "乐团墨染长袍"), "set.medleyband"),
+            new UniqueDef("set.medleyband.hands", "hands.manuscript_gloves", new Txt("楽団の楽譜手袋", "Ensemble Scorekeeper Gloves", "乐团乐谱手套"), "set.medleyband"),
+            new UniqueDef("set.medleyband.feet", "feet.star_slippers", new Txt("楽団の舞台靴", "Ensemble Stagesteps", "乐团舞台靴"), "set.medleyband"),
+            new UniqueDef("set.gamblertrump.weapon", "weapon.dream_wand", new Txt("勝負師の細杖", "Gambler's Wand", "赌师细杖"), "set.gamblertrump"),
+            new UniqueDef("set.gamblertrump.head", "head.dream_circlet", new Txt("勝負師の額冠", "Gambler's Circlet", "赌师额冠"), "set.gamblertrump"),
+            new UniqueDef("set.gamblertrump.charm", "charm.clockwork_charm", new Txt("勝負師の懐中時計", "Gambler's Pocket Watch", "赌师怀表"), "set.gamblertrump"),
+            new UniqueDef("set.gamblertrump.armor", "armor.traveler_coat", new Txt("勝負師の旅外套", "Gambler's Travelcoat", "赌师旅装外套"), "set.gamblertrump"),
+            new UniqueDef("set.gamblertrump.hands", "hands.spell_gloves", new Txt("勝負師の呪文手袋", "Gambler's Spellgloves", "赌师咒文手套"), "set.gamblertrump"),
+            new UniqueDef("set.gamblertrump.feet", "feet.star_slippers", new Txt("勝負師の星靴", "Gambler's Starshoes", "赌师星靴"), "set.gamblertrump"),
+            new UniqueDef("set.barehand.weapon", "weapon.tortoise_bokken", new Txt("無手の誇りの木刀", "Bare-Hand Bokken", "空手之傲木刀"), "set.barehand"),
+            new UniqueDef("set.barehand.hands", "hands.monk_wraps", new Txt("無手の誇りの巻き布", "Bare-Hand Wraps", "空手之傲缠布"), "set.barehand"),
+            new UniqueDef("set.barehand.charm", "charm.hunters_seal", new Txt("無手の誇りの印", "Bare-Hand Seal", "空手之傲印记"), "set.barehand"),
+            new UniqueDef("set.barehand.head", "head.berserker_mask", new Txt("無手の誇りの面", "Bare-Hand Mask", "空手之傲面罩"), "set.barehand"),
+            new UniqueDef("set.barehand.armor", "armor.monk_garb", new Txt("無手の誇りの道着", "Bare-Hand Gi", "空手之傲道服"), "set.barehand"),
+            new UniqueDef("set.barehand.feet", "feet.stalker_boots", new Txt("無手の誇りの足袋", "Bare-Hand Tabi", "空手之傲足袋"), "set.barehand"),
+            new UniqueDef("set.crystalcircuit.head", "head.meditation_band", new Txt("回路の瞑想帯", "Circuit Meditation Band", "回路冥想带"), "set.crystalcircuit"),
+            new UniqueDef("set.crystalcircuit.hands", "hands.alchemist_gloves", new Txt("回路の調合手袋", "Circuit Compounder Gloves", "回路调配手套"), "set.crystalcircuit"),
+            new UniqueDef("set.crystalcircuit.charm", "charm.dream_lens", new Txt("回路の水晶玉", "Circuit Crystal Lens", "回路水晶球"), "set.crystalcircuit"),
+            new UniqueDef("set.crystalcircuit.weapon", "weapon.windhowl_staff", new Txt("回路の導杖", "Circuit Conductor Staff", "回路导引杖"), "set.crystalcircuit"),
+            new UniqueDef("set.crystalcircuit.armor", "armor.mirrorsilk_robe", new Txt("回路の鏡絹衣", "Circuit Mirrorsilk", "回路镜绢衣"), "set.crystalcircuit"),
+            new UniqueDef("set.crystalcircuit.feet", "feet.whisperweave_shoes", new Txt("回路の囁き靴", "Circuit Whisperweave Shoes", "回路低语鞋"), "set.crystalcircuit"),
+            new UniqueDef("set.dreamvigil.head", "head.dream_veil", new Txt("寝ずの番の面紗", "Vigil Veil", "守夜面纱"), "set.dreamvigil"),
+            new UniqueDef("set.dreamvigil.armor", "armor.morningdew_robe", new Txt("寝ずの番の朝露衣", "Vigil Dewrobe", "守夜朝露衣"), "set.dreamvigil"),
+            new UniqueDef("set.dreamvigil.charm", "charm.stardust_pendant", new Txt("寝ずの番の星飾り", "Vigil Stardust", "守夜星饰"), "set.dreamvigil"),
+            new UniqueDef("set.dreamvigil.weapon", "weapon.pilgrim_staff", new Txt("寝ずの番の巡礼杖", "Vigil Pilgrim Staff", "守夜巡礼杖"), "set.dreamvigil"),
+            new UniqueDef("set.dreamvigil.hands", "hands.healer_hands", new Txt("寝ずの番の手袋", "Vigil Gloves", "守夜手套"), "set.dreamvigil"),
+            new UniqueDef("set.dreamvigil.feet", "feet.pilgrim_boots", new Txt("寝ずの番の巡礼靴", "Vigil Pilgrim Boots", "守夜巡礼靴"), "set.dreamvigil"),
+            new UniqueDef("set.tithebound.weapon", "weapon.war_axe", new Txt("供犠の戦斧", "Tithe Hatchet", "献祭战斧"), "set.tithebound"),
+            new UniqueDef("set.tithebound.armor", "armor.spiked_plate", new Txt("供犠の棘甲", "Tithe Spikeplate", "献祭棘刺甲"), "set.tithebound"),
+            new UniqueDef("set.tithebound.charm", "charm.blaze_brooch", new Txt("供犠の炎針", "Tithe Flamepin", "献祭炎针"), "set.tithebound"),
+            new UniqueDef("set.tithebound.head", "head.thorn_circlet", new Txt("供犠の茨冠", "Tithe Thorn Crown", "献祭荆棘冠"), "set.tithebound"),
+            new UniqueDef("set.tithebound.hands", "hands.thorn_wraps", new Txt("供犠の棘手巻", "Tithe Barbwraps", "献祭棘刺缠手"), "set.tithebound"),
+            new UniqueDef("set.tithebound.feet", "feet.chain_greaves", new Txt("供犠の鎖脛当", "Tithe Chaingreaves", "献祭锁链胫甲"), "set.tithebound"),
+            new UniqueDef("set.prismdance.hands", "hands.star_rings", new Txt("舞い星の環", "Dancing-Star Rings", "舞星之环"), "set.prismdance"),
+            new UniqueDef("set.prismdance.head", "head.star_diadem", new Txt("舞い星の冠", "Dancing-Star Diadem", "舞星之冠"), "set.prismdance"),
+            new UniqueDef("set.prismdance.feet", "feet.dancer_shoes", new Txt("舞い星の踊り靴", "Dancing-Star Shoes", "舞星舞鞋"), "set.prismdance"),
+            new UniqueDef("set.prismdance.weapon", "weapon.evening_fan", new Txt("舞い星の夕扇", "Dancing-Star Fan", "舞星晚扇"), "set.prismdance"),
+            new UniqueDef("set.prismdance.armor", "armor.aurora_wrap", new Txt("舞い星の羽衣", "Dancing-Star Aurora", "舞星羽衣"), "set.prismdance"),
+            new UniqueDef("set.prismdance.charm", "charm.halo_charm", new Txt("舞い星の光環御守", "Dancing-Star Halo Charm", "舞星光环护符"), "set.prismdance"),
+            new UniqueDef("unique.a_frostembrace_coat", "armor.frost_coat", new Txt("寒気抱きの外衣", "Chillembrace Coat", "拥寒外套"),
+                new Txt("氷を抱いた腕の中では、盾が先に砕ける。", "In arms that embrace ice, the shield breaks first.", "在拥冰的臂弯里，盾先一步碎裂。"),
                 Power.ShieldbreakBurst, EquipmentItemsBalanceValues.Unique_unique_a_frostembrace_coat_Power0, Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_frostembrace_coat_Power1) { Link = new LinkDef { Requires = new[] { "Hero_Cetus", "St_Q_EmbracingTheChill" }, Kind = LinkKind.Guard, Value = EquipmentItemsBalanceValues.Unique_unique_a_frostembrace_coat_Link } },
-            new UniqueDef("unique.a_prison_plate", "armor.citadel_plate", new Txt("牢の砦胸甲", "Gaol Citadel Plate"),
-                new Txt("捕らわれても、動じなければ砦になる。", "Even when caged, the unflinching become a fortress."),
+            new UniqueDef("unique.a_prison_plate", "armor.citadel_plate", new Txt("牢の砦胸甲", "Gaol Citadel Plate", "牢狱堡垒胸甲"),
+                new Txt("捕らわれても、動じなければ砦になる。", "Even when caged, the unflinching become a fortress.", "纵然被囚，不动摇者自成堡垒。"),
                 Power.Breakout, EquipmentItemsBalanceValues.Unique_unique_a_prison_plate_Power0, Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_prison_plate_Power1) { Link = new LinkDef { Requires = new[] { "Gem_U_SoulPrison" }, Kind = LinkKind.Guard, Value = EquipmentItemsBalanceValues.Unique_unique_a_prison_plate_Link } },
-            new UniqueDef("unique.a_resolve_scale", "armor.scale_coat", new Txt("決意の竜鱗", "Resolve Dragonscale"),
-                new Txt("決意した者が先に立つのは、竜の掟。", "It is the dragon's law that the resolved stand first."),
+            new UniqueDef("unique.a_resolve_scale", "armor.scale_coat", new Txt("決意の竜鱗", "Resolve Dragonscale", "决意龙鳞"),
+                new Txt("決意した者が先に立つのは、竜の掟。", "It is the dragon's law that the resolved stand first.", "决意者立于人前，是龙的铁则。"),
                 Power.VanguardsOath, EquipmentItemsBalanceValues.Unique_unique_a_resolve_scale_Power0, Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_resolve_scale_Power1) { Link = new LinkDef { Requires = new[] { "Hero_Vesper", "St_D_Resolve", "St_Q_Discipline" }, Kind = LinkKind.Guard, Value = EquipmentItemsBalanceValues.Unique_unique_a_resolve_scale_Link } },
-            new UniqueDef("unique.a_deception_jacket", "armor.duskweave_jacket", new Txt("撹乱の影上着", "Deception Duskweave Jacket"),
-                new Txt("包囲を抜けた後、影が一つ多く残っている。", "After breaking out, one extra shadow remains."),
+            new UniqueDef("unique.a_deception_jacket", "armor.duskweave_jacket", new Txt("撹乱の影上着", "Deception Duskweave Jacket", "惑乱影织上衣"),
+                new Txt("包囲を抜けた後、影が一つ多く残っている。", "After breaking out, one extra shadow remains.", "突出重围之后，影子多出了一道。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_deception_jacket_Power0, Power.Umbra, EquipmentItemsBalanceValues.Unique_unique_a_deception_jacket_Power1) { Link = new LinkDef { Requires = new[] { "Hero_Husk", "St_R_Deception", "St_Q_DeathMark" }, Kind = LinkKind.MemorySurge, Value = EquipmentItemsBalanceValues.Unique_unique_a_deception_jacket_Link } },
-            new UniqueDef("unique.a_unbowed_cuirass", "armor.basalt_cuirass", new Txt("不撓の玄武胸甲", "Unbowed Basalt Cuirass"),
-                new Txt("押されても、玄武は元の場所へ戻る。", "Pushed aside, the basalt returns to its place."),
+            new UniqueDef("unique.a_unbowed_cuirass", "armor.basalt_cuirass", new Txt("不撓の玄武胸甲", "Unbowed Basalt Cuirass", "不挠玄武胸甲"),
+                new Txt("押されても、玄武は元の場所へ戻る。", "Pushed aside, the basalt returns to its place.", "即使被推挤，玄武也回到原位。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_cuirass_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_cuirass_Power1),
-            new UniqueDef("unique.a_unbowed_plate", "armor.guardian_plate", new Txt("撓まぬ護り胸当て", "Springback Guardian Plate"),
-                new Txt("ふっ飛ばされるほど、護りは強く立つ。", "The farther you are thrown, the stronger the ward stands."),
+            new UniqueDef("unique.a_unbowed_plate", "armor.guardian_plate", new Txt("撓まぬ護り胸当て", "Springback Guardian Plate", "不屈回弹护胸"),
+                new Txt("ふっ飛ばされるほど、護りは強く立つ。", "The farther you are thrown, the stronger the ward stands.", "被击飞得越远，守护立得越稳。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_plate_Power0, Power.Aegis, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_plate_Power1),
-            new UniqueDef("unique.a_unbowed_vest", "armor.ironbark_vest", new Txt("転ばぬ鉄樹衣", "Steadfast Ironbark Vest"),
-                new Txt("転んでも、木の根は抜けない。", "Even when you stumble, the roots do not pull out."),
+            new UniqueDef("unique.a_unbowed_vest", "armor.ironbark_vest", new Txt("転ばぬ鉄樹衣", "Steadfast Ironbark Vest", "不倒铁木衣"),
+                new Txt("転んでも、木の根は抜けない。", "Even when you stumble, the roots do not pull out.", "纵然跌倒，树根也不被拔起。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_vest_Power0, Power.Bulwark, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_vest_Power1),
-            new UniqueDef("unique.a_unbowed_ready", "armor.buckler_vest", new Txt("撓まぬ備えの小盾衣", "Springback Ready Vest"),
-                new Txt("倒されても、立ち上がりに間はいらない。", "Even when knocked down, there is no delay in rising."),
+            new UniqueDef("unique.a_unbowed_ready", "armor.buckler_vest", new Txt("撓まぬ備えの小盾衣", "Springback Ready Vest", "回弹戒备小盾衣"),
+                new Txt("倒されても、立ち上がりに間はいらない。", "Even when knocked down, there is no delay in rising.", "即使被击倒，起身也毫无迟滞。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_ready_Power0, Power.ReadyGuard, EquipmentItemsBalanceValues.Unique_unique_a_unbowed_ready_Power1),
-            new UniqueDef("unique.f_resolve_greaves", "feet.guard_sabatons", new Txt("決意の前衛靴", "Resolute Vanguard Sabatons"),
-                new Txt("最前列は、最初に決めた者の席。", "The front row belongs to the first to decide."),
+            new UniqueDef("unique.f_resolve_greaves", "feet.guard_sabatons", new Txt("決意の前衛靴", "Resolute Vanguard Sabatons", "决意前卫靴"),
+                new Txt("最前列は、最初に決めた者の席。", "The front row belongs to the first to decide.", "最前排，是留给最先决意之人的席位。"),
                 Power.VanguardsOath, EquipmentItemsBalanceValues.Unique_unique_f_resolve_greaves_Power0, Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_resolve_greaves_Power1) { Link = new LinkDef { Requires = new[] { "Hero_Vesper", "St_M_Charge", "St_D_Resolve" }, Kind = LinkKind.MemoryDamage, Value = EquipmentItemsBalanceValues.Unique_unique_f_resolve_greaves_Link } },
-            new UniqueDef("unique.f_wary_shoes", "feet.mist_shoes", new Txt("疑心の忍び足", "Wary Footfalls"),
-                new Txt("疑い深い足は、危険の一歩手前で止まる。", "Wary feet stop one step before danger."),
+            new UniqueDef("unique.f_wary_shoes", "feet.mist_shoes", new Txt("疑心の忍び足", "Wary Footfalls", "疑心蹑步靴"),
+                new Txt("疑い深い足は、危険の一歩手前で止まる。", "Wary feet stop one step before danger.", "多疑的脚步，在危险前一阶停住。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_wary_shoes_Power0, Power.Retaliation, EquipmentItemsBalanceValues.Unique_unique_f_wary_shoes_Power1) { Link = new LinkDef { Requires = new[] { "Gem_L_Paranoia", "St_M_FastFeet" }, Kind = LinkKind.MemoryHaste, Value = EquipmentItemsBalanceValues.Unique_unique_f_wary_shoes_Link } },
-            new UniqueDef("unique.f_faith_boots", "feet.stone_boots", new Txt("信仰の石靴", "Faithstone Boots"),
-                new Txt("祈りの数だけ、根を張る。", "It roots itself once for every prayer."),
+            new UniqueDef("unique.f_faith_boots", "feet.stone_boots", new Txt("信仰の石靴", "Faithstone Boots", "信仰石靴"),
+                new Txt("祈りの数だけ、根を張る。", "It roots itself once for every prayer.", "有多少祈祷，就扎多少根。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_faith_boots_Power0, Power.StillWater, EquipmentItemsBalanceValues.Unique_unique_f_faith_boots_Power1) { Link = new LinkDef { Requires = new[] { "Gem_L_DivineFaith", "Hero_Vesper" }, Kind = LinkKind.Guard, Value = EquipmentItemsBalanceValues.Unique_unique_f_faith_boots_Link } },
-            new UniqueDef("unique.f_unbowed_boots", "feet.ballast_boots", new Txt("不撓の重し靴", "Unbowed Ballast Boots"),
-                new Txt("突き飛ばされても、立ち上がる速さは変わらない。", "Knocked down, you rise just as fast."),
+            new UniqueDef("unique.f_unbowed_boots", "feet.ballast_boots", new Txt("不撓の重し靴", "Unbowed Ballast Boots", "不挠压舱靴"),
+                new Txt("突き飛ばされても、立ち上がる速さは変わらない。", "Knocked down, you rise just as fast.", "即使被撞飞，起身的速度也不改分毫。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_boots_Power0, Power.Barrier, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_boots_Power1),
-            new UniqueDef("unique.f_unbowed_greaves", "feet.rampart_greaves", new Txt("揺るがぬ砦脛", "Steadfast Rampart Greaves"),
-                new Txt("押されても、足は元の場所を覚えている。", "Pushed aside, the feet remember where they stood."),
+            new UniqueDef("unique.f_unbowed_greaves", "feet.rampart_greaves", new Txt("揺るがぬ砦脛", "Steadfast Rampart Greaves", "坚定壁垒胫甲"),
+                new Txt("押されても、足は元の場所を覚えている。", "Pushed aside, the feet remember where they stood.", "即使被推挤，双脚仍记得原处。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_greaves_Power0, Power.Aegis, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_greaves_Power1),
-            new UniqueDef("unique.f_unbowed_stone", "feet.stone_boots", new Txt("転ばぬ石靴", "Stonestep Boots"),
-                new Txt("転んだ数だけ、次の一歩は慎重になる。", "Each fall makes the next step more careful."),
+            new UniqueDef("unique.f_unbowed_stone", "feet.stone_boots", new Txt("転ばぬ石靴", "Stonestep Boots", "不倒石履"),
+                new Txt("転んだ数だけ、次の一歩は慎重になる。", "Each fall makes the next step more careful.", "每跌一跤，下一步便更谨慎。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_stone_Power0, Power.Bulwark, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_stone_Power1),
-            new UniqueDef("unique.f_sentry_boots", "feet.winterhide_boots", new Txt("歩哨の冬靴", "Sentry Winterboots"),
-                new Txt("凍える夜の見張りは、最後に報われる。", "The watch on a freezing night is rewarded in the end."),
+            new UniqueDef("unique.f_sentry_boots", "feet.winterhide_boots", new Txt("歩哨の冬靴", "Sentry Winterboots", "哨兵冬靴"),
+                new Txt("凍える夜の見張りは、最後に報われる。", "The watch on a freezing night is rewarded in the end.", "寒夜守望，终有回报。"),
                 Power.Breakout, EquipmentItemsBalanceValues.Unique_unique_f_sentry_boots_Power0, Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_sentry_boots_Power1),
-            new UniqueDef("unique.f_unbowed_runup", "feet.gale_greaves", new Txt("撓まぬ助走靴", "Springback Runup Greaves"),
-                new Txt("押し返された距離が、次の助走になる。", "The distance you were pushed back becomes the next run-up."),
+            new UniqueDef("unique.f_unbowed_runup", "feet.gale_greaves", new Txt("撓まぬ助走靴", "Springback Runup Greaves", "回弹助跑胫甲"),
+                new Txt("押し返された距離が、次の助走になる。", "The distance you were pushed back becomes the next run-up.", "被推回的距离，正是下一次助跑。"),
                 Power.UnbowedMind, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_runup_Power0, Power.RunUp, EquipmentItemsBalanceValues.Unique_unique_f_unbowed_runup_Power1),
-            new UniqueDef("set.breakoutcorps.armor", "armor.stormfront_vest", new Txt("突破隊の嵐衣", "Breakout Stormvest"), "set.breakoutcorps"),
-            new UniqueDef("set.breakoutcorps.feet", "feet.iron_greaves", new Txt("突破隊の鉄脛", "Breakout Greaves"), "set.breakoutcorps"),
-            new UniqueDef("set.breakoutcorps.head", "head.iron_coif", new Txt("突破隊の鎖頭巾", "Breakout Coif"), "set.breakoutcorps"),
-            new UniqueDef("set.breakoutcorps.weapon", "weapon.gatehouse_maul", new Txt("突破隊の破城槌", "Breakout Ram"), "set.breakoutcorps"),
-            new UniqueDef("set.breakoutcorps.hands", "hands.ironvein_gauntlets", new Txt("突破隊の鉄手", "Breakout Ironhands"), "set.breakoutcorps"),
-            new UniqueDef("set.breakoutcorps.charm", "charm.iron_feather", new Txt("突破隊の鉄羽根", "Breakout Ironfeather"), "set.breakoutcorps"),
-            new UniqueDef("set.boss_demon.weapon", "weapon.shield_maul", new Txt("震根の槌", "Quakeroot Maul"), "set.boss_demon", "boss_demon.weapon"),
-            new UniqueDef("set.boss_demon.armor", "armor.root_mail", new Txt("不退の樹皮", "Unyielding Bark"), "set.boss_demon", "boss_demon.armor"),
-            new UniqueDef("set.boss_demon.charm", "charm.pulsing_core", new Txt("萌発の核", "Sprouting Core"), "set.boss_demon", "boss_demon.charm"),
-            new UniqueDef("set.boss_demon.head", "head.moss_crown", new Txt("放射の枝冠", "Radial Branch Crown"), "set.boss_demon", "boss_demon.head"),
-            new UniqueDef("set.boss_demon.hands", "hands.rootgrip_gloves", new Txt("溜め裂きの手甲", "Delayed Rending Grips"), "set.boss_demon", "boss_demon.hands"),
-            new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("瞬駆の根履", "Blinkstride Treads"), "set.boss_demon", "boss_demon.feet"),
+            new UniqueDef("set.breakoutcorps.armor", "armor.stormfront_vest", new Txt("突破隊の嵐衣", "Breakout Stormvest", "突破队风暴衣"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.feet", "feet.iron_greaves", new Txt("突破隊の鉄脛", "Breakout Greaves", "突破队铁胫甲"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.head", "head.iron_coif", new Txt("突破隊の鎖頭巾", "Breakout Coif", "突破队锁链头巾"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.weapon", "weapon.gatehouse_maul", new Txt("突破隊の破城槌", "Breakout Ram", "突破队破城槌"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.hands", "hands.ironvein_gauntlets", new Txt("突破隊の鉄手", "Breakout Ironhands", "突破队铁手"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.charm", "charm.iron_feather", new Txt("突破隊の鉄羽根", "Breakout Ironfeather", "突破队铁羽"), "set.breakoutcorps"),
+            new UniqueDef("set.boss_demon.weapon", "weapon.shield_maul", new Txt("震根の槌", "Quakeroot Maul", "震根巨槌"), "set.boss_demon", "boss_demon.weapon"),
+            new UniqueDef("set.boss_demon.armor", "armor.root_mail", new Txt("不退の樹皮", "Unyielding Bark", "不退树皮"), "set.boss_demon", "boss_demon.armor"),
+            new UniqueDef("set.boss_demon.charm", "charm.pulsing_core", new Txt("萌発の核", "Sprouting Core", "萌发之核"), "set.boss_demon", "boss_demon.charm"),
+            new UniqueDef("set.boss_demon.head", "head.moss_crown", new Txt("放射の枝冠", "Radial Branch Crown", "放射枝冠"), "set.boss_demon", "boss_demon.head"),
+            new UniqueDef("set.boss_demon.hands", "hands.rootgrip_gloves", new Txt("溜め裂きの手甲", "Delayed Rending Grips", "蓄势撕裂手甲"), "set.boss_demon", "boss_demon.hands"),
+            new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("瞬駆の根履", "Blinkstride Treads", "瞬驰根履"), "set.boss_demon", "boss_demon.feet"),
         }.Concat(BossProfiles.CreateSkollPieces()).Concat(BossProfiles.CreateInfernusPieces()).Concat(BossProfiles.CreateInkPieces())
             .Concat(BossProfiles.CreateNyxPieces()).Concat(BossProfiles.CreateErebosPieces()).Concat(BossProfiles.CreateSeekerPieces())
             .Concat(BossProfiles.CreateAzurakPieces()).Concat(BossProfiles.CreatePrimusPieces())
@@ -4649,7 +4649,7 @@ namespace SodRpg.Core.Game
         {
             new SetDef
             {
-                Id = "set.boss_demon", Name = new Txt("荒ぶる樹界", "Rampaging Grove"),
+                Id = "set.boss_demon", Name = new Txt("荒ぶる樹界", "Rampaging Grove", "狂暴树界"),
                 BossTypeName = "Mon_Forest_BossDemon",
                 TwoPiece = Array.Empty<StatLine>(),
                 ThreePiece = Array.Empty<PowerLine>(),
@@ -5040,26 +5040,26 @@ namespace SodRpg.Core.Game
 
         public static readonly IReadOnlyList<TalentDef> Talents = new[]
         {
-            new TalentDef("t.off.edge", Line.Offense, new Txt("鋭刃", "Keen Edge"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_off_edge_stat_perRank, 3),
-            new TalentDef("t.off.mind", Line.Offense, new Txt("魔力", "Arcane Mind"), Stat.PowerPct, MemoryDamageBalance.Effect_legacy_t_off_mind_stat_perRank, 3),
-            new TalentDef("t.off.swift", Line.Offense, new Txt("迅速", "Swiftness"), Stat.AttackSpeedPct, MemoryDamageBalance.Effect_legacy_t_off_swift_stat_perRank, 3),
-            new TalentDef("t.off.vital", Line.Offense, new Txt("急所", "Vital Points"), Stat.CritChancePct, MemoryDamageBalance.Effect_legacy_t_off_vital_stat_perRank, 3),
-            new TalentDef("t.off.key", Line.Offense, new Txt("舞い続ける者", "Ceaseless Dancer"), Power.Momentum, MemoryDamageBalance.Effect_legacy_t_off_key_power_perRank,
-                new Txt("敵を次々に倒す戦い方に向いています。", "Suits fights where you chain kills.")),
+            new TalentDef("t.off.edge", Line.Offense, new Txt("鋭刃", "Keen Edge", "锐刃"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_off_edge_stat_perRank, 3),
+            new TalentDef("t.off.mind", Line.Offense, new Txt("魔力", "Arcane Mind", "奥术心智"), Stat.PowerPct, MemoryDamageBalance.Effect_legacy_t_off_mind_stat_perRank, 3),
+            new TalentDef("t.off.swift", Line.Offense, new Txt("迅速", "Swiftness", "迅捷"), Stat.AttackSpeedPct, MemoryDamageBalance.Effect_legacy_t_off_swift_stat_perRank, 3),
+            new TalentDef("t.off.vital", Line.Offense, new Txt("急所", "Vital Points", "要害"), Stat.CritChancePct, MemoryDamageBalance.Effect_legacy_t_off_vital_stat_perRank, 3),
+            new TalentDef("t.off.key", Line.Offense, new Txt("舞い続ける者", "Ceaseless Dancer", "不停起舞者"), Power.Momentum, MemoryDamageBalance.Effect_legacy_t_off_key_power_perRank,
+                new Txt("敵を次々に倒す戦い方に向いています。", "Suits fights where you chain kills.", "适合接连击杀敌人的战斗方式。")),
 
-            new TalentDef("t.grd.hearty", Line.Guard, new Txt("頑健", "Hearty"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_t_grd_hearty_stat_perRank, 3),
-            new TalentDef("t.grd.iron", Line.Guard, new Txt("鉄皮", "Ironhide"), Stat.Armor, MemoryDamageBalance.Effect_legacy_t_grd_iron_stat_perRank, 3),
-            new TalentDef("t.grd.regen", Line.Guard, new Txt("再生", "Regrowth"), Stat.HealthRegen, MemoryDamageBalance.Effect_legacy_t_grd_regen_stat_perRank, 3),
-            new TalentDef("t.grd.steady", Line.Guard, new Txt("不屈", "Unyielding"), Stat.Tenacity, MemoryDamageBalance.Effect_legacy_t_grd_steady_stat_perRank, 3),
-            new TalentDef("t.grd.key", Line.Guard, new Txt("逆襲の構え", "Counterstance"), Power.Retaliation, MemoryDamageBalance.Effect_legacy_t_grd_key_power_perRank,
-                new Txt("敵の攻撃を受け止めて反撃する戦い方に向いています。", "Suits a tank that strikes back.")),
+            new TalentDef("t.grd.hearty", Line.Guard, new Txt("頑健", "Hearty", "强健"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_t_grd_hearty_stat_perRank, 3),
+            new TalentDef("t.grd.iron", Line.Guard, new Txt("鉄皮", "Ironhide", "铁皮"), Stat.Armor, MemoryDamageBalance.Effect_legacy_t_grd_iron_stat_perRank, 3),
+            new TalentDef("t.grd.regen", Line.Guard, new Txt("再生", "Regrowth", "再生"), Stat.HealthRegen, MemoryDamageBalance.Effect_legacy_t_grd_regen_stat_perRank, 3),
+            new TalentDef("t.grd.steady", Line.Guard, new Txt("不屈", "Unyielding", "不屈"), Stat.Tenacity, MemoryDamageBalance.Effect_legacy_t_grd_steady_stat_perRank, 3),
+            new TalentDef("t.grd.key", Line.Guard, new Txt("逆襲の構え", "Counterstance", "反击架势"), Power.Retaliation, MemoryDamageBalance.Effect_legacy_t_grd_key_power_perRank,
+                new Txt("敵の攻撃を受け止めて反撃する戦い方に向いています。", "Suits a tank that strikes back.", "适合正面承受敌方攻击并反击的战斗方式。")),
 
-            new TalentDef("t.res.focus", Line.Resonance, new Txt("集中", "Focus"), Stat.Haste, MemoryDamageBalance.Effect_legacy_t_res_focus_stat_perRank, 3),
-            new TalentDef("t.res.light", Line.Resonance, new Txt("軽歩", "Lightstep"), Stat.MoveSpeedPct, MemoryDamageBalance.Effect_legacy_t_res_light_stat_perRank, 3),
-            new TalentDef("t.res.tune", Line.Resonance, new Txt("共振", "Attunement"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_res_tune_stat_perRank, 3),
-            new TalentDef("t.res.ward", Line.Resonance, new Txt("守護", "Warding"), Stat.MaxHealthFlat, MemoryDamageBalance.Effect_legacy_t_res_ward_stat_perRank, 3),
-            new TalentDef("t.res.key", Line.Resonance, new Txt("共鳴の環", "Ring of Resonance"), Power.Resonance, MemoryDamageBalance.Effect_legacy_t_res_key_power_perRank,
-                new Txt("味方の近くで戦うほど活きます。", "Best when fighting close to allies.")),
+            new TalentDef("t.res.focus", Line.Resonance, new Txt("集中", "Focus", "专注"), Stat.Haste, MemoryDamageBalance.Effect_legacy_t_res_focus_stat_perRank, 3),
+            new TalentDef("t.res.light", Line.Resonance, new Txt("軽歩", "Lightstep", "轻步"), Stat.MoveSpeedPct, MemoryDamageBalance.Effect_legacy_t_res_light_stat_perRank, 3),
+            new TalentDef("t.res.tune", Line.Resonance, new Txt("共振", "Attunement", "共振"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_res_tune_stat_perRank, 3),
+            new TalentDef("t.res.ward", Line.Resonance, new Txt("守護", "Warding", "守护"), Stat.MaxHealthFlat, MemoryDamageBalance.Effect_legacy_t_res_ward_stat_perRank, 3),
+            new TalentDef("t.res.key", Line.Resonance, new Txt("共鳴の環", "Ring of Resonance", "共鸣之环"), Power.Resonance, MemoryDamageBalance.Effect_legacy_t_res_key_power_perRank,
+                new Txt("味方の近くで戦うほど活きます。", "Best when fighting close to allies.", "越靠近队友战斗，越能发挥作用。")),
         };
 
         /// <summary>同じ固有効果を複数持つ場合の合計上限。</summary>
@@ -5266,48 +5266,48 @@ namespace SodRpg.Core.Game
         /// <summary>エピックの銘（1つ目の固有効果から）。v1.22。</summary>
         private static readonly Dictionary<Power, Txt> Epithets = new Dictionary<Power, Txt>
         {
-            [Power.Momentum] = new Txt("連撃の", "Relentless"),
-            [Power.Retaliation] = new Txt("報復の", "Vengeful"),
-            [Power.Bulwark] = new Txt("鉄壁の", "Steadfast"),
-            [Power.Lifesteal] = new Txt("吸血の", "Vampiric"),
-            [Power.Thorns] = new Txt("逆棘の", "Barbed"),
-            [Power.Executioner] = new Txt("断罪の", "Executing"),
-            [Power.Resonance] = new Txt("共鳴の", "Resonant"),
-            [Power.Tailwind] = new Txt("追い風の", "Windborne"),
-            [Power.Barrier] = new Txt("護りの", "Warding"),
-            [Power.SecondWind] = new Txt("不倒の", "Undying"),
-            [Power.Blaze] = new Txt("猛火の", "Blazing"),
-            [Power.ChainLightning] = new Txt("雷鳴の", "Thundering"),
-            [Power.Shatter] = new Txt("砕きの", "Shattering"),
-            [Power.Aegis] = new Txt("守護の", "Guardian"),
-            [Power.Bloodlust] = new Txt("血狂いの", "Bloodmad"),
-            [Power.Ember] = new Txt("燻る", "Smoldering"),
-            [Power.Frost] = new Txt("凍てつく", "Freezing"),
-            [Power.Radiance] = new Txt("輝く", "Radiant"),
-            [Power.Umbra] = new Txt("宵闇の", "Dusky"),
-            [Power.Convergence] = new Txt("四元の", "Converging"),
-            [Power.EchoingDodge] = new Txt("残像の", "Echoing"),
-            [Power.UltimateSurge] = new Txt("昂りの", "Surging"),
-            [Power.SoulSiphon] = new Txt("魂喰いの", "Soul-eating"),
-            [Power.Whirlwind] = new Txt("旋風の", "Whirling"),
-            [Power.Frenzy] = new Txt("乱戦の", "Frenzied"),
-            [Power.OpeningStrike] = new Txt("先駆けの", "Vanguard"),
-            [Power.StarShield] = new Txt("星護りの", "Starward"),
-            [Power.Sprint] = new Txt("疾駆の", "Swift"),
-            [Power.Vigor] = new Txt("万全の", "Hale"),
-            [Power.Overload] = new Txt("溢れる", "Overflowing"),
-            [Power.Finale] = new Txt("終曲の", "Final"),
-            [Power.CriticalEcho] = new Txt("余韻の", "Lingering"),
-            [Power.Fetters] = new Txt("枷の", "Fettering"),
-            [Power.CrystalResonance] = new Txt("結晶の", "Crystalline"),
-            [Power.PreyPride] = new Txt("誇り高き", "Proud"),
-            [Power.OverflowingLife] = new Txt("満ちる", "Brimming"),
-            [Power.Devotion] = new Txt("祈りの", "Devout"),
-            [Power.Wildfire] = new Txt("飛び火の", "Spreading"),
-            [Power.StillWater] = new Txt("止水の", "Stilled"),
-            [Power.SpendersWard] = new Txt("散財の", "Lavish"),
-            [Power.PerfectRead] = new Txt("見切りの", "Keen-eyed"),
-            [Power.LucidBoon] = new Txt("明晰な", "Lucid"),
+            [Power.Momentum] = new Txt("連撃の", "Relentless", "连击的"),
+            [Power.Retaliation] = new Txt("報復の", "Vengeful", "复仇的"),
+            [Power.Bulwark] = new Txt("鉄壁の", "Steadfast", "铁壁的"),
+            [Power.Lifesteal] = new Txt("吸血の", "Vampiric", "吸血的"),
+            [Power.Thorns] = new Txt("逆棘の", "Barbed", "反刺的"),
+            [Power.Executioner] = new Txt("断罪の", "Executing", "断罪的"),
+            [Power.Resonance] = new Txt("共鳴の", "Resonant", "共鸣的"),
+            [Power.Tailwind] = new Txt("追い風の", "Windborne", "顺风的"),
+            [Power.Barrier] = new Txt("護りの", "Warding", "守护的"),
+            [Power.SecondWind] = new Txt("不倒の", "Undying", "不倒的"),
+            [Power.Blaze] = new Txt("猛火の", "Blazing", "烈火的"),
+            [Power.ChainLightning] = new Txt("雷鳴の", "Thundering", "雷鸣的"),
+            [Power.Shatter] = new Txt("砕きの", "Shattering", "粉碎的"),
+            [Power.Aegis] = new Txt("守護の", "Guardian", "护卫的"),
+            [Power.Bloodlust] = new Txt("血狂いの", "Bloodmad", "血狂的"),
+            [Power.Ember] = new Txt("燻る", "Smoldering", "闷燃的"),
+            [Power.Frost] = new Txt("凍てつく", "Freezing", "冰封的"),
+            [Power.Radiance] = new Txt("輝く", "Radiant", "辉耀的"),
+            [Power.Umbra] = new Txt("宵闇の", "Dusky", "暮色的"),
+            [Power.Convergence] = new Txt("四元の", "Converging", "四元的"),
+            [Power.EchoingDodge] = new Txt("残像の", "Echoing", "残影的"),
+            [Power.UltimateSurge] = new Txt("昂りの", "Surging", "高昂的"),
+            [Power.SoulSiphon] = new Txt("魂喰いの", "Soul-eating", "噬魂的"),
+            [Power.Whirlwind] = new Txt("旋風の", "Whirling", "旋风的"),
+            [Power.Frenzy] = new Txt("乱戦の", "Frenzied", "乱战的"),
+            [Power.OpeningStrike] = new Txt("先駆けの", "Vanguard", "先锋的"),
+            [Power.StarShield] = new Txt("星護りの", "Starward", "星护的"),
+            [Power.Sprint] = new Txt("疾駆の", "Swift", "疾驰的"),
+            [Power.Vigor] = new Txt("万全の", "Hale", "万全的"),
+            [Power.Overload] = new Txt("溢れる", "Overflowing", "溢出的"),
+            [Power.Finale] = new Txt("終曲の", "Final", "终曲的"),
+            [Power.CriticalEcho] = new Txt("余韻の", "Lingering", "余韵的"),
+            [Power.Fetters] = new Txt("枷の", "Fettering", "枷锁的"),
+            [Power.CrystalResonance] = new Txt("結晶の", "Crystalline", "结晶的"),
+            [Power.PreyPride] = new Txt("誇り高き", "Proud", "高傲的"),
+            [Power.OverflowingLife] = new Txt("満ちる", "Brimming", "充盈的"),
+            [Power.Devotion] = new Txt("祈りの", "Devout", "祈愿的"),
+            [Power.Wildfire] = new Txt("飛び火の", "Spreading", "飞火的"),
+            [Power.StillWater] = new Txt("止水の", "Stilled", "止水的"),
+            [Power.SpendersWard] = new Txt("散財の", "Lavish", "散财的"),
+            [Power.PerfectRead] = new Txt("見切りの", "Keen-eyed", "看破的"),
+            [Power.LucidBoon] = new Txt("明晰な", "Lucid", "清明的"),
         };
 
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : NewPowersV129.IsPower(p) ? NewPowersV129.Epithet(p) : ElementReactions.Epithet(p);
@@ -5681,61 +5681,61 @@ namespace SodRpg.Core.Game
             if (ElementReactions.IsPower(p)) return FormatReaction(p, v);
             string body;
             string ElementHeading(string ja, string en) => v < 100
-                ? Loc.T("", $"{en} application chance +{v} percentage points / ")
-                : Loc.T("", $"{en} application +{v / 100} " + (v / 100 == 1 ? "stack" : "stacks") + (v % 100 > 0 ? $" (plus a {v % 100}% chance for 1 more)" : "") + " / ");
+                ? Loc.T("", $"{en} application chance +{v} percentage points / ", $"{(ja == "闇" ? "暗" : ja)}附加几率 +{v}个百分点 / ")
+                : Loc.T("", $"{en} application +{v / 100} " + (v / 100 == 1 ? "stack" : "stacks") + (v % 100 > 0 ? $" (plus a {v % 100}% chance for 1 more)" : "") + " / ", $"{(ja == "闇" ? "暗" : ja)}附加 +{v / 100} 层" + (v % 100 > 0 ? $"（另有{v % 100}%几率附加1层）" : "") + " / ");
             switch (p)
             {
-                case Power.Momentum: body = Loc.T($"敵を倒すたびに{PowerRuntime.MomentumDuration}秒間、攻撃速度が{v}%上がる。{PowerRuntime.MomentumMaxStacks}回まで重なり、敵を倒すと全体の効果時間が延びる。", $"Attack speed +{v}% per kill for {PowerRuntime.MomentumDuration}s; stacks up to {PowerRuntime.MomentumMaxStacks} times, with kills refreshing the whole duration"); break;
-                case Power.Retaliation: body = Loc.T($"敵からダメージを受けた後{PowerRuntime.RetaliationDuration}秒間、攻撃力・魔力が{v}%上がる。重ならず、再発動すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.RetaliationDuration}s after enemy damage; refreshes without stacking"); break;
-                case Power.Bulwark: body = Loc.T($"自分の周囲{PowersBalance.BulwarkRange}m以内に敵が{PowerRuntime.BulwarkEnemies}体以上いる間、防御が{v}上がる。", $"Armor +{v} while at least {PowerRuntime.BulwarkEnemies} enemies are within {PowersBalance.BulwarkRange}m of you"); break;
-                case Power.Lifesteal: body = Loc.T($"通常攻撃が命中するたび、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.LifestealInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on a basic attack hit; heals yourself (once per {PowerRuntime.LifestealInterval}s)"); break;
-                case Power.Thorns: body = Loc.T($"敵からダメージを受けたとき、受けたダメージの{v}%をその敵に返す。{PowerRuntime.ThornsInterval}秒に1回まで。反射ダメージでは発動しない。", $"Retaliatory damage +{v}% of damage received, dealt back to the attacking enemy (once per {PowerRuntime.ThornsInterval}s; reflected damage does not trigger it)"); break;
-                case Power.Executioner: body = Loc.T($"HPが{PowerRuntime.ExecuteThreshold:0%}未満の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy below {PowerRuntime.ExecuteThreshold:0%} health"); break;
-                case Power.Resonance: body = Loc.T($"味方との距離係数が最大のとき、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2f:0.#}%上がる。味方がいなければ自分は{v / 2f:0.#}%上がり、味方による自分への追加分と味方への付与量に距離係数を掛ける。味方への付与は重ならず、最も高い値だけを適用する。", $"At full allied distance effectiveness, your attack damage and ability power increase by {v}% and allies' by {v / 2f:0.#}%. Your solo bonus is {v / 2f:0.#}%; distance scales your additional allied bonus and the bonus granted to allies. Bonuses granted to allies do not stack; only the highest applies") + CoopDistance.Description; break;
-                case Power.Tailwind: body = Loc.T($"敵を倒した後{PowerRuntime.TailwindDuration}秒間、移動速度が{v}%上がる。重ならず、敵を倒すと効果時間が延びる。", $"Movement speed +{v}% for {PowerRuntime.TailwindDuration}s after a kill; kills refresh it without stacking"); break;
-                case Power.Barrier: body = Loc.T($"最初は{PowerRuntime.BarrierFirstDelay}秒後、以後は{PowerRuntime.BarrierInterval}秒ごとに、最大HPの{v}%の障壁を{PowerRuntime.BarrierDuration}秒間得る。", $"Shield +{v}% of your maximum health for {PowerRuntime.BarrierDuration}s; first granted after {PowerRuntime.BarrierFirstDelay}s, then every {PowerRuntime.BarrierInterval}s"); break;
-                case Power.SecondWind: body = Loc.T($"自分のHPが{PowerRuntime.SecondWindThreshold:0%}未満のとき、最大HPの{v}%を回復する。{PowerRuntime.SecondWindCooldown}秒に1回まで。", $"Health restored +{v}% of your maximum health while below {PowerRuntime.SecondWindThreshold:0%} health (once per {PowerRuntime.SecondWindCooldown}s)"); break;
-                case Power.Blaze: body = Loc.T($"4発目の強化通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加魔法ダメージを与える。命中回数ではなく、強化攻撃の周期で判定する。", $"Basic attack bonus magic damage +{v}% of the higher of your attack damage or ability power when your empowered fourth attack hits (judged by the empowered-attack cycle, not by counting hits)"); break;
-                case Power.ChainLightning: body = Loc.T($"通常攻撃が命中したとき、{PowerRuntime.ChainChance:0%}の確率で、当てた敵の周囲{PowerRuntime.ChainRange}m以内の別の敵最大{PowerRuntime.ChainTargets}体に、攻撃力・魔力の高い方の{v}%の追加魔法ダメージをそれぞれ与える。", $"Bonus magic damage +{v}% of the higher of your attack damage or ability power per target; a basic attack hit has a {PowerRuntime.ChainChance:0%} chance to hit up to {PowerRuntime.ChainTargets} other enemies within {PowerRuntime.ChainRange}m of the struck enemy"); break;
-                case Power.Shatter: body = Loc.T($"敵を倒したとき、倒した敵の周囲{PowerRuntime.ShatterRadius}m以内の敵それぞれに、攻撃力・魔力の高い方の{v}%の範囲ダメージを与える。この効果による撃破からは連鎖しない。", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within {PowerRuntime.ShatterRadius}m of an enemy you kill (kills from this effect do not chain)"); break;
-                case Power.Aegis: body = Loc.T($"自分の最大HPの{PowerRuntime.AegisThreshold:0%}以上の一撃を受けたとき、最大HPの{v}%の障壁を{PowersBalance.AegisShieldDuration}秒間得る。{PowerRuntime.AegisCooldown}秒に1回まで。", $"Shield +{v}% of your maximum health for {PowersBalance.AegisShieldDuration}s when a single hit deals at least {PowerRuntime.AegisThreshold:0%} of your maximum health (once per {PowerRuntime.AegisCooldown}s)"); break;
-                case Power.Bloodlust: body = Loc.T($"自分のHPが{PowerRuntime.BloodlustThreshold:0%}未満の間、攻撃速度が{v}%上がる。", $"Attack speed +{v}% while your health is below {PowerRuntime.BloodlustThreshold:0%}"); break;
-                case Power.Ember: body = ElementHeading("火", "Fire") + Loc.T(ElementJa(v, "火") + "火の蓄積に上限はない。", ElementEn(v, "Fire") + " (Fire has no stack limit)"); break;
-                case Power.Frost: body = Loc.T($"通常攻撃が命中したとき、{v}%の確率で敵に冷気を付ける。冷気は重ならない。", $"Cold application chance +{v} percentage points on basic attack hits; applies Cold to the struck enemy, without stacking"); break;
-                case Power.Radiance: body = ElementHeading("光", "Light") + Loc.T(ElementJa(v, "光") + "光は5つまで。3つ以上のとき、光ダメージは必ず会心する。", ElementEn(v, "Light") + " (up to 5 stacks; Light damage always critically hits at 3 or more)"); break;
-                case Power.Umbra: body = ElementHeading("闇", "Dark") + Loc.T(ElementJa(v, "闇") + "会心したときは、この確率判定とは別に必ず闇をもう1つ付ける。闇は5つまで。", ElementEn(v, "Dark") + ". A critical basic hit always applies 1 additional stack independently of this roll (up to 5 stacks)"); break;
-                case Power.Convergence: body = Loc.T($"自分が属性を付けた敵に火・冷気・光・闇がそろっているとき、その敵に攻撃力・魔力の高い方の{v}%の追加ダメージを与える。同じ敵には{PowerRuntime.ConvergenceCooldown}秒に1回まで。", $"Bonus damage +{v}% of the higher of your attack damage or ability power to an enemy when your elemental application leaves it with Fire, Cold, Light and Dark (once per {PowerRuntime.ConvergenceCooldown}s per enemy)"); break;
-                case Power.EchoingDodge: body = Loc.T($"移動の記憶を使った後{PowerRuntime.EchoingDodgeWindow}秒以内の次の通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加ダメージを与える。重ならず、再使用すると効果時間が延びる。次の通常攻撃に付く追加効果は、最大の1つだけを消費し、残りは期限まで保持される。", $"Next basic attack bonus damage +{v}% of the higher of your attack damage or ability power on the next hit within {PowerRuntime.EchoingDodgeWindow}s of using a Movement memory; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry"); break;
-                case Power.UltimateSurge: body = Loc.T($"奥義の記憶を使った後{PowerRuntime.SurgeDuration}秒間、攻撃力・魔力が{v}%上がる。重ならず、再使用すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.SurgeDuration}s after using an Ultimate memory; refreshes without stacking"); break;
-                case Power.SoulSiphon: body = Loc.T($"敵を倒したとき、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.SoulSiphonInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on kill (once per {PowerRuntime.SoulSiphonInterval}s)"); break;
-                case Power.Whirlwind: body = Loc.T($"移動の記憶を使ったとき、自分の周囲{PowerRuntime.WhirlwindRadius}m以内の敵それぞれに、攻撃力・魔力の高い方の{v}%の範囲ダメージを与える。{PowerRuntime.WhirlwindInterval}秒に1回まで。", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within {PowerRuntime.WhirlwindRadius}m of you when using a Movement memory (once per {PowerRuntime.WhirlwindInterval}s)"); break;
-                case Power.Frenzy: body = Loc.T($"自分の周囲{PowersBalance.FrenzyRange}m以内の敵1体につき、攻撃速度が{v}%上がる。最大{PowerRuntime.FrenzyMaxEnemies}体分まで数える。", $"Attack speed +{v}% per enemy within {PowersBalance.FrenzyRange}m of you, counting up to {PowerRuntime.FrenzyMaxEnemies} enemies"); break;
-                case Power.OpeningStrike: body = Loc.T($"HPが{PowerRuntime.OpeningStrikeThreshold:0%}以上の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy at or above {PowerRuntime.OpeningStrikeThreshold:0%} health"); break;
-                case Power.StarShield: body = Loc.T($"奥義の記憶を使ったとき、最大HPの{v}%の障壁を{PowerRuntime.StarShieldDuration}秒間得る。", $"Shield +{v}% of your maximum health, granted to yourself for {PowerRuntime.StarShieldDuration}s when using an Ultimate memory"); break;
-                case Power.Sprint: body = Loc.T($"移動の記憶を使った後{PowerRuntime.SprintDuration}秒間、移動速度・攻撃速度が{v}%上がる。重ならず、再使用すると効果時間が延びる。", $"Movement speed and attack speed +{v}% for {PowerRuntime.SprintDuration}s after using a Movement memory; refreshes without stacking"); break;
-                case Power.Vigor: body = Loc.T($"自分のHPが{PowerRuntime.VigorThreshold:0%}以上の間、攻撃力・魔力が{v}%上がる。", $"Attack damage and ability power +{v}% while your health is at or above {PowerRuntime.VigorThreshold:0%}"); break;
-                case Power.Overload: body = Loc.T($"通常記憶を使った後{PowerRuntime.OverloadDuration}秒間、攻撃力・魔力が{v}%上がる。移動・奥義・アイデンティティの記憶は対象外。重ならず、再使用すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.OverloadDuration}s after using an ordinary memory; excludes Movement, Ultimate and Identity memories; refreshes without stacking"); break;
-                case Power.Finale: body = Loc.T($"通常記憶の3枠すべてを{PowerRuntime.FinaleWindow}秒以内に使ったとき、奥義の残りクールダウンが{v}%短くなる。{PowerRuntime.FinaleCooldown}秒に1回まで。次の発動には3枠をもう一度使う必要がある。", $"Ultimate remaining cooldown -{v}% when all 3 ordinary-memory slots are used within {PowerRuntime.FinaleWindow}s (once per {PowerRuntime.FinaleCooldown}s; all 3 must be used again for the next trigger)"); break;
-                case Power.CriticalEcho: body = Loc.T($"通常攻撃が会心で命中したとき、通常記憶3枠の残りクールダウンが{v / 10f:0.#}秒短くなる。{PowerRuntime.CriticalEchoCooldown}秒に1回まで。", $"Remaining cooldown of all 3 ordinary-memory slots -{v / 10f:0.#}s on a critical basic attack hit (once per {PowerRuntime.CriticalEchoCooldown}s)"); break;
-                case Power.Fetters: body = Loc.T($"スタン・スロウ・冷気のいずれかを受けている敵に与えるダメージが{v}%増える。", $"Damage dealt +{v}% to enemies that are stunned, slowed or chilled"); break;
-                case Power.CrystalResonance: body = Loc.T($"装着中の全エッセンスの品質の合計100%ごとに、攻撃力・魔力が{v}%上がる。100%未満の端数は数えず、最大{PowerRuntime.CrystalResonanceMaxTiers * 100}%分まで数える。", $"Attack damage and ability power +{v}% per 100% total quality across all equipped Essences; ignores incomplete hundreds, counts up to {PowerRuntime.CrystalResonanceMaxTiers * 100}%"); break;
-                case Power.PreyPride: body = Loc.T($"現在のハンター追跡度1につき、攻撃力・魔力が{v}%上がる。追跡度は{PowerRuntime.PreyPrideMaxLevel}まで数える。", $"Attack damage and ability power +{v}% per current hunter tracking level, counting up to level {PowerRuntime.PreyPrideMaxLevel}"); break;
-                case Power.OverflowingLife: body = Loc.T($"最大HPを超える回復が出たとき、超過回復量の{v}%の障壁を{PowerRuntime.OverflowingLifeDuration}秒間得る。1回に得る障壁は最大HPの{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}までで、段数を上げてもこの{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}の上限は増えない。", $"Shield +{v}% of overhealing, granted to yourself for {PowerRuntime.OverflowingLifeDuration}s; each grant is capped at {PowerRuntime.OverflowingLifeMaxHealthRatio:0%} of your maximum health (this {PowerRuntime.OverflowingLifeMaxHealthRatio:0%} limit does not increase with ranks)"); break;
-                case Power.Devotion: body = Loc.T($"聖堂の使用が成功するたび、攻撃力・魔力が{v}%上がり、そのゾーンの間続く。最大{PowerRuntime.DevotionMaxStacks}回分まで重なる。", $"Attack damage and ability power +{v}% per successful shrine use, lasting for the zone; up to {PowerRuntime.DevotionMaxStacks} uses"); break;
-                case Power.Wildfire: body = Loc.T($"自分の火付与で火が{PowerRuntime.WildfireMinStacks}つ以上になった敵から、周囲{PowerRuntime.WildfireRange}m以内の最も近い別の敵1体へ、{v}%の確率で火を1つ付ける。同じ送り元からは{PowerRuntime.WildfireCooldown}秒に1回まで。拡散した火からは連鎖しない。", $"Fire spread chance +{v} percentage points when your Fire application leaves an enemy with at least {PowerRuntime.WildfireMinStacks} Fire stacks; applies 1 Fire to the nearest other enemy within {PowerRuntime.WildfireRange}m (once per {PowerRuntime.WildfireCooldown}s per source enemy; spread Fire does not chain)"); break;
-                case Power.StillWater: body = Loc.T($"自分の技で敵をスタンさせたとき、最大HPの{v}%の障壁を{PowerRuntime.StillWaterDuration}秒間得る。{PowerRuntime.StillWaterCooldown}秒に1回まで。", $"Shield +{v}% of your maximum health for {PowerRuntime.StillWaterDuration}s when your own skill stuns an enemy (once per {PowerRuntime.StillWaterCooldown}s)"); break;
-                case Power.SpendersWard: body = Loc.T($"ゴールドを合計{PowerRuntime.SpendersWardGold}使うごとに、最大HPの{v}%の障壁を{PowerRuntime.SpendersWardDuration}秒間得る。最大{PowerRuntime.SpendersWardMaxStacks}回分まで重なる。各付与の期限は延長せず、満杯のときに使った{PowerRuntime.SpendersWardGold}ゴールド分は持ち越さない。", $"Shield +{v}% of your maximum health for {PowerRuntime.SpendersWardDuration}s per {PowerRuntime.SpendersWardGold} gold spent; up to {PowerRuntime.SpendersWardMaxStacks} grants coexist, with separate expiry times. Spending while full does not bank another grant"); break;
-                case Power.PerfectRead: body = Loc.T($"無敵でダメージを実際に無効化した後{PowerRuntime.PerfectReadDuration}秒間、攻撃速度が{v}%上がる。{PowerRuntime.PerfectReadCooldown}秒に1回まで。重ならず、再発動すると効果時間が延びる。", $"Attack speed +{v}% for {PowerRuntime.PerfectReadDuration}s after actually negating damage with invulnerability (once per {PowerRuntime.PerfectReadCooldown}s; refreshes without stacking)"); break;
-                case Power.LucidBoon: body = Loc.T($"有効な邪悪な明晰夢1つにつき、攻撃力・魔力が{v}%上がる。最大{PowerRuntime.LucidBoonMaxDreams}つまで数える。装備・星の同じ効果を合算した最終増加量は{Content.PowerCap(Power.LucidBoon)}%まで。", $"Attack damage and ability power +{v}% per active Evil lucid dream, counting up to {PowerRuntime.LucidBoonMaxDreams}; the resulting bonus from this effect across equipment and stars is capped at {Content.PowerCap(Power.LucidBoon)}%"); break;
-                case Power.ShadowStep: body = Loc.T($"回避・ダッシュ・瞬間移動の後{PowerRuntime.ShadowStepWindow}秒以内の次の通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加ダメージを与える。重ならず、再び移動すると効果時間が延びる。次の通常攻撃に付く追加効果は、最大の1つだけを消費し、残りは期限まで保持される。", $"Next basic attack bonus damage +{v}% of the higher of your attack damage or ability power on the next hit within {PowerRuntime.ShadowStepWindow}s of a dodge, dash or teleport; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry"); break;
+                case Power.Momentum: body = Loc.T($"敵を倒すたびに{PowerRuntime.MomentumDuration}秒間、攻撃速度が{v}%上がる。{PowerRuntime.MomentumMaxStacks}回まで重なり、敵を倒すと全体の効果時間が延びる。", $"Attack speed +{v}% per kill for {PowerRuntime.MomentumDuration}s; stacks up to {PowerRuntime.MomentumMaxStacks} times, with kills refreshing the whole duration", $"每击杀一名敌人，攻击速度提升{v}%，持续{PowerRuntime.MomentumDuration}秒。最多叠加{PowerRuntime.MomentumMaxStacks}次，击杀敌人时刷新整体持续时间。"); break;
+                case Power.Retaliation: body = Loc.T($"敵からダメージを受けた後{PowerRuntime.RetaliationDuration}秒間、攻撃力・魔力が{v}%上がる。重ならず、再発動すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.RetaliationDuration}s after enemy damage; refreshes without stacking", $"攻击力与法术强度提升{v}%，持续{PowerRuntime.RetaliationDuration}秒（受到敌方伤害后触发；不叠加，再次触发时刷新持续时间）。"); break;
+                case Power.Bulwark: body = Loc.T($"自分の周囲{PowersBalance.BulwarkRange}m以内に敵が{PowerRuntime.BulwarkEnemies}体以上いる間、防御が{v}上がる。", $"Armor +{v} while at least {PowerRuntime.BulwarkEnemies} enemies are within {PowersBalance.BulwarkRange}m of you", $"护甲提升{v}（周围至少有{PowerRuntime.BulwarkEnemies}名敌人处于{PowersBalance.BulwarkRange}米范围内时生效）。"); break;
+                case Power.Lifesteal: body = Loc.T($"通常攻撃が命中するたび、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.LifestealInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on a basic attack hit; heals yourself (once per {PowerRuntime.LifestealInterval}s)", $"通常攻击命中时，回复最大生命{v / 10f:0.#}%的HP（治疗自己；每{PowerRuntime.LifestealInterval}秒最多一次）。"); break;
+                case Power.Thorns: body = Loc.T($"敵からダメージを受けたとき、受けたダメージの{v}%をその敵に返す。{PowerRuntime.ThornsInterval}秒に1回まで。反射ダメージでは発動しない。", $"Retaliatory damage +{v}% of damage received, dealt back to the attacking enemy (once per {PowerRuntime.ThornsInterval}s; reflected damage does not trigger it)", $"受到敌方伤害时，将所受伤害的{v}%反弹给该敌人。每{PowerRuntime.ThornsInterval}秒最多一次。反弹伤害不会触发此效果。"); break;
+                case Power.Executioner: body = Loc.T($"HPが{PowerRuntime.ExecuteThreshold:0%}未満の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy below {PowerRuntime.ExecuteThreshold:0%} health", $"通常攻击额外造成相当于攻击力{v}%的伤害（命中生命低于{PowerRuntime.ExecuteThreshold:0%}的敌人时触发）。"); break;
+                case Power.Resonance: body = Loc.T($"味方との距離係数が最大のとき、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2f:0.#}%上がる。味方がいなければ自分は{v / 2f:0.#}%上がり、味方による自分への追加分と味方への付与量に距離係数を掛ける。味方への付与は重ならず、最も高い値だけを適用する。", $"At full allied distance effectiveness, your attack damage and ability power increase by {v}% and allies' by {v / 2f:0.#}%. Your solo bonus is {v / 2f:0.#}%; distance scales your additional allied bonus and the bonus granted to allies. Bonuses granted to allies do not stack; only the highest applies", $"队友距离系数达到最大时，你的攻击力与法术强度提升{v}%，队友提升{v / 2f:0.#}%。没有队友时自己提升{v / 2f:0.#}%；距离系数作用于队友带给你的额外加成以及你赋予队友的加成。赋予队友的加成不叠加，只取最高值。") + CoopDistance.Description; break;
+                case Power.Tailwind: body = Loc.T($"敵を倒した後{PowerRuntime.TailwindDuration}秒間、移動速度が{v}%上がる。重ならず、敵を倒すと効果時間が延びる。", $"Movement speed +{v}% for {PowerRuntime.TailwindDuration}s after a kill; kills refresh it without stacking", $"击杀敌人后，移动速度提升{v}%，持续{PowerRuntime.TailwindDuration}秒。不叠加，击杀敌人时刷新持续时间。"); break;
+                case Power.Barrier: body = Loc.T($"最初は{PowerRuntime.BarrierFirstDelay}秒後、以後は{PowerRuntime.BarrierInterval}秒ごとに、最大HPの{v}%の障壁を{PowerRuntime.BarrierDuration}秒間得る。", $"Shield +{v}% of your maximum health for {PowerRuntime.BarrierDuration}s; first granted after {PowerRuntime.BarrierFirstDelay}s, then every {PowerRuntime.BarrierInterval}s", $"获得相当于最大生命{v}%的护盾，持续{PowerRuntime.BarrierDuration}秒；首次在{PowerRuntime.BarrierFirstDelay}秒后获得，此后每{PowerRuntime.BarrierInterval}秒获得一次。"); break;
+                case Power.SecondWind: body = Loc.T($"自分のHPが{PowerRuntime.SecondWindThreshold:0%}未満のとき、最大HPの{v}%を回復する。{PowerRuntime.SecondWindCooldown}秒に1回まで。", $"Health restored +{v}% of your maximum health while below {PowerRuntime.SecondWindThreshold:0%} health (once per {PowerRuntime.SecondWindCooldown}s)", $"回复最大生命{v}%的HP（生命低于{PowerRuntime.SecondWindThreshold:0%}时触发；每{PowerRuntime.SecondWindCooldown}秒最多一次）。"); break;
+                case Power.Blaze: body = Loc.T($"4発目の強化通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加魔法ダメージを与える。命中回数ではなく、強化攻撃の周期で判定する。", $"Basic attack bonus magic damage +{v}% of the higher of your attack damage or ability power when your empowered fourth attack hits (judged by the empowered-attack cycle, not by counting hits)", $"第4次强化通常攻击命中时，造成相当于攻击力与法术强度中较高者{v}%的额外魔法伤害。判定依据是强化攻击的周期，而非命中次数。"); break;
+                case Power.ChainLightning: body = Loc.T($"通常攻撃が命中したとき、{PowerRuntime.ChainChance:0%}の確率で、当てた敵の周囲{PowerRuntime.ChainRange}m以内の別の敵最大{PowerRuntime.ChainTargets}体に、攻撃力・魔力の高い方の{v}%の追加魔法ダメージをそれぞれ与える。", $"Bonus magic damage +{v}% of the higher of your attack damage or ability power per target; a basic attack hit has a {PowerRuntime.ChainChance:0%} chance to hit up to {PowerRuntime.ChainTargets} other enemies within {PowerRuntime.ChainRange}m of the struck enemy", $"对每个目标额外造成相当于攻击力与法术强度中较高者{v}%的魔法伤害；通常攻击命中时有{PowerRuntime.ChainChance:0%}的概率触发，最多击中{PowerRuntime.ChainTargets}名其他敌人，范围为被命中敌人周围{PowerRuntime.ChainRange}米。"); break;
+                case Power.Shatter: body = Loc.T($"敵を倒したとき、倒した敵の周囲{PowerRuntime.ShatterRadius}m以内の敵それぞれに、攻撃力・魔力の高い方の{v}%の範囲ダメージを与える。この効果による撃破からは連鎖しない。", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within {PowerRuntime.ShatterRadius}m of an enemy you kill (kills from this effect do not chain)", $"击杀敌人时，造成相当于攻击力与法术强度中较高者{v}%的范围伤害，影响被击杀敌人周围{PowerRuntime.ShatterRadius}米内的每名敌人。此效果造成的击杀不会连锁。"); break;
+                case Power.Aegis: body = Loc.T($"自分の最大HPの{PowerRuntime.AegisThreshold:0%}以上の一撃を受けたとき、最大HPの{v}%の障壁を{PowersBalance.AegisShieldDuration}秒間得る。{PowerRuntime.AegisCooldown}秒に1回まで。", $"Shield +{v}% of your maximum health for {PowersBalance.AegisShieldDuration}s when a single hit deals at least {PowerRuntime.AegisThreshold:0%} of your maximum health (once per {PowerRuntime.AegisCooldown}s)", $"获得相当于最大生命{v}%的护盾，持续{PowersBalance.AegisShieldDuration}秒（受到单次至少相当于最大生命{PowerRuntime.AegisThreshold:0%}的伤害时触发；每{PowerRuntime.AegisCooldown}秒最多一次）。"); break;
+                case Power.Bloodlust: body = Loc.T($"自分のHPが{PowerRuntime.BloodlustThreshold:0%}未満の間、攻撃速度が{v}%上がる。", $"Attack speed +{v}% while your health is below {PowerRuntime.BloodlustThreshold:0%}", $"攻击速度提升{v}%（生命低于{PowerRuntime.BloodlustThreshold:0%}期间生效）。"); break;
+                case Power.Ember: body = ElementHeading("火", "Fire") + Loc.T(ElementJa(v, "火") + "火の蓄積に上限はない。", ElementEn(v, "Fire") + " (Fire has no stack limit)", (v < 100 ? $"通常攻击命中时，有{Math.Max(0, v) % 100}%的概率为敌人附加1个火" : $"通常攻击每次命中时，为敌人附加{v / 100}个火" + (v % 100 > 0 ? $"（另有{v % 100}%的概率再附加1个）" : "")) + "（火没有叠加上限。）"); break;
+                case Power.Frost: body = Loc.T($"通常攻撃が命中したとき、{v}%の確率で敵に冷気を付ける。冷気は重ならない。", $"Cold application chance +{v} percentage points on basic attack hits; applies Cold to the struck enemy, without stacking", $"通常攻击命中时，有{v}%的概率为敌人附加冰属性。冰不叠加。"); break;
+                case Power.Radiance: body = ElementHeading("光", "Light") + Loc.T(ElementJa(v, "光") + "光は5つまで。3つ以上のとき、光ダメージは必ず会心する。", ElementEn(v, "Light") + " (up to 5 stacks; Light damage always critically hits at 3 or more)", (v < 100 ? $"通常攻击命中时，有{Math.Max(0, v) % 100}%的概率为敌人附加1个光" : $"通常攻击每次命中时，为敌人附加{v / 100}个光" + (v % 100 > 0 ? $"（另有{v % 100}%的概率再附加1个）" : "")) + "（光最多5层；达到3层及以上时，光属性伤害必定暴击。）"); break;
+                case Power.Umbra: body = ElementHeading("闇", "Dark") + Loc.T(ElementJa(v, "闇") + "会心したときは、この確率判定とは別に必ず闇をもう1つ付ける。闇は5つまで。", ElementEn(v, "Dark") + ". A critical basic hit always applies 1 additional stack independently of this roll (up to 5 stacks)", (v < 100 ? $"通常攻击命中时，有{Math.Max(0, v) % 100}%的概率为敌人附加1个暗" : $"通常攻击每次命中时，为敌人附加{v / 100}个暗" + (v % 100 > 0 ? $"（另有{v % 100}%的概率再附加1个）" : "")) + "。暴击时，在此概率判定之外必定再附加1个暗（暗最多5层）。"); break;
+                case Power.Convergence: body = Loc.T($"自分が属性を付けた敵に火・冷気・光・闇がそろっているとき、その敵に攻撃力・魔力の高い方の{v}%の追加ダメージを与える。同じ敵には{PowerRuntime.ConvergenceCooldown}秒に1回まで。", $"Bonus damage +{v}% of the higher of your attack damage or ability power to an enemy when your elemental application leaves it with Fire, Cold, Light and Dark (once per {PowerRuntime.ConvergenceCooldown}s per enemy)", $"当你附加的属性使敌人集齐火、冰、光、暗时，对该敌人造成相当于攻击力与法术强度中较高者{v}%的额外伤害。对同一敌人每{PowerRuntime.ConvergenceCooldown}秒最多一次。"); break;
+                case Power.EchoingDodge: body = Loc.T($"移動の記憶を使った後{PowerRuntime.EchoingDodgeWindow}秒以内の次の通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加ダメージを与える。重ならず、再使用すると効果時間が延びる。次の通常攻撃に付く追加効果は、最大の1つだけを消費し、残りは期限まで保持される。", $"Next basic attack bonus damage +{v}% of the higher of your attack damage or ability power on the next hit within {PowerRuntime.EchoingDodgeWindow}s of using a Movement memory; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry", $"下一次通常攻击额外造成相当于攻击力与法术强度中较高者{v}%的伤害（在使用移动记忆后{PowerRuntime.EchoingDodgeWindow}秒内命中时触发）。不叠加，再次使用时刷新持续时间。附加在下一次通常攻击上的额外效果只消耗最高的一个，其余保留至到期。"); break;
+                case Power.UltimateSurge: body = Loc.T($"奥義の記憶を使った後{PowerRuntime.SurgeDuration}秒間、攻撃力・魔力が{v}%上がる。重ならず、再使用すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.SurgeDuration}s after using an Ultimate memory; refreshes without stacking", $"使用奥义记忆后，攻击力与法术强度提升{v}%，持续{PowerRuntime.SurgeDuration}秒。不叠加，再次使用时刷新持续时间。"); break;
+                case Power.SoulSiphon: body = Loc.T($"敵を倒したとき、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.SoulSiphonInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on kill (once per {PowerRuntime.SoulSiphonInterval}s)", $"击杀敌人时，回复最大生命{v / 10f:0.#}%的HP。每{PowerRuntime.SoulSiphonInterval}秒最多一次。"); break;
+                case Power.Whirlwind: body = Loc.T($"移動の記憶を使ったとき、自分の周囲{PowerRuntime.WhirlwindRadius}m以内の敵それぞれに、攻撃力・魔力の高い方の{v}%の範囲ダメージを与える。{PowerRuntime.WhirlwindInterval}秒に1回まで。", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within {PowerRuntime.WhirlwindRadius}m of you when using a Movement memory (once per {PowerRuntime.WhirlwindInterval}s)", $"使用移动记忆时，造成相当于攻击力与法术强度中较高者{v}%的范围伤害，影响周围{PowerRuntime.WhirlwindRadius}米内的每名敌人。每{PowerRuntime.WhirlwindInterval}秒最多一次。"); break;
+                case Power.Frenzy: body = Loc.T($"自分の周囲{PowersBalance.FrenzyRange}m以内の敵1体につき、攻撃速度が{v}%上がる。最大{PowerRuntime.FrenzyMaxEnemies}体分まで数える。", $"Attack speed +{v}% per enemy within {PowersBalance.FrenzyRange}m of you, counting up to {PowerRuntime.FrenzyMaxEnemies} enemies", $"附近每有一名敌人，攻击速度提升{v}%；计入周围{PowersBalance.FrenzyRange}米内的敌人，最多计入{PowerRuntime.FrenzyMaxEnemies}名。"); break;
+                case Power.OpeningStrike: body = Loc.T($"HPが{PowerRuntime.OpeningStrikeThreshold:0%}以上の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy at or above {PowerRuntime.OpeningStrikeThreshold:0%} health", $"通常攻击额外造成相当于攻击力{v}%的伤害（命中生命不低于{PowerRuntime.OpeningStrikeThreshold:0%}的敌人时触发）。"); break;
+                case Power.StarShield: body = Loc.T($"奥義の記憶を使ったとき、最大HPの{v}%の障壁を{PowerRuntime.StarShieldDuration}秒間得る。", $"Shield +{v}% of your maximum health, granted to yourself for {PowerRuntime.StarShieldDuration}s when using an Ultimate memory", $"使用奥义记忆时，为自己获得相当于最大生命{v}%的护盾，持续{PowerRuntime.StarShieldDuration}秒。"); break;
+                case Power.Sprint: body = Loc.T($"移動の記憶を使った後{PowerRuntime.SprintDuration}秒間、移動速度・攻撃速度が{v}%上がる。重ならず、再使用すると効果時間が延びる。", $"Movement speed and attack speed +{v}% for {PowerRuntime.SprintDuration}s after using a Movement memory; refreshes without stacking", $"使用移动记忆后，移动速度与攻击速度提升{v}%，持续{PowerRuntime.SprintDuration}秒。不叠加，再次使用时刷新持续时间。"); break;
+                case Power.Vigor: body = Loc.T($"自分のHPが{PowerRuntime.VigorThreshold:0%}以上の間、攻撃力・魔力が{v}%上がる。", $"Attack damage and ability power +{v}% while your health is at or above {PowerRuntime.VigorThreshold:0%}", $"攻击力与法术强度提升{v}%（生命不低于{PowerRuntime.VigorThreshold:0%}期间生效）。"); break;
+                case Power.Overload: body = Loc.T($"通常記憶を使った後{PowerRuntime.OverloadDuration}秒間、攻撃力・魔力が{v}%上がる。移動・奥義・アイデンティティの記憶は対象外。重ならず、再使用すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.OverloadDuration}s after using an ordinary memory; excludes Movement, Ultimate and Identity memories; refreshes without stacking", $"使用通常记忆后，攻击力与法术强度提升{v}%，持续{PowerRuntime.OverloadDuration}秒。移动、奥义与本体记忆不在其列。不叠加，再次使用时刷新持续时间。"); break;
+                case Power.Finale: body = Loc.T($"通常記憶の3枠すべてを{PowerRuntime.FinaleWindow}秒以内に使ったとき、奥義の残りクールダウンが{v}%短くなる。{PowerRuntime.FinaleCooldown}秒に1回まで。次の発動には3枠をもう一度使う必要がある。", $"Ultimate remaining cooldown -{v}% when all 3 ordinary-memory slots are used within {PowerRuntime.FinaleWindow}s (once per {PowerRuntime.FinaleCooldown}s; all 3 must be used again for the next trigger)", $"奥义的剩余冷却缩短{v}%（在{PowerRuntime.FinaleWindow}秒内用完通常记忆的全部3个槽位时触发；每{PowerRuntime.FinaleCooldown}秒最多一次，下次触发需再次用完3个槽位）。"); break;
+                case Power.CriticalEcho: body = Loc.T($"通常攻撃が会心で命中したとき、通常記憶3枠の残りクールダウンが{v / 10f:0.#}秒短くなる。{PowerRuntime.CriticalEchoCooldown}秒に1回まで。", $"Remaining cooldown of all 3 ordinary-memory slots -{v / 10f:0.#}s on a critical basic attack hit (once per {PowerRuntime.CriticalEchoCooldown}s)", $"通常攻击暴击命中时，通常记忆3个槽位的剩余冷却各缩短{v / 10f:0.#}秒。每{PowerRuntime.CriticalEchoCooldown}秒最多一次。"); break;
+                case Power.Fetters: body = Loc.T($"スタン・スロウ・冷気のいずれかを受けている敵に与えるダメージが{v}%増える。", $"Damage dealt +{v}% to enemies that are stunned, slowed or chilled", $"对处于眩晕、减速或冰缓状态的敌人，造成的伤害提高{v}%。"); break;
+                case Power.CrystalResonance: body = Loc.T($"装着中の全エッセンスの品質の合計100%ごとに、攻撃力・魔力が{v}%上がる。100%未満の端数は数えず、最大{PowerRuntime.CrystalResonanceMaxTiers * 100}%分まで数える。", $"Attack damage and ability power +{v}% per 100% total quality across all equipped Essences; ignores incomplete hundreds, counts up to {PowerRuntime.CrystalResonanceMaxTiers * 100}%", $"全部已装备精华的品质合计每满100%，攻击力与法术强度提升{v}%。不足100%的尾数不计，最多计入{PowerRuntime.CrystalResonanceMaxTiers * 100}%。"); break;
+                case Power.PreyPride: body = Loc.T($"現在のハンター追跡度1につき、攻撃力・魔力が{v}%上がる。追跡度は{PowerRuntime.PreyPrideMaxLevel}まで数える。", $"Attack damage and ability power +{v}% per current hunter tracking level, counting up to level {PowerRuntime.PreyPrideMaxLevel}", $"当前猎人追踪等级每有1级，攻击力与法术强度提升{v}%。追踪等级最多计入{PowerRuntime.PreyPrideMaxLevel}级。"); break;
+                case Power.OverflowingLife: body = Loc.T($"最大HPを超える回復が出たとき、超過回復量の{v}%の障壁を{PowerRuntime.OverflowingLifeDuration}秒間得る。1回に得る障壁は最大HPの{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}までで、段数を上げてもこの{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}の上限は増えない。", $"Shield +{v}% of overhealing, granted to yourself for {PowerRuntime.OverflowingLifeDuration}s; each grant is capped at {PowerRuntime.OverflowingLifeMaxHealthRatio:0%} of your maximum health (this {PowerRuntime.OverflowingLifeMaxHealthRatio:0%} limit does not increase with ranks)", $"治疗量超过最大生命时，将超额治疗量的{v}%化为护盾，持续{PowerRuntime.OverflowingLifeDuration}秒。单次获得的护盾最高为最大生命的{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}，升阶也不会提高这个{PowerRuntime.OverflowingLifeMaxHealthRatio:0%}的上限。"); break;
+                case Power.Devotion: body = Loc.T($"聖堂の使用が成功するたび、攻撃力・魔力が{v}%上がり、そのゾーンの間続く。最大{PowerRuntime.DevotionMaxStacks}回分まで重なる。", $"Attack damage and ability power +{v}% per successful shrine use, lasting for the zone; up to {PowerRuntime.DevotionMaxStacks} uses", $"每次成功使用神殿，攻击力与法术强度提升{v}%，持续整个区域。最多叠加{PowerRuntime.DevotionMaxStacks}次。"); break;
+                case Power.Wildfire: body = Loc.T($"自分の火付与で火が{PowerRuntime.WildfireMinStacks}つ以上になった敵から、周囲{PowerRuntime.WildfireRange}m以内の最も近い別の敵1体へ、{v}%の確率で火を1つ付ける。同じ送り元からは{PowerRuntime.WildfireCooldown}秒に1回まで。拡散した火からは連鎖しない。", $"Fire spread chance +{v} percentage points when your Fire application leaves an enemy with at least {PowerRuntime.WildfireMinStacks} Fire stacks; applies 1 Fire to the nearest other enemy within {PowerRuntime.WildfireRange}m (once per {PowerRuntime.WildfireCooldown}s per source enemy; spread Fire does not chain)", $"有{v}%的概率扩散火（你附加的火使敌人达到{PowerRuntime.WildfireMinStacks}层以上时触发），向其周围{PowerRuntime.WildfireRange}米内最近的一名其他敌人附加1层火。对同一来源敌人每{PowerRuntime.WildfireCooldown}秒最多一次。扩散的火不会连锁。"); break;
+                case Power.StillWater: body = Loc.T($"自分の技で敵をスタンさせたとき、最大HPの{v}%の障壁を{PowerRuntime.StillWaterDuration}秒間得る。{PowerRuntime.StillWaterCooldown}秒に1回まで。", $"Shield +{v}% of your maximum health for {PowerRuntime.StillWaterDuration}s when your own skill stuns an enemy (once per {PowerRuntime.StillWaterCooldown}s)", $"自己的技能使敌人眩晕时，获得相当于最大生命{v}%的护盾，持续{PowerRuntime.StillWaterDuration}秒。每{PowerRuntime.StillWaterCooldown}秒最多一次。"); break;
+                case Power.SpendersWard: body = Loc.T($"ゴールドを合計{PowerRuntime.SpendersWardGold}使うごとに、最大HPの{v}%の障壁を{PowerRuntime.SpendersWardDuration}秒間得る。最大{PowerRuntime.SpendersWardMaxStacks}回分まで重なる。各付与の期限は延長せず、満杯のときに使った{PowerRuntime.SpendersWardGold}ゴールド分は持ち越さない。", $"Shield +{v}% of your maximum health for {PowerRuntime.SpendersWardDuration}s per {PowerRuntime.SpendersWardGold} gold spent; up to {PowerRuntime.SpendersWardMaxStacks} grants coexist, with separate expiry times. Spending while full does not bank another grant", $"获得相当于最大生命{v}%的护盾，持续{PowerRuntime.SpendersWardDuration}秒（每累计花费{PowerRuntime.SpendersWardGold}金币触发一次）。最多同时保留{PowerRuntime.SpendersWardMaxStacks}次赋予的护盾，各自到期，期限不延长。满额后花费的金币不会累积为下一次赋予。"); break;
+                case Power.PerfectRead: body = Loc.T($"無敵でダメージを実際に無効化した後{PowerRuntime.PerfectReadDuration}秒間、攻撃速度が{v}%上がる。{PowerRuntime.PerfectReadCooldown}秒に1回まで。重ならず、再発動すると効果時間が延びる。", $"Attack speed +{v}% for {PowerRuntime.PerfectReadDuration}s after actually negating damage with invulnerability (once per {PowerRuntime.PerfectReadCooldown}s; refreshes without stacking)", $"以无敌实际抵消伤害后，攻击速度提升{v}%，持续{PowerRuntime.PerfectReadDuration}秒。每{PowerRuntime.PerfectReadCooldown}秒最多一次。不叠加，再次触发时刷新持续时间。"); break;
+                case Power.LucidBoon: body = Loc.T($"有効な邪悪な明晰夢1つにつき、攻撃力・魔力が{v}%上がる。最大{PowerRuntime.LucidBoonMaxDreams}つまで数える。装備・星の同じ効果を合算した最終増加量は{Content.PowerCap(Power.LucidBoon)}%まで。", $"Attack damage and ability power +{v}% per active Evil lucid dream, counting up to {PowerRuntime.LucidBoonMaxDreams}; the resulting bonus from this effect across equipment and stars is capped at {Content.PowerCap(Power.LucidBoon)}%", $"每有一个生效的邪恶清明梦，攻击力与法术强度提升{v}%。最多计入{PowerRuntime.LucidBoonMaxDreams}个。装备与星的同名效果合计后的最终提升量最高为{Content.PowerCap(Power.LucidBoon)}%。"); break;
+                case Power.ShadowStep: body = Loc.T($"回避・ダッシュ・瞬間移動の後{PowerRuntime.ShadowStepWindow}秒以内の次の通常攻撃が命中したとき、攻撃力・魔力の高い方の{v}%の追加ダメージを与える。重ならず、再び移動すると効果時間が延びる。次の通常攻撃に付く追加効果は、最大の1つだけを消費し、残りは期限まで保持される。", $"Next basic attack bonus damage +{v}% of the higher of your attack damage or ability power on the next hit within {PowerRuntime.ShadowStepWindow}s of a dodge, dash or teleport; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry", $"下一次通常攻击额外造成相当于攻击力与法术强度中较高者{v}%的伤害（在闪避、冲刺或瞬移后{PowerRuntime.ShadowStepWindow}秒内命中时触发）。不叠加，再次移动时刷新持续时间。附加在下一次通常攻击上的额外效果只消耗最高的一个，其余保留至到期。"); break;
                 default: return "-";
             }
             string cap = p == Power.StillWater || p == Power.SpendersWard || p == Power.PerfectRead
-                ? Loc.T($"装備・星の同じ効果は合計で最大{PowerCap(p)}%まで。", $" (combined across equipment and stars, this effect is capped at {PowerCap(p)}%)")
+                ? Loc.T($"装備・星の同じ効果は合計で最大{PowerCap(p)}%まで。", $" (combined across equipment and stars, this effect is capped at {PowerCap(p)}%)", $"装备与星的同名效果合计最高{PowerCap(p)}%。")
                 : "";
             if (NewPowersV129.IsConditionalAttribute(p))
                 cap += Loc.T($"条件つきの攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大{PowerRuntime.ConditionalPowerCap}%まで。",
-                    $". Conditional attack damage and ability power bonuses together are capped at +{PowerRuntime.ConditionalPowerCap}%, counted before awakening");
+                    $". Conditional attack damage and ability power bonuses together are capped at +{PowerRuntime.ConditionalPowerCap}%, counted before awakening", $"条件性的攻击力与法术强度提升，全部效果合计以觉醒前数值计，最高{PowerRuntime.ConditionalPowerCap}%。");
             return body + cap;
         }
 
@@ -5747,23 +5747,23 @@ namespace SodRpg.Core.Game
             {
                 case Power.Steam:
                     effect = Loc.T($"自分が属性を付けた敵に火と冷気がそろっているとき、その敵と周囲3m以内の敵それぞれに、攻撃力・魔力の高い方の{v}%の範囲無属性ダメージを与え、移動速度を2秒間30%下げる。装備・星の同じ効果は合計で最大120%まで。この上限は道標倍率を掛ける前の1回分の割合で、全対象へのダメージ合計ではない。",
-                        $"Area non-elemental damage +{v}% of the higher of your attack damage or ability power and enemy movement speed -30% for 2s when your elemental application leaves an enemy with Fire and Cold; affects it and each enemy within 3m (combined equipment and star damage percentage of this effect capped at 120% before Waypoint multipliers, not a damage total across targets)");
+                        $"Area non-elemental damage +{v}% of the higher of your attack damage or ability power and enemy movement speed -30% for 2s when your elemental application leaves an enemy with Fire and Cold; affects it and each enemy within 3m (combined equipment and star damage percentage of this effect capped at 120% before Waypoint multipliers, not a damage total across targets)", $"当你附加的属性使敌人集齐火与冰时，对该敌人及其周围3米内的每名敌人造成相当于攻击力与法术强度中较高者{v}%的范围无属性伤害，并使其移动速度降低30%，持续2秒。装备与星的同名效果合计最高120%。此上限是乘以路标倍率之前的单次百分比，并非全部目标的伤害总和。");
                     break;
                 case Power.Eclipse:
                     effect = Loc.T($"自分が属性を付けた敵に光と闇がそろっているとき、その敵が自分から受けるダメージが4秒間{v}%増える。装備・星の同じ効果は合計で最大25%まで。この上限は道標倍率を掛ける前の割合。被ダメージ増加は重ならず、最も高い値だけを適用する。",
-                        $"Damage an enemy takes from you +{v}% for 4s when your elemental application leaves it with Light and Dark (combined equipment and star value of this effect capped at 25% before Waypoint multipliers; damage-vulnerability effects use only the highest value without stacking)");
+                        $"Damage an enemy takes from you +{v}% for 4s when your elemental application leaves it with Light and Dark (combined equipment and star value of this effect capped at 25% before Waypoint multipliers; damage-vulnerability effects use only the highest value without stacking)", $"当你附加的属性使敌人集齐光与暗时，该敌人受到来自你的伤害提高{v}%，持续4秒。装备与星的同名效果合计最高25%。此上限为乘以路标倍率之前的百分比。受到的伤害提升不叠加，只取最高值。");
                     break;
                 case Power.Cinder:
                     effect = Loc.T($"自分が属性を付けた敵に火と闇がそろっているとき、その敵に印を付ける。印の付いた敵が倒れると、倒れた敵の周囲4m以内の別の敵それぞれに火を1つ付ける。装備・星の同じ効果は合計で最大1つまで。この上限は道標倍率を掛ける前の数。印は重ならず、味方が倒した場合も発動する。",
-                        $"Fire applied on death +1 stack / when your elemental application leaves an enemy with Fire and Dark, mark it; when the marked enemy dies, apply Fire to each other enemy within 4m of it (combined across equipment and stars, capped at 1 stack before Waypoint multipliers; marks do not stack; ally kills also trigger it)");
+                        $"Fire applied on death +1 stack / when your elemental application leaves an enemy with Fire and Dark, mark it; when the marked enemy dies, apply Fire to each other enemy within 4m of it (combined across equipment and stars, capped at 1 stack before Waypoint multipliers; marks do not stack; ally kills also trigger it)", $"当你附加的属性使敌人集齐火与暗时，为其刻下印记。被印记的敌人死亡时，对其周围4米内的每名其他敌人附加1个火。装备与星的同名效果合计最多1个，此上限为乘以路标倍率之前的数量。印记不叠加，队友击杀同样触发。");
                     break;
                 default:
                     effect = Loc.T($"自分が属性を付けた敵に光と冷気がそろっているとき、最大HPの{v}%の障壁を4秒間得る。装備・星の同じ効果は合計で最大12%まで。この上限は道標倍率を掛ける前の、1回の障壁量の基準となる割合。",
-                        $"Shield +{v}% of your maximum health for 4s when your elemental application leaves an enemy with Light and Cold (combined equipment and star value of this effect capped at 12% before Waypoint multipliers; this is the percentage used for one shield grant)");
+                        $"Shield +{v}% of your maximum health for 4s when your elemental application leaves an enemy with Light and Cold (combined equipment and star value of this effect capped at 12% before Waypoint multipliers; this is the percentage used for one shield grant)", $"当你附加的属性使敌人集齐光与冰时，获得相当于最大生命{v}%的护盾，持续4秒。装备与星的同名效果合计最高12%。此上限是乘以路标倍率之前、作为单次护盾量基准的百分比。");
                     break;
             }
             return effect + Loc.T("属性は消費しない。同じ敵への同じ反応は6秒に1回までで、継続・多段の属性付与による連発を防ぐ。反応の追加効果は連鎖しない。道標の倍率は効果量に掛かる。",
-                ". Does not consume elements. Each reaction triggers at most once per 6s per enemy, to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoint multipliers apply to the effect amount.");
+                ". Does not consume elements. Each reaction triggers at most once per 6s per enemy, to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoint multipliers apply to the effect amount.", "不消耗属性。同一敌人的同一反应每6秒最多触发一次，以防止持续或多段属性附加造成的连续触发。反应的追加效果不会连锁。路标倍率作用于效果量。");
         }
     }
 }
