@@ -155,12 +155,17 @@ namespace SodRpg.Mod
                                 double logarithm = Math.Log(Math.Max(ratio, 0.01));
                                 double alpha = logarithm < state.LogAverage ? CoopBalance.DynamicDifficulty.AlphaDown : CoopBalance.DynamicDifficulty.Alpha;
                                 double average = state.LogAverage + alpha * (logarithm - state.LogAverage);
-                                double factor = Math.Exp(CoopBalance.DynamicDifficulty.Strength * average);
+                                // 2026-10-20：上がるときは strengthUp（ゆるやか）、下がるときは strengthDown（速い）で別の強さで埋める。
+                                double strength = average >= 0 ? CoopBalance.DynamicDifficulty.StrengthUp : CoopBalance.DynamicDifficulty.StrengthDown;
+                                double factor = Math.Exp(strength * average);
                                 if (double.IsNaN(factor) || double.IsInfinity(factor)) throw new InvalidOperationException("Invalid dynamic factor.");
                                 state.LogAverage = average;
                                 state.Rooms++;
+                                // 2026-10-20：世界ごとの上限（進んだ世界ほど高い）を safetyMaxFactor の内側に掛ける。
                                 state.Factor = state.Rooms < CoopBalance.DynamicDifficulty.MinRooms ? 1
-                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(CoopBalance.DynamicDifficulty.SafetyMaxFactor, factor));
+                                    : Math.Min(CoopBalance.DynamicDifficulty.MaxFactor(RunWorldIndex),
+                                        Math.Max(CoopBalance.DynamicDifficulty.MinFactor,
+                                            Math.Min(CoopBalance.DynamicDifficulty.SafetyMaxFactor, factor)));
                             }
                         }
                     }

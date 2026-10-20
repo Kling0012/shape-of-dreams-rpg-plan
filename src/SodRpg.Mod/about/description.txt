@@ -1,5 +1,5 @@
-[b]Made co-op lighter for host and guests by skipping redundant facing updates, duplicate kill handling, and per-frame gem cooldown sends.[/b]
-[b]止まっている相手の向き、撃破の処理、宝石のクールダウンの送信から無駄を省き、協力プレイを軽くしました。[/b]
+[b]Cuts extra work when receiving chat and achievement notices and when enemies pick targets, making the game a little lighter.[/b]
+[b]チャットや実績解除の知らせの受け取りと、敵が狙う相手を決める処理の無駄を省き、ゲームを少し軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.

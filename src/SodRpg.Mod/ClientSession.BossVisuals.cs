@@ -101,7 +101,7 @@ namespace SodRpg.Mod
         private float _nextBossDisplayPrune, _nextBossRenderRefresh;
         // Per-Repaint invariants (camera position, screen metrics, white texture); read once per
         // DrawBossEffects so the per-line and per-visual paths stop re-entering native property getters.
-        // Call BossDisplayVisible and DrawBossWorldLine only within DrawBossEffects (including its helpers).
+        // Call BossDisplayVisible, DrawBossWorldLine and DrawBossWorldSegment only within DrawBossEffects (including its helpers).
         private Vector3 _bossCameraPosition;
         private int _bossScreenWidth, _bossScreenHeight;
         private Texture2D _bossWhiteTexture;
@@ -426,19 +426,26 @@ namespace SodRpg.Mod
                     {
                         var direction = BossVisualDirection(effect);
                         int spokes = Math.Min(effect.count, BossQualityLow ? BossSpokeLimitLow : BossSpokeLimit);
-                        for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
+                        // Project the shared center only when at least one spoke will draw: an exhausted
+                        // budget (or zero spokes) skips the projection, exactly like the per-line path did.
+                        if (spokes > 0 && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1))
                         {
-                            int spokeIndex = i * effect.count / spokes;
-                            var spoke = Quaternion.Euler(0, 360f * spokeIndex / effect.count, 0) * direction;
-                            var tip = effect.center + spoke * effect.range;
-                            DrawBossWorldLine(camera, effect.center, tip, 2f);
-                            if (effect.kind == 4)
+                            var spokeCenter = camera.WorldToScreenPoint(effect.center);
+                            for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
                             {
-                                bool inward = effect.angle == 180f;
-                                var head = inward ? effect.center + spoke * .4f : tip;
-                                var arrow = inward ? -spoke : spoke;
-                                DrawBossWorldLine(camera, head, head - Quaternion.Euler(0, 35f, 0) * arrow * .35f, 2f);
-                                DrawBossWorldLine(camera, head, head - Quaternion.Euler(0, -35f, 0) * arrow * .35f, 2f);
+                                int spokeIndex = i * effect.count / spokes;
+                                var spoke = Quaternion.Euler(0, 360f * spokeIndex / effect.count, 0) * direction;
+                                var tip = effect.center + spoke * effect.range;
+                                DrawBossWorldSegment(spokeCenter, camera.WorldToScreenPoint(tip), 2f);
+                                if (effect.kind == 4)
+                                {
+                                    bool inward = effect.angle == 180f;
+                                    var head = inward ? effect.center + spoke * .4f : tip;
+                                    var arrow = inward ? -spoke : spoke;
+                                    var spokeHead = camera.WorldToScreenPoint(head);
+                                    DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, 35f, 0) * arrow * .35f), 2f);
+                                    DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, -35f, 0) * arrow * .35f), 2f);
+                                }
                             }
                         }
                         if (effect.kind == 4) DrawBossWorldRing(camera, effect.center, effect.radius, 2f);
@@ -514,54 +521,61 @@ namespace SodRpg.Mod
             var direction = BossVisualDirection(effect);
             var end = effect.range > 0 ? effect.center + direction * effect.range : effect.end;
             var half = Vector3.Cross(Vector3.up, direction) * (effect.width * .5f);
-            DrawBossWorldLine(camera, effect.center - half, end - half, width);
-            DrawBossWorldLine(camera, effect.center + half, end + half, width);
-            DrawBossWorldLine(camera, effect.center - half, effect.center + half, width);
-            DrawBossWorldLine(camera, end - half, end + half, width);
+            var startLeft = camera.WorldToScreenPoint(effect.center - half);
+            var startRight = camera.WorldToScreenPoint(effect.center + half);
+            var endLeft = camera.WorldToScreenPoint(end - half);
+            var endRight = camera.WorldToScreenPoint(end + half);
+            DrawBossWorldSegment(startLeft, endLeft, width);
+            DrawBossWorldSegment(startRight, endRight, width);
+            DrawBossWorldSegment(startLeft, startRight, width);
+            DrawBossWorldSegment(endLeft, endRight, width);
         }
         private void DrawBossWorldFan(Camera camera, DreamforgeBossEffect effect, float width)
         {
             var direction = BossVisualDirection(effect);
             int segments = BossQualityLow ? BossFanSegmentsLow : BossFanSegments;
             if (_bossSegmentsLeft < segments + 2) return;
-            var previous = effect.center + Quaternion.Euler(0, -effect.angle * .5f, 0) * direction * effect.range;
-            DrawBossWorldLine(camera, effect.center, previous, width);
+            var center = camera.WorldToScreenPoint(effect.center);
+            var previous = camera.WorldToScreenPoint(effect.center + Quaternion.Euler(0, -effect.angle * .5f, 0) * direction * effect.range);
+            DrawBossWorldSegment(center, previous, width);
             for (int i = 1; i <= segments; i++)
             {
-                var next = effect.center + Quaternion.Euler(0, -effect.angle * .5f + effect.angle * i / segments, 0) * direction * effect.range;
-                DrawBossWorldLine(camera, previous, next, width); previous = next;
+                var next = camera.WorldToScreenPoint(effect.center + Quaternion.Euler(0, -effect.angle * .5f + effect.angle * i / segments, 0) * direction * effect.range);
+                DrawBossWorldSegment(previous, next, width); previous = next;
             }
-            DrawBossWorldLine(camera, previous, effect.center, width);
+            DrawBossWorldSegment(previous, center, width);
         }
         private void DrawBossWorldRing(Camera camera, Vector3 center, float radius, float width)
         {
             int segments = BossQualityLow ? BossRingSegmentsLow : BossRingSegments;
             if (_bossSegmentsLeft < segments) return;
-            Vector3 previous = center + Vector3.right * radius;
+            var previous = camera.WorldToScreenPoint(center + Vector3.right * radius);
             for (int i = 1; i <= segments; i++)
             {
                 float angle = i * (Mathf.PI * 2f / segments);
-                Vector3 next = center + new Vector3(Mathf.Cos(angle) * radius, .03f, Mathf.Sin(angle) * radius);
-                DrawBossWorldLine(camera, previous, next, width);
+                var next = camera.WorldToScreenPoint(center + new Vector3(Mathf.Cos(angle) * radius, .03f, Mathf.Sin(angle) * radius));
+                DrawBossWorldSegment(previous, next, width);
                 previous = next;
             }
         }
         private void DrawBossWorldLine(Camera camera, Vector3 from, Vector3 to, float width)
         {
             if (_bossSegmentsLeft <= 0) return;
+            DrawBossWorldSegment(camera.WorldToScreenPoint(from), camera.WorldToScreenPoint(to), width);
+        }
+        // Screen-space tail shared with the chained helpers (strip, fan, ring, spokes): they project each
+        // shared vertex once instead of re-projecting it per segment. Budget is still spent one per segment.
+        // Call only within DrawBossEffects (including its helpers): screen metrics and the identity base
+        // matrix it installed are assumed here.
+        private void DrawBossWorldSegment(Vector3 a, Vector3 b, float width)
+        {
+            if (_bossSegmentsLeft <= 0) return;
             _bossSegmentsLeft--;
-            Vector3 a = camera.WorldToScreenPoint(from), b = camera.WorldToScreenPoint(to);
-            if (!BossFinite(a) || !BossFinite(b) || a.z <= 0f || b.z <= 0f
-                || a.x < 0 && b.x < 0 || a.x > _bossScreenWidth && b.x > _bossScreenWidth
-                || a.y < 0 && b.y < 0 || a.y > _bossScreenHeight && b.y > _bossScreenHeight) return;
-            var start = new Vector2(a.x, _bossScreenHeight - a.y);
-            var difference = new Vector2(b.x - a.x, a.y - b.y);
-            float length = difference.magnitude;
-            if (length < .1f) return;
-            Matrix4x4 matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg, start);
-            GUI.DrawTexture(new Rect(start.x, start.y - width * .5f, length, width), _bossWhiteTexture);
-            GUI.matrix = matrix;
+            if (!BossSegmentPlacement.TryPlace(a, b, width, _bossScreenWidth, _bossScreenHeight,
+                out var pivot, out float angle, out var rect)) return;
+            GUIUtility.RotateAroundPivot(angle, pivot);
+            GUI.DrawTexture(rect, _bossWhiteTexture);
+            GUI.matrix = Matrix4x4.identity; // the base installed by DrawBossEffects; reading GUI.matrix back per line was a native call
         }
     }
 }

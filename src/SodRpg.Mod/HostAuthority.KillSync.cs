@@ -745,6 +745,16 @@ namespace SodRpg.Mod
             if (netId != 0 && !_queuedMonsterRemovals.Contains(netId)) _queuedMonsterCues.Set(netId, cue);
         }
 
+        // Whether a SendMonsterBehaviorCue call emits its message, decided only from the behavior
+        // state, the computed cue and the path. Broadcasts always carry the cue, including the
+        // no-op 0 that clears every guest's entry. Per-peer replay carries only nonzero cues of
+        // monsters that still have behavior state: the same-state broadcast precedes the replay
+        // on the reliable-ordered connection, so a replayed 0 would only remove an entry that is
+        // already gone, and a stateless monster never had one. Kept pure so the native harness
+        // can compile and test the lightweight replay path (#904).
+        internal static bool ShouldSendMonsterBehaviorCue(bool hasBehaviorState, int cue, bool perPeerReplay)
+            => hasBehaviorState && (!perPeerReplay || cue != 0);
+
         private void SendClassificationDelta(uint netId, MonsterClassificationDelta delta, DewPlayer target)
         {
             var display = target != null && HasDynamicRoster(target) ? null : DynamicSnapshot();

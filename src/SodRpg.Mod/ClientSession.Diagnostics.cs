@@ -26,10 +26,13 @@ namespace SodRpg.Mod
             {
                 var gm = NetworkedManagerBase<GameManager>.softInstance;
                 var hero = LocalHero;
+                // HeroKeyOf は Unity の null チェック（ネイティブ呼び出し）と Type.Name（Mono では毎回新しい文字列を
+                // 確保する）を伴う。診断1回につき1度だけ計算する。
+                string heroKey = HeroKeyOf(hero);
                 var run = Profile?.Run;
                 int equipped = 0, missing = 0, polaris = 0;
                 // Profile.Hero creates state; diagnostics must only inspect existing state.
-                if (hero != null && Profile.Heroes.TryGetValue(HeroKeyOf(hero), out var state))
+                if (heroKey != null && Profile.Heroes.TryGetValue(heroKey, out var state))
                     foreach (var uid in state.Equipped)
                     {
                         if (string.IsNullOrEmpty(uid)) continue;
@@ -44,7 +47,7 @@ namespace SodRpg.Mod
                     + " activeMatches=" + (run != null && run.RunId == ActiveRunId)
                     + " nativeConcluded=" + (gm != null && gm.isGameConcluded)
                     + " completedMatches=" + (gm != null && gm.runId == _completedRunId)
-                    + " hero=" + (hero != null ? HeroKeyOf(hero) : "none") + " heroInstance=" + (hero != null ? hero.GetInstanceID() : 0)
+                    + " hero=" + (heroKey != null ? heroKey : "none") + " heroInstance=" + (hero != null ? hero.GetInstanceID() : 0)
                     + " actorInstance=" + (_clientRpcOn != null ? _clientRpcOn.GetInstanceID() : 0)
                     + " infinity=" + (run?.Infinity != null) + " nativeSaveAgreement=" + InfinityMode.NativeSaveAgreement
                     + " depth=" + (run?.DreamDepth ?? -1) + " lastDepth=" + (Profile?.LastDreamDepth ?? -1)
