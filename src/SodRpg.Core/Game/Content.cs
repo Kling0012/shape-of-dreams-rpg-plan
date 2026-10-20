@@ -1991,7 +1991,7 @@ namespace SodRpg.Core.Game
                 new Txt("三つの技を綴れば、終幕は早く訪れる。", "Chain three skills, and the final act arrives early.", "连用三个技能，终幕便会提前到来。"),
                 Power.Finale, EquipmentItemsBalanceValues.Unique_unique_finale_codex_Power0, Power.StarShield, EquipmentItemsBalanceValues.Unique_unique_finale_codex_Power1),
             new UniqueDef("unique.grand_finale_diadem", "head.star_diadem", new Txt("大詰めの髪飾り", "Diadem of the Grand Finale", "终场发饰"),
-                new Txt("三つの技を重ね、切り札を引き寄せろ。", "Layer Q, W and E to pull your ultimate closer.", "交替施展Q、W、E，让奥义更快到来。"),
+                new Txt("三つの技を重ね、切り札を引き寄せろ。", "Layer Q, W and E to pull your ultimate closer.", "施展Q、W、E，让奥义更快到来。"),
                 Power.Finale, EquipmentItemsBalanceValues.Unique_unique_grand_finale_diadem_Power0, Power.UltimateSurge, EquipmentItemsBalanceValues.Unique_unique_grand_finale_diadem_Power1),
             new UniqueDef("unique.intermission_shoes", "feet.dancer_shoes", new Txt("幕間の舞靴", "Intermission Dancers", "幕间舞鞋"),
                 new Txt("舞い続けて技を巡らせ、最後の幕を開けよ。", "Keep dancing through your skills to raise the last curtain.", "不停起舞，让技能流转，揭开最后的帷幕。"),

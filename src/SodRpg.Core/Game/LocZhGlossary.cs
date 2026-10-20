@@ -59,6 +59,10 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
+        // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
+        // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
+        // Beads: 数珠 → 念珠 / Curtain Call: 終幕 → 终幕 / Prey: 獲物 → 猎物
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
