@@ -1,69 +1,62 @@
-[b]Cuts extra work when receiving chat and achievement notices and when enemies pick targets, making the game a little lighter.[/b]
+[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]docs/README.en.md[/url][/h1]
+[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]docs/README.zh.md[/url][/h1]
+
 [b]チャットや実績解除の知らせの受け取りと、敵が狙う相手を決める処理の無駄を省き、ゲームを少し軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
-Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
-[h2]Bug reports / 不具合の報告[/h2]
-This mod is made entirely by AI and has not been play-tested. Reports from players are very welcome.
+[h2]不具合の報告[/h2]
 このMODは、すべてAIが作成しています。テストプレイは行っていません。プレイヤーの皆さんからの積極的な報告を歓迎します。
-Bug reports and requests / 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
-Patch notes / パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
+不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
+パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
 
-[h2]Relics / 遺物[/h2]
+[h2]導入[/h2]
 [list]
-[*] Personal drops for every player in 6 slots and 5 rarities, each with its own icon, including legendary relics and sets.
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988]Steam ワークショップ[/url]で Dreamforge RPG を購読します。Steam がダウンロードと更新を行います。
+[*] ゲームを起動し、MOD の管理画面で Dreamforge RPG を有効にします。
+[*] 更新後はゲームを再起動します。セーブデータは引き継がれます。
+[/list]
+
+[h2]遺物[/h2]
+[list]
 [*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます。部位は6つ、レア度は5段階で、遺物には1つずつ絵が付いています。固有品とセットもあります。
-[*] Rares carry one power and Epics two. Powers react to the base game: Q/W/E rotations, crits, stuns, overhealing, Essence quality and more.
 [*] レアは固有効果を1つ、エピックは2つ持ちます。固有効果は、Q・W・Eの使い分け、会心、スタン、超過回復、エッセンスの品質など、本体の仕組みに反応します。
-[*] Legendaries awaken in 3 levels as you defeat enemies while wearing them.
 [*] 固有品は、装着して敵を倒すほど目覚めます。覚醒は3段階です。
 [/list]
 
-[h2]Secure or Delve / 確保か、深く潜るか[/h2]
+[h2]確保か、深く潜るか[/h2]
 [list]
-[*] At each new zone, Secure to bank your loot, or Delve for more and better drops while taking 6% more damage per level.
 [*] 新しいゾーンに着くたびに、拾った物を「確保する」で保管庫に入れるか、「深く潜る」で戦利品を増やすかを選びます。1段潜るごとに、受けるダメージが6%増えます。
-[*] Dream events and nightmare pacts may appear at secure points.
 [*] 確保地点には「夢の出来事」や、呪いと引き換えに見返りを得る「悪夢の契約」が現れることがあります。
-[*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
 [*] 全滅すると、持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]
 
-[h2]Enemies / 敵[/h2]
+[h2]敵[/h2]
 [list]
-[*] Enemies grow with delve depth, and stronger gear draws more nightmares with extra traits.
 [*] 敵は深さに合わせて強くなり、強い装備で潜るほど、特別な性質を持つ悪夢の敵が増えます。
-[*] Dream pressure raises enemy HP, damage and numbers from the party's average progress, not player count. Bosses are never added.
 [*] 「夢の圧」は、人数ではなく参加者の成長の平均から、敵のHP・与ダメージ・数を強化します。ボスの数は増えません。
-[*] Dream variants: base-game enemies reborn with new looks, abilities and better loot.
 [*] 本体の敵をもとにした「夢の変種」は、見た目と能力が変わり、良い戦利品を落とします。
 [/list]
 
-[h2]Growth / 成長[/h2]
+[h2]成長[/h2]
 [list]
-[*] Each Traveler has their own star map, star XP and points. Route stars strengthen specific memories. Respec is free.
 [*] 旅人ごとに星図があり、星の経験とポイントも旅人ごとに別です。記憶ごとのルートの星は、その記憶を強くします。振り直しは無料です。
-[*] Forge: enhance, retune, salvage, transmute and craft. The workshop unlocks convenience upgrades.
 [*] 鍛冶では強化・再調律・分解・合成・製作ができます。工房では鞄や保管庫の拡張などを解放できます。
-[*] Bounties every run, daily dreams, feats with rewards and Traveler mastery.
 [*] 遠征ごとの依頼、日替わりの「今日の夢」、報酬つきの偉業、旅人の熟練度があります。
 [/list]
 
-[h2]Performance / 軽さ[/h2]
-Optional settings lighten the whole game: an FPS cap in the background and lighter rendering.
+[h2]軽さ[/h2]
 設定でゲーム全体を軽くできます。裏にあるときのFPS上限や、描画の軽量化を選べます。
 
-[h2]Controls / 操作[/h2]
+[h2]操作[/h2]
 [list]
-[*] F6: Dreamforge menu / Dreamforge のメニュー
-[*] F7: Secure / 確保する　F8: Delve / 深く潜る
-[*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示の大きさは、MOD設定で変えられます。
+[*] F6: Dreamforge のメニュー
+[*] F7: 確保する　F8: 深く潜る
+[*] キー・言語・表示の大きさは、MOD設定で変えられます。言語は日本語・英語・中国語（簡体字）から選べます（中国語の未訳の部分は英語で表示されます）。
 [/list]
 
-[h2]Multiplayer / マルチプレイ[/h2]
-Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player.
+[h2]マルチプレイ[/h2]
 参加者全員が同じ版のMODを入れてください。能力の反映はホストが行います。保存と戦利品はプレイヤーごとに別々です。
 
-This mod alters gameplay. Save file: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json
+このMODはゲームプレイを変更します。セーブファイル: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json
