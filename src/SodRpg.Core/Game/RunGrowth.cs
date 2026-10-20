@@ -325,32 +325,32 @@ namespace SodRpg.Core.Game
             switch (trigger)
             {
                 case RunGrowthTrigger.DamageTakenMaxHpPct:
-                    return Loc.T($"実際に失ったHP（障壁が吸収した分を除く）が最大HPの{threshold}%に達するたび", $"each time actual health lost (excluding shield absorption) totals {threshold}% of max health");
+                    return Loc.T($"実際に失ったHP（障壁が吸収した分を除く）が最大HPの{threshold}%に達するたび", $"each time actual health lost (excluding shield absorption) totals {threshold}% of max health", $"每当实际损失的生命值（不含护盾吸收量）累计达到最大生命值的{threshold}%时");
                 case RunGrowthTrigger.ShieldAbsorbedMaxHpPct:
-                    return Loc.T($"障壁が吸収した量が最大HPの{threshold}%に達するたび", $"each time damage absorbed by shields totals {threshold}% of max health");
+                    return Loc.T($"障壁が吸収した量が最大HPの{threshold}%に達するたび", $"each time damage absorbed by shields totals {threshold}% of max health", $"每当护盾吸收的伤害累计达到最大生命值的{threshold}%时");
                 case RunGrowthTrigger.ParrySuccess:
-                    return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully")
-                        : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries");
+                    return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully", "每次成功招架时")
+                        : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries", $"每成功招架{threshold}次时");
                 case RunGrowthTrigger.HealSucceeded:
-                    return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally")
-                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
+                    return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally", "每次你的治疗实际恢复自身或队友的生命值时")
+                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies", $"每对自身或队友完成{threshold}次有效治疗时"))
                         + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
-                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)");
+                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)", $"（对队友的有效治疗和护盾计为{StarRankBalance.SupportAllyGrowthMultiplier}次，自我治疗计为1次；不含过量治疗生成的护盾）");
                 case RunGrowthTrigger.EnemyKill:
-                    return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy")
-                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill");
+                    return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy", "每次击杀敌人时")
+                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill", $"每击杀{threshold}名敌人时");
                 case RunGrowthTrigger.SummonHit:
-                    return threshold == 1 ? Loc.T("自分の召喚獣の攻撃が敵に命中するたび", "each time your summon hits an enemy")
-                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies");
+                    return threshold == 1 ? Loc.T("自分の召喚獣の攻撃が敵に命中するたび", "each time your summon hits an enemy", "每次你的召唤物命中敌人时")
+                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies", $"每当你的召唤物累计命中敌人{threshold}次时");
                 case RunGrowthTrigger.BasicAttackHit:
-                    return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy")
-                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies");
+                    return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy", "每次你的普通攻击命中敌人时")
+                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies", $"每当你的普通攻击累计命中敌人{threshold}次时");
                 case RunGrowthTrigger.MemoryHit:
-                    return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy")
-                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies");
+                    return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy", "每次你的记忆命中敌人时")
+                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies", $"每当你的记忆累计命中敌人{threshold}次时");
                 default:
-                    return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow")
-                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks");
+                    return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow", "每次以暴击普通攻击完成击杀时")
+                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks", $"每以暴击普通攻击完成{threshold}次击杀时");
             }
         }
 
@@ -359,24 +359,24 @@ namespace SodRpg.Core.Game
             string number = value.ToString("0.##", CultureInfo.InvariantCulture);
             switch (stat)
             {
-                case Stat.AttackFlat: return Loc.T($"攻撃力 +{number}", $"Attack Damage +{number}");
-                case Stat.PowerFlat: return Loc.T($"魔力 +{number}", $"Ability Power +{number}");
-                case Stat.Armor: return Loc.T($"防御 +{number}", $"Armor +{number}");
-                case Stat.MaxHealthFlat: return Loc.T($"最大HP +{number}", $"Max Health +{number}");
-                case Stat.MaxHealthPct: return Loc.T($"最大HP +{number}%", $"Max Health +{number}%");
-                case Stat.AttackPct: return Loc.T($"攻撃力 +{number}%", $"Attack Damage +{number}%");
-                case Stat.PowerPct: return Loc.T($"魔力 +{number}%", $"Ability Power +{number}%");
-                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 +{number}%", $"Attack Speed +{number}%");
-                case Stat.CritChancePct: return Loc.T($"会心率 +{number}%", $"Crit Chance +{number}%");
-                case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%");
-                case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%");
-                case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%");
-                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%");
-                case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%");
-                case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}");
-                case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}");
-                case Stat.MoveSpeedPct: return Loc.T($"移動速度 +{number}%", $"Move Speed +{number}%");
-                case Stat.Tenacity: return Loc.T($"不屈 +{number}", $"Tenacity +{number}");
+                case Stat.AttackFlat: return Loc.T($"攻撃力 +{number}", $"Attack Damage +{number}", $"攻击力 +{number}");
+                case Stat.PowerFlat: return Loc.T($"魔力 +{number}", $"Ability Power +{number}", $"法术强度 +{number}");
+                case Stat.Armor: return Loc.T($"防御 +{number}", $"Armor +{number}", $"护甲 +{number}");
+                case Stat.MaxHealthFlat: return Loc.T($"最大HP +{number}", $"Max Health +{number}", $"最大生命值 +{number}");
+                case Stat.MaxHealthPct: return Loc.T($"最大HP +{number}%", $"Max Health +{number}%", $"最大生命值 +{number}%");
+                case Stat.AttackPct: return Loc.T($"攻撃力 +{number}%", $"Attack Damage +{number}%", $"攻击力 +{number}%");
+                case Stat.PowerPct: return Loc.T($"魔力 +{number}%", $"Ability Power +{number}%", $"法术强度 +{number}%");
+                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 +{number}%", $"Attack Speed +{number}%", $"攻击速度 +{number}%");
+                case Stat.CritChancePct: return Loc.T($"会心率 +{number}%", $"Crit Chance +{number}%", $"暴击率 +{number}%");
+                case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%", $"暴击伤害 +{number}%");
+                case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%", $"护盾强度 +{number}%");
+                case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%", $"治疗强度 +{number}%");
+                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%", $"受到的治疗 +{number}%");
+                case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%", $"召唤物伤害 +{number}%");
+                case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}", $"生命恢复 +{number}");
+                case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}", $"技能急速 +{number}");
+                case Stat.MoveSpeedPct: return Loc.T($"移動速度 +{number}%", $"Move Speed +{number}%", $"移动速度 +{number}%");
+                case Stat.Tenacity: return Loc.T($"不屈 +{number}", $"Tenacity +{number}", $"韧性 +{number}");
                 default: return Content.FormatStat(stat, (int)Math.Round(value));
             }
         }
@@ -438,7 +438,7 @@ namespace SodRpg.Core.Game
             => string.Join("、", amounts.Select((amount, i) => amount + (i == amounts.Count - 1 ? "上がる" : "上がり")));
 
         private static string PerStack(RunGrowthEntry entry)
-            => string.Join(Loc.T("、", ", "), entry.Effects.Select(x => StatText(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)));
+            => string.Join(Loc.T("、", ", ", "、"), entry.Effects.Select(x => StatText(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)));
 
         /// <summary>星図・一覧に出す説明（1スタックあたりと上限）。</summary>
         public static string Describe(RunGrowthEntry entry)
@@ -448,7 +448,7 @@ namespace SodRpg.Core.Game
             string capJa = entry.Cap == 0 ? "蓄積の上限はない。" : $"鍛錬は最大{entry.Cap}つまで溜まり、";
             string capEn = entry.Cap == 0 ? "no stack cap" : $"up to {entry.Cap} stacks";
             return Loc.T($"{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる。鍛錬1つにつき、{rise}。{capJa}遠征の間は死亡やゾーン移動でも失われず、遠征の開始で0に戻る。",
-                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} ({capEn}; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
+                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} ({capEn}; kept through death and zone changes for the whole expedition, reset when a new expedition begins)", $"每层锻炼提供{PerStack(entry)}；获得{gain}{(gain == 1 ? "层" : "层")}锻炼的条件为{TriggerText(entry.Trigger, entry.Threshold)}（{(entry.Cap == 0 ? "层数无上限" : $"最多{entry.Cap}层")}；整次远征中死亡或切换区域均保留，开始新远征时清零）");
         }
 
         public static string Describe(RunGrowthDef def)
@@ -533,8 +533,8 @@ namespace SodRpg.Core.Game
         {
             int shown = EffectiveStacks(entry, stacks);
             string count = entry.Cap == 0
-                ? Loc.T($"鍛錬 {shown}（蓄積の上限はない）", $"Training {shown} (no stack cap)")
-                : Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}");
+                ? Loc.T($"鍛錬 {shown}（蓄積の上限はない）", $"Training {shown} (no stack cap)", $"锻炼 {shown}（层数无上限）")
+                : Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}", $"锻炼 {shown}/{entry.Cap}");
             return count + (shown > 0
                 ? " <color=#c4c4dc>(" + string.Join(" ", entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + ")</color>" : "");
         }
@@ -544,10 +544,10 @@ namespace SodRpg.Core.Game
         {
             int shown = EffectiveStacks(entry, stacks);
             string count = entry.Cap == 0
-                ? Loc.T($"現在 {shown}つ（蓄積の上限はない）", $"Now {shown} stacks (no stack cap)")
-                : Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks");
+                ? Loc.T($"現在 {shown}つ（蓄積の上限はない）", $"Now {shown} stacks (no stack cap)", $"当前{shown}层（层数无上限）")
+                : Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks", $"当前{shown}/{entry.Cap}层");
             return Describe(entry) + "\n" + count
-                + (shown > 0 ? "（" + string.Join(Loc.T("、", ", "), entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + "）" : "");
+                + (shown > 0 ? "（" + string.Join(Loc.T("、", ", ", "、"), entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + "）" : "");
         }
     }
 
