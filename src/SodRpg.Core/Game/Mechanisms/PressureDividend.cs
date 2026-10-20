@@ -94,7 +94,7 @@ namespace SodRpg.Core.Game
             int hpGain = (int)Math.Round((MinimumAppliedHpMultiplier - 1.0) * 100.0, MidpointRounding.AwayFromZero);
             int cap = MaximumProbabilityUnits / 100;
             return Loc.T($"夢の圧で最大HPが{hpGain}%以上増えた敵を指定の記憶で倒したとき、{chance}%の確率（上限{cap}%）で未確保の欠片を1個獲得する。同じ敵から獲得できるのは1人につき最大1個まで。",
-                $"Defeating enemies with the specified memory when dream pressure increased their maximum HP by at least {hpGain}% has a {chance}% chance (maximum {cap}%) to grant 1 unsecured shard, at most 1 per enemy for each owner.");
+                $"Defeating enemies with the specified memory when dream pressure increased their maximum HP by at least {hpGain}% has a {chance}% chance (maximum {cap}%) to grant 1 unsecured shard, at most 1 per enemy for each owner.", $"用指定记忆击杀最大HP因梦境之压至少增加{hpGain}%的敌人时，有{chance}%概率（上限{cap}%）获得1个未存入仓库的碎片，每位拥有者从同一敌人处最多获得1个。");
         }
 
         internal static void RequireToken(string token, string parameter)

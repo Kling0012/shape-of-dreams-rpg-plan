@@ -13,7 +13,7 @@ namespace SodRpg.Core.Game
             profile.Run.SatchelShards = (int)Math.Min(int.MaxValue, (long)profile.Run.SatchelShards + shards);
             return new GameEvent(EventKind.Info, Loc.T(
                 "夢の圧の報酬として、未確保の欠片を1個獲得しました（敵1体につき最大1個）。",
-                "Pressure dividend: gained 1 unsecured shard (maximum 1 per enemy)."));
+                "Pressure dividend: gained 1 unsecured shard (maximum 1 per enemy).", "梦境之压奖励：获得1个未存入仓库的碎片（每个敌人最多1个）。"));
         }
     }
 }
