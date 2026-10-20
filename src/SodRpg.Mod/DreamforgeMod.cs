@@ -143,7 +143,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Language setting save failed: " + ex.Message);
-                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }
 
@@ -711,7 +711,7 @@ namespace SodRpg.Mod
             {
                 string message = Loc.T(
                     $"ボス限定装備{excluded}点を除外しました。確認用の付与には dreamforge_givebossset を使用してください。",
-                    $"Excluded {excluded} boss-exclusive item(s). Use dreamforge_givebossset for development grants.");
+                    $"Excluded {excluded} boss-exclusive item(s). Use dreamforge_givebossset for development grants.", $"已排除{excluded}件首领专属装备。确认用的授予请使用 dreamforge_givebossset。");
                 Debug.Log("[DreamforgeRPG] " + message);
                 _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + message));
             }
@@ -729,7 +729,7 @@ namespace SodRpg.Mod
             if (set?.BossTypeName == null)
             {
                 string message = Loc.T("登録済みのボス限定セットIDまたはボス型名を指定してください。",
-                    "Specify a registered boss-exclusive set id or boss type name.");
+                    "Specify a registered boss-exclusive set id or boss type name.", "请指定已注册的首领专属套装ID或首领类型名。");
                 Debug.Log("[DreamforgeRPG] " + message);
                 _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + message));
                 return;
@@ -752,7 +752,7 @@ namespace SodRpg.Mod
             if (p.Run == null || !BossSets.TryGetSet(bossTypeName, out _))
             {
                 string message = Loc.T("遠征中に登録済みのボス型名を指定してください。",
-                    "Specify a registered boss type name during an active run.");
+                    "Specify a registered boss type name during an active run.", "请在远征中指定已注册的首领类型名。");
                 Debug.Log("[DreamforgeRPG] " + message);
                 _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + message));
                 return;
@@ -766,7 +766,7 @@ namespace SodRpg.Mod
             p.StoreRng(rng);
             string result = Loc.T(
                 $"開発用ボス抽選：{bossTypeName}、確率{BossSets.DropChance(nightmare, depth) * 100:0}%、{(relic == null ? "当選なし" : relic.DisplayName)}。",
-                $"Developer boss roll: {bossTypeName}, chance {BossSets.DropChance(nightmare, depth) * 100:0}%, {(relic == null ? "no drop" : relic.DisplayName)}.");
+                $"Developer boss roll: {bossTypeName}, chance {BossSets.DropChance(nightmare, depth) * 100:0}%, {(relic == null ? "no drop" : relic.DisplayName)}.", $"开发用首领抽取：{bossTypeName}，概率{BossSets.DropChance(nightmare, depth) * 100:0}%，{(relic == null ? "未掉落" : relic.DisplayName)}。");
             Debug.Log("[DreamforgeRPG] " + result);
             if (relic != null) GrantDeveloperBossRelic(p, relic);
             _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + result));
@@ -779,7 +779,7 @@ namespace SodRpg.Mod
             relic.DeveloperGranted = true;
             if (profile.Run != null) profile.Run.Satchel.Add(relic);
             else profile.Stash.Add(relic);
-            string message = Loc.T("開発付与：", "Developer grant: ") + relic.DisplayName;
+            string message = Loc.T("開発付与：", "Developer grant: ", "开发者授予：") + relic.DisplayName;
             Debug.Log("[DreamforgeRPG] " + message + " (" + relic.UniqueId + ", " + relic.Uid + ")");
             _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + message, relic.Rarity));
         }

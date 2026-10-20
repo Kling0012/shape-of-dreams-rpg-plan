@@ -169,6 +169,28 @@ namespace SodRpg.Core.Game
                 ["Melee co-op effects"] = "近战协作效果",
                 ["Melee co-op effects (while the basic attack is melee)"] = "近战协作效果（通常攻击为近战时）",
                 ["Automatic casting"] = "自动施放",
+
+                // 取引・図鑑・星団・敵の担当表示で繰り返し出る語
+                ["Cancel"] = "取消",
+                ["Dream Dust"] = "梦尘",
+                ["Legendary"] = "传说",
+                ["Keystone"] = "刻印",
+                ["Memory cluster"] = "记忆星团",
+                ["Bridge cluster"] = "记忆之桥星团",
+                ["Outer cluster"] = "外缘星团",
+                ["Enemy ownership"] = "敌人归属制",
+                ["Dynamic difficulty"] = "动态难度",
+                ["Dynamic difficulty: "] = "动态难度：",
+                ["Enemy HP "] = "敌人生命 ",
+                ["　Enemy HP "] = "　敌人生命 ",
+                [" · Attack "] = " · 攻击 ",
+                [" · Rewards "] = " · 奖励 ",
+                ["standard"] = "标准",
+                [" (capped)"] = "（上限）",
+                ["  <- this one"] = "  ←此装备",
+                ["That pact is not on offer."] = "该契约未在提示中。",
+                ["Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world)."] = "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。",
+                ["The trade was not made because its record could not be saved. Check the save location and try again."] = "因无法保存交易记录，未执行交易。请确认保存位置后重试。",
             };
         }
     }

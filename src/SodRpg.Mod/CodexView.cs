@@ -314,23 +314,23 @@ namespace SodRpg.Mod
             for (int i = 0; i < Cats.Length; i++)
                 _catLabels[i] = CodexPresenter.CategoryLabel(_res, Cats[i]);
             int all = _res.ScopeTotal, got = _res.ScopeFound;
-            _foundLabels[0] = Loc.T($"すべて {all}", $"All {all}");
-            _foundLabels[1] = Loc.T($"発見済み {got}", $"Found {got}");
-            _foundLabels[2] = Loc.T($"未発見 {all - got}", $"Unfound {all - got}");
+            _foundLabels[0] = Loc.T($"すべて {all}", $"All {all}", $"全部 {all}");
+            _foundLabels[1] = Loc.T($"発見済み {got}", $"Found {got}", $"已发现 {got}");
+            _foundLabels[2] = Loc.T($"未発見 {all - got}", $"Unfound {all - got}", $"未发现 {all - got}");
             int cat = (int)_filter.Category;
-            _slotLabels[0] = Loc.T($"全枠 {_res.CategoryFound[cat]}/{_res.CategoryTotal[cat]}", $"All {_res.CategoryFound[cat]}/{_res.CategoryTotal[cat]}");
+            _slotLabels[0] = Loc.T($"全枠 {_res.CategoryFound[cat]}/{_res.CategoryTotal[cat]}", $"All {_res.CategoryFound[cat]}/{_res.CategoryTotal[cat]}", $"任意部位 {_res.CategoryFound[cat]}/{_res.CategoryTotal[cat]}");
             for (int i = 0; i < 6; i++)
                 _slotLabels[i + 1] = $"{Content.SlotName(Slots[i])} {_res.SlotFound[(int)Slots[i]]}/{_res.SlotTotal[(int)Slots[i]]}";
-            _lineLabels[0] = Loc.T("全系統", "All lines");
+            _lineLabels[0] = Loc.T("全系統", "All lines", "全系");
             for (int i = 0; i < 3; i++)
                 _lineLabels[i + 1] = $"{Content.LineName(Lines[i])} {_res.LineFound[(int)Lines[i]]}/{_res.LineTotal[(int)Lines[i]]}";
-            _status = Loc.T($"{_res.Items.Count}件を表示（この条件で {got}/{all} 発見）", $"Showing {_res.Items.Count} ({got}/{all} found in this view)");
-            _backLabel = Loc.T("← 記録へ", "← Records");
-            _searchHint = Loc.T("名前・効果で検索", "Search name / effect");
-            _emptyText = Loc.T("条件に合う項目がありません。絞り込みや検索を変えてみてください。", "Nothing matches. Try changing the filters or search.");
+            _status = Loc.T($"{_res.Items.Count}件を表示（この条件で {got}/{all} 発見）", $"Showing {_res.Items.Count} ({got}/{all} found in this view)", $"显示{_res.Items.Count}件（此条件下已发现 {got}/{all}）");
+            _backLabel = Loc.T("← 記録へ", "← Records", "← 记录");
+            _searchHint = Loc.T("名前・効果で検索", "Search name / effect", "按名称・效果搜索");
+            _emptyText = Loc.T("条件に合う項目がありません。絞り込みや検索を変えてみてください。", "Nothing matches. Try changing the filters or search.", "没有符合条件的条目。请尝试更改筛选或搜索。");
             _hint = Loc.T(
                 "固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も「？？？」と伏せられ、枠と系統だけ見えます。土台は伏せられず、未発見でも名前とアイコンが淡く表示されます。検索できるのは見つけたものと土台の名前・効果です。",
-                "Legendaries, sets, powers, named items and mini sets keep their name and effects hidden until you find them (???; only slot and line show). Bases are not secret, so unfound ones still show a dim name and icon. Search covers found entries and base names and effects.");
+                "Legendaries, sets, powers, named items and mini sets keep their name and effects hidden until you find them (???; only slot and line show). Bases are not secret, so unfound ones still show a dim name and icon. Search covers found entries and base names and effects.", "传说・套装・固有效果・铭品・小套装在发现之前，名称和效果都以“？？？”隐藏，只显示部位和系。基底不隐藏，未发现时也会以暗色显示名称和图标。可搜索的是已发现的条目以及基底的名称・效果。");
 
             _summary = CodexPresenter.Summary(_res);
         }
@@ -340,7 +340,7 @@ namespace SodRpg.Mod
             if (_sel == null)
             {
                 _detailHead = "";
-                _detailBody = Loc.T("左の一覧から項目を選ぶと、ここに詳しく出ます。", "Pick an entry on the left to see its details here.");
+                _detailBody = Loc.T("左の一覧から項目を選ぶと、ここに詳しく出ます。", "Pick an entry on the left to see its details here.", "从左侧列表选择条目，详情会显示在这里。");
                 _detailBodyW = -1;
                 return;
             }

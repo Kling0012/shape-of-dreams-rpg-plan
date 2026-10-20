@@ -33,7 +33,7 @@ namespace SodRpg.Mod
             {
                 if (!CanStashSatchelNow)
                     return Loc.T("今は鞄の遺物を保管庫へ送れません。再開・保存・取引の完了を待ってください。",
-                        "Satchel relics cannot be sent to the stash now. Wait for restoration, saving or trade to finish.");
+                        "Satchel relics cannot be sent to the stash now. Wait for restoration, saving or trade to finish.", "现在无法将背包中的遗物送入仓库。请等待恢复・保存・交易完成。");
                 before = Profile.Clone();
                 var notices = Rules.StashSatchelNow(Profile, _trades.ReservedSalvageUids());
                 bool saved = SaveNow(true);
@@ -60,7 +60,7 @@ namespace SodRpg.Mod
             {
                 Log.Error("Direct stash: " + ex);
                 if (before != null && !submitted) RestoreDirectStash(before);
-                return Loc.T("鞄の遺物を保管庫へ送れませんでした：", "Could not send satchel relics to the stash: ") + ex.Message;
+                return Loc.T("鞄の遺物を保管庫へ送れませんでした：", "Could not send satchel relics to the stash: ", "无法将背包中的遗物送入仓库：") + ex.Message;
             }
         }
 
@@ -77,11 +77,11 @@ namespace SodRpg.Mod
 
         private static string DirectStashSaveFailed() => Loc.T(
             "保管庫への送信を保存できませんでした。遺物は鞄に戻しました。保存先を確認して再試行してください。",
-            "The transfer could not be saved. Your relics were restored to the satchel. Check the save location and retry.");
+            "The transfer could not be saved. Your relics were restored to the satchel. Check the save location and retry.", "无法保存送入仓库的操作。遗物已退回背包。请确认保存位置后重试。");
 
         private static string DirectStashSavePending() => Loc.T(
             "保管庫への送信の保存確認を待っています。遺物は保管庫に保持し、保存を再試行します。もう一度送ることはできません。",
-            "Waiting to confirm the transfer save. Relics remain in the stash while saving retries; sending again is blocked.");
+            "Waiting to confirm the transfer save. Relics remain in the stash while saving retries; sending again is blocked.", "正在等待确认仓库发送的保存。遗物将保持在仓库并重试保存，无法再次发送。");
 
         private void TickDirectStash()
         {

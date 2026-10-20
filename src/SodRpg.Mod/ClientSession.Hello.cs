@@ -152,7 +152,7 @@ namespace SodRpg.Mod
             {
                 _hostVersionWarning = new Txt(
                     "ホストから Dreamforge の返事がありません。ホストがこの MOD の同じ版（" + HostAuthority.ModVersion + "）を入れているか確認してください。",
-                    "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").");
+                    "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").", "主机没有回应 Dreamforge。请确认主机安装了相同版本（" + HostAuthority.ModVersion + "）的本MOD。");
             }
         }
 
@@ -179,7 +179,7 @@ namespace SodRpg.Mod
                 // The host's own Infinity availability is shown by the lobby line, so only the shared items are listed here.
                 _hostVersionWarning = new Txt(
                     $"ホストの Dreamforge に差があります（{HostAuthority.DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}。版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。機能は続行します。",
-                    $"The host's Dreamforge differs ({HostAuthority.DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}; version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.");
+                    $"The host's Dreamforge differs ({HostAuthority.DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}; version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.", $"主机的 Dreamforge 存在差异（{HostAuthority.DescribeDifferencesZh(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}。版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。功能将继续运行。");
                 Log.Warn($"Client: compatibility warning: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{HostAuthority.ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}; features continue.");
             }
         }
