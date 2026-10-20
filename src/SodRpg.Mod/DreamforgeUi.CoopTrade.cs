@@ -135,7 +135,7 @@ namespace SodRpg.Mod
             if (!string.IsNullOrEmpty(trade.Status)) GUILayout.Label(trade.Status, _st.Small);
             GUILayout.Label(Loc.T(
                 "内容が変わると双方の確認が解除されます。受け取る遺物は保管庫へ。欠片・調律石は所持分（鞄を含む）から渡します。",
-                "Any offer change clears both confirmations. Received relics go to the stash; shards and tuning include those in your satchel.", "提示内容变更后双方的确认都会解除。收到的遗物将进入仓库；碎片・调律石从所持部分（包括背包）中支付。"), _st.Small);
+                "Any offer change clears both confirmations. Received relics go to the stash; shards and tuning include those in your satchel.", "提供的物品变更后双方的确认都会解除。收到的遗物将进入仓库；碎片・调律石从所持部分（包括背包）中支付。"), _st.Small);
 
             bool valid = TryCoopTradeAmounts(out int shards, out int tuning);
             string invalid = valid ? null : Loc.T("素材は0以上の整数で入力してください。", "Enter a nonnegative whole number for each material.", "请为每种材料输入0以上的整数。");
@@ -149,12 +149,12 @@ namespace SodRpg.Mod
                     if (!CoopTradeRelicOfferable(_s.Profile, uid))
                     {
                         staleOffer = Loc.T("提示できない遺物が含まれています。提示から外して続けてください。",
-                            "Some relics can no longer be offered. Remove them from your offer to continue.", "包含无法提示的遗物。请将其从提示中移除后继续。");
+                            "Some relics can no longer be offered. Remove them from your offer to continue.", "包含无法提供的遗物。请将其从提供的物品中移除后继续。");
                         GUILayout.BeginHorizontal();
                         GUILayout.Label(staleOffer, _st.Warn, TradeChoicesWidth);
                         bool staleEnabled = GUI.enabled;
                         GUI.enabled = staleEnabled && _s.CanCoopTrade && !_s.CoopTradeOfferPending;
-                        if (GUILayout.Button(Loc.T("無効な遺物を提示から外す", "Remove invalid relics", "从提示中移除无效遗物"), _st.ButtonWrap, TradeActionSize))
+                        if (GUILayout.Button(Loc.T("無効な遺物を提示から外す", "Remove invalid relics", "移除无法提供的遗物"), _st.ButtonWrap, TradeActionSize))
                             SetStatus(_s.SetCoopTradeOffer(CopyCoopTradeOffer(trade.OwnOffer, trade.OwnOffer.Shards, trade.OwnOffer.Tuning)));
                         GUI.enabled = staleEnabled;
                         GUILayout.EndHorizontal();

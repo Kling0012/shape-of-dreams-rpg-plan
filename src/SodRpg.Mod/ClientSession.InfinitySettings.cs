@@ -50,7 +50,7 @@ namespace SodRpg.Mod
                 return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…", "正在等待主机的设置…");
             return RemoteHostInfinityAvailable ? null : Loc.T(
                 "ホスト側でインフィニティは無効です。通常モードは利用できます。",
-                "Infinity is disabled on the host's side. Normal mode remains available.", "主机侧已禁用Infinity。通常模式仍可使用。");
+                "Infinity is disabled on the host's side. Normal mode remains available.", "主机侧已禁用Infinity。普通模式仍可使用。");
         }
         public bool ChosenInfinityEnabled => RunActive ? Profile.Run.Infinity != null
             : CanChooseRunRules ? Profile.LastInfinityEnabled

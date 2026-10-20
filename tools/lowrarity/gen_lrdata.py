@@ -20,7 +20,7 @@ def render_outputs():
     text = (ROOT / "src/SodRpg.Core/Game/Content.cs").read_text(encoding="utf-8")
     families_path = ROOT / "tools/lowrarity/base-families.json"
     families = json.loads(families_path.read_text(encoding="utf-8"))
-    pattern = re.compile(r'new BaseDef\("([^"\n]+)", Slot\.(\w+), Line\.(\w+), new Txt\("([^"\n]*)", "([^"\n]*)"\), Stat\.(\w+), EquipmentItemsBalanceValues\.\w+(?:, Family\.(\w+))?\)')
+    pattern = re.compile(r'new BaseDef\("([^"\n]+)", Slot\.(\w+), Line\.(\w+), new Txt\("([^"\n]*)", "([^"\n]*)"(?:, "(?:[^"\\\n]|\\[^\n])*")?\), Stat\.(\w+), EquipmentItemsBalanceValues\.\w+(?:, Family\.(\w+))?\)')
     definitions = list(pattern.finditer(text))
     if len(definitions) != len(values) or set(families) - set(values):
         raise ValueError("authored base coverage does not match canonical source")

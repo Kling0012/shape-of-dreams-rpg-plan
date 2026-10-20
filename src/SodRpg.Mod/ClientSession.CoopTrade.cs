@@ -493,7 +493,7 @@ namespace SodRpg.Mod
         public string ConfirmCoopTrade()
         {
             if (!CanCoopTrade || CoopTrade == null || !CoopTrade.Accepted) return CoopUnavailable();
-            if (_coopPendingOffer != null) return Loc.T("提示内容の更新を待ってください。", "Wait for the offer update to be acknowledged.", "请等待提示内容的更新被确认。");
+            if (_coopPendingOffer != null) return Loc.T("提示内容の更新を待ってください。", "Wait for the offer update to be acknowledged.", "请等待提供的物品更新得到确认。");
             try { SendCoopProfile("confirm", CoopTrade.OwnOffer); return null; }
             catch (Exception ex) { return ex.Message; }
         }
