@@ -30,7 +30,7 @@ namespace SodRpg.Mod
             {
                 if (!CanClaimInterruptedRelics)
                     return Loc.T("今は中断した遠征の遺物を受け取れません。再開・保存・取引の完了を待ってください。",
-                        "Interrupted expedition relics are unavailable now. Wait for restoration, saving or trade to finish.");
+                        "Interrupted expedition relics are unavailable now. Wait for restoration, saving or trade to finish.", "现在无法领取中断远征的遗物。请等待恢复・保存・交易完成。");
                 before = Profile.Clone();
                 var notices = Rules.ClaimInterruptedRelics(Profile, _trades.ReservedSalvageUids());
                 bool saved = SaveNow(true);
@@ -57,7 +57,7 @@ namespace SodRpg.Mod
             {
                 Log.Error("Interrupted relic claim: " + ex);
                 if (before != null && !submitted) RestoreInterruptedRelicClaim(before);
-                return Loc.T("遺物の受け取りに失敗しました：", "Could not claim interrupted relics: ") + ex.Message;
+                return Loc.T("遺物の受け取りに失敗しました：", "Could not claim interrupted relics: ", "无法领取遗物：") + ex.Message;
             }
         }
 
@@ -74,11 +74,11 @@ namespace SodRpg.Mod
 
         private static string InterruptedRelicSaveFailed() => Loc.T(
             "受け取りを保存できませんでした。遺物は受け取る前の状態に戻しました。保存先を確認して再試行してください。",
-            "The claim could not be saved. Your relics were restored. Check the save location and retry.");
+            "The claim could not be saved. Your relics were restored. Check the save location and retry.", "无法保存领取操作。遗物已恢复到领取前的状态。请确认保存位置后重试。");
 
         private static string InterruptedRelicSavePending() => Loc.T(
             "受け取りの保存確認を待っています。遺物はこの鞄に保持し、保存を再試行します。再度の受け取りはできません。",
-            "Waiting to confirm the claim save. Relics remain in this satchel while saving retries; claiming again is blocked.");
+            "Waiting to confirm the claim save. Relics remain in this satchel while saving retries; claiming again is blocked.", "正在等待确认领取的保存。遗物将保持在此背包并重试保存，无法再次领取。");
 
         private void TickInterruptedRelics()
         {

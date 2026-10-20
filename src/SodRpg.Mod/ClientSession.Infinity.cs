@@ -148,7 +148,7 @@ namespace SodRpg.Mod
                     _infinitySaveHoldReleasedRun = _infinityPendingSaveRun;
                     string warning = Loc.T(
                         "Infinityの保存が完了しないため、この遠征の保存待ちを解除しました。保存は再試行しますが、続きから再開すると進行が戻る場合があります。",
-                        "Infinity saving has not completed. Save waits are lifted for this expedition only. Saving will retry, but Continue may roll back progress.");
+                        "Infinity saving has not completed. Save waits are lifted for this expedition only. Saving will retry, but Continue may roll back progress.", "由于Infinity的保存未完成，已解除本次远征的保存等待。保存会重试，但从存档继续时进度可能会回退。");
                     Log.Warn(warning);
                     _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
                 }
@@ -223,7 +223,7 @@ namespace SodRpg.Mod
             else SaveNow();
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                 "ボスの魂の処理が完了。記憶・エッセンスを拾ってから選択画面を開いてください。ホストは全員の回収を確認して帰還か潜行を選べます。",
-                "Boss soul finished. Collect memories and essences before opening the choice panel. The host can confirm everyone has collected their loot, then choose Return or Delve.")));
+                "Boss soul finished. Collect memories and essences before opening the choice panel. The host can confirm everyone has collected their loot, then choose Return or Delve.", "首领之魂的处理已完成。请拾取记忆和精华后再打开选择画面。主机可确认全员回收完毕后选择返回或下潜。")));
         }
 
         private bool TryInfinityArrival()
@@ -278,11 +278,11 @@ namespace SodRpg.Mod
                 return SecureChoiceUnavailable();
             if (InfinityMode.PersonalIntentPending) return null;
             if (!InfinityMode.NativeSaveAgreement || !HostInfinityCanAdvance || !HostInfinityBoundarySettled || !HostInfinityRewardsSettled)
-                return Loc.T("全員の撃破・配当・取引と保存の確定を待っています。", "Waiting for party kills, dividends, trades and saves to settle.");
+                return Loc.T("全員の撃破・配当・取引と保存の確定を待っています。", "Waiting for party kills, dividends, trades and saves to settle.", "正在等待全员的击败・分红・交易与保存确定。");
             if (state.ChoiceRevision == long.MaxValue || state.SegmentEpoch == long.MaxValue)
-                return Loc.T("インフィニティの世代上限に達しました。", "Infinity has reached its identity limit.");
+                return Loc.T("インフィニティの世代上限に達しました。", "Infinity has reached its identity limit.", "Infinity已达到世代上限。");
             if (pact != Pact.None && !Profile.Run.OfferedPacts.Contains(pact))
-                return Loc.T("その契約は提示されていません。", "That pact is not on offer.");
+                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约未在提示中。");
             var previous = InfinityMode.CurrentChoice;
             if (previous != null && previous.RunId == Profile.Run.RunId && !previous.Boundary
                 && previous.Revision > state.ChoiceRevision) return null;

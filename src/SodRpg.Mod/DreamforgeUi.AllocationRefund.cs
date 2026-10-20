@@ -36,9 +36,9 @@ namespace SodRpg.Mod
                 return;
             }
             GUILayout.BeginVertical(_st.Panel);
-            GUILayout.Label(Loc.T("変更と払い戻しを一括承認", "Approve configuration change and atomic refund"), _st.Label);
+            GUILayout.Label(Loc.T("変更と払い戻しを一括承認", "Approve configuration change and atomic refund", "一并批准变更与退还"), _st.Label);
             GUILayout.Label(Loc.T($"払い戻し：{plan.RefundCost} ポイント。承認するまで変更されません。",
-                $"Refund: {plan.RefundCost} points. Nothing changes until approved."), _st.Warn);
+                $"Refund: {plan.RefundCost} points. Nothing changes until approved.", $"退还：{plan.RefundCost} 点。批准之前不会有任何变更。"), _st.Warn);
             _allocationRefundScroll = GUILayout.BeginScrollView(_allocationRefundScroll, GUILayout.MaxHeight(120));
             foreach (var refund in plan.Refunds)
             {
@@ -52,7 +52,7 @@ namespace SodRpg.Mod
                 ? _s.CanEditLoadout && (_allocationRefundRelic == null
                     || !_s.Trades.IsReserved(_allocationRefundRelic) && _s.Profile.FindStash(_allocationRefundRelic) != null)
                 : _s.CanEditTalents && _s.Profile.Run == null);
-            if (GUILayout.Button(Loc.T("変更と全払い戻しを承認", "Approve change and all refunds"), _st.Button))
+            if (GUILayout.Button(Loc.T("変更と全払い戻しを承認", "Approve change and all refunds", "批准变更与全部退还"), _st.Button))
             {
                 try
                 {
@@ -70,7 +70,7 @@ namespace SodRpg.Mod
                 }
             }
             GUI.enabled = enabled;
-            if (GUILayout.Button(Loc.T("取り消す", "Cancel"), _st.Button)) _allocationRefund = null;
+            if (GUILayout.Button(Loc.T("取り消す", "Cancel", "取消"), _st.Button)) _allocationRefund = null;
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
         }

@@ -31,7 +31,7 @@ namespace SodRpg.Mod
             {
                 var cost = def.Costs[level];
                 row.Button = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
-                    $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
+                    $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")", $"解锁（碎片{cost.Shards}" + (cost.Tuning > 0 ? $"・调律石{cost.Tuning}" : "") + "）");
             }
             return row;
         }
@@ -58,32 +58,32 @@ namespace SodRpg.Mod
                     if (GUILayout.Button(row.Button, _st.Button, WorkshopButtonSize)) Act(() => Rules.BuyUpgrade(p, def.Id, _s.InGame && p.Run != null), false);
                     GUI.enabled = true;
                 }
-                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, WorkshopMaxWidth);
+                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed", "已全部解放"), _st.Header, WorkshopMaxWidth);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(4);
             }
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
-            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
+            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions.", "远征中工坊不可用。请从远征返回后再使用。"), _st.Warn);
         }
 
         /// <summary>工房の強化の「いまの値 → 解放後の値」。</summary>
         private static string WorkshopValue(Profile p, Upgrade u, bool canRaise)
         {
             int now, next;
-            string ja, en;
+            string ja, en, zh;
             switch (u)
             {
-                case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = Workshop.SatchelCapacityAt(Workshop.Level(p, u) + 1); ja = "鞄の上限"; en = "Satchel"; break;
-                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = Content.StashCapacity + Workshop.StashBonus(Workshop.Level(p, u) + 1); ja = "保管庫の上限"; en = "Stash"; break;
-                case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = Workshop.RerollsAt(Workshop.Level(p, u) + 1); ja = "引き直し"; en = "Rerolls"; break;
+                case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = Workshop.SatchelCapacityAt(Workshop.Level(p, u) + 1); ja = "鞄の上限"; en = "Satchel"; zh = "背包上限"; break;
+                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = Content.StashCapacity + Workshop.StashBonus(Workshop.Level(p, u) + 1); ja = "保管庫の上限"; en = "Stash"; zh = "仓库上限"; break;
+                case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = Workshop.RerollsAt(Workshop.Level(p, u) + 1); ja = "引き直し"; en = "Rerolls"; zh = "重抽"; break;
                 // 禁忌の職人（#415）：解放後は、宿敵との因縁と手持ちの禁忌の核を出す。
                 case Upgrade.ForbiddenSmith:
-                    return canRaise ? "" : $"<color=#ff9a9a>{Forbidden.GrudgeLabel(p.NemesisGrudge)} · {Loc.T("禁忌の核", "Forbidden cores")} {p.Material(Materials.NemesisCore)}</color>";
+                    return canRaise ? "" : $"<color=#ff9a9a>{Forbidden.GrudgeLabel(p.NemesisGrudge)} · {Loc.T("禁忌の核", "Forbidden cores", "禁忌之核")} {p.Material(Materials.NemesisCore)}</color>";
                 default: return "";
             }
             string arrow = canRaise ? $" → <color=#7cf07c>{next}</color>" : "";
-            return $"<color=#cfd3ee>{Loc.T(ja, en)} {now}{arrow}</color>";
+            return $"<color=#cfd3ee>{Loc.T(ja, en, zh)} {now}{arrow}</color>";
         }
     }
 }
