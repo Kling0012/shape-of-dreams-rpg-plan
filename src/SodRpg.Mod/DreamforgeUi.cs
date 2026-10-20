@@ -507,14 +507,14 @@ namespace SodRpg.Mod
             sb.Length = 0;
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
-            sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
-            sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
-                .Append(_s.PersonalEnemyWaypointsActive ? Loc.T("・共通の夢の圧 ", " · Shared pressure ")
-                    : Loc.T("・夢の圧 ", " · Pressure "));
+            sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ", "<b>Dreamforge</b>  梦境等级 ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
+            sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ", "梦境深度 ")).Append(_s.ChosenDreamDepth)
+                .Append(_s.PersonalEnemyWaypointsActive ? Loc.T("・共通の夢の圧 ", " · Shared pressure ", " · 共享梦境之压 ")
+                    : Loc.T("・夢の圧 ", " · Pressure ", " · 梦境之压 "));
             if (_s.HostConfirmed)
                 sb.Append("HP×").Append(_s.PressureHealthMultiplier.ToString("0.00"))
-                    .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
-            else sb.Append(Loc.T("ホストの確認待ち", "awaiting host"));
+                    .Append(Loc.T("・攻×", " · ATK×", " · 攻×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
+            else sb.Append(Loc.T("ホストの確認待ち", "awaiting host", "等待主机确认"));
             sb.Append("</size>");
             // 遠征中は動的難易度の自分の分を1行で出す（#700）。例外が出たらこの行だけを止める。
             if (run != null && _s.ActiveRunId != null && !_dynamicHudFailed)
@@ -529,11 +529,11 @@ namespace SodRpg.Mod
             if (run?.Infinity != null)
             {
                 var infinity = run.Infinity;
-                sb.Append("\n<size=13>").Append(Loc.T("インフィニティ · クリア ", "Infinity · cleared "))
-                    .Append(infinity.ClearedCombatTotal).Append(Loc.T("部屋 · 周期 ", " rooms · cycle "))
+                sb.Append("\n<size=13>").Append(Loc.T("インフィニティ · クリア ", "Infinity · cleared ", "无限 · 已通关 "))
+                    .Append(infinity.ClearedCombatTotal).Append(Loc.T("部屋 · 周期 ", " rooms · cycle ", " 房间 · 周期 "))
                     .Append(infinity.ClearsInCycle).Append('/').Append(infinity.Interval)
-                    .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
-                if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)"));
+                    .Append(Loc.T(" · 圧段階 ", " · pressure stage ", " · 压力阶段 ")).Append(infinity.PressureStage);
+                if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)", "（上限）"));
                 sb.Append("</size>");
                 string choiceNotice = _s.InfinityChoiceNotice;
                 if (choiceNotice != null)
@@ -544,7 +544,7 @@ namespace SodRpg.Mod
                 if (supportNotice != null)
                     sb.Append("\n<color=#ffb070>").Append(supportNotice).Append("</color>");
                 else if (!InfinityMode.NativeSaveAgreement)
-                    sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required")).Append("</color>");
+                    sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required", "存档不一致：进度暂停，等待恢复")).Append("</color>");
             }
             string sectionTags = SectionTagNotice();
             if (sectionTags != null)
@@ -565,30 +565,33 @@ namespace SodRpg.Mod
                     sb.Append("\n<size=13><color=#ffd27f>").Append(omen).Append("</color></size>");
                 var waypoint = Waypoints.Get(run.ActiveWaypoint);
                 if (waypoint != null)
-                    sb.Append("\n<size=13><color=#a8e9cd>").Append(Loc.T("道標：", "Waypoint: ")).Append(waypoint.Name).Append("</color></size>");
+                    sb.Append("\n<size=13><color=#a8e9cd>").Append(Loc.T("道標：", "Waypoint: ", "路标：")).Append(waypoint.Name).Append("</color></size>");
                 var daily = DailyDream.Get(run.DailyId);
                 if (!compact && (daily != null || run.LimboDepth > 0))
                 {
                     sb.Append("\n<size=13>");
-                    if (daily != null) sb.Append("<color=#a8d8ff>").Append(Loc.T("今日の夢：", "Today: ")).Append(daily.Name).Append("</color>");
-                    if (run.LimboDepth > 0) sb.Append("<color=#d0a0ff>").Append(Loc.T("　Limbo ", "  Limbo ")).Append(run.LimboDepth).Append("</color>");
+                    if (daily != null) sb.Append("<color=#a8d8ff>").Append(Loc.T("今日の夢：", "Today: ", "今日之梦：")).Append(daily.Name).Append("</color>");
+                    if (run.LimboDepth > 0) sb.Append("<color=#d0a0ff>").Append(Loc.T("　Limbo ", "  Limbo ", "　Limbo ")).Append(run.LimboDepth).Append("</color>");
                     sb.Append("</size>");
                 }
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
-                sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
+                sb.Append('\n').Append(Loc.T("潜行 ", "Delve ", "下潜 ")).Append("<color=").Append(heatColor).Append('>')
                     .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
                 sb.Append("\n<size=13>").Append(Loc.T(
                     $"未確保：遺物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
-                    $"Unsecured: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
+                    $"Unsecured: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning",
+                    $"未存入仓库：遗物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}·碎片{run.SatchelShards}·调律石{run.SatchelTuning}")).Append("</size>");
                 if (run.ActiveWaypoint == Waypoint.BossHoard)
                 {
                     sb.Append("\n<size=13><color=#a8e9cd>");
                     if (run.WaypointHoardReleased)
-                        sb.Append(Loc.T($"宝庫：開封済み・撃破戦利品 ×{Waypoints.HoardMultiplier}", $"Hoard: opened · kill loot ×{Waypoints.HoardMultiplier}"));
+                        sb.Append(Loc.T($"宝庫：開封済み・撃破戦利品 ×{Waypoints.HoardMultiplier}", $"Hoard: opened · kill loot ×{Waypoints.HoardMultiplier}",
+                        $"宝库：已开启 · 击杀掉落 ×{Waypoints.HoardMultiplier}"));
                     else
                         sb.Append(Loc.T(
                             $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×{Waypoints.HoardMultiplier}・未開封で離れると失う",
-                            $"Hoard held (before ×{Waypoints.HoardMultiplier}): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×{Waypoints.HoardMultiplier}; leaving unopened forfeits it"));
+                            $"Hoard held (before ×{Waypoints.HoardMultiplier}): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×{Waypoints.HoardMultiplier}; leaving unopened forfeits it",
+                            $"宝库暂存（倍率前 ×{Waypoints.HoardMultiplier}）：遗物{run.DeferredWaypointRelics.Count}·碎片{run.DeferredWaypointShards}·调律石{run.DeferredWaypointTuning}\n击败Boss后发放 ×{Waypoints.HoardMultiplier}·未开启就离开将失去"));
                     sb.Append("</color></size>");
                 }
                 if (p.LostAndFound.Count > 0 && !run.LostRecovered)
@@ -596,11 +599,11 @@ namespace SodRpg.Mod
                     int rooms = Workshop.RoomsToRecover(p);
                     sb.Append("\n<size=13><color=#ffb070>").Append(Loc.T(
                         $"遺失物の回収：戦闘部屋 {Math.Min(run.RoomsCleared, rooms)}/{rooms}",
-                        $"Lost & Found: combat rooms {Math.Min(run.RoomsCleared, rooms)}/{rooms}")).Append("</color></size>");
+                        $"Lost & Found: combat rooms {Math.Min(run.RoomsCleared, rooms)}/{rooms}", $"遗失物回收：战斗房间 {Math.Min(run.RoomsCleared, rooms)}/{rooms}")).Append("</color></size>");
                 }
                 if (!compact && run.Pacts.Count > 0)
                 {
-                    sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: "));
+                    sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: ", "契约："));
                     for (int i = 0; i < run.Pacts.Count; i++)
                     {
                         if (i > 0) sb.Append("・");
@@ -617,12 +620,14 @@ namespace SodRpg.Mod
                 }
                 AppendRunGrowthHud(sb);
                 if (!_s.HostConfirmed && _s.LocalHero != null)
-                    sb.Append("\n<size=13>").Append(Loc.T("装備の効果がまだ反映されていません（ホストがこのMODを入れていない可能性があります）", "Gear bonuses not applied yet (the host may not have this mod)")).Append("</size>");
+                    sb.Append("\n<size=13>").Append(Loc.T("装備の効果がまだ反映されていません（ホストがこのMODを入れていない可能性があります）", "Gear bonuses not applied yet (the host may not have this mod)",
+                    "装备效果尚未生效（主机可能未安装本MOD）")).Append("</size>");
             }
             int unclaimedFeats = Feats.Unclaimed(p);
             if (unclaimedFeats > 0)
-                sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)")).Append("</color></size>");
-            sb.Append("\n<size=13><color=#c4c4dc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
+                sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)",
+                $"★ 有{unclaimedFeats}项成就奖励可领取（记录页）")).Append("</color></size>");
+            sb.Append("\n<size=13><color=#c4c4dc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu", "] 菜单")).Append("</color></size>");
             return sb.ToString();
         }
 
@@ -885,11 +890,12 @@ namespace SodRpg.Mod
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.", "正在等待交易完成。"), _st.Warn);
             else if (_s.LostTradeCount > 0)
-                GUILayout.Label(Loc.T("ホストが確認できない取引があります。遅れて届く応答を待っています（対価も返却も保留中。確保・潜行は続けられます）。手放すにはコンソールで dreamforge_trades_giveup。", "Some trades cannot be confirmed by the host and are on hold (you can still secure or delve). To give them up, run dreamforge_trades_giveup in the console."), _st.Small);
+                GUILayout.Label(Loc.T("ホストが確認できない取引があります。遅れて届く応答を待っています（対価も返却も保留中。確保・潜行は続けられます）。手放すにはコンソールで dreamforge_trades_giveup。", "Some trades cannot be confirmed by the host and are on hold (you can still secure or delve). To give them up, run dreamforge_trades_giveup in the console.",
+                "有交易无法由主机确认，正在等待迟到的响应（对价与返还均暂挂中。仍可存入仓库或下潜）。要放弃的话，请在控制台输入 dreamforge_trades_giveup。"), _st.Small);
             else if (_s.HasHeldTrades)
-                GUILayout.Label(Loc.T("取引の結果をホストに確認中です（確保・潜行は続けられます）。", "Checking a trade result with the host (you can still secure or delve)."), _st.Small);
+                GUILayout.Label(Loc.T("取引の結果をホストに確認中です（確保・潜行は続けられます）。", "Checking a trade result with the host (you can still secure or delve).", "正在向主机确认交易结果（仍可存入仓库或下潜）。"), _st.Small);
             else if (run.Infinity == null && !_s.CanResolveSecureChoice)
-                GUILayout.Label(Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve."), _st.Small);
+                GUILayout.Label(Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve.", "请等待主机确定路标并选择存入仓库或下潜。"), _st.Small);
             {
                 int dust = _s.LocalDust;
                 GUI.enabled = dust >= Economy.DustPerBatch && !_s.TradePending(TradeKind.DustToShards);
@@ -898,7 +904,8 @@ namespace SodRpg.Mod
                         batches > 0
                             ? $"ドリームダスト{batches * Economy.DustPerBatch}を欠片{batches * Economy.ShardsPerBatch}に換える（ダスト{Economy.DustPerBatch}につき欠片{Economy.ShardsPerBatch}。所持{dust}）"
                             : $"ドリームダストを欠片に換える（ダスト{Economy.DustPerBatch}につき欠片{Economy.ShardsPerBatch}。所持{dust}）",
-                        $"Convert Dream Dust to shards ({Economy.DustPerBatch}->{Economy.ShardsPerBatch}, you have {dust})"), _st.Button, GUILayout.Height(30)))
+                        $"Convert Dream Dust to shards ({Economy.DustPerBatch}->{Economy.ShardsPerBatch}, you have {dust})",
+                        $"将梦境之尘换成碎片（{Economy.DustPerBatch}->{Economy.ShardsPerBatch}，持有{dust}）"), _st.Button, GUILayout.Height(30)))
                 {
                     string err = _s.ConvertDust();
                     if (err != null) SetStatus(err);
@@ -910,24 +917,26 @@ namespace SodRpg.Mod
                 var e = run.OfferedEvent;
                 bool merchant = e == DreamEvent.Merchant;
                 bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
-                if (_s.CoopTradeLocked) { ok = false; why = Loc.T("交換を確認中です。", "A trade is being confirmed."); }
+                if (_s.CoopTradeLocked) { ok = false; why = Loc.T("交換を確認中です。", "A trade is being confirmed.", "交易正在确认中。"); }
                 if (run.Infinity != null && (InfinityMode.PersonalIntentPending
                     || !_s.CanChooseRunRules && !_s.CanChooseInfinityPersonal))
                 {
                     ok = false;
-                    why = Loc.T("自分の選択は完了しました。", "Your choices are complete.");
+                    why = Loc.T("自分の選択は完了しました。", "Your choices are complete.", "你的选择已完成。");
                 }
-                if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
+                if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)",
+                $"金币不足（{_s.MerchantPrice()}G）"); }
                 GUILayout.BeginHorizontal();
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
                 if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, EventArtKey(e));
                 GUILayout.BeginVertical();
-                GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#ccd>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ", "事件：") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#ccd>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
                 bool confirm = ok && _confirmEvent == e && DreamEvents.NeedsConfirm(e);
                 string label = !ok ? why
-                    : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)")
-                    : confirm ? Loc.T("<color=#ff8080>取り消せません。もう一度押すと確定します</color>", "<color=#ff8080>This can't be undone. Press again to confirm</color>")
+                    : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)", $"购买（{_s.MerchantPrice()}G）")
+                    : confirm ? Loc.T("<color=#ff8080>取り消せません。もう一度押すと確定します</color>", "<color=#ff8080>This can't be undone. Press again to confirm</color>",
+                    "<color=#ff8080>无法撤销。再按一次确认</color>")
                     : DreamEvents.ActionLabel(e);
                 if (GUILayout.Button(label, _st.Row, GUILayout.Height(32)))
                 {
@@ -958,7 +967,8 @@ namespace SodRpg.Mod
             }
             if (run.OfferedPacts.Count > 0)
             {
-                GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact."), _st.Small);
+                GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact.",
+                "也可以结下梦魇契约再下潜。接受负面代价以换取更大的回报，效果会叠加到下次存入仓库为止。代价的诅咒与本体的诅咒相同，只附加在结下契约之人的旅人身上。"), _st.Small);
                 GUI.enabled = run.Infinity != null && !_s.CanChooseRunRules
                     ? _s.CanChooseInfinityPersonal : _s.CanResolveSecureChoice && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
                 for (int i = 0; i < run.OfferedPacts.Count; i++)
@@ -989,23 +999,26 @@ namespace SodRpg.Mod
 
         private void DrawWaypointPicker(RunState run)
         {
-            GUILayout.Label(Loc.T("道標 ─ 次のゾーンの決まり", "Waypoint ─ a rule for the next zone"), _st.Label);
+            GUILayout.Label(Loc.T("道標 ─ 次のゾーンの決まり", "Waypoint ─ a rule for the next zone", "路标 ─ 下一个区域的规则"), _st.Label);
             if (!_s.WaypointChoicesReady)
             {
-                GUILayout.Label(Loc.T("ホストから道標の候補を受け取っています。", "Waiting for the host's waypoint cards."), _st.Small);
+                GUILayout.Label(Loc.T("ホストから道標の候補を受け取っています。", "Waiting for the host's waypoint cards.", "正在接收主机的路标卡。"), _st.Small);
                 return;
             }
             GUILayout.Label(run.Infinity != null
                 ? Loc.T("各自が1枚選びます。「選ばない」こともできます。戦利品・旅人への効果は各自の選択に従い、次のボス後の選択で終わります。",
-                    "Each player may choose one card or skip. Loot and Traveler effects use your own choice until the next post-boss choice.")
-                : Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
+                    "Each player may choose one card or skip. Loot and Traveler effects use your own choice until the next post-boss choice.",
+                    "各自选择1张卡，也可以不选。战利品与对旅人的效果按各自的选择生效，直到下次Boss后的选择为止。")
+                : Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point.",
+                "由主机选择1张卡，也可以不选。效果在下一个存仓点结束。"), _st.Small);
             GUILayout.Label(run.Infinity != null
                 ? _s.CanChooseRunRules
                     ? Loc.T("道標・出来事を選んでから帰還か潜行を決めてください。ゲストの選択中は進行を保留します。",
-                        "Choose your waypoint and event, then Return or Delve. Progress waits while guests finish their choices.")
+                        "Choose your waypoint and event, then Return or Delve. Progress waits while guests finish their choices.", "请选择路标与事件，然后决定返回或下潜。其他玩家选择期间，进度会暂停等待。")
                     : Loc.T("道標・出来事を選んだら、契約を選ぶか「契約なしで選択を完了」を押してください。",
-                        "After choosing your waypoint and event, pick a pact or press Finish without a pact.")
-                : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
+                        "After choosing your waypoint and event, pick a pact or press Finish without a pact.", "选完路标与事件后，请选择契约，或按“不结契约，完成选择”。")
+                : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact.",
+                "不结束选择继续战斗时，将以选择中的路标下潜。不会结契约。"), _st.Small);
             if (_waypointCardsJapanese != Loc.Language)
             {
                 _waypointCardsJapanese = Loc.Language;
@@ -1028,14 +1041,14 @@ namespace SodRpg.Mod
             {
                 GUI.enabled = (_s.CanChooseRunRules || _s.CanChooseInfinityPersonal)
                     && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
-                if (GUILayout.Button(Loc.T("道標を選ばない", "Skip the waypoint"), _st.Button, GUILayout.Height(28)))
+                if (GUILayout.Button(Loc.T("道標を選ばない", "Skip the waypoint", "不选路标"), _st.Button, GUILayout.Height(28)))
                     SetStatus(_s.ChooseWaypoint(Waypoint.None));
                 GUI.enabled = true;
             }
             var chosen = Waypoints.Get(run.PendingWaypoint);
             GUILayout.Label(run.WaypointChosen
-                ? Loc.T("選択：", "Selected: ") + (chosen != null ? chosen.Name.ToString() : Loc.T("道標なし", "No waypoint"))
-                : Loc.T("未選択（このまま進むと道標なし）", "No selection (continuing skips the waypoint)"), _st.Small);
+                ? Loc.T("選択：", "Selected: ", "已选：") + (chosen != null ? chosen.Name.ToString() : Loc.T("道標なし", "No waypoint", "无路标"))
+                : Loc.T("未選択（このまま進むと道標なし）", "No selection (continuing skips the waypoint)", "未选（继续前进则跳过路标）"), _st.Small);
         }
 
         private void DrawDreamDepthChoice()
@@ -1043,20 +1056,21 @@ namespace SodRpg.Mod
             if (_s.InGame) return;
             int depth = _s.ChosenDreamDepth;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("夢の深さ", "Dream depth"), _st.Label, GUILayout.Width(110));
+            GUILayout.Label(Loc.T("夢の深さ", "Dream depth", "梦境深度"), _st.Label, GUILayout.Width(110));
             GUI.enabled = _s.CanChooseDepth;
             for (int i = 0; i <= DreamDepth.Maximum; i++)
                 if (GUILayout.Button(DepthLabels[i], depth == i ? _st.TabSel : _st.Tab, GUILayout.Width(36)))
                     SetStatus(_s.ChooseDreamDepth(i));
             GUI.enabled = true;
-            GUILayout.Label(Loc.T("ホストが選択・遠征中は固定", "Chosen by the host; fixed during the expedition"), _st.Small);
+            GUILayout.Label(Loc.T("ホストが選択・遠征中は固定", "Chosen by the host; fixed during the expedition", "由主机选择；远征中固定"), _st.Small);
             GUILayout.EndHorizontal();
             DrawInfinityChoice();
             if (!_s.HasHostRunChoices)
-                GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
+                GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts.", "主机选择的深度将在远征开始时送达。"), _st.Small);
             else GUILayout.Label(Loc.T(
                 $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}・部屋 +{DreamDepth.ExtraZoneNodes(depth)}",
-                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
+                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}",
+                $"敌人HP ×{DreamDepth.HealthMultiplier(depth):0.00}·敌人伤害 ×{DreamDepth.DamageMultiplier(depth):0.00}·高品质遗物 +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%·觉醒 ×{DreamDepth.AwakeningMultiplier(depth):0.00}·星经验 ×{DreamDepth.StarXpMultiplier(depth):0.00}·房间 +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
         }
 
         private static readonly int[] InfinityIntervals = { InfinityRunState.ShortInterval, InfinityRunState.MiddleInterval, InfinityRunState.LongInterval };
@@ -1086,7 +1100,7 @@ namespace SodRpg.Mod
             bool enabled = _s.ChosenInfinityEnabled;
             int interval = _s.ChosenInfinityInterval;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("インフィニティ", "Infinity mode"), _st.Label, GUILayout.Width(110));
+            GUILayout.Label(Loc.T("インフィニティ", "Infinity mode", "无限模式"), _st.Label, GUILayout.Width(110));
             GUI.enabled = _s.CanChooseDepth;
             if (GUILayout.Button(Loc.T("オフ（通常）", "Off (normal)"), !enabled ? _st.TabSel : _st.Tab, GUILayout.Width(112)))
                 SetStatus(_s.ChooseInfinity(false, interval));
