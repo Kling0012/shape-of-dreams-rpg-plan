@@ -34,7 +34,7 @@ namespace SodRpg.Core.Game
 
         internal static JsonObject OfferObject(CoopTradeOffer offer)
         {
-            if (offer == null || offer.RelicUids == null) throw new InvalidOperationException(Loc.T("取引の提示がありません。", "Trade offer is missing."));
+            if (offer == null || offer.RelicUids == null) throw new InvalidOperationException(Loc.T("取引の提示がありません。", "Trade offer is missing.", "缺少交易报价。"));
             return new JsonObject().Add("relicUids", offer.RelicUids.Select(uid => (object)uid).ToList())
                 .Add("shards", (long)offer.Shards).Add("tuning", (long)offer.Tuning);
         }
