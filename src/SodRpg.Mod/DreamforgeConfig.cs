@@ -245,6 +245,9 @@ namespace SodRpg.Mod
         [LabelText("Skip merchants' same-pose prop rewrites while the merchant is still (host + guests) / 止まっている商人の装飾モデルへの同じ位置・向きの毎フレーム再書き込みを省く（ホスト・参加者）")]
         public bool nativeMerchantPropIdle = true;
 
+        [LabelText("Skip unchanged transform writes on generic synced objects (guests) / 汎用同期オブジェクトの同じ位置・向きの毎フレーム再書き込みを省く（参加者）")]
+        public bool nativeGenericTransformIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

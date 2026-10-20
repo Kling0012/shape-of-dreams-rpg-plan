@@ -760,6 +760,33 @@ namespace SodRpg.Mod
             props[1].transform.SetPositionAndRotation(transform.position, transform.rotation);
         }
     }
+    // NativeGenericTransformIdlePerf の受け口。本体 Dew.Core GenericTransformSync（2026-10-21
+    // 逆コンパイル確認）の、パッチが触る範囲の模倣: FrameUpdate の宣言と、サーバーでない端末での
+    // _pos / _rot の transform への転写（同期変数が NaN を含むとき本体はその書き込みを飛ばす）。
+    // 実機と同じく Mirror.NetworkBehaviour の子孫（isServer と transform を継承）。
+    // GenericTransformIdlePerfTests（ProxyPositionIdlePerfTests.cs）が Prefix の省略判定を
+    // この模倣に対して直接動かす。
+    internal class GenericTransformSync : NetworkBehaviour
+    {
+        internal Vector3 _pos;
+        internal Quaternion _rot;
+
+        internal void FrameUpdate()
+        {
+            if (isServer)
+            {
+                return;
+            }
+            if (!float.IsNaN(_pos.x) && !float.IsNaN(_pos.y) && !float.IsNaN(_pos.z))
+            {
+                transform.position = _pos;
+            }
+            if (!float.IsNaN(_rot.x) && !float.IsNaN(_rot.y) && !float.IsNaN(_rot.z) && !float.IsNaN(_rot.w))
+            {
+                transform.rotation = _rot;
+            }
+        }
+    }
     // NativeTimescaleIdlePerf の受け口。本体 Dew.Core TimescaleManager（2026-10-20 逆コンパイル確認）
     // のうちパッチが触る範囲の模倣: FrameUpdate の宣言と、Postfix が読む effectTimescale。
     // 実機の weaver 生成セッター Network<effectTimescale>k__BackingField は <> 入りのため

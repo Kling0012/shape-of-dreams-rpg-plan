@@ -617,4 +617,178 @@ namespace Issue73.Native.Tests
             }
         }
     }
+
+    /// <summary>
+    /// （#996）汎用同期オブジェクトの同じ位置・向きの毎フレーム再書き込みの省略
+    /// （NativeGenericTransformIdlePerf）の検証。Prepare・Prefix はリンクされた
+    /// NativePerfPatches.cs そのものに、模倣の GenericTransformSync（NativeBoundary.cs、
+    /// 実機と同じく NetworkBehaviour の子孫）に対して直接動かす。位置・回転が成分ごとの
+    /// float == で完全一致するときだけ本体を省き、1成分でも違えば（回転のわずかな違いを
+    /// 含む）本体経路に戻すこと、同期変数の NaN ではその比較を飛ばすこと、ホストでは
+    /// 比較の前に本体へ流すこと、存在しない型名では TryPrepare が警告1回で false を
+    /// 返す（例外を外へ出さない）ことを確かめる。
+    /// </summary>
+    public sealed class GenericTransformIdlePerfTests : IDisposable
+    {
+        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+        // Prepare の読み取り欄と Prefix は静的な欄を読み書きするため、毎テストで模倣型に
+        // 向け直して Dispose で設定を既定（有効）へ戻す（ChaosShrineHitScanPerfTests と同じ形）。
+        public GenericTransformIdlePerfTests()
+        {
+            typeof(NativeGenericTransformIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
+            typeof(NativeGenericTransformIdlePerf).GetField("_warned", Hidden).SetValue(null, false);
+            NativePerfOptions.GenericTransformIdle = true;
+            Assert.True(NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync"));
+        }
+
+        public void Dispose()
+        {
+            typeof(NativeGenericTransformIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
+            NativePerfOptions.GenericTransformIdle = true;
+        }
+
+        private static bool Run(object sync)
+            => (bool)typeof(NativeGenericTransformIdlePerf).GetMethod("Prefix", Hidden)
+                .Invoke(null, new[] { sync });
+
+        // パッチ適用後と同じ呼び出し形: Prefix が false を返したときだけ本体が走る。
+        private static void PatchedFrameUpdate(GenericTransformSync sync)
+        {
+            if (Run(sync)) sync.FrameUpdate();
+        }
+
+        // 参加者側（isServer は既定 false）の同期オブジェクト。held・heldRot は transform の
+        // 現在値、pos・rot は同期変数。
+        private static GenericTransformSync Guest(Vector3 held, Quaternion heldRot, Vector3 pos, Quaternion rot)
+        {
+            var sync = new GenericTransformSync { _pos = pos, _rot = rot };
+            sync.transform.position = held;
+            sync.transform.rotation = heldRot;
+            return sync;
+        }
+
+        private static void AssertPosition(Vector3 actual, float x, float y, float z)
+        {
+            Assert.Equal(x, actual.x);
+            Assert.Equal(y, actual.y);
+            Assert.Equal(z, actual.z);
+        }
+
+        // (1) 位置の3成分のどれか1つでも違えば本体経路（true）。
+        [Fact]
+        public void OneDifferentPositionComponentRunsTheNativeBody()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            Assert.True(Run(Guest(new Vector3(3.001f, 0.5f, -7f), facing, pose, facing))); // x だけ
+            Assert.True(Run(Guest(new Vector3(3f, 0.5001f, -7f), facing, pose, facing))); // y だけ
+            Assert.True(Run(Guest(new Vector3(3f, 0.5f, -6.999f), facing, pose, facing))); // z だけ
+        }
+
+        // (1) 回転の4成分のどれか1つだけがわずかに違っても省かない（完全一致でのみ省く。
+        // Unity の Quaternion == の許容（約0.1度）より小さい 0.0001 の差も浮かせる）。
+        [Fact]
+        public void ASlightlyDifferentRotationComponentRunsTheNativeBody()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            Assert.True(Run(Guest(pose, new Quaternion(facing.x + 0.0001f, facing.y, facing.z, facing.w), pose, facing)));
+            Assert.True(Run(Guest(pose, new Quaternion(facing.x, facing.y + 0.0001f, facing.z, facing.w), pose, facing)));
+            Assert.True(Run(Guest(pose, new Quaternion(facing.x, facing.y, facing.z + 0.0001f, facing.w), pose, facing)));
+            Assert.True(Run(Guest(pose, new Quaternion(facing.x, facing.y, facing.z, facing.w - 0.0001f), pose, facing)));
+        }
+
+        // (2) 位置・回転が完全一致するときだけ本体を省き（false）、書き込みも増えない。
+        [Fact]
+        public void MatchingPoseIsSkippedWithoutRewrites()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            var sync = Guest(pose, facing, pose, facing);
+            int writes = sync.transform.positionWriteLog.Count; // 初期化の書き込み
+            Assert.False(Run(sync));
+            PatchedFrameUpdate(sync);
+            PatchedFrameUpdate(sync);
+            Assert.Equal(writes, sync.transform.positionWriteLog.Count); // 書き込みが増えない
+            AssertPosition(sync.transform.position, pose.x, pose.y, pose.z); // 値もそのまま
+            Assert.Equal(facing, sync.transform.rotation);
+        }
+
+        // (2) 続き: 動いた同期オブジェクトは最初の1フレームだけ本体が書き、書いた値と
+        // 同期変数が一致した次のフレームから省く。
+        [Fact]
+        public void FrameAfterTheNativeWriteStartsSkipping()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            var sync = Guest(new Vector3(0f, 0f, 0f), default, pose, facing); // transform は原点
+            Assert.True(Run(sync)); // まだ書かれていない: 本体経路
+            int writes = sync.transform.positionWriteLog.Count;
+            PatchedFrameUpdate(sync); // 本体が書く
+            Assert.Equal(writes + 1, sync.transform.positionWriteLog.Count);
+            Assert.False(Run(sync)); // 書いた値と同期変数が一致: 以後は省く
+            PatchedFrameUpdate(sync);
+            Assert.Equal(writes + 1, sync.transform.positionWriteLog.Count);
+            AssertPosition(sync.transform.position, pose.x, pose.y, pose.z);
+            Assert.Equal(facing, sync.transform.rotation);
+        }
+
+        // (3) 同期変数の NaN ではその比較を飛ばす（本体もその書き込みを飛ばすため、
+        // もう一方が一致していれば省く）。
+        [Fact]
+        public void NaNSyncvarsSkipThatComparison()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            // _pos の1成分だけ NaN: 位置の比較を飛ばし、回転は一致なので省く。
+            Assert.False(Run(Guest(pose, facing, new Vector3(float.NaN, 0.5f, -7f), facing)));
+            Assert.False(Run(Guest(pose, facing, new Vector3(3f, float.NaN, -7f), facing)));
+            // _rot の1成分だけ NaN: 回転の比較を飛ばし、位置は一致なので省く。
+            Assert.False(Run(Guest(pose, facing, pose, new Quaternion(float.NaN, 0.38268343f, 0f, 0.92387953f))));
+            // 両方 NaN（止まっている同期オブジェクト）: 本体は何も書かないので、
+            // transform が何を持っていても省く。
+            Assert.False(Run(Guest(new Vector3(1f, 2f, 3f), new Quaternion(4f, 5f, 6f, 7f),
+                new Vector3(float.NaN, float.NaN, float.NaN), new Quaternion(float.NaN, 0f, 0f, float.NaN))));
+            // 逆に transform 側が NaN のときは比較がすべて外れて本体経路（NaN からの回復）。
+            var recovered = Guest(new Vector3(float.NaN, 0.5f, -7f), facing, pose, facing);
+            Assert.True(Run(recovered));
+            PatchedFrameUpdate(recovered);
+            AssertPosition(recovered.transform.position, pose.x, pose.y, pose.z);
+        }
+
+        // ホスト（isServer）では比較の前に本体へ流す（true）。本体はホストでは何も
+        // 書かない（書き込みは両方 !isServer が条件）ため、省ける状態の pose でも
+        // 書き込みは起こらない。省略判定は参加者のみ。
+        [Fact]
+        public void HostRunsTheNativeBodyBeforeAnyComparison()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            var host = Guest(pose, facing, pose, facing); // 参加者なら省ける状態
+            host.isServer = true;
+            Assert.True(Run(host));
+            int writes = host.transform.positionWriteLog.Count;
+            PatchedFrameUpdate(host);
+            PatchedFrameUpdate(host);
+            Assert.Equal(writes, host.transform.positionWriteLog.Count);
+            AssertPosition(host.transform.position, pose.x, pose.y, pose.z);
+            Assert.Equal(facing, host.transform.rotation);
+        }
+
+        // (4) 存在しない型名では TryPrepare は false を返し、例外を外へ出さない
+        // （警告1回でこの修正だけが外れて、残りの MOD は動き続ける）。ここで
+        // TryPrepare から例外が出れば、このテスト自体がその例外で落ちる。
+        [Fact]
+        public void AnUnresolvableTypeFailsPrepareWithASingleWarning()
+        {
+            Log.Warnings.Clear();
+            Assert.False(NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync_NotInThisGame"));
+            Assert.Single(Log.Warnings);
+            Assert.Contains("generic transform idle", Log.Warnings[0]);
+            Assert.False(NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync_NotInThisGame"));
+            Assert.Single(Log.Warnings); // 警告は最初の1回だけ
+            Log.Warnings.Clear();
+        }
+    }
 }
