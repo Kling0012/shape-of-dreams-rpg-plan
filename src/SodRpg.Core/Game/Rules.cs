@@ -416,7 +416,7 @@ namespace SodRpg.Core.Game
             string rarity = Content.RarityName((Rarity)trade.Rarity).ToString();
             return new GameEvent(EventKind.Info, Loc.T(
                 $"以前の鞄あふれ取引を回復しました：『{name}』（{rarity}）の夢のダスト {trade.EarnDust} は付与済みです。",
-                $"Recovered a legacy overflow trade: {trade.EarnDust} Dream Dust for \"{name}\" ({rarity}) has already been granted.", $"已恢复旧的背包溢出交易：“{trade.EarnDust}”（{name}）的梦境之尘 {rarity} 已经发放。"), (Rarity)trade.Rarity);
+                $"Recovered a legacy overflow trade: {trade.EarnDust} Dream Dust for \"{name}\" ({rarity}) has already been granted.", $"已恢复旧的背包溢出交易：{trade.EarnDust} 梦境之尘已作为“{name}”（{rarity}）的收益发放。"), (Rarity)trade.Rarity);
         }
 
         /// <summary>Legacy failed dust trades only. Fallback shards were capped at removal time; call after consuming a failed result.</summary>
@@ -838,7 +838,7 @@ namespace SodRpg.Core.Game
 
         public static GameEvent BuyUpgrade(Profile p, Upgrade u, bool inExpedition = true)
         {
-            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("工房は遠征の外でのみ使えます。", "The workshop is only available outside expeditions.", "工房只能在远征之外使用。"));
+            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("工房は遠征の外でのみ使えます。", "The workshop is only available outside expeditions.", "工坊只能在远征之外使用。"));
             var def = Workshop.Get(u);
             int lv = Workshop.Level(p, u);
             if (lv >= def.MaxLevel) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at max level.", "已无法继续强化。"));
@@ -848,7 +848,7 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, -cost.Shards);
             p.AddMaterial(Materials.Tuning, -cost.Tuning);
             p.Upgrades[u] = lv + 1;
-            return new GameEvent(EventKind.LevelUp, Loc.T($"工房で「{def.Name}」を解放しました（{lv + 1}/{def.MaxLevel}）。", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}", $"工房：已解放“{def.Name}”（{lv + 1}/{def.MaxLevel}）。"));
+            return new GameEvent(EventKind.LevelUp, Loc.T($"工房で「{def.Name}」を解放しました（{lv + 1}/{def.MaxLevel}）。", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}", $"工坊：已解放“{def.Name}”（{lv + 1}/{def.MaxLevel}）。"));
         }
 
         /// <summary>確保地点の出来事を使う（1回だけ）。</summary>
@@ -1381,7 +1381,7 @@ namespace SodRpg.Core.Game
         public static GameEvent RerollBounty(Profile p, int index, bool solo = false)
         {
             var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition.", "仅在远征中可用。"));
-            if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop).", "没有剩余的重掷次数（在工房解锁）。"));
+            if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop).", "没有剩余的重掷次数（在工坊解锁）。"));
             if (index < 0 || index >= run.Bounties.Count || run.Bounties[index].Done)
                 throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty.", "请选择未完成的委托。"));
             var rng = p.TakeRng();
@@ -1889,11 +1889,11 @@ namespace SodRpg.Core.Game
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
-            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled.", "上锁的遗物无法重掷。"));
-            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled.", "装备中的遗物无法重掷。"));
-            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は洗い直せません。", "Forbidden relics cannot be rerolled.", "禁忌化的遗物无法重掷。"));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled.", "上锁的遗物无法重洗。"));
+            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled.", "装备中的遗物无法重洗。"));
+            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は洗い直せません。", "Forbidden relics cannot be rerolled.", "禁忌化的遗物无法重洗。"));
             var (shards, tuning) = AffixRerollCost(r);
-            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.", "重掷费用无效。")); // 負の費用は支払いが加算になるので受け付けない
+            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.", "重洗费用无效。")); // 負の費用は支払いが加算になるので受け付けない
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed).", $"素材不足（碎片{shards}、调律石{tuning}）。"));
             int count = r.Affixes.Count;
@@ -1916,7 +1916,7 @@ namespace SodRpg.Core.Game
             string after = string.Join(sep, r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)));
             return new GameEvent(EventKind.Info, Loc.T(
                 $"「{r.PlainName}」の特性を洗い直しました：{string.Join(sep, before)} → {after}",
-                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}", $"重掷了“{r.PlainName}”的全部词条：{string.Join(sep, before)} → {after}"), r.Rarity);
+                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}", $"重洗了“{r.PlainName}”的全部词条：{string.Join(sep, before)} → {after}"), r.Rarity);
         }
 
         /// <summary>
