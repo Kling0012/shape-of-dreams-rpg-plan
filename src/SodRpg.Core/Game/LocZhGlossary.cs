@@ -83,6 +83,19 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // #951 の基本装備名・セット説明で繰り返し使う訳語（完全一致辞書への登録は不要）:
+        // Resonance / Resonant: 共鳴 → 共鸣 / Dreamer: 夢見 → 织梦者
+        // Oath: 誓い → 誓言 / Vow: 誓約 → 誓约 / Warden: 番人 → 守卫
+        // Deeproot: 深根 → 深根 / Boulder: 岩塊 → 岩块 / Tortoiseshell: 亀甲 → 龟甲
+        // Sunlit: 陽光 → 阳光 / Dawnlight・Dawnmist: 暁光・暁霧 → 晓光・晓雾
+        // Dusk: 黄昏 → 黄昏（織り・縫い・踏み・珠との複合名では「暮」）
+        // Seafoam: 海沫 → 海沫 / Whisper: 囁き → 低语 / Comet: 彗星 → 彗星
+        // Healer / Healing / Mender: 癒し手・癒し → 治愈者・治愈
+        // Fingerless Gloves / Mitts: 指抜き・指なし手袋 → 半指手套 / Wraps: 手巻き → 缠手
+        // Grips: 握り → 护手 / Knuckles: 拳当て → 拳套 / Greaves: 脛当て → 护胫
+        // Sabatons: 鉄靴・鉄鞋 → 铁靴 / Slippers: 上履き・室内履き → 便鞋
+        // Locket: ロケット → 吊坠盒 / Pendant: 垂飾り → 吊坠 / Brooch: ブローチ → 胸针
+        // Link: 連携 → 联动 / piece stage: 装着段階 → 件套阶段
         // #952 の基本装備・固有品で繰り返し使う訳語（名前の一部なので参照用）:
         // Hoarfrost / Rime: 霧氷 → 雾凇 / Remembrance・Nostalgia: 追憶 → 追忆
         // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
