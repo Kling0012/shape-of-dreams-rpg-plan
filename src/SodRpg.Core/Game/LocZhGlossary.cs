@@ -67,6 +67,42 @@ namespace SodRpg.Core.Game
         //部位の訳し分け: 手袋→手套、拳→拳甲、籠手・手甲→手甲、腕当て→护腕、手巻き→缠手、指→指套、
         // 指輪・指環→戒指・指环、長靴→长靴、鉄靴→铁靴、脛当て・鉄脛→胫甲、草履→草履、下駄→木屐、
         // 上履き→便鞋、鋲靴→钉鞋、歩み靴・追い足→疾行靴、ロケット→坠盒、首飾り→项链、飾り→坠饰
+        // 固有品・セット部位で繰り返し使う訳語（#955）。名前の一部なので辞書には登録しない。
+        // Tidecaller: 潮鳴り → 潮鸣
+        // Lampkeeper: 灯守 → 守灯
+        // Cinder / Embercoal: 残火・熾火・燃え殻 → 余烬
+        // Dusk: 黄昏 → 黄昏
+        // Winterbound: 冬枯れ → 凋冬
+        // Starsinger: 星詠み → 咏星
+        // Hunting Party: 狩猟団 → 狩猎团
+        // Bastion: 不落城 → 不落城
+        // Wildfire: 燎原 → 燎原
+        // Grove: 古森 → 古森
+        // Reverie: 夢想 → 梦想
+        // Phantom: 幻影 → 幻影
+        // Permafrost: 凍土 → 冻土
+        // Carnage: 修羅道 → 修罗
+        // Galedancer: 風舞 → 风舞
+        // Firmament: 天穹 → 天穹
+        // Nightstrike: 闇討ち → 暗袭
+        // Ashrunner / Ashrun: 灰走り → 灰行者（セット部位）・灰行（駆け靴）
+        // Healer: 施療 → 施疗
+        // Ironknight: 鉄騎 → 铁骑
+        // Eclipse: 蝕 → 蚀、日蝕 → 日蚀、月蝕 → 月蚀
+        // Thunderclap: 迅雷 → 迅雷
+        // Myriad: 万象 → 万象
+        // Dawnbreak: 払暁 → 破晓
+        // Icicrystal: 氷晶 → 冰晶
+        // Mistsimmer / Mistwater / Steammist: 霧湯・湯霧 → 雾汤
+        // Ashfall / Cinderfall: 灰降り・降り灰 → 落灰
+        // Eclipse-Rite: 蝕の儀 → 蚀仪
+        // Canticle: 聖歌 → 圣歌
+        // Holy-Ice: 聖氷 → 圣冰
+        // Crystal: 結晶 → 结晶
+        // Ward: 障壁 → 屏障、護り → 守护
+        // Bracers: 腕輪 → 护腕
+        // Locket: ロケット → 坠饰（複合名では「坠」）
+        // Greaves / Treads: 足甲・脚絆 → 胫甲
         // #961 で追加した主な用語（ボス・賞金首・部屋の予兆・実績・禁忌・エッセンス・家系）:
         // 攻撃力・魔力の高い方のX% → 攻击力与法术强度中较高一方的X%
         // 再発動までX秒かかる → 冷却X秒 / 予告 → 预警 / 障壁 → 护盾
