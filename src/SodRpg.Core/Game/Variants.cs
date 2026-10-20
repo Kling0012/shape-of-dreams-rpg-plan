@@ -88,208 +88,208 @@ namespace SodRpg.Core.Game
             new VariantDef
             {
                 Id = "var.corroding_hound", MonsterType = "Mon_Forest_Hound",
-                Name = new Txt("蝕む猟犬", "Corroding Hound", "腐蚀猎犬"),
-                Description = new Txt("素早く走り回り、噛みつかれると防御が削られる。距離を取っても追いつかれる。", "Fast and relentless; its bites strip your armor.", "行动迅捷且穷追不舍，被咬中会削减防御。即使拉开距离也会被追上。"),
+                Name = new Txt("蝕む猟犬", "Corroding Hound"),
+                Description = new Txt("素早く走り回り、噛みつかれると防御が削られる。距離を取っても追いつかれる。", "Fast and relentless; its bites strip your armor."),
                 Stats = MonstersBalance.CreateCorrodingHoundStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.45f, G = 0.75f, B = 0.3f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.mirror_scarab", MonsterType = "Mon_Forest_Scarab",
-                Name = new Txt("鏡殻のスカラベ", "Mirror Scarab", "镜壳圣甲虫"),
-                Description = new Txt("鏡のような殻が強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win.", "镜面般的甲壳会化解过重的一击。以多次小伤害消耗是捷径。"),
+                Name = new Txt("鏡殻のスカラベ", "Mirror Scarab"),
+                Description = new Txt("鏡のような殻が強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win."),
                 Stats = MonstersBalance.CreateMirrorScarabStats(),
                 Traits = VariantTrait.HitCap, R = 0.85f, G = 0.9f, B = 1f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.elder_treant", MonsterType = "Mon_Forest_Treant",
-                Name = new Txt("古老の樹人", "Elder Treant", "古老树人"),
-                Description = new Txt($"分厚い樹皮の障壁をまとい、旅人の攻撃に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded by thick bark that thorns the travelers who attack it. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning.", $"身披厚实树皮织成的障壁，会向攻击它的旅人回以棘刺。畏火：受到火元素伤害，或处于燃烧状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("古老の樹人", "Elder Treant"),
+                Description = new Txt($"分厚い樹皮の障壁をまとい、旅人の攻撃に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded by thick bark that thorns the travelers who attack it. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning."),
                 Stats = MonstersBalance.CreateElderTreantStats(),
                 Affixes = NightmareAffix.Warded | NightmareAffix.Thorned, Tags = VariantTag.WeakFire, R = 0.25f, G = 0.55f, B = 0.25f, Scale = 1.3f,
             },
             new VariantDef
             {
                 Id = "var.blood_bat", MonsterType = "Mon_DarkCave_CaveBat",
-                Name = new Txt("血吸い蝙蝠", "Bloodsucker Bat", "吸血蝙蝠"),
-                Description = new Txt("噛みつくたびに傷が癒える。放っておくと倒しにくくなる。", "Heals with every bite; deal with it quickly.", "每次撕咬都会治愈自身伤口。放任不管会越来越难对付。"),
+                Name = new Txt("血吸い蝙蝠", "Bloodsucker Bat"),
+                Description = new Txt("噛みつくたびに傷が癒える。放っておくと倒しにくくなる。", "Heals with every bite; deal with it quickly."),
                 Stats = MonstersBalance.CreateBloodBatStats(),
                 Affixes = NightmareAffix.Ravenous, R = 0.9f, G = 0.2f, B = 0.25f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.abyss_oppressor", MonsterType = "Mon_DarkCave_Oppressor",
-                Name = new Txt("深淵の圧制者", "Abyssal Oppressor", "深渊压迫者"),
-                Description = new Txt($"障壁に守られ、重い一撃で防御を砕く。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded, and its heavy blows shatter your armor. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield.", $"以障壁护身，用沉重一击粉碎防御。破盾：对持有障壁目标的伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%，攻击者持有障壁期间承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("深淵の圧制者", "Abyssal Oppressor"),
+                Description = new Txt($"障壁に守られ、重い一撃で防御を砕く。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded, and its heavy blows shatter your armor. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield."),
                 Stats = MonstersBalance.CreateAbyssOppressorStats(),
                 Affixes = NightmareAffix.Sundering | NightmareAffix.Warded, Tags = VariantTag.ShieldBreaker, R = 0.45f, G = 0.2f, B = 0.6f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.hollow_gunner", MonsterType = "Mon_Despair_WretchedArtillery",
-                Name = new Txt("虚ろな砲手", "Hollow Gunner", "空洞炮手"),
-                Description = new Txt($"遠くから重い砲撃を撃ち込み、障壁で身を守る。記憶を弾く：記憶のダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。通常攻撃は軽減しない。", $"Shelling from afar behind a barrier. Warded against memories: reduces memory damage by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; basic attacks are unaffected.", $"从远处倾泻沉重炮火，并以障壁自守。抵御记忆：记忆伤害降低{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%。通常攻击不受影响。"),
+                Name = new Txt("虚ろな砲手", "Hollow Gunner"),
+                Description = new Txt($"遠くから重い砲撃を撃ち込み、障壁で身を守る。記憶を弾く：記憶のダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。通常攻撃は軽減しない。", $"Shelling from afar behind a barrier. Warded against memories: reduces memory damage by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; basic attacks are unaffected."),
                 Stats = MonstersBalance.CreateHollowGunnerStats(),
                 Affixes = NightmareAffix.Warded, Tags = VariantTag.Spellward, R = 0.6f, G = 0.35f, B = 0.9f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.blazing_martyr", MonsterType = "Mon_Despair_UnstableRat",
-                Name = new Txt("焔の殉教者", "Blazing Martyr", "烈焰殉道者"),
-                Description = new Txt($"倒れると大きく爆ぜ、近くにいた者を最大HPの{DeathBurstPct}%ほど焼く（夢の圧力・潜行で増減）。とどめは離れて。", $"Explodes on death for about {DeathBurstPct}% of nearby travelers' max HP (scaled by dream pressure and delve); finish it from a distance.", $"倒下时猛烈炸裂，对附近旅人造成约其最大生命{DeathBurstPct}%的灼烧伤害（受梦境之压与下潜影响增减）。补刀请保持距离。"),
+                Name = new Txt("焔の殉教者", "Blazing Martyr"),
+                Description = new Txt($"倒れると大きく爆ぜ、近くにいた者を最大HPの{DeathBurstPct}%ほど焼く（夢の圧力・潜行で増減）。とどめは離れて。", $"Explodes on death for about {DeathBurstPct}% of nearby travelers' max HP (scaled by dream pressure and delve); finish it from a distance."),
                 Stats = MonstersBalance.CreateBlazingMartyrStats(),
                 Traits = VariantTrait.DeathBurst, R = 1f, G = 0.55f, B = 0.15f, Scale = 1.3f,
             },
             new VariantDef
             {
                 Id = "var.ink_scholar", MonsterType = "Mon_Ink_GhostBlade",
-                Name = new Txt("吸命の学徒", "Lifedrain Scholar", "吸命学者"),
-                Description = new Txt("斬りつけた分だけ命を吸う。長引くほど不利になる。", "Drains life with each cut; the longer the fight, the worse.", "每次斩击都会汲取生命。战斗拖得越久越不利。"),
+                Name = new Txt("吸命の学徒", "Lifedrain Scholar"),
+                Description = new Txt("斬りつけた分だけ命を吸う。長引くほど不利になる。", "Drains life with each cut; the longer the fight, the worse."),
                 Stats = MonstersBalance.CreateInkScholarStats(),
                 Affixes = NightmareAffix.Ravenous, R = 0.35f, G = 0.2f, B = 0.45f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.thousand_arrows", MonsterType = "Mon_Ink_Archer",
-                Name = new Txt("千本射ち", "Thousand Arrows", "千箭齐发"),
-                Description = new Txt("矢継ぎ早に射かけ、当たるたびに防御を削る。", "Rapid volleys that strip your armor.", "连珠箭雨，每次命中削减防御。"),
+                Name = new Txt("千本射ち", "Thousand Arrows"),
+                Description = new Txt("矢継ぎ早に射かけ、当たるたびに防御を削る。", "Rapid volleys that strip your armor."),
                 Stats = MonstersBalance.CreateThousandArrowsStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.3f, G = 0.45f, B = 0.8f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.molten_core", MonsterType = "Mon_LavaLand_FireElemental",
-                Name = new Txt("熔けた核", "Molten Core", "熔核"),
-                Description = new Txt($"触れれば焼け、倒れれば最大HPの{DeathBurstPct}%ほどの爆発（夢の圧力・潜行で増減）を起こす。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Burns those who strike it, and bursts for about {DeathBurstPct}% of nearby travelers' max HP when it falls (scaled by dream pressure and delve). Weak to cold: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from cold damage or while chilled.", $"触碰即遭灼烧，倒下时引发约附近旅人最大生命{DeathBurstPct}%的爆炸（受梦境之压与下潜影响增减）。畏寒：受到冰元素伤害，或处于冰冻状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("熔けた核", "Molten Core"),
+                Description = new Txt($"触れれば焼け、倒れれば最大HPの{DeathBurstPct}%ほどの爆発（夢の圧力・潜行で増減）を起こす。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Burns those who strike it, and bursts for about {DeathBurstPct}% of nearby travelers' max HP when it falls (scaled by dream pressure and delve). Weak to cold: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from cold damage or while chilled."),
                 Stats = MonstersBalance.CreateMoltenCoreStats(),
                 Affixes = NightmareAffix.Thorned, Traits = VariantTrait.DeathBurst, Tags = VariantTag.WeakCold, R = 1f, G = 0.4f, B = 0.1f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.star_stalker", MonsterType = "Mon_Sky_Baam",
-                Name = new Txt("星追いの影", "Star Stalker", "逐星之影"),
-                Description = new Txt("影のように素早く迫り、防御を削り取る。", "Closes in like a shadow and strips your armor.", "如影般迅速逼近，削除防御。"),
+                Name = new Txt("星追いの影", "Star Stalker"),
+                Description = new Txt("影のように素早く迫り、防御を削り取る。", "Closes in like a shadow and strips your armor."),
                 Stats = MonstersBalance.CreateStarStalkerStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.25f, G = 0.25f, B = 0.4f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.frost_alpha", MonsterType = "Mon_SnowMountain_SnowWolf",
-                Name = new Txt("氷原の群れ長", "Frost Alpha", "冰原头狼"),
-                Description = new Txt("群れを率いる大きな狼。氷の障壁をまとっている。", "A pack leader wrapped in an icy barrier.", "率领狼群的巨狼。身覆冰霜障壁。"),
+                Name = new Txt("氷原の群れ長", "Frost Alpha"),
+                Description = new Txt("群れを率いる大きな狼。氷の障壁をまとっている。", "A pack leader wrapped in an icy barrier."),
                 Stats = MonstersBalance.CreateFrostAlphaStats(),
                 Affixes = NightmareAffix.Warded, R = 0.6f, G = 0.85f, B = 1f, Scale = 1.35f,
             },
             new VariantDef
             {
                 Id = "var.shard_devourer", MonsterType = "Mon_GoldenLizard_ElusiveLizard",
-                Name = new Txt("欠片喰らい", "Shard Devourer", "碎片吞噬者"),
-                Description = new Txt("夢の欠片を腹いっぱいに溜め込んだトカゲ。逃げ足は速いが、倒せば欠片がたくさん出る。", "A lizard gorged on dream shards. Catch it for a big payout.", "肚中塞满梦境碎片的蜥蜴。逃跑迅速，但击败后可获得大量碎片。"),
+                Name = new Txt("欠片喰らい", "Shard Devourer"),
+                Description = new Txt("夢の欠片を腹いっぱいに溜め込んだトカゲ。逃げ足は速いが、倒せば欠片がたくさん出る。", "A lizard gorged on dream shards. Catch it for a big payout."),
                 Stats = MonstersBalance.CreateShardDevourerStats(),
                 R = 1f, G = 0.85f, B = 0.3f, Scale = 1.2f, ShardBonusPct = DevourerShardBonusPct,
             },
             new VariantDef
             {
                 Id = "var.mist_spitter", MonsterType = "Mon_Forest_SpiderSpitter",
-                Name = new Txt("霞吐き蜘蛛", "Mist Spitter", "吐雾蜘蛛"),
-                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。吐き出しと後退を避けて{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内へ。", $"Reduces hits from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%; dodge its spit and backdash to close within {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m.", $"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以外的攻击伤害降低{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。躲避吐息与后跳，进入{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内。"),
+                Name = new Txt("霞吐き蜘蛛", "Mist Spitter"),
+                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。吐き出しと後退を避けて{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内へ。", $"Reduces hits from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%; dodge its spit and backdash to close within {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m."),
                 Stats = MonstersBalance.CreateMistSpitterStats(),
                 Affixes = NightmareAffix.Veiled, R = 0.65f, G = 0.85f, B = 0.7f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.brood_warden", MonsterType = "Mon_Forest_SpiderWarrior",
-                Name = new Txt("群巣の番蜘蛛", "Brood Warden", "巢群守卫蛛"),
-                Description = new Txt($"同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内の活動中の味方で被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後一度だけ最寄りの非ボス味方にHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（重複不可）。召喚獣を狩る：召喚獣へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%、召喚獣からの被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"An awake ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section grants {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction. After a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning, once shields the nearest nonboss ally for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s (nonstacking). Hunts summons: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to summons but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from summon damage.", $"同区划{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m内有活动的同伴时，承伤-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。预告{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒后，仅一次为最近的非首领同伴附加生命{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%的障壁，持续{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（不可叠加）。猎杀召唤物：对召唤物伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%，受召唤物伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("群巣の番蜘蛛", "Brood Warden"),
+                Description = new Txt($"同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内の活動中の味方で被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後一度だけ最寄りの非ボス味方にHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（重複不可）。召喚獣を狩る：召喚獣へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%、召喚獣からの被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"An awake ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section grants {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction. After a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning, once shields the nearest nonboss ally for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s (nonstacking). Hunts summons: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to summons but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from summon damage."),
                 Stats = MonstersBalance.CreateBroodWardenStats(),
                 Affixes = NightmareAffix.Packbound | NightmareAffix.Beacon, Tags = VariantTag.SummonHunter, R = 0.45f, G = 0.7f, B = 0.25f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.hollow_elemental", MonsterType = "Mon_DarkCave_DarkElemental",
-                Name = new Txt("空洞の影精", "Hollow Shade", "空洞幽影"),
-                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m未満の攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。光に弱い：光のダメージ、または光を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits from within {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. Weak to light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage or while illuminated.", $"削减来自不足{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m处攻击的{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%伤害。畏光：受到光元素伤害，或处于光照状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("空洞の影精", "Hollow Shade"),
+                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m未満の攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。光に弱い：光のダメージ、または光を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits from within {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. Weak to light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage or while illuminated."),
                 Stats = MonstersBalance.CreateHollowElementalStats(),
                 Affixes = NightmareAffix.Hollow, Tags = VariantTag.WeakLight, R = 0.4f, G = 0.3f, B = 0.7f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.flicker_olm", MonsterType = "Mon_DarkCave_NightOlm",
-                Name = new Txt("明滅する洞竜", "Flicker Olm", "明灭洞螈"),
-                Description = new Txt($"最初の{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒は無防備、以後{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減と{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間無防備。光{MonsterBehavior.LightEaterMinStacks}以上で脆い：光のダメージで被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%（スタックは消さない）。", $"Open for the first {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s, then cycles {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s of {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction and {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s open. Frail at {MonsterBehavior.LightEaterMinStacks}+ light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage while carrying {MonsterBehavior.LightEaterMinStacks} or more light stacks (never consumed).", $"最初{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒毫无防备，随后循环{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%减伤与{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒无防备。畏光（{MonsterBehavior.LightEaterMinStacks}层以上）：受光元素伤害时承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%（持有{MonsterBehavior.LightEaterMinStacks}层以上光时，层数从不会被消耗）。"),
+                Name = new Txt("明滅する洞竜", "Flicker Olm"),
+                Description = new Txt($"最初の{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒は無防備、以後{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減と{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間無防備。光{MonsterBehavior.LightEaterMinStacks}以上で脆い：光のダメージで被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%（スタックは消さない）。", $"Open for the first {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s, then cycles {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s of {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction and {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s open. Frail at {MonsterBehavior.LightEaterMinStacks}+ light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage while carrying {MonsterBehavior.LightEaterMinStacks} or more light stacks (never consumed)."),
                 Stats = MonstersBalance.CreateFlickerOlmStats(),
                 Affixes = NightmareAffix.Pulsing, Tags = VariantTag.LightEater, R = 0.3f, G = 0.8f, B = 0.8f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.timorous_displacer", MonsterType = "Mon_Despair_Displacer",
-                Name = new Txt("臆病な跳躍獣", "Timorous Displacer", "胆小的位移兽"),
-                Description = new Txt($"未被弾時は移動+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%、被弾後{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒は-{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%。一撃を当てて転移先を追う。", $"Moves {MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}% faster while unhit, but {MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}% slower for {MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}s after damage. Tag it, then pursue through its blink.", $"未受击时移动速度+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%，受击后{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%的减速持续{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒。先命中一击，再追击它的瞬移。"),
+                Name = new Txt("臆病な跳躍獣", "Timorous Displacer"),
+                Description = new Txt($"未被弾時は移動+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%、被弾後{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒は-{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%。一撃を当てて転移先を追う。", $"Moves {MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}% faster while unhit, but {MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}% slower for {MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}s after damage. Tag it, then pursue through its blink."),
                 Stats = MonstersBalance.CreateTimorousDisplacerStats(),
                 Affixes = NightmareAffix.Skittish, R = 0.7f, G = 0.35f, B = 0.85f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.overreaching_bug", MonsterType = "Mon_Despair_DreadBug",
-                Name = new Txt("大振りの恐虫", "Overreaching Dreadbug", "大开大合的恐虫"),
-                Description = new Txt($"詠唱中は{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減、攻撃発射後{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒は被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%。跳躍や打撃を避けて反撃。", $"Reduces damage by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% while channeling; takes {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% more for {MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}s after firing. Dodge its leap or strike, then punish recovery.", $"咏唱中减伤{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%，攻击发出后{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%的额外承伤持续{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒。躲避它的扑击或打击，再惩罚其后摇。"),
+                Name = new Txt("大振りの恐虫", "Overreaching Dreadbug"),
+                Description = new Txt($"詠唱中は{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減、攻撃発射後{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒は被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%。跳躍や打撃を避けて反撃。", $"Reduces damage by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% while channeling; takes {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% more for {MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}s after firing. Dodge its leap or strike, then punish recovery."),
                 Stats = MonstersBalance.CreateOverreachingBugStats(),
                 Affixes = NightmareAffix.Committed, R = 0.8f, G = 0.4f, B = 0.45f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.last_thaw", MonsterType = "Mon_SnowMountain_IceElemental",
-                Name = new Txt("薄氷の核", "Last Thaw", "薄冰之核"),
-                Description = new Txt($"HP{MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}%以下で{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後、一度だけHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒。予告中に集中攻撃するか殻を割る。", $"At {MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}% HP, a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning precedes a once-per-life {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP shield for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s. Save burst for the warning or break its shell.", $"生命不高于{MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}%时，经{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒预告后，仅此一次获得生命{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%的障壁，持续{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒。在预告期间集中攻击，或击碎它的外壳。"),
+                Name = new Txt("薄氷の核", "Last Thaw"),
+                Description = new Txt($"HP{MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}%以下で{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後、一度だけHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒。予告中に集中攻撃するか殻を割る。", $"At {MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}% HP, a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning precedes a once-per-life {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP shield for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s. Save burst for the warning or break its shell."),
                 Stats = MonstersBalance.CreateLastThawStats(),
                 Affixes = NightmareAffix.LastStand, R = 0.7f, G = 0.9f, B = 1f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.rime_sentinel", MonsterType = "Mon_SnowMountain_VikingWarrior",
-                Name = new Txt("霜盾の番兵", "Rime Sentinel", "霜盾哨兵"),
-                Description = new Txt($"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度からの被ダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。記憶のダメージは通常どおり。", $"Reduces damage from its frontal {MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}-degree cone by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; memory damage passes through normally.", $"削减来自正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度扇形区域的{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%伤害。对非记忆伤害坚甲：非记忆伤害（通常攻击、固有效果、机关等）降低{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%。记忆伤害照常生效。"),
+                Name = new Txt("霜盾の番兵", "Rime Sentinel"),
+                Description = new Txt($"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度からの被ダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。記憶のダメージは通常どおり。", $"Reduces damage from its frontal {MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}-degree cone by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; memory damage passes through normally."),
                 Stats = MonstersBalance.CreateRimeSentinelStats(),
                 Affixes = NightmareAffix.Facing, Tags = VariantTag.Armored, R = 0.45f, G = 0.7f, B = 0.95f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.furnace_ram", MonsterType = "Mon_LavaLand_Magmadon",
-                Name = new Txt("炉殻の突進獣", "Furnace Ram", "炉壳突进兽"),
-                Description = new Txt($"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度と詠唱中は{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減（合計上限{MonsterBehavior.Number((decimal)MonsterBehavior.MaxGuardReduction * 100m)}%）。発射後{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒は被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%が優先。突進を横へ避けて反撃。", $"Frontal {MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}-degree hits and channeling each grant {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction, capped at {MonsterBehavior.Number((decimal)MonsterBehavior.MaxGuardReduction * 100m)}%. After firing, {MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}s of {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% extra damage overrides guards. Flank the charge and punish recovery.", $"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度与咏唱中各提供{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%减伤（合计上限{MonsterBehavior.Number((decimal)MonsterBehavior.MaxGuardReduction * 100m)}%）。发射后{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒内{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%的额外承伤优先生效。横向躲避冲锋，并惩罚其后摇。"),
+                Name = new Txt("炉殻の突進獣", "Furnace Ram"),
+                Description = new Txt($"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度と詠唱中は{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減（合計上限{MonsterBehavior.Number((decimal)MonsterBehavior.MaxGuardReduction * 100m)}%）。発射後{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒は被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%が優先。突進を横へ避けて反撃。", $"Frontal {MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}-degree hits and channeling each grant {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% reduction, capped at {MonsterBehavior.Number((decimal)MonsterBehavior.MaxGuardReduction * 100m)}%. After firing, {MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}s of {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% extra damage overrides guards. Flank the charge and punish recovery."),
                 Stats = MonstersBalance.CreateFurnaceRamStats(),
                 Affixes = NightmareAffix.Facing | NightmareAffix.Committed, R = 1f, G = 0.45f, B = 0.2f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.ember_mender", MonsterType = "Mon_LavaLand_InfernoSpider",
-                Name = new Txt("熾火の繕い蜘蛛", "Ember Mender", "余烬修补蛛"),
-                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}秒無傷なら毎秒HP{MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}%回復、一生で{MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}%まで。満タンでは消費しない。溶岩跳躍の合間に当て続ける。", $"After {MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}s without damage heals {MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}% HP per second, capped at {MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}% per life with no budget spent at full HP. Keep landing hits between lava jumps.", $"{MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}秒未受伤害后，每秒回复生命{MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}%，一生累计不超过{MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}%，满生命时不消耗额度。在熔岩跳跃的间隙持续命中它。"),
+                Name = new Txt("熾火の繕い蜘蛛", "Ember Mender"),
+                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}秒無傷なら毎秒HP{MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}%回復、一生で{MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}%まで。満タンでは消費しない。溶岩跳躍の合間に当て続ける。", $"After {MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}s without damage heals {MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}% HP per second, capped at {MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}% per life with no budget spent at full HP. Keep landing hits between lava jumps."),
                 Stats = MonstersBalance.CreateEmberMenderStats(),
                 Affixes = NightmareAffix.Recuperating, R = 0.95f, G = 0.65f, B = 0.3f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.mist_tiger", MonsterType = "Mon_Ink_Tiger",
-                Name = new Txt("霞走りの虎", "Mist Tiger", "雾行虎"),
-                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。移動+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%、被弾後{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒は-{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%。光に弱い：光のダメージ、または光を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%; moves +{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%, then -{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}% for {MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}s after damage. Weak to light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage or while illuminated.", $"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以外的攻击伤害降低{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%；移动+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%，受击后{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%的减速持续{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒。畏光：受到光元素伤害，或处于光照状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("霞走りの虎", "Mist Tiger"),
+                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。移動+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%、被弾後{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒は-{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%。光に弱い：光のダメージ、または光を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%; moves +{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%, then -{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}% for {MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}s after damage. Weak to light: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from light damage or while illuminated."),
                 Stats = MonstersBalance.CreateMistTigerStats(),
                 Affixes = NightmareAffix.Veiled | NightmareAffix.Skittish, Tags = VariantTag.WeakLight, R = 0.65f, G = 0.65f, B = 0.85f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.lantern_seed", MonsterType = "Mon_Sky_StarSeed",
-                Name = new Txt("灯籠の星種", "Lantern Seed", "灯笼星种"),
-                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m未満の攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後、一度だけ同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内の最寄りの活動中の非ボス味方へHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（重複不可）。闇に弱い：闇のダメージ、または闇を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits within {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. After a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning, once shields the nearest awake nonboss ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s (nonstacking). Weak to dark: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from dark damage or while darkened.", $"削减来自不足{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m处攻击的{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%伤害。经{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒预告后，仅一次为同区划{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m内最近的活动非首领同伴附加生命{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%的障壁，持续{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（不可叠加）。畏暗：受到暗元素伤害，或处于暗影状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("灯籠の星種", "Lantern Seed"),
+                Description = new Txt($"{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m未満の攻撃を{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%軽減。{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後、一度だけ同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内の最寄りの活動中の非ボス味方へHP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒（重複不可）。闇に弱い：闇のダメージ、または闇を浴びている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Reduces hits within {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m by {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%. After a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning, once shields the nearest awake nonboss ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s (nonstacking). Weak to dark: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from dark damage or while darkened."),
                 Stats = MonstersBalance.CreateLanternSeedStats(),
                 Affixes = NightmareAffix.Beacon | NightmareAffix.Hollow, Tags = VariantTag.WeakDark, R = 1f, G = 0.85f, B = 0.5f, Scale = 1.05f,
             },
             new VariantDef
             {
                 Id = "var.eclipse_demon", MonsterType = "Mon_Forest_BossDemon",
-                Name = new Txt("月蝕の森魔", "Eclipse Demon", "月蚀森魔"),
-                Description = new Txt($"最初の{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒は無防備、以後{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒守り・{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒無防備。ボスの軽減上限{MonsterBehavior.Number((decimal)MonsterBehavior.BossGuardReduction * 100m)}%。HP{MonsterBehavior.Number((decimal)MonsterBehavior.FirstPhaseHealthRatio * 100m)}%と{MonsterBehavior.Number((decimal)MonsterBehavior.SecondPhaseHealthRatio * 100m)}%を下回ると{MonsterBehavior.Number((decimal)MonsterBehavior.PhaseOpeningSeconds)}秒間被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%が優先。攻撃を避け、節目に集中攻撃。", $"Initially open for {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s, then cycles {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s guarded and {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s open; boss reduction caps at {MonsterBehavior.Number((decimal)MonsterBehavior.BossGuardReduction * 100m)}%. Crossing {MonsterBehavior.Number((decimal)MonsterBehavior.FirstPhaseHealthRatio * 100m)}% and {MonsterBehavior.Number((decimal)MonsterBehavior.SecondPhaseHealthRatio * 100m)}% HP overrides guards with {MonsterBehavior.Number((decimal)MonsterBehavior.PhaseOpeningSeconds)}s of {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% extra damage. Bank burst for these phases and evade its attacks.", $"最初{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒毫无防备，随后循环{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒有守备与{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒无防备；首领减伤上限{MonsterBehavior.Number((decimal)MonsterBehavior.BossGuardReduction * 100m)}%。生命跌破{MonsterBehavior.Number((decimal)MonsterBehavior.FirstPhaseHealthRatio * 100m)}%与{MonsterBehavior.Number((decimal)MonsterBehavior.SecondPhaseHealthRatio * 100m)}%时，{MonsterBehavior.Number((decimal)MonsterBehavior.PhaseOpeningSeconds)}秒的{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%额外承伤优先生效。保留爆发应对这些阶段，并躲避它的攻击。"),
+                Name = new Txt("月蝕の森魔", "Eclipse Demon"),
+                Description = new Txt($"最初の{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒は無防備、以後{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒守り・{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒無防備。ボスの軽減上限{MonsterBehavior.Number((decimal)MonsterBehavior.BossGuardReduction * 100m)}%。HP{MonsterBehavior.Number((decimal)MonsterBehavior.FirstPhaseHealthRatio * 100m)}%と{MonsterBehavior.Number((decimal)MonsterBehavior.SecondPhaseHealthRatio * 100m)}%を下回ると{MonsterBehavior.Number((decimal)MonsterBehavior.PhaseOpeningSeconds)}秒間被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%が優先。攻撃を避け、節目に集中攻撃。", $"Initially open for {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s, then cycles {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s guarded and {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s open; boss reduction caps at {MonsterBehavior.Number((decimal)MonsterBehavior.BossGuardReduction * 100m)}%. Crossing {MonsterBehavior.Number((decimal)MonsterBehavior.FirstPhaseHealthRatio * 100m)}% and {MonsterBehavior.Number((decimal)MonsterBehavior.SecondPhaseHealthRatio * 100m)}% HP overrides guards with {MonsterBehavior.Number((decimal)MonsterBehavior.PhaseOpeningSeconds)}s of {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% extra damage. Bank burst for these phases and evade its attacks."),
                 Stats = MonstersBalance.CreateEclipseDemonStats(),
                 Affixes = NightmareAffix.Pulsing, Traits = VariantTrait.PhaseOpening,
                 R = 0.55f, G = 0.3f, B = 0.75f, Scale = 1.2f,
@@ -299,32 +299,32 @@ namespace SodRpg.Core.Game
             new VariantDef
             {
                 Id = "var.rust_scavenger", MonsterType = "Mon_SnowMountain_Scavenger",
-                Name = new Txt("錆の漁り手", "Rust Scavenger", "锈蚀拾荒者"),
-                Description = new Txt($"雪原で拾った鉄屑を鎧のように纏う漁り手。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A scavenger wearing the scrap iron it collects. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning.", $"身披在雪原拾来的铁屑作为铠甲的拾荒者。畏火：受到火元素伤害，或处于燃烧状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("錆の漁り手", "Rust Scavenger"),
+                Description = new Txt($"雪原で拾った鉄屑を鎧のように纏う漁り手。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A scavenger wearing the scrap iron it collects. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning."),
                 Stats = MonstersBalance.CreateRustScavengerStats(),
                 Tags = VariantTag.WeakFire, R = 0.8f, G = 0.55f, B = 0.35f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.broodfly", MonsterType = "Mon_Despair_ParalyticFly",
-                Name = new Txt("巣食う生蠅", "Brood-Parasite Fly", "巢寄生蝇"),
-                Description = new Txt($"連れの獣に卵を産みつける生蠅。召喚獣を狩る：召喚獣へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%、召喚獣からの被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A fly that lays its eggs in companion beasts. Hunts summons: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to summons but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from summon damage.", $"向同伴野兽产卵的蝇。猎杀召唤物：对召唤物伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%，受召唤物伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("巣食う生蠅", "Brood-Parasite Fly"),
+                Description = new Txt($"連れの獣に卵を産みつける生蠅。召喚獣を狩る：召喚獣へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%、召喚獣からの被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A fly that lays its eggs in companion beasts. Hunts summons: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to summons but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from summon damage."),
                 Stats = MonstersBalance.CreateBroodflyStats(),
                 Tags = VariantTag.SummonHunter, R = 0.6f, G = 0.85f, B = 0.4f, Scale = 1.05f,
             },
             new VariantDef
             {
                 Id = "var.stardust_shell", MonsterType = "Mon_Sky_StellaMatter",
-                Name = new Txt("星屑の殻", "Stardust Shell", "星屑之壳"),
-                Description = new Txt($"星の欠片が固まった結晶の塊。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。記憶のダメージは通常どおり。", $"A mass of fused star fragments. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; memory damage passes through normally.", $"星星碎片熔结而成的结晶块。对非记忆伤害坚甲：非记忆伤害（通常攻击、固有效果、机关等）降低{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%。记忆伤害照常生效。"),
+                Name = new Txt("星屑の殻", "Stardust Shell"),
+                Description = new Txt($"星の欠片が固まった結晶の塊。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。記憶のダメージは通常どおり。", $"A mass of fused star fragments. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; memory damage passes through normally."),
                 Stats = MonstersBalance.CreateStardustShellStats(),
                 Tags = VariantTag.Armored, R = 0.75f, G = 0.8f, B = 1f, Scale = 1.1f,
             },
             new VariantDef
             {
                 Id = "var.web_ripper", MonsterType = "Mon_DarkCave_CaveSpider",
-                Name = new Txt("帷を裂く蜘蛛", "Web-Rending Spider", "裂网蜘蛛"),
-                Description = new Txt($"粘りの糸で障壁を引き裂く洞窟蜘蛛。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A cave spider whose sticky web tears barriers apart. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield.", $"以黏丝撕裂障壁的洞窟蜘蛛。破盾：对持有障壁目标的伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%，攻击者持有障壁期间承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
+                Name = new Txt("帷を裂く蜘蛛", "Web-Rending Spider"),
+                Description = new Txt($"粘りの糸で障壁を引き裂く洞窟蜘蛛。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"A cave spider whose sticky web tears barriers apart. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield."),
                 Stats = MonstersBalance.CreateWebRipperStats(),
                 Tags = VariantTag.ShieldBreaker, R = 0.75f, G = 0.65f, B = 0.9f, Scale = 1.15f,
             },
@@ -370,22 +370,22 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>頭上の名札。例：「夢の変種・蝕む猟犬」。</summary>
-        public static string Label(VariantDef v) => v == null ? "" : Loc.T("夢の変種・", "Dream Variant: ", "梦之变种·") + v.Name;
+        public static string Label(VariantDef v) => v == null ? "" : Loc.T("夢の変種・", "Dream Variant: ") + v.Name;
 
         /// <summary>性質の短い名前（HUD の区画の一行知らせに並べる）。両言語で空でない。</summary>
         public static string TagNotice(VariantTag tag)
         {
             switch (tag)
             {
-                case VariantTag.WeakFire: return Loc.T("火に弱い", "fire-weak", "畏火");
-                case VariantTag.WeakCold: return Loc.T("冷気に弱い", "cold-weak", "畏寒");
-                case VariantTag.WeakLight: return Loc.T("光に弱い", "light-weak", "畏光");
-                case VariantTag.WeakDark: return Loc.T("闇に弱い", "dark-weak", "畏暗");
-                case VariantTag.ShieldBreaker: return Loc.T("障壁を割る", "shield-breaking", "破盾");
-                case VariantTag.SummonHunter: return Loc.T("召喚獣を狩る", "summon-hunting", "猎杀召唤物");
-                case VariantTag.LightEater: return Loc.T($"光{MonsterBehavior.LightEaterMinStacks}以上で脆い", $"light-frail ({MonsterBehavior.LightEaterMinStacks}+)", $"光{MonsterBehavior.LightEaterMinStacks}层以上变脆");
-                case VariantTag.Armored: return Loc.T("記憶以外に堅い", "non-memory-armored", "非记忆坚甲");
-                case VariantTag.Spellward: return Loc.T("記憶を弾く", "memory-warded", "抵御记忆");
+                case VariantTag.WeakFire: return Loc.T("火に弱い", "fire-weak");
+                case VariantTag.WeakCold: return Loc.T("冷気に弱い", "cold-weak");
+                case VariantTag.WeakLight: return Loc.T("光に弱い", "light-weak");
+                case VariantTag.WeakDark: return Loc.T("闇に弱い", "dark-weak");
+                case VariantTag.ShieldBreaker: return Loc.T("障壁を割る", "shield-breaking");
+                case VariantTag.SummonHunter: return Loc.T("召喚獣を狩る", "summon-hunting");
+                case VariantTag.LightEater: return Loc.T($"光{MonsterBehavior.LightEaterMinStacks}以上で脆い", $"light-frail ({MonsterBehavior.LightEaterMinStacks}+)");
+                case VariantTag.Armored: return Loc.T("記憶以外に堅い", "non-memory-armored");
+                case VariantTag.Spellward: return Loc.T("記憶を弾く", "memory-warded");
                 default: return "";
             }
         }
@@ -400,8 +400,8 @@ namespace SodRpg.Core.Game
                 var tag = (VariantTag)bit;
                 if ((tags & tag) != 0) parts.Add(TagNotice(tag));
             }
-            return Loc.T("この区画：", "This section: ", "本区划：") + string.Join(Loc.T("・", ", ", "、"), parts)
-                + Loc.T("敵がいる", " enemies", "的敌人");
+            return Loc.T("この区画：", "This section: ") + string.Join(Loc.T("・", ", "), parts)
+                + Loc.T("敵がいる", " enemies");
         }
 
         /// <summary>変種の撃破を、何の格として抽選するか（悪夢と同じく一段上）。</summary>
