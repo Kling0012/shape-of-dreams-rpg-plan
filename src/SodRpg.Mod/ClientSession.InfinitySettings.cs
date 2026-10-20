@@ -50,7 +50,7 @@ namespace SodRpg.Mod
                 return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…", "正在等待主机的设置…");
             return RemoteHostInfinityAvailable ? null : Loc.T(
                 "ホスト側でインフィニティは無効です。通常モードは利用できます。",
-                "Infinity is disabled on the host's side. Normal mode remains available.");
+                "Infinity is disabled on the host's side. Normal mode remains available.", "主机侧已禁用Infinity。通常模式仍可使用。");
         }
         public bool ChosenInfinityEnabled => RunActive ? Profile.Run.Infinity != null
             : CanChooseRunRules ? Profile.LastInfinityEnabled
@@ -69,8 +69,8 @@ namespace SodRpg.Mod
 
         public string ChooseInfinity(bool enabled, int interval)
         {
-            if (!CanChooseDepth) return Loc.T("モードと周期は遠征前にホストが選びます。", "The host chooses the mode and interval before the expedition.");
-            if (!InfinityRunState.ValidInterval(interval)) return Loc.T($"周期は{InfinityRunState.ShortInterval}・{InfinityRunState.MiddleInterval}・{InfinityRunState.LongInterval}部屋です。", $"The interval must be {InfinityRunState.ShortInterval}, {InfinityRunState.MiddleInterval} or {InfinityRunState.LongInterval} rooms.");
+            if (!CanChooseDepth) return Loc.T("モードと周期は遠征前にホストが選びます。", "The host chooses the mode and interval before the expedition.", "模式和周期由主机在远征前选择。");
+            if (!InfinityRunState.ValidInterval(interval)) return Loc.T($"周期は{InfinityRunState.ShortInterval}・{InfinityRunState.MiddleInterval}・{InfinityRunState.LongInterval}部屋です。", $"The interval must be {InfinityRunState.ShortInterval}, {InfinityRunState.MiddleInterval} or {InfinityRunState.LongInterval} rooms.", $"周期为{InfinityRunState.ShortInterval}・{InfinityRunState.MiddleInterval}・{InfinityRunState.LongInterval}个房间。");
             if (enabled && !InfinityMode.Available) return InfinityMode.UnavailableNotice;
             if (enabled && LimboInfinityNotice != null) return LimboInfinityNotice;
             Profile.LastInfinityEnabled = enabled;

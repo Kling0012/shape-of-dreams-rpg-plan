@@ -39,12 +39,12 @@ namespace SodRpg.Mod
         {
             switch (c)
             {
-                case CodexCategory.Bases: return Loc.T("土台", "Bases");
-                case CodexCategory.Uniques: return Loc.T("固有品", "Legendaries");
-                case CodexCategory.Sets: return Loc.T("セット", "Sets");
-                case CodexCategory.Named: return Loc.T("銘品", "Named");
-                case CodexCategory.MiniSets: return Loc.T("組", "Mini sets");
-                default: return Loc.T("固有効果", "Powers");
+                case CodexCategory.Bases: return Loc.T("土台", "Bases", "基底");
+                case CodexCategory.Uniques: return Loc.T("固有品", "Legendaries", "传说");
+                case CodexCategory.Sets: return Loc.T("セット", "Sets", "套装");
+                case CodexCategory.Named: return Loc.T("銘品", "Named", "铭品");
+                case CodexCategory.MiniSets: return Loc.T("組", "Mini sets", "小套装");
+                default: return Loc.T("固有効果", "Powers", "固有效果");
             }
         }
 

@@ -188,17 +188,17 @@ namespace SodRpg.Mod
         {
             switch (reason)
             {
-                case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.");
-                case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
-                case "protocol": return Loc.T("この取引の通信を読み取れませんでした。この1件は実行していません。", "This trade message could not be read. This request was not executed.");
-                case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.");
+                case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.", "交易失败：金币不足。");
+                case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.", "交易失败：梦尘不足。");
+                case "protocol": return Loc.T("この取引の通信を読み取れませんでした。この1件は実行していません。", "This trade message could not be read. This request was not executed.", "无法读取该交易的通信。此1件未执行。");
+                case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.", "交易失败：该遗物在本次远征中已分解过。");
                 case "unknown":
-                case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
-                case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
+                case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.", "交易未成立。金币和梦尘未减少。");
+                case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.", "交易失败：交易标识重复。请重试。");
                 case "dustcap": return Loc.T(
                     "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
-                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).");
-                default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
+                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).", "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。");
+                default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.", "交易失败。请重试。");
             }
         }
 
@@ -300,14 +300,14 @@ namespace SodRpg.Mod
             {
                 Emit(new GameEvent(EventKind.Warning, Loc.T(
                     "取引の応答が遅れています。待ちは解除しました。ホストに結果を確認しています。",
-                    "The trade response is late. The wait was released; checking the result with the host.")));
+                    "The trade response is late. The wait was released; checking the result with the host.", "交易响应延迟。已解除等待，正在向主机确认结果。")));
                 SaveNow();
             }
             if (_trades.DetachStale(Time.unscaledTime) > 0)
             {
                 Emit(new GameEvent(EventKind.Warning, Loc.T(
                     "60秒以上確認できない取引の待ちを解除しました。予約品は保持し、遅れた結果を引き続き確認します。他の品の取引は続行できます。",
-                    "Released the wait for trades unresolved for over 60 seconds. Reserved assets are retained and late results are still checked. Other assets can be traded.")));
+                    "Released the wait for trades unresolved for over 60 seconds. Reserved assets are retained and late results are still checked. Other assets can be traded.", "已解除超过60秒无法确认的交易的等待。预留物品保持持有，并将继续确认延迟的结果。其他物品可以继续交易。")));
                 SaveNow();
             }
             if (Profile.PendingSalvage.Count > 0)
@@ -786,7 +786,7 @@ namespace SodRpg.Mod
             if (Onboarding.BackfillStarterCodex(Profile) > 0) _dirty = true; // 以前の配布で銘品が図鑑に載らなかった分を補う
             // v1.20：以前に+3・+5にした遺物へ、強化の節目を一度だけ付ける。
             int milestones = Rules.ApplyEnhanceMilestones(Profile);
-            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目をこれまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
+            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目をこれまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.", $"强化里程碑已应用于{milestones}件你已强化过的遗物（特性和固有效果有所增加）。")));
             if (newSlotStarters.Count > 0)
             {
                 Emit(newSlotStarters);
@@ -956,7 +956,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
-            if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
+            if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).", $"金币不足（{price}G）。");
             string blocked = TradeUnavailable();
             if (blocked != null) return blocked;
             return SendTrade(_trades.BeginMerchant(Profile.Run.Heat, price, Time.unscaledTime, Profile.Run.OfferedEventId));
@@ -964,10 +964,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         public string ConvertDust()
         {
-            if (Profile.Run == null || (!Profile.Run.AwaitingChoice && !Profile.Run.GearWindow)) return Loc.T("確保地点でのみ換えられます。", "Only at a secure point.");
+            if (Profile.Run == null || (!Profile.Run.AwaitingChoice && !Profile.Run.GearWindow)) return Loc.T("確保地点でのみ換えられます。", "Only at a secure point.", "仅可在存仓点更换。");
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
-            if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
-            if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.", $"需要至少{Economy.DustPerBatch}梦尘。");
+            if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.", "正在等待交易完成。");
             string blocked = TradeUnavailable();
             if (blocked != null) return blocked;
             int batches = Math.Min(dust / Economy.DustPerBatch, Economy.MaxBatchesPerTrade);
@@ -983,12 +983,12 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (CoopTradeLocked) return CoopUnavailable();
             if (!_trades.CanBegin)
                 return Loc.T($"未確定の取引が{TradeLedger.MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
-                    $"There are already {TradeLedger.MaxHeld} unresolved trades. New trades are paused until their results are confirmed.");
-            if (_clientRpcOn == null || !NetworkClient.active) return Loc.T("ゲームに接続していません。", "Not connected to a game.");
+                    $"There are already {TradeLedger.MaxHeld} unresolved trades. New trades are paused until their results are confirmed.", $"未确定的交易已达{TradeLedger.MaxHeld}件。在结果确认之前无法进行新的交易。");
+            if (_clientRpcOn == null || !NetworkClient.active) return Loc.T("ゲームに接続していません。", "Not connected to a game.", "未连接到游戏。");
             if (_hostLedgerId == 0)
             {
                 SendLedgerProbe();
-                return Loc.T("ホストとの取引を準備しています。少し待ってからもう一度お試しください。", "Preparing trades with the host. Please try again in a moment.");
+                return Loc.T("ホストとの取引を準備しています。少し待ってからもう一度お試しください。", "Preparing trades with the host. Please try again in a moment.", "正在准备与主机的交易。请稍候片刻后再试。");
             }
             return null;
         }
@@ -1007,7 +1007,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (_clientRpcOn == null || !NetworkClient.active)
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
-                return Loc.T("ゲームに接続していません。", "Not connected to a game.");
+                return Loc.T("ゲームに接続していません。", "Not connected to a game.", "未连接到游戏。");
             }
             // ホストが決済を始める前に、token・内容・台帳の識別子・分解の予約を含む準備状態をディスクへ確定させる。
             // 確定できなければ送らない（ホストの通貨は動かない）。送ったあとの異常終了でも、保存済みの token から結果を照会できる。
@@ -1016,7 +1016,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
                 SaveNow();
                 return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
-                    "The trade was not made because its record could not be saved. Check the save location and try again.");
+                    "The trade was not made because its record could not be saved. Check the save location and try again.", "因无法保存交易记录，未执行交易。请确认保存位置后重试。");
             }
             return SendDurableTrade(t);
         }
@@ -1043,7 +1043,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     RestoreSalvageTrade(_trades.Complete(t.Token, false));
                     Log.Error("Client SendTrade preparation: " + ex.Message);
                     SaveNow();
-                    return Loc.T("取引を送れませんでした。", "Could not send the trade.");
+                    return Loc.T("取引を送れませんでした。", "Could not send the trade.", "无法发送交易。");
                 }
                 // Sending may have delivered before throwing; keep every kind's token, ledger and reservation
                 // until a host receipt confirms the result, including a late success response.
@@ -1051,7 +1051,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 Log.Warn("Client trade send uncertain; querying the existing receipt: " + ex.Message);
                 SaveNow();
                 return Loc.T("取引の送信結果が不明です。予約を保持し、ホストに結果を確認しています。",
-                    "The trade send result is uncertain. Its reservation is retained while checking with the host.");
+                    "The trade send result is uncertain. Its reservation is retained while checking with the host.", "交易发送结果不明。预留将保持持有，正在向主机确认结果。");
             }
             return null;
         }
@@ -1068,7 +1068,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (t.Kind != TradeKind.SatchelOverflowDust) RestoreSalvageTrade(t);
             Emit(new GameEvent(EventKind.Warning, Loc.T(
                 $"結果を確認できない取引{taken.Count}件を手放しました（対価は付いていません）。",
-                $"Gave up {taken.Count} trade(s) whose result could not be confirmed (no reward was granted).")));
+                $"Gave up {taken.Count} trade(s) whose result could not be confirmed (no reward was granted).", $"已放弃{taken.Count}件无法确认结果的交易（未获得报酬）。")));
             SaveNow();
             return taken.Count;
         }
@@ -1098,7 +1098,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     // ホストは記録の有無を確かめられない：支払い済みかもしれないので、返却も対価も確定せず保留する（遺物は預かったまま）。
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
                         "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
-                        "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
+                        "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.", "主机无法确认交易的结果（可能是本体货币处理发生异常、主机重新加载或连接变更）。报酬和返还均未确定，处于保留状态。")));
                     if (t.Kind == TradeKind.SalvageForDust) DeferSave();
                     else SaveNow();
                     return;
@@ -1129,7 +1129,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         {
                             // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
                             long paid = CountSalvageDustPaid(t.EarnDust);
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust")));
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust", $"分解获得梦尘+{paid}")));
                         }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();
@@ -1157,9 +1157,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             try
             {
                 if (_trades.IsReserved(uid) || Profile.PendingSalvage.Exists(s => s.Relic.Uid == uid))
-                    return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
-                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-                var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
+                    return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.", "正在等待交易完成。");
+                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition.", "仅限远征中。"));
+                var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel.", "该遗物不在你的背包中。"));
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
                 return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
@@ -1188,7 +1188,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             int attempted = 0;
             try
             {
-                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
+                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition.", "仅限远征中。"));
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
                 int limit = Math.Min(30, Math.Min(TradeLedger.MaxHeld - _trades.ManualHeldCount,
@@ -1211,7 +1211,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (prepared.Count == 0) return null;
                 if (!SaveNow(true))
                     return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
-                        "The trade was not made because its record could not be saved. Check the save location and try again.");
+                        "The trade was not made because its record could not be saved. Check the save location and try again.", "因无法保存交易记录，未执行交易。请确认保存位置后重试。");
                 durable = true;
                 string firstError = null;
                 for (int i = 0; i < prepared.Count; i++)
@@ -1658,7 +1658,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _forbiddenGearStripNotice = true;
                 ForbiddenGearHostNotice = Loc.T(
                     "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
-                    "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                    "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.", "主机的MOD不支持禁忌装备（#415）。本次会话中，禁忌化的遗物和超过上限再调律的遗物不会被应用。");
                 Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
                 break;
             }
@@ -1715,7 +1715,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
                 if (confirm)
                 {
-                    SetSaveErrorText(Loc.T("保存先が無効です。", "Saving is unavailable."));
+                    SetSaveErrorText(Loc.T("保存先が無効です。", "Saving is unavailable.", "保存不可用。"));
                     _dirty = true;
                 }
                 return !confirm; // 確認なしの保存は従来どおり何もしない

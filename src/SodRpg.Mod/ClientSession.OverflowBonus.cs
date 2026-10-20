@@ -114,7 +114,7 @@ namespace SodRpg.Mod
                 if (forgone > 0)
                     Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
                         $"ホストの再起動で、未確認の追加ドリームダスト{forgone}は確定できなかったため諦めました。遺物の受け取りと欠片への換算には影響しません。これからのあふれから再度受け取れます。",
-                        $"Gave up {forgone} unconfirmed extra overflow Dream Dust because the host restarted. Relic pickup and shard conversion are unaffected; new overflows pay again.")));
+                        $"Gave up {forgone} unconfirmed extra overflow Dream Dust because the host restarted. Relic pickup and shard conversion are unaffected; new overflows pay again.", $"因主机重启，放弃了{forgone}份未确认的额外溢出梦尘。遗物领取和碎片换算不受影响，之后的溢出可再次领取。")));
             }
             Profile.ReceiveOverflowDreamDust = true;
         }
@@ -201,7 +201,7 @@ namespace SodRpg.Mod
             if (forgone > 0)
                 Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
                     $"前の遠征の追加ドリームダスト{forgone}は確定できなかったため諦めました。遺物の受け取りと欠片への換算には影響しません。",
-                    $"Gave up {forgone} unconfirmed extra overflow Dream Dust from the previous expedition. Relic pickup and shard conversion are unaffected.")));
+                    $"Gave up {forgone} unconfirmed extra overflow Dream Dust from the previous expedition. Relic pickup and shard conversion are unaffected.", $"前次远征的额外梦尘{forgone}因无法确认而放弃。遗物领取和碎片换算不受影响。")));
             UpdateOverflowBonusPreference();
         }
 
@@ -213,7 +213,7 @@ namespace SodRpg.Mod
             Log.Warn("Overflow bonus unavailable; only the extra Dream Dust stops, relic pickup and shard conversion continue: " + reason);
             Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
                 "鞄あふれの追加ドリームダストは使えません（止まるのは追加のダストだけです）。遺物の受け取りと欠片への換算は続きます。",
-                "Extra overflow Dream Dust is unavailable (only the bonus dust stops). Relic pickup and shard conversion continue.")));
+                "Extra overflow Dream Dust is unavailable (only the bonus dust stops). Relic pickup and shard conversion continue.", "背包溢出的额外梦尘无法使用（停止的仅是额外的梦尘）。遗物领取和碎片换算仍继续。")));
         }
     }
 }
