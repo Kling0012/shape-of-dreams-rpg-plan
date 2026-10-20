@@ -43,7 +43,7 @@ namespace SodRpg.Core.Game
 
         public string Describe() => Loc.T(
             $"レベル連動のエッセンス枠：{(Enabled ? "オン" : "オフ")}（{TargetsText()}）\n{EveryLevels}レベルごとに +1、混沌と合わせて1つの記憶は最大{Ceiling}枠",
-            $"Level-based essence slots: {(Enabled ? "on" : "off")} ({TargetsText()})\n+1 every {EveryLevels} levels; at most {Ceiling} slots per memory including Chaos", $"随等级增加的精华槽：{(Enabled ? "on" : "off")}（{TargetsText()}）\n每{EveryLevels}级 +1；含混沌在内，每个记忆最多{Ceiling}槽");
+            $"Level-based essence slots: {(Enabled ? "on" : "off")} ({TargetsText()})\n+1 every {EveryLevels} levels; at most {Ceiling} slots per memory including Chaos", $"随等级增加的精华槽：{(Enabled ? "开启" : "关闭")}（{TargetsText()}）\n每{EveryLevels}级 +1；含混沌在内，每个记忆最多{Ceiling}槽");
 
         public string TargetsText()
         {
