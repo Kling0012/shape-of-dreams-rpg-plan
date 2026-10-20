@@ -16,7 +16,8 @@ namespace SodRpg.Core.Game
             {
                 string hero = "Hero_" + char.ToUpperInvariant(slug[0]) + slug.Substring(1);
                 foreach (var talent in HeroSigils.TreeFor(hero))
-                    if (talent.Id == id) return Loc.T("星『" + talent.DisplayName.Ja + "』", "star “" + talent.DisplayName.En + "”", "星「" + (talent.DisplayName.Zh ?? LocZhGlossary.Lookup(talent.DisplayName.En)) + "」");
+                    if (talent.Id == id) return Loc.T("星『" + talent.DisplayName.Ja + "』", "star “" + talent.DisplayName.En + "”",
+                        StarMapClusters.ChineseName(talent.DisplayName, "星「", "」"));
             }
             return Loc.T("（名前のない星）", "(unnamed star)", "（无名之星）");
         }
@@ -24,7 +25,8 @@ namespace SodRpg.Core.Game
         private static string PairName(string pairId)
         {
             var pair = PairCombos.Get(pairId);
-            return pair?.Name != null ? Loc.T("橋の合わせ技「" + pair.Name.Ja + "」", "\"" + pair.Name.En + "\"", "「" + (pair.Name.Zh ?? LocZhGlossary.Lookup(pair.Name.En)) + "」") : Loc.T("この橋の合わせ技", "this bridge combo", "此桥梁组合");
+            return pair?.Name != null ? Loc.T("橋の合わせ技「" + pair.Name.Ja + "」", "\"" + pair.Name.En + "\"",
+                StarMapClusters.ChineseName(pair.Name, "「", "」")) : Loc.T("この橋の合わせ技", "this bridge combo", "此桥梁组合");
         }
 
         private static string Number(decimal value) => value.ToString("0.#######", CultureInfo.InvariantCulture);

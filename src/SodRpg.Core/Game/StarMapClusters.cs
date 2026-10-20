@@ -118,7 +118,11 @@ namespace SodRpg.Core.Game
                     var name = cluster.DisplayName;
                     string ja = name.Ja.EndsWith("の星団", StringComparison.Ordinal) ? name.Ja.Substring(0, name.Ja.Length - 3) : name.Ja;
                     string en = name.En.EndsWith(" Cluster", StringComparison.Ordinal) ? name.En.Substring(0, name.En.Length - 8) : name.En;
-                    cluster.DisplayName = new Txt(ja + "：" + star.Ja, en + ": " + star.En, ((name.Zh ?? LocZhGlossary.Lookup(name.En)).EndsWith("星团", StringComparison.Ordinal) ? (name.Zh ?? LocZhGlossary.Lookup(name.En)).Substring(0, (name.Zh ?? LocZhGlossary.Lookup(name.En)).Length - 2) : name.Zh ?? LocZhGlossary.Lookup(name.En)) + "：" + (star.Zh ?? LocZhGlossary.Lookup(star.En)));
+                    string zh = ChineseName(name);
+                    string starZh = ChineseName(star);
+                    if (zh != null && zh.EndsWith("星团", StringComparison.Ordinal)) zh = zh.Substring(0, zh.Length - 2);
+                    cluster.DisplayName = new Txt(ja + "：" + star.Ja, en + ": " + star.En,
+                        zh != null && starZh != null ? zh + "：" + starZh : null);
                 }
                 var again = new Dictionary<string, List<int>>(StringComparer.Ordinal);
                 foreach (int i in pair.Value)
@@ -132,10 +136,22 @@ namespace SodRpg.Core.Game
                     for (int n = 0; n < group.Count; n++)
                     {
                         var name = clusters[group[n]].DisplayName;
-                        clusters[group[n]].DisplayName = new Txt(name.Ja + "（" + Ordinal(n + 1) + "）", name.En + " (" + (n + 1) + ")", (name.Zh ?? LocZhGlossary.Lookup(name.En)) + "（" + (n + 1) + "）");
+                        clusters[group[n]].DisplayName = new Txt(name.Ja + "（" + Ordinal(n + 1) + "）", name.En + " (" + (n + 1) + ")",
+                            ChineseName(name) is string zh ? zh + "（" + (n + 1) + "）" : null);
                     }
                 }
             }
+        }
+
+        internal static string ChineseName(Txt name, string prefix = "", string suffix = "")
+        {
+            string zh = name?.Zh;
+            if (zh == null && name?.En != null)
+            {
+                zh = LocZhGlossary.Lookup(name.En);
+                if (string.Equals(zh, name.En, StringComparison.Ordinal)) zh = null;
+            }
+            return zh == null ? null : prefix + zh + suffix;
         }
 
         private static Txt NotableStarName(HeroTreeLayout layout, StarMapCluster cluster)
@@ -170,24 +186,27 @@ namespace SodRpg.Core.Game
                     if (memory != null)
                     {
                         var m = Links.Name(memory);
-                        return new Txt(m.Ja + "の星団", m.En + " Cluster", (m.Zh ?? LocZhGlossary.Lookup(m.En)) + "星团");
+                        return new Txt(m.Ja + "の星団", m.En + " Cluster", ChineseName(m, suffix: "星团"));
                     }
-                    return new Txt(representative.Ja + "の星団", representative.En + " Cluster", (representative.Zh ?? LocZhGlossary.Lookup(representative.En)) + "星团");
+                    return new Txt(representative.Ja + "の星団", representative.En + " Cluster", ChineseName(representative, suffix: "星团"));
                 case ClusterRegionKind.Bridge:
                     var pair = def.Region.Id == null ? null : PairCombos.ForBridge(def.Region.Id);
                     if (pair != null && pair.Name != null && !string.IsNullOrWhiteSpace(pair.Name.Ja) && !string.IsNullOrWhiteSpace(pair.Name.En))
-                        return new Txt("橋の星団「" + pair.Name.Ja + "」", "Bridge Cluster: " + pair.Name.En, "桥梁星团：" + (pair.Name.Zh ?? LocZhGlossary.Lookup(pair.Name.En)));
+                        return new Txt("橋の星団「" + pair.Name.Ja + "」", "Bridge Cluster: " + pair.Name.En, ChineseName(pair.Name, prefix: "桥梁星团："));
                     if (pair != null && Links.IsMemory(pair.RouteA) && Links.IsMemory(pair.RouteB))
                     {
                         var a = Links.Name(pair.RouteA);
                         var b = Links.Name(pair.RouteB);
-                        return new Txt("橋の星団「" + a.Ja + "×" + b.Ja + "」", "Bridge Cluster: " + a.En + " x " + b.En, "桥梁星团：" + (a.Zh ?? LocZhGlossary.Lookup(a.En)) + "×" + (b.Zh ?? LocZhGlossary.Lookup(b.En)));
+                        string aZh = ChineseName(a);
+                        string bZh = ChineseName(b);
+                        return new Txt("橋の星団「" + a.Ja + "×" + b.Ja + "」", "Bridge Cluster: " + a.En + " x " + b.En,
+                            aZh != null && bZh != null ? "桥梁星团：" + aZh + "×" + bZh : null);
                     }
-                    return new Txt("橋の星団「" + representative.Ja + "」", "Bridge Cluster: " + representative.En, "桥梁星团：" + (representative.Zh ?? LocZhGlossary.Lookup(representative.En)));
+                    return new Txt("橋の星団「" + representative.Ja + "」", "Bridge Cluster: " + representative.En, ChineseName(representative, prefix: "桥梁星团："));
                 case ClusterRegionKind.Keystone:
-                    return new Txt(representative.Ja + "の刻印星団", representative.En + " Keystone Cluster", (representative.Zh ?? LocZhGlossary.Lookup(representative.En)) + "刻印星团");
+                    return new Txt(representative.Ja + "の刻印星団", representative.En + " Keystone Cluster", ChineseName(representative, suffix: "刻印星团"));
                 default:
-                    return new Txt(representative.Ja + "の外縁星団", representative.En + " Outer Cluster", (representative.Zh ?? LocZhGlossary.Lookup(representative.En)) + "外缘星团");
+                    return new Txt(representative.Ja + "の外縁星団", representative.En + " Outer Cluster", ChineseName(representative, suffix: "外缘星团"));
             }
         }
 
