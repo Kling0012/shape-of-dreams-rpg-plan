@@ -133,7 +133,7 @@ namespace SodRpg.Core.Game
         public static string KeystoneSections(string benefit, int cost)
         {
             return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>", "<color=#9fe0b0><b>效果</b></color>") + NL + benefit
-                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}", $"必要点数：{cost}");
+                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}", $"所需点数：{cost}");
         }
 
         /// <summary>次の枠が開く星のレベルの1文。開く枠がなければ空文字。</summary>

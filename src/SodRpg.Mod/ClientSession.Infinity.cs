@@ -282,7 +282,7 @@ namespace SodRpg.Mod
             if (state.ChoiceRevision == long.MaxValue || state.SegmentEpoch == long.MaxValue)
                 return Loc.T("インフィニティの世代上限に達しました。", "Infinity has reached its identity limit.", "Infinity已达到世代上限。");
             if (pact != Pact.None && !Profile.Run.OfferedPacts.Contains(pact))
-                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约不在可选范围内。");
+                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约不在可选之列。");
             var previous = InfinityMode.CurrentChoice;
             if (previous != null && previous.RunId == Profile.Run.RunId && !previous.Boundary
                 && previous.Revision > state.ChoiceRevision) return null;
