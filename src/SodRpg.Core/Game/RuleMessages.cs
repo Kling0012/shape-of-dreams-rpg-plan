@@ -22,52 +22,52 @@ namespace SodRpg.Core.Game
             "The relic does not belong to that slot.", "该遗物无法放入此装备部位。");
         public static readonly Txt KeystoneNotReady = new Txt(
             "この刻印はまだ選べません。取得済みの星とのつながり、取得した段数、熟練度の条件を満たしてください。",
-            "This keystone is not available yet: connect it to your acquired stars and meet the rank and mastery requirements.");
+            "This keystone is not available yet: connect it to your acquired stars and meet the rank and mastery requirements.", "此刻印尚不可用：请将其连接至已获取的星，并满足阶级和精通要求。");
         public static readonly Txt UnknownStar = new Txt(
             "この旅人の星図にない星です。",
-            "That star is not in this Traveler's tree.");
+            "That star is not in this Traveler's tree.", "此星不属于该旅人的星树。");
         public static readonly Txt KeystoneNotAllocated = new Txt(
             "その刻印は選ばれていません。",
-            "That keystone is not selected.");
+            "That keystone is not selected.", "未选择此刻印。");
         public static readonly Txt KeystoneDuplicate = new Txt(
             "同じ刻印は重ねて選べません。",
-            "The same keystone cannot be selected twice.");
+            "The same keystone cannot be selected twice.", "不能重复选择同一刻印。");
         public static readonly Txt KeystoneSlotsFull = new Txt(
             "刻印の枠がありません。次の枠は星のレベルが上がると開きます。",
-            "No free keystone slot. The next slot unlocks at a higher star level.");
+            "No free keystone slot. The next slot unlocks at a higher star level.", "没有空闲的刻印槽。下一个槽位将在更高的星级解锁。");
         public static readonly Txt StarNotAllocated = new Txt(
             "その星はまだ取得していません。",
-            "That star is not acquired.");
+            "That star is not acquired.", "尚未获取此星。");
         public static readonly Txt UseKeystoneChange = new Txt(
             "刻印は刻印の選択操作で変更してください。",
-            "Use the keystone selection to change a keystone.");
+            "Use the keystone selection to change a keystone.", "请通过刻印选择来更改刻印。");
         public static readonly Txt AlreadyMaxRank = new Txt(
             "これ以上は上げられません（最大段です）。",
-            "Already at max rank.");
+            "Already at max rank.", "已达最高阶。");
         public static readonly Txt NeedConnectedStars = new Txt(
             "先に、線でつながっている手前の星を取得してください。",
-            "Allocate the connected prerequisite stars first.");
+            "Allocate the connected prerequisite stars first.", "请先分配相连的前置星。");
         public static readonly Txt ChoiceNotAllocated = new Txt(
             "その選択の星はまだ取得していません。",
-            "That choice star is not allocated.");
+            "That choice star is not allocated.", "尚未分配此二选一星。");
         public static readonly Txt SelectOneEffect = new Txt(
             "二つの効果のうち、1つを選んでください。",
-            "Explicitly select one of the two effects.");
+            "Explicitly select one of the two effects.", "请明确选择两种效果中的一种。");
         public static readonly Txt SameOptionOnly = new Txt(
             "選択の星は全ての段で同じ効果になります。先に効果を切り替えてください。",
-            "All ranks of a choice must use the same option. Change the choice explicitly first.");
+            "All ranks of a choice must use the same option. Change the choice explicitly first.", "同一二选一星的所有阶级必须使用相同选项。请先明确更改选择。");
         public static readonly Txt NotChoiceStar = new Txt(
             "この星には選択肢がありません。",
-            "That is not a choice star.");
+            "That is not a choice star.", "此星不是二选一星。");
         public static readonly Txt MissingDisableRule = new Txt(
             "星の無効化ルールが見つかりません（内部エラー）。",
-            "Missing permanent-disable rule.");
+            "Missing permanent-disable rule.", "缺少永久禁用规则。");
         public static readonly Txt UnknownStarId = new Txt(
             "星の定義が見つかりません（内部エラー）：",
-            "Unknown star: ");
+            "Unknown star: ", "未知的星：");
         public static readonly Txt NotEnoughMaterial = new Txt(
             "素材が足りません：",
-            "Not enough materials: ");
+            "Not enough materials: ", "材料不足：");
 
         /// <summary>表の全件。日本語に仮名か漢字が含まれ、英語が空でないことを検査する。</summary>
         public static IReadOnlyList<Txt> All { get; } = new List<Txt>
