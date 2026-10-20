@@ -209,6 +209,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged physics-proxy position writes / 止まっている実体の物理プロキシ位置の同じ書き込みを省く")]
         public bool nativeProxyPositionIdle = true;
 
+        [LabelText("Skip settled pickup orbs' per-frame ground raycasts / 止まったドロップ品の毎フレーム地面レイキャストを省く")]
+        public bool nativePickupIdle = true;
+
         [LabelText("Reduce overlapping enemy hit effects (local) / 敵への命中演出の重なりを減らす（各端末）")]
         public bool nativeEnemyHitFxBudget = true;
 

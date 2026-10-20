@@ -87,6 +87,7 @@ namespace SodRpg.Mod
             nativeRoomStartDependency = true,
             nativeChatMuteCheckAlloc = true,
             nativeProxyPositionIdle = true,
+            nativePickupIdle = true,
             nativeEnemyHitFxBudget = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,

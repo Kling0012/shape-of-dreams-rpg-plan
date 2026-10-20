@@ -203,4 +203,148 @@ namespace Issue73.Native.Tests
             });
         }
     }
+
+    /// <summary>
+    /// （#921）静止したドロップ品の毎フレーム地面レイキャストの省略
+    /// （NativePickupIdlePerf）の検証。Prepare・Prefix はリンクされた
+    /// NativePerfPatches.cs そのものに、模倣の PickupInstance（NativeBoundary.cs）と
+    /// 差し替え可能な Time.time で直接動かす。動いている・吸い寄せられている宝珠は
+    /// 常に本体経路に戻すこと、最初の静止フレームは本体を走らせて個体ごとの表を
+    /// 作ること、0.5 秒未満の再訪は飛ばして 0.5 秒で本体へ戻し次の再確認時刻を
+    /// 更新すること、ごく小さい速度でも飛ばさないこと、設定 OFF では常に本体経路で
+    /// あることを確かめる。
+    /// </summary>
+    public sealed class PickupIdlePerfTests
+    {
+        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+        // 本体では Prepare を Harmony が呼ぶ。ここでは同じ初期化（対象メソッドの解決と
+        // 速度2フィールドの FieldRef）を直接走らせる。
+        private static bool PreparePatch()
+            => (bool)typeof(NativePickupIdlePerf).GetMethod("Prepare", Hidden).Invoke(null, null);
+
+        private static bool RunPrefix(PickupInstance pickup)
+            => (bool)typeof(NativePickupIdlePerf).GetMethod("Prefix", Hidden)
+                .Invoke(null, new object[] { pickup });
+
+        // 設定・静的状態・時計を保存・復元して、ほかのテストへの影響を残さない。
+        private static void WithPatch(bool optionEnabled, float time, Action run)
+        {
+            var type = typeof(NativePickupIdlePerf);
+            var disabled = type.GetField("_disabled", Hidden);
+            var warned = type.GetField("_warned", Hidden);
+            Assert.NotNull(disabled);
+            Assert.NotNull(warned);
+            object savedDisabled = disabled.GetValue(null);
+            object savedWarned = warned.GetValue(null);
+            bool savedOption = NativePerfOptions.PickupIdle;
+            float savedTime = Time.time;
+            disabled.SetValue(null, false);
+            warned.SetValue(null, false);
+            NativePerfOptions.PickupIdle = optionEnabled;
+            Time.time = time;
+            try
+            {
+                Assert.True(PreparePatch()); // 模倣に対する解決も本物と同じ形で通る
+                run();
+            }
+            finally
+            {
+                disabled.SetValue(null, savedDisabled);
+                warned.SetValue(null, savedWarned);
+                NativePerfOptions.PickupIdle = savedOption;
+                Time.time = savedTime;
+            }
+        }
+
+        // 静止状態の宝珠: 目標なし・速度は既定の (0, 0)・0。
+        private static PickupInstance RestingOrb() => new PickupInstance();
+
+        [Fact]
+        public void MovingOrAttractedOrbsAlwaysRunNative()
+        {
+            WithPatch(true, 100f, () =>
+            {
+                // 吸い寄せ先がある: 速度が完全にゼロでも本体経路。
+                Assert.True(RunPrefix(new PickupInstance { Network_target = new Hero() }));
+                // 水平2成分・垂直1成分のどれか1つでも非ゼロなら本体経路。
+                Assert.True(RunPrefix(new PickupInstance { _currentFlatVelocity = new Vector2(0.001f, 0f) }));
+                Assert.True(RunPrefix(new PickupInstance { _currentFlatVelocity = new Vector2(0f, -0.001f) }));
+                Assert.True(RunPrefix(new PickupInstance { _currentYVelocity = 0.001f }));
+                // 境界の例: ごく小さい速度（1e-6）でも飛ばさない。
+                Assert.True(RunPrefix(new PickupInstance { _currentFlatVelocity = new Vector2(1e-6f, 0f) }));
+                Assert.True(RunPrefix(new PickupInstance { _currentFlatVelocity = new Vector2(0f, 1e-6f) }));
+                Assert.True(RunPrefix(new PickupInstance { _currentYVelocity = -1e-6f }));
+            });
+        }
+
+        [Fact]
+        public void FirstIdleFrameRunsNativeAndKeepsABookPerOrb()
+        {
+            WithPatch(true, 100f, () =>
+            {
+                var first = RestingOrb();
+                var second = RestingOrb();
+                // 最初の静止フレームは本体を走らせる（表はまだない）。
+                Assert.True(RunPrefix(first));
+                // 表は個体ごと: 別の宝珠の初回も本体を走らせる。
+                Assert.True(RunPrefix(second));
+                Time.time = 100.25f;
+                Assert.False(RunPrefix(first)); // 以後は個体ごとに間引く
+                Assert.False(RunPrefix(second));
+            });
+        }
+
+        [Fact]
+        public void SettledOrbSkipsUntilHalfSecondElapsesThenRunsNativeAgain()
+        {
+            WithPatch(true, 100f, () =>
+            {
+                var orb = RestingOrb();
+                Assert.True(RunPrefix(orb)); // 初回の静止フレームは本体
+                Time.time = 100.25f;
+                Assert.False(RunPrefix(orb)); // 0.5 秒未満の再訪は飛ばす
+                Time.time = 100.4999f;
+                Assert.False(RunPrefix(orb));
+                Time.time = 100.5f; // ちょうど 0.5 秒で本体へ戻す
+                Assert.True(RunPrefix(orb));
+                Time.time = 100.9f;
+                Assert.False(RunPrefix(orb)); // 次の再確認時刻は更新済み
+                Time.time = 101f;
+                Assert.True(RunPrefix(orb));
+            });
+        }
+
+        [Fact]
+        public void AssigningATargetOrVelocityEndsTheSkipImmediately()
+        {
+            WithPatch(true, 100f, () =>
+            {
+                var orb = RestingOrb();
+                Assert.True(RunPrefix(orb));
+                Time.time = 100.25f;
+                Assert.False(RunPrefix(orb)); // 静止中は飛ばしている
+                orb.Network_target = new Hero();
+                Assert.True(RunPrefix(orb)); // 目標が付いた次のフレームで即座に本体へ
+                orb.Network_target = null;
+                orb._currentYVelocity = 2f; // RpcSyncPosition 相当の速度の書き込み
+                Assert.True(RunPrefix(orb));
+            });
+        }
+
+        [Fact]
+        public void OptionOffAlwaysRunsNativeEvenForASettledOrb()
+        {
+            WithPatch(true, 100f, () =>
+            {
+                var orb = RestingOrb();
+                Assert.True(RunPrefix(orb));
+                Time.time = 100.25f;
+                Assert.False(RunPrefix(orb)); // 設定 ON では飛ばしている
+                NativePerfOptions.PickupIdle = false;
+                Assert.True(RunPrefix(orb)); // OFF の間は表があっても常に本体経路
+                Assert.True(RunPrefix(orb));
+            });
+        }
+    }
 }
