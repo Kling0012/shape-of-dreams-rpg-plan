@@ -983,7 +983,7 @@ namespace SodRpg.Core.Game
                     var target = DreamEvents.TradeTarget(p, e, trades);
                     var pool = DreamEvents.ReplacementPowers(target)
                         .Where(x => Content.PowerAllowedForRarity(x.Power, target.Rarity)).ToList();
-                    if (pool.Count == 0) throw new InvalidOperationException(Loc.T("別の固有効果を付けられません。", "No different power is available."));
+                    if (pool.Count == 0) throw new InvalidOperationException(Loc.T("別の固有効果を付けられません。", "No different power is available.", "没有其他可用的固有效果。"));
                     var chosen = pool[rng.Range(0, pool.Count - 1)];
                     var replacement = new PowerLine(chosen.Power, rng.Range(chosen.Min, chosen.Max));
                     var old = target.Powers[0];
@@ -992,21 +992,21 @@ namespace SodRpg.Core.Game
                     target.Powers[0] = replacement;
                     ev.Add(new GameEvent(e == DreamEvent.MemoryWell ? EventKind.LevelUp : EventKind.Info, Loc.T(
                         $"「{target.PlainName}」の固有効果「{Content.PowerName(old.Power)}」を失い、「{Content.PowerName(replacement.Power)}」へ交換しました。",
-                        $"\"{target.PlainName}\" lost \"{Content.PowerName(old.Power)}\" and gained \"{Content.PowerName(replacement.Power)}\"."), target.Rarity));
+                        $"\"{target.PlainName}\" lost \"{Content.PowerName(old.Power)}\" and gained \"{Content.PowerName(replacement.Power)}\".", $"“{target.PlainName}”失去了固有效果“{Content.PowerName(old.Power)}”，换成了“{Content.PowerName(replacement.Power)}”。"), target.Rarity));
                     break;
                 }
                 case DreamEvent.ShadowExchange:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
                     var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target), target.Base.Family);
-                    if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available."));
+                    if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available.", "没有其他可用的词条。"));
                     var old = target.Affixes[0];
                     run.SatchelShards -= DreamEvents.ShadowExchangeCost(target.Rarity);
                     target.Retunes++;
                     target.Affixes[0] = replacement;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T(
                         $"「{target.PlainName}」の特性を交換しました：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}",
-                        $"\"{target.PlainName}\" exchanged an affix: {Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}"), target.Rarity));
+                        $"\"{target.PlainName}\" exchanged an affix: {Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}", $"“{target.PlainName}”的词条已交换：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}"), target.Rarity));
                     break;
                 }
                 case DreamEvent.LostMausoleum:
@@ -1021,7 +1021,7 @@ namespace SodRpg.Core.Game
                         relic.Enhance = 0;
                         ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                             $"霊廟から「{relic.PlainName}」を回収しました。強化は0になり、まだ持ち帰っていません。",
-                            $"Recovered \"{relic.PlainName}\" from the mausoleum with enhancement reset to 0 (unsecured)."), relic.Rarity));
+                            $"Recovered \"{relic.PlainName}\" from the mausoleum with enhancement reset to 0 (unsecured).", $"从灵庙取回了“{relic.PlainName}”。强化归零，且尚未带回。"), relic.Rarity));
                         AddToSatchel(p, relic, trades);
                     }
                     break;
@@ -1033,7 +1033,7 @@ namespace SodRpg.Core.Game
                     {
                         var replacement = Loot.RollBaseRelic(rng, target.Base, target.Rarity + 1, target.ItemLevel);
                         run.Satchel.Remove(target);
-                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに勝ち、「{target.DisplayName}」を新品へ交換しました。", $"Won the wager and exchanged \"{target.DisplayName}\" for a fresh relic.")));
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに勝ち、「{target.DisplayName}」を新品へ交換しました。", $"Won the wager and exchanged \"{target.DisplayName}\" for a fresh relic.", $"赌赢了，将“{target.DisplayName}”换成了全新遗物。")));
                         RecordEventRelic(p, replacement, ev, trades);
                     }
                     else
@@ -1041,7 +1041,7 @@ namespace SodRpg.Core.Game
                         int shards = SalvageValue(target);
                         run.Satchel.Remove(target);
                         run.SatchelShards += shards;
-                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負け、「{target.DisplayName}」は未確保の欠片{shards}になりました。", $"Lost the wager: \"{target.DisplayName}\" became {shards} unsecured shards.")));
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負け、「{target.DisplayName}」は未確保の欠片{shards}になりました。", $"Lost the wager: \"{target.DisplayName}\" became {shards} unsecured shards.", $"赌输了，“{target.DisplayName}”变成了{shards}枚未存入的碎片。")));
                     }
                     break;
                 }
@@ -1054,7 +1054,7 @@ namespace SodRpg.Core.Game
                     string milestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T(
                         $"「{target.PlainName}」は特性「{Content.FormatStat(lost.Stat, lost.Value)}」を失い、+{target.Enhance}に強化されました。",
-                        $"\"{target.PlainName}\" lost \"{Content.FormatStat(lost.Stat, lost.Value)}\" and was enhanced to +{target.Enhance}.") + MilestoneSuffix(milestone), target.Rarity));
+                        $"\"{target.PlainName}\" lost \"{Content.FormatStat(lost.Stat, lost.Value)}\" and was enhanced to +{target.Enhance}.", $"“{target.PlainName}”失去了词条“{Content.FormatStat(lost.Stat, lost.Value)}”，强化到了+{target.Enhance}。") + MilestoneSuffix(milestone), target.Rarity));
                     AdvanceBounty(p, BountyKind.RelicEnhancer, 1, false, ev);
                     break;
                 }
@@ -1073,7 +1073,7 @@ namespace SodRpg.Core.Game
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
                     run.Satchel.Remove(target);
-                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
+                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering.", $"已将“{target.DisplayName}”作为供品献上。"), target.Rarity));
                     if (e == DreamEvent.StarOffering)
                     {
                         AddStarXp(p, run.HeroKey, EventsBalance.StarOfferingXp, ev);
@@ -1088,7 +1088,7 @@ namespace SodRpg.Core.Game
                     run.SatchelShards -= EventsBalance.AbyssalChestShards;
                     run.Heat += EventsBalance.AbyssalChestHeatIncrement;
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
-                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"宝箱を開き、潜行が{run.Heat}になりました。", $"Opened the chest; delve is now {run.Heat}.")));
+                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"宝箱を開き、潜行が{run.Heat}になりました。", $"Opened the chest; delve is now {run.Heat}.", $"打开了宝箱，下潜深度变为{run.Heat}。")));
                     RecordEventRelic(p, relic, ev, trades);
                     AdvanceBounty(p, BountyKind.Delver, 1, false, ev);
                     break;
@@ -1100,7 +1100,7 @@ namespace SodRpg.Core.Game
                     var relic = Loot.RollRelic(rng, target.Rarity, target.ItemLevel, slot,
                         p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
                     run.Satchel.Remove(target);
-                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を別の枠の遺物と交換しました。", $"Exchanged \"{target.DisplayName}\" for a relic in another slot."), target.Rarity));
+                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を別の枠の遺物と交換しました。", $"Exchanged \"{target.DisplayName}\" for a relic in another slot.", $"已将“{target.DisplayName}”与其他部位的遗物交换。"), target.Rarity));
                     RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
@@ -1111,7 +1111,7 @@ namespace SodRpg.Core.Game
                     run.Satchel.Remove(target);
                     p.Stash.Add(target);
                     run.RelicsSecured++;
-                    ev.Add(new GameEvent(EventKind.Secured, Loc.T($"「{target.DisplayName}」を保管庫へ送りました。他の荷物は未確保のままです。", $"Sent \"{target.DisplayName}\" to the stash; other cargo remains unsecured."), target.Rarity));
+                    ev.Add(new GameEvent(EventKind.Secured, Loc.T($"「{target.DisplayName}」を保管庫へ送りました。他の荷物は未確保のままです。", $"Sent \"{target.DisplayName}\" to the stash; other cargo remains unsecured.", $"已将“{target.DisplayName}”送入仓库。其他行李仍为未存入状态。"), target.Rarity));
                     AdvanceBounty(p, BountyKind.Collector, 1, true, ev);
                     break;
                 }
@@ -1152,7 +1152,7 @@ namespace SodRpg.Core.Game
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                 $"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買いました" + (run != null ? "（まだ持ち帰っていません）" : "（保管庫に入りました）"),
-                $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant" + (run != null ? " (unsecured)" : " (stash)")), relic.Rarity));
+                $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant" + (run != null ? " (unsecured)" : " (stash)"), $"从梦之商人处购买了{Content.RarityName(relic.Rarity)}“{relic.DisplayName}”" + (run != null ? "（尚未带回）" : "（已进入仓库）")), relic.Rarity));
             if (run != null)
             {
                 run.RelicsFound++;
@@ -1174,7 +1174,7 @@ namespace SodRpg.Core.Game
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れました（まだ持ち帰っていません）",
-                $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
+                $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)", $"获得了{Content.RarityName(relic.Rarity)}“{relic.DisplayName}”（尚未带回）"), relic.Rarity));
             AddToSatchel(p, relic, trades);
             AdvanceRelicBounties(p, relic, ev);
         }
@@ -1274,7 +1274,7 @@ namespace SodRpg.Core.Game
         /// <summary>確保地点でドリームダストを欠片へ換える（ダストはホストが支払い済み）。欠片はそのまま保管庫側へ。</summary>
         public static GameEvent ConvertDust(Profile p, int dustPaid)
         {
-            if (p.Run == null || (!p.Run.AwaitingChoice && !p.Run.GearWindow)) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point."));
+            if (p.Run == null || (!p.Run.AwaitingChoice && !p.Run.GearWindow)) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point.", "只能在存仓点更换。"));
             return GrantPaidDustShards(p, dustPaid);
         }
 
@@ -1282,10 +1282,10 @@ namespace SodRpg.Core.Game
         public static GameEvent GrantPaidDustShards(Profile p, int dustPaid)
         {
             int batches = dustPaid / Economy.DustPerBatch;
-            if (batches <= 0) throw new InvalidOperationException(Loc.T("ドリームダストが足りません。", "Not enough Dream Dust."));
+            if (batches <= 0) throw new InvalidOperationException(Loc.T("ドリームダストが足りません。", "Not enough Dream Dust.", "梦境之尘不足。"));
             int shards = batches * Economy.ShardsPerBatch;
             p.AddMaterial(Materials.Shard, shards);
-            return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えました。", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
+            return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えました。", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards", $"已将{batches * Economy.DustPerBatch}梦境之尘换为{shards}枚碎片。"));
         }
 
         /// <summary>成功応答の対象を鞄か預かりから1つだけ取り除く。既に無ければ null。</summary>
@@ -1328,11 +1328,11 @@ namespace SodRpg.Core.Game
             }
             if (!restored) return ev;
             int salvaged = TrimLostAndFound(p);
-            ev.Add(new GameEvent(EventKind.Info, Loc.T("分解待ちの遺物を戻しました。", "Pending salvage relics were returned.")));
+            ev.Add(new GameEvent(EventKind.Info, Loc.T("分解待ちの遺物を戻しました。", "Pending salvage relics were returned.", "待分解的遗物已返还。")));
             if (salvaged > 0)
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T(
                     $"遺失物が上限を超えたため{salvaged}個を欠片にしました。",
-                    $"Lost & Found overflowed: {salvaged} relic(s) were turned into shards.")));
+                    $"Lost & Found overflowed: {salvaged} relic(s) were turned into shards.", $"遗失物超过上限，{salvaged}件变成了碎片。")));
             return ev;
         }
 
@@ -1380,34 +1380,34 @@ namespace SodRpg.Core.Game
         /// <summary>未達成の依頼を1つ、今ある依頼と重ならない進められる種類で引き直す。</summary>
         public static GameEvent RerollBounty(Profile p, int index, bool solo = false)
         {
-            var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-            if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop)."));
+            var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition.", "仅在远征中可用。"));
+            if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop).", "没有剩余的重掷次数（在工坊解锁）。"));
             if (index < 0 || index >= run.Bounties.Count || run.Bounties[index].Done)
-                throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty."));
+                throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty.", "请选择未完成的委托。"));
             var rng = p.TakeRng();
             var existing = new HashSet<BountyKind>(run.Bounties.Select(b => b.Kind));
             var candidates = Bounties.Roll(rng, 1,
                 k => !existing.Contains(k) && Bounties.Reachable(k, solo, run.Infinity != null));
             var replacement = candidates.Count > 0 ? candidates[0] : null;
             p.StoreRng(rng);
-            if (replacement == null) throw new InvalidOperationException(Loc.T("引き直せる依頼がありません。", "No other bounty available."));
+            if (replacement == null) throw new InvalidOperationException(Loc.T("引き直せる依頼がありません。", "No other bounty available.", "没有其他可重掷的委托。"));
             var old = run.Bounties[index];
             run.Bounties[index] = replacement;
             run.RerollsUsed++;
-            return new GameEvent(EventKind.Bounty, Loc.T($"依頼を引き直しました：{old.Describe()} → {replacement.Describe()}", $"Bounty rerolled: {old.Describe()} -> {replacement.Describe()}"));
+            return new GameEvent(EventKind.Bounty, Loc.T($"依頼を引き直しました：{old.Describe()} → {replacement.Describe()}", $"Bounty rerolled: {old.Describe()} -> {replacement.Describe()}", $"委托已重掷：{old.Describe()} → {replacement.Describe()}"));
         }
 
         /// <summary>開始深度を選ぶ。遠征の外でのみ、確保できた最高深度まで。</summary>
         [Obsolete("v1.1 で廃止。本体の Limbo 深度を使う。")]
         public static void SetStartDepth(Profile p, int depth)
         {
-            throw new InvalidOperationException(Loc.T("開始深度は廃止しました。本体の Limbo 深度が遺物に反映されます。", "Start depth was removed; the game's Limbo depth now boosts relics."));
+            throw new InvalidOperationException(Loc.T("開始深度は廃止しました。本体の Limbo 深度が遺物に反映されます。", "Start depth was removed; the game's Limbo depth now boosts relics.", "开始深度已废除。本体的Limbo深度现在会反映到遗物上。"));
         }
 
         /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。ロビーにいる間は残ったランがあっても変えられる。</summary>
         public static void SetFocus(Profile p, Line? focus, bool inExpedition = true)
         {
-            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("狙い系統は遠征の外でのみ変更できます。", "Focus can only be changed outside expeditions."));
+            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("狙い系統は遠征の外でのみ変更できます。", "Focus can only be changed outside expeditions.", "流派只能在远征之外更改。"));
             p.Focus = focus;
         }
 
@@ -1445,7 +1445,7 @@ namespace SodRpg.Core.Game
             string name = HeroNames.Display(heroKey);
             ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
                 $"{name}の星図ポイントが{gained}増えました。",
-                $"{name} earned {gained} star map point(s).")));
+                $"{name} earned {gained} star map point(s).", $"{name}的星图点数增加了{gained}。")));
             AddHint(p, Hint.TalentPoints, ev);
         }
 
@@ -1460,7 +1460,7 @@ namespace SodRpg.Core.Game
                 p.DreamLevel++;
                 ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
                     $"夢のレベルが{p.DreamLevel}に上がりました！",
-                    $"Dream Level {p.DreamLevel}!")));
+                    $"Dream Level {p.DreamLevel}!", $"梦境等级升到了{p.DreamLevel}！")));
             }
             if (p.DreamLevel >= Content.MaxDreamLevel) p.DreamXp = 0;
             return ev;
@@ -1475,7 +1475,7 @@ namespace SodRpg.Core.Game
             IReadOnlyCollection<string> approvedRefundIds = null)
         {
             RequireUnreserved(trades, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
             ApplyAllocationChange(p, heroKey, new AllocationChange
             {
                 Kind = AllocationChangeKind.Equipment, EquipmentSlot = r.Slot, EquipmentUid = uid,
@@ -1513,11 +1513,11 @@ namespace SodRpg.Core.Game
         {
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged.", "上锁的遗物无法分解。"));
             if (loadoutLocked && p.IsEquippedAnywhere(uid))
             {
-                throw new InvalidOperationException(Loc.T("装着中の遺物は確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
+                throw new InvalidOperationException(Loc.T("装着中の遺物は確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition.", "装备中的遗物只能在存仓点或远征之外分解。"));
             }
             int shards = SalvageValue(r);
             int tuning = Content.SalvageTuning(r.Rarity);
@@ -1529,7 +1529,7 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Tuning, tuning);
             return new GameEvent(EventKind.Info, Loc.T(
                 $"「{r.DisplayName}」を分解して、欠片{shards}" + (tuning > 0 ? $"と調律石{tuning}" : "") + "を得ました。",
-                $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
+                $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : ""), $"分解了“{r.DisplayName}”，获得碎片{shards}" + (tuning > 0 ? $"、调律石{tuning}" : "") + "。"));
         }
 
         /// <summary>まとめて分解の対象（設定したレア度まで。鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
@@ -1541,7 +1541,7 @@ namespace SodRpg.Core.Game
 
         public static void SetBulkSalvageMaxRarity(Profile p, Rarity r)
         {
-            if (r < Rarity.Common || r > Rarity.Epic) throw new ArgumentOutOfRangeException(nameof(r), Loc.T("まとめて分解はコモンからエピックまでです。", "Bulk salvage covers Common to Epic only."));
+            if (r < Rarity.Common || r > Rarity.Epic) throw new ArgumentOutOfRangeException(nameof(r), Loc.T("まとめて分解はコモンからエピックまでです。", "Bulk salvage covers Common to Epic only.", "批量分解仅限普通到史诗。"));
             p.BulkSalvageMaxRarity = r;
         }
 
@@ -1560,12 +1560,12 @@ namespace SodRpg.Core.Game
                 }
                 catch (InvalidOperationException) { }
             }
-            if (done == 0) return new GameEvent(EventKind.Info, Loc.T("分解できる遺物はありませんでした。", "Nothing could be salvaged."));
+            if (done == 0) return new GameEvent(EventKind.Info, Loc.T("分解できる遺物はありませんでした。", "Nothing could be salvaged.", "没有可分解的遗物。"));
             int shards = p.Material(Materials.Shard) - shardsBefore;
             int tuning = p.Material(Materials.Tuning) - tuningBefore;
             return new GameEvent(EventKind.Info, Loc.T(
                 $"{done}個をまとめて分解して、欠片{shards}" + (tuning > 0 ? $"と調律石{tuning}" : "") + "を得ました。",
-                $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
+                $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + ".", $"批量分解了{done}件，获得碎片{shards}" + (tuning > 0 ? $"、调律石{tuning}" : "") + "。"));
         }
 
         /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。係数はForgeBalanceを参照。上限では0。</summary>
@@ -1579,10 +1579,10 @@ namespace SodRpg.Core.Game
         {
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            if (r.Enhance >= Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
+            if (r.Enhance >= Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement.", "已无法继续强化。"));
             int cost = Content.EnhanceCost(r);
-            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
+            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed).", $"碎片不足（需要{cost}）。"));
             p.AddMaterial(Materials.Shard, -cost);
             var rng = p.TakeRng();
             if (rng.Chance(EnhanceFailureChance(r) / 100.0))
@@ -1594,19 +1594,19 @@ namespace SodRpg.Core.Game
                 return new GameEvent(EventKind.Info, lowered
                     ? Loc.T(
                         $"「{r.PlainName}」の強化に失敗し、強化値が{Content.EnhanceDemotionSteps}段下がりました（+{r.Enhance}）。欠片{cost}は消費されました。",
-                        $"Enhancement failed for \"{r.PlainName}\" and lowered it by {Content.EnhanceDemotionSteps} level(s) to +{r.Enhance}. The {cost} shards were spent.")
+                        $"Enhancement failed for \"{r.PlainName}\" and lowered it by {Content.EnhanceDemotionSteps} level(s) to +{r.Enhance}. The {cost} shards were spent.", $"“{r.PlainName}”强化失败，强化值下降了{Content.EnhanceDemotionSteps}级（+{r.Enhance}）。{cost}枚碎片已被消耗。")
                     : Loc.T(
                         $"「{r.PlainName}」の強化に失敗しましたが、強化値は変わりませんでした（+{r.Enhance}）。欠片{cost}は消費されました。",
-                        $"Enhancement failed for \"{r.PlainName}\" but its enhancement level is unchanged (+{r.Enhance}). The {cost} shards were spent."), r.Rarity);
+                        $"Enhancement failed for \"{r.PlainName}\" but its enhancement level is unchanged (+{r.Enhance}). The {cost} shards were spent.", $"“{r.PlainName}”强化失败，但强化值没有变化（+{r.Enhance}）。{cost}枚碎片已被消耗。"), r.Rarity);
             }
             r.Enhance++;
             string milestone = GrantEnhanceMilestones(rng, r);
             p.StoreRng(rng);
             return WithBountyProgress(p, new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
-                Loc.T($"「{r.PlainName}」の強化に成功し、+{r.Enhance}になりました。", $"Successfully enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
+                Loc.T($"「{r.PlainName}」の強化に成功し、+{r.Enhance}になりました。", $"Successfully enhanced \"{r.PlainName}\" to +{r.Enhance}.", $"“{r.PlainName}”强化成功，达到了+{r.Enhance}。") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
         }
 
-        private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
+        private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ", "里程碑：") + milestone;
 
         /// <summary>限界突破の材料になる遺物（目標と同じ枠・同じレア度以上・鍵なし・未装着・取引中でない・再調律中でない）を弱い順に。</summary>
         public static List<Relic> LimitBreakCandidates(Profile p, Relic target, TradeLedger trades = null)
@@ -1632,21 +1632,21 @@ namespace SodRpg.Core.Game
         /// <summary>材料1つと費用を消費して融合を1段上げる。全条件を消費前に検証する。</summary>
         public static GameEvent Fuse(Profile p, string uid, string materialUid, TradeLedger trades = null, bool loadoutLocked = false)
         {
-            if (loadoutLocked) throw new InvalidOperationException(Loc.T("融合は確保地点か遠征の外でのみ使えます。", "Fusion is available only at a secure point or outside an expedition."));
+            if (loadoutLocked) throw new InvalidOperationException(Loc.T("融合は確保地点か遠征の外でのみ使えます。", "Fusion is available only at a secure point or outside an expedition.", "融合只能在存仓点或远征之外使用。"));
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
             if (r.FusionLevel < 0 || r.FusionLevel >= Fusion.MaxLevel)
-                throw new InvalidOperationException(Loc.T("融合段階が上限、または不正です。", "Fusion level is at its cap or invalid."));
-            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash."));
+                throw new InvalidOperationException(Loc.T("融合段階が上限、または不正です。", "Fusion level is at its cap or invalid.", "融合阶段已达上限或无效。"));
+            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash.", "材料遗物不在仓库中。"));
             if (!FusionCandidates(p, r, trades).Contains(material))
                 throw new InvalidOperationException(Loc.T("材料は同じ名前・同じレア度の、鍵なし・未装着・取引中でも再調律中でもない別の遺物です。",
-                    "Use another relic of the same name and rarity that is unlocked, unequipped, unreserved and not retuning."));
+                    "Use another relic of the same name and rarity that is unlocked, unequipped, unreserved and not retuning.", "材料须为同名、同稀有度，且未上锁、未装备、不在交易或再调律中的另一件遗物。"));
             int shards = Fusion.ShardCost(r), tuning = Fusion.TuningCost(r);
             if (p.Material(Materials.Shard) < shards)
-                throw new InvalidOperationException(Loc.T($"欠片が足りません（{shards}必要）。", $"Not enough shards ({shards} needed)."));
+                throw new InvalidOperationException(Loc.T($"欠片が足りません（{shards}必要）。", $"Not enough shards ({shards} needed).", $"碎片不足（需要{shards}）。"));
             if (p.Material(Materials.Tuning) < tuning)
-                throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuning}必要）。", $"Not enough tuning stones ({tuning} needed)."));
+                throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuning}必要）。", $"Not enough tuning stones ({tuning} needed).", $"调律石不足（需要{tuning}）。"));
             p.AddMaterial(Materials.Shard, -shards);
             if (tuning > 0) p.AddMaterial(Materials.Tuning, -tuning);
             p.Stash.Remove(material);
