@@ -10,6 +10,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.37 — Chinese codex and terminology fixes（2026-10-21）
+
+### 不具合の修正 / Bug fixes
+- 図鑑の中国語の固有効果名を既存の明示訳から取得し、一般語に固有名の訳が適用される問題と、中国語での図鑑生成後に表示言語が英語へ変わる問題を直しました。 / Fixed Chinese codex power names to use their explicit translations, prevented power-specific translations from affecting generic text, and preserved Chinese as the display language after codex generation.
+- 中国語の奥義・共演・疑心の表記ゆれと英語残りを直しました。 / Fixed inconsistent Chinese terms and untranslated Ultimate references in power, waypoint and equipment text.
+- 保存エラーの英文が null の場合も、エラーメッセージの取得中に例外が起きないようにしました。 / Prevented retrieving a save error message from throwing when its English text is null.
+- 中国語の装備説明で障壁の訳語をそろえ、魂牢の鉄羽の説明文を直しました。 / Standardized shield terminology in Chinese equipment descriptions and corrected the Soulgaol Feather description.
+- 中国語で契約を選べないときの案内と、星図の要石に必要なポイントの表記を直しました。 / Corrected Chinese wording for unavailable pacts and star-map keystone point costs.
+
+---
+
 ## v3.8.36 — Chinese translations for 200 unique items, Chinese text fixes and a lighter merchant area（2026-10-21）
 
 ### 不具合の修正 / Bug fixes
