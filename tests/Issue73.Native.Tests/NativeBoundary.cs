@@ -1155,6 +1155,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
         private float _tickNow;
         private float _nextGemSlotCheck;
+        // BountyReportBatching.cs の間引きフラッシュ（TickBountyReports）が使う次回送信時刻。
+        private float _nextBountyFlush;
         private bool _pressureDirty;
         // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
         // 本物のハンドラ群を抽出するため、ここはその実行に必要な状態の形だけを用意する。
