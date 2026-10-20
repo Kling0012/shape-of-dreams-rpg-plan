@@ -44,6 +44,7 @@ namespace SodRpg.Mod
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
             NativePerfOptions.ChaosShrineChoice = config.nativeChaosShrineChoiceCache;
+            NativePerfOptions.BossSoulShrineScan = config.nativeBossSoulShrineScan;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
             NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
@@ -90,6 +91,7 @@ namespace SodRpg.Mod
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ChaosShrineHitScan = true;
         internal static bool ChaosShrineChoice = true;
+        internal static bool BossSoulShrineScan = true;
         internal static bool ProjectileIdleRpc = true;
         internal static bool CustomRpcDispatch = true;
         internal static bool SampleUpdateIdle = true;
@@ -3098,6 +3100,137 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "chaos shrine hit scan", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeBossSoulShrineScanPerf
+    {
+        // Shrine_BossSoul.CanInteract ends with
+        // !ActorManager.instance.allEntities.Any(e => e is BossMonster): the shrine is only
+        // usable while no boss exists. CanInteract runs per frame on every client (guests
+        // included) — ControlManager.GetNearbyInteractable probes every interactable within
+        // 6 units each frame, EditSkillManager.LogicUpdate re-checks it every tick while the
+        // shrine's upgrade UI is open, and FloatingWindowManager re-checks the focused
+        // target. Enumerable.Any over HashSet<Entity> boxes a fresh enumerator on every call
+        // and routes every element through a delegate invocation, so with the shrine nearby
+        // this is a full-entity scan plus an allocation on every client every frame.
+        //
+        // The transpiler swaps only that one Any call for a hand loop with identical
+        // semantics: the same HashSet<Entity> iterated in the same order (the native body
+        // mutates nothing inside the call), the same `is BossMonster` test
+        // (Type.IsInstanceOfType is exactly the `is` operator, null included), the same
+        // short-circuit and the same result — with the struct enumerator and no delegate
+        // call. Everything else in the native body (base.CanInteract, the used-players
+        // list, the negation) is left untouched, so no game logic is replicated. With the
+        // option off, or on any exception inside the loop, the helper falls back to the
+        // native Enumerable.Any call, which is the original behaviour unchanged.
+        private static MethodBase _target;
+        private static Type _bossType;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare() => TryPrepare("Shrine_BossSoul", "BossMonster");
+
+        // Split out with the type names as arguments so the tests can point the same wiring
+        // at stand-in classes and at missing names (the fail-soft path), exactly like
+        // NativeChaosShrineHitScanPerf. The name-only lookups stay: the mod never references
+        // these native classes, and TypeByName resolves the harness stand-ins in tests
+        // exactly like the real classes in the game.
+        internal static bool TryPrepare(string shrineTypeName, string bossTypeName)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(shrineTypeName);
+                if (type == null)
+                    throw new MissingMemberException(shrineTypeName + " unavailable");
+                MethodBase target = null;
+                foreach (var candidate in AccessTools.GetDeclaredMethods(type))
+                {
+                    if (candidate.Name == "CanInteract" && candidate.ReturnType == typeof(bool)
+                        && candidate.GetParameters().Length == 1 && candidate.GetMethodBody() != null)
+                    {
+                        target = candidate;
+                        break;
+                    }
+                }
+                if (target == null)
+                    throw new MissingMemberException(shrineTypeName + ".CanInteract unavailable");
+                _bossType = AccessTools.TypeByName(bossTypeName);
+                if (_bossType == null)
+                    throw new MissingMemberException(bossTypeName + " unavailable");
+                _target = target;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int sites = 0;
+            int site = -1;
+            Type elementType = null;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo m) || m.Name != "Any" || !m.IsGenericMethod
+                    || m.GetGenericArguments().Length != 1
+                    || m.DeclaringType != typeof(System.Linq.Enumerable)) continue;
+                var parameters = m.GetParameters();
+                if (parameters.Length != 2 || !parameters[1].ParameterType.IsGenericType
+                    || parameters[1].ParameterType.GetGenericTypeDefinition() != typeof(Func<,>)) continue;
+                var element = parameters[1].ParameterType.GetGenericArguments()[0];
+                if (element.IsGenericParameter || !parameters[0].ParameterType.IsGenericType
+                    || parameters[0].ParameterType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
+                    || parameters[0].ParameterType.GetGenericArguments()[0] != element) continue;
+                elementType = element;
+                site = i;
+                sites++;
+            }
+            // The native body holds exactly one Any(source, predicate) call; any other count
+            // means the body changed shape or this transpiler already ran.
+            if (sites != 1 || site < 0 || elementType == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", "native boss scan callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeBossSoulShrineScanPerf), nameof(BossScan))
+                .MakeGenericMethod(elementType);
+            return code;
+        }
+
+        // Same call shape as Enumerable.Any<TSource>(IEnumerable<TSource>, Func<TSource, bool>):
+        // the predicate argument stays on the evaluation stack and is only ever forwarded to
+        // the native fallback. The loop mirrors Any's short-circuit exactly, and
+        // Type.IsInstanceOfType is the `is` operator: null is no match, subclasses match.
+        internal static bool BossScan<T>(IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            if (_disabled || !NativePerfOptions.BossSoulShrineScan) return System.Linq.Enumerable.Any(source, predicate);
+            try
+            {
+                if (source is HashSet<T> set)
+                {
+                    foreach (T entry in set)
+                        if (_bossType.IsInstanceOfType(entry)) return true;
+                    return false;
+                }
+                foreach (T entry in source)
+                    if (_bossType.IsInstanceOfType(entry)) return true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", ex.Message);
+                return System.Linq.Enumerable.Any(source, predicate);
+            }
         }
     }
 
