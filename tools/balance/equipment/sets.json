@@ -5,7 +5,8 @@
       "id": "set.tide",
       "name": {
         "ja": "潮鳴りの装い",
-        "en": "Tidecaller's Regalia"
+        "en": "Tidecaller's Regalia",
+        "zh": "潮鸣礼装"
       },
       "twoPiece": [
         {
@@ -42,7 +43,8 @@
       "id": "set.lamp",
       "name": {
         "ja": "灯守の誓い",
-        "en": "Lampkeeper's Oath"
+        "en": "Lampkeeper's Oath",
+        "zh": "守灯人之誓"
       },
       "twoPiece": [
         {
@@ -79,7 +81,8 @@
       "id": "set.cinder",
       "name": {
         "ja": "残火の誓約",
-        "en": "Cinder Covenant"
+        "en": "Cinder Covenant",
+        "zh": "余烬契约"
       },
       "twoPiece": [
         {
@@ -112,7 +115,8 @@
       "id": "set.dusk",
       "name": {
         "ja": "黄昏の狩装",
-        "en": "Dusk Hunter's Garb"
+        "en": "Dusk Hunter's Garb",
+        "zh": "暮色猎装"
       },
       "twoPiece": [
         {
@@ -145,7 +149,8 @@
       "id": "set.winter",
       "name": {
         "ja": "冬枯れの誓約",
-        "en": "Winterbound Oath"
+        "en": "Winterbound Oath",
+        "zh": "寒冬之誓"
       },
       "twoPiece": [
         {
@@ -182,7 +187,8 @@
       "id": "set.starsong",
       "name": {
         "ja": "星詠みの装束",
-        "en": "Starsinger's Raiment"
+        "en": "Starsinger's Raiment",
+        "zh": "咏星者法衣"
       },
       "twoPiece": [
         {
@@ -219,7 +225,8 @@
       "id": "set.hunt",
       "name": {
         "ja": "狩猟団の装備",
-        "en": "Hunting Party Kit"
+        "en": "Hunting Party Kit",
+        "zh": "狩猎团装备"
       },
       "twoPiece": [
         {
@@ -256,7 +263,8 @@
       "id": "set.bastion",
       "name": {
         "ja": "不落城の装い",
-        "en": "Bastion's Bulwark"
+        "en": "Bastion's Bulwark",
+        "zh": "不落城壁垒"
       },
       "twoPiece": [
         {
@@ -293,7 +301,8 @@
       "id": "set.wildfire",
       "name": {
         "ja": "燎原の軍装",
-        "en": "Wildfire Warband"
+        "en": "Wildfire Warband",
+        "zh": "飞火军装"
       },
       "twoPiece": [
         {
@@ -330,7 +339,8 @@
       "id": "set.grove",
       "name": {
         "ja": "古森の守り",
-        "en": "Old Grove Ward"
+        "en": "Old Grove Ward",
+        "zh": "古林守护"
       },
       "twoPiece": [
         {
@@ -367,7 +377,8 @@
       "id": "set.reverie",
       "name": {
         "ja": "夢想の楽団",
-        "en": "Reverie Ensemble"
+        "en": "Reverie Ensemble",
+        "zh": "梦幻乐团"
       },
       "twoPiece": [
         {
@@ -404,7 +415,8 @@
       "id": "set.phantom",
       "name": {
         "ja": "幻影の一座",
-        "en": "Phantom Troupe"
+        "en": "Phantom Troupe",
+        "zh": "幻影剧团"
       },
       "twoPiece": [
         {
@@ -441,7 +453,8 @@
       "id": "set.permafrost",
       "name": {
         "ja": "凍土の装い",
-        "en": "Permafrost Garb"
+        "en": "Permafrost Garb",
+        "zh": "冻土装束"
       },
       "twoPiece": [
         {
@@ -478,7 +491,8 @@
       "id": "set.asura",
       "name": {
         "ja": "修羅道の装い",
-        "en": "Path of Carnage"
+        "en": "Path of Carnage",
+        "zh": "修罗道装束"
       },
       "twoPiece": [
         {
@@ -515,7 +529,8 @@
       "id": "set.gale",
       "name": {
         "ja": "風舞の装い",
-        "en": "Galedancer's Attire"
+        "en": "Galedancer's Attire",
+        "zh": "风舞者装束"
       },
       "twoPiece": [
         {
@@ -548,7 +563,8 @@
       "id": "set.firmament",
       "name": {
         "ja": "天穹の誓い",
-        "en": "Firmament Vow"
+        "en": "Firmament Vow",
+        "zh": "苍穹之誓"
       },
       "twoPiece": [
         {
@@ -585,7 +601,8 @@
       "id": "set.ambush",
       "name": {
         "ja": "闇討ちの装い",
-        "en": "Nightstrike Gear"
+        "en": "Nightstrike Gear",
+        "zh": "夜袭装备"
       },
       "twoPiece": [
         {
@@ -622,7 +639,8 @@
       "id": "set.ashrunner",
       "name": {
         "ja": "灰走りの装い",
-        "en": "Ashrunner's Garb"
+        "en": "Ashrunner's Garb",
+        "zh": "踏灰者装束"
       },
       "twoPiece": [
         {
@@ -659,7 +677,8 @@
       "id": "set.mercy",
       "name": {
         "ja": "施療の誓い",
-        "en": "Healer's Pledge"
+        "en": "Healer's Pledge",
+        "zh": "医者之誓"
       },
       "twoPiece": [
         {
@@ -696,7 +715,8 @@
       "id": "set.ironknight",
       "name": {
         "ja": "鉄騎の誓い",
-        "en": "Ironknight's Oath"
+        "en": "Ironknight's Oath",
+        "zh": "铁骑之誓"
       },
       "twoPiece": [
         {
@@ -733,7 +753,8 @@
       "id": "set.eclipse",
       "name": {
         "ja": "月蝕の装い",
-        "en": "Eclipse Regalia"
+        "en": "Eclipse Regalia",
+        "zh": "月蚀礼装"
       },
       "twoPiece": [
         {
@@ -766,7 +787,8 @@
       "id": "set.thunderclap",
       "name": {
         "ja": "迅雷の武装",
-        "en": "Thunderclap Arms"
+        "en": "Thunderclap Arms",
+        "zh": "迅雷武装"
       },
       "twoPiece": [
         {
@@ -803,7 +825,8 @@
       "id": "set.myriad",
       "name": {
         "ja": "万象の装い",
-        "en": "Myriad Weaver's Vestments"
+        "en": "Myriad Weaver's Vestments",
+        "zh": "万象织者法衣"
       },
       "twoPiece": [
         {
@@ -840,7 +863,8 @@
       "id": "set.daybreak",
       "name": {
         "ja": "払暁の誓い",
-        "en": "Dawnbreak Vow"
+        "en": "Dawnbreak Vow",
+        "zh": "破晓之誓"
       },
       "twoPiece": [
         {
@@ -877,7 +901,8 @@
       "id": "set.steamweave",
       "name": {
         "ja": "湯けむり織りの調べ",
-        "en": "Steamweaver's Cadence"
+        "en": "Steamweaver's Cadence",
+        "zh": "织雾者之调"
       },
       "twoPiece": [
         {
@@ -918,7 +943,8 @@
       "id": "set.eclipserite",
       "name": {
         "ja": "蝕の儀の装い",
-        "en": "Eclipse-Rite Vestments"
+        "en": "Eclipse-Rite Vestments",
+        "zh": "月蚀仪式法衣"
       },
       "twoPiece": [
         {
@@ -959,7 +985,8 @@
       "id": "set.cinderfall",
       "name": {
         "ja": "降り灰の行軍",
-        "en": "Cinderfall March"
+        "en": "Cinderfall March",
+        "zh": "落灰行军"
       },
       "twoPiece": [
         {
@@ -1000,7 +1027,8 @@
       "id": "set.icicanticle",
       "name": {
         "ja": "氷晶の聖句",
-        "en": "Icicrystal Canticle"
+        "en": "Icicrystal Canticle",
+        "zh": "冰晶圣歌"
       },
       "twoPiece": [
         {
@@ -1041,7 +1069,8 @@
       "id": "set.shardknight",
       "name": {
         "ja": "砕盾騎士団の誓い",
-        "en": "Oath of the Shardshield Knights"
+        "en": "Oath of the Shardshield Knights",
+        "zh": "碎盾骑士团之誓"
       },
       "twoPiece": [
         {
@@ -1082,7 +1111,8 @@
       "id": "set.bashbound",
       "name": {
         "ja": "盾打ちの誓約",
-        "en": "Bashbound Covenant"
+        "en": "Bashbound Covenant",
+        "zh": "盾击契约"
       },
       "twoPiece": [
         {
@@ -1123,7 +1153,8 @@
       "id": "set.vanguardline",
       "name": {
         "ja": "陣頭の隊列",
-        "en": "Frontline Formation"
+        "en": "Frontline Formation",
+        "zh": "前线阵列"
       },
       "twoPiece": [
         {
@@ -1164,7 +1195,8 @@
       "id": "set.rearmarks",
       "name": {
         "ja": "後陣の射手隊",
-        "en": "Rearline Marksmen"
+        "en": "Rearline Marksmen",
+        "zh": "后阵射手队"
       },
       "twoPiece": [
         {
@@ -1205,7 +1237,8 @@
       "id": "set.watchcircle",
       "name": {
         "ja": "見守りの輪",
-        "en": "Watcher's Circle"
+        "en": "Watcher's Circle",
+        "zh": "守望之环"
       },
       "twoPiece": [
         {
@@ -1246,7 +1279,8 @@
       "id": "set.relaychoir",
       "name": {
         "ja": "継ぎ歌の合唱",
-        "en": "Relaysong Choir"
+        "en": "Relaysong Choir",
+        "zh": "接歌合唱团"
       },
       "twoPiece": [
         {
@@ -1287,7 +1321,8 @@
       "id": "set.packfeast",
       "name": {
         "ja": "群れの宴",
-        "en": "Feast of the Pack"
+        "en": "Feast of the Pack",
+        "zh": "群兽盛宴"
       },
       "twoPiece": [
         {
@@ -1328,7 +1363,8 @@
       "id": "set.lastblooms",
       "name": {
         "ja": "弔い花の庭",
-        "en": "Garden of Funeral Blooms"
+        "en": "Garden of Funeral Blooms",
+        "zh": "悼花之庭"
       },
       "twoPiece": [
         {
@@ -1369,7 +1405,8 @@
       "id": "set.pinpoint",
       "name": {
         "ja": "一点狙いの狩人",
-        "en": "Single-Mark Hunters"
+        "en": "Single-Mark Hunters",
+        "zh": "专一猎手"
       },
       "twoPiece": [
         {
@@ -1410,7 +1447,8 @@
       "id": "set.wanderblades",
       "name": {
         "ja": "渡り鳥の剣舞",
-        "en": "Migrant Bladedance"
+        "en": "Migrant Bladedance",
+        "zh": "候鸟剑舞"
       },
       "twoPiece": [
         {
@@ -1447,7 +1485,8 @@
       "id": "set.fortuneedge",
       "name": {
         "ja": "運刃の賭け",
-        "en": "Gambit of the Fortune Edge"
+        "en": "Gambit of the Fortune Edge",
+        "zh": "幸运之刃的豪赌"
       },
       "twoPiece": [
         {
@@ -1488,7 +1527,8 @@
       "id": "set.runupcharge",
       "name": {
         "ja": "助走の突撃隊",
-        "en": "Runup Charge Corps"
+        "en": "Runup Charge Corps",
+        "zh": "助跑冲锋队"
       },
       "twoPiece": [
         {
@@ -1529,7 +1569,8 @@
       "id": "set.medleyband",
       "name": {
         "ja": "連奏の楽団",
-        "en": "Medley Ensemble"
+        "en": "Medley Ensemble",
+        "zh": "联奏乐团"
       },
       "twoPiece": [
         {
@@ -1570,7 +1611,8 @@
       "id": "set.gamblertrump",
       "name": {
         "ja": "切り札の勝負師",
-        "en": "Trump-Card Gambler"
+        "en": "Trump-Card Gambler",
+        "zh": "王牌赌徒"
       },
       "twoPiece": [
         {
@@ -1611,7 +1653,8 @@
       "id": "set.barehand",
       "name": {
         "ja": "無手の矜持",
-        "en": "Creed of the Bare Hand"
+        "en": "Creed of the Bare Hand",
+        "zh": "空手之傲"
       },
       "twoPiece": [
         {
@@ -1652,7 +1695,8 @@
       "id": "set.crystalcircuit",
       "name": {
         "ja": "結晶の回路",
-        "en": "Crystal Circuit Array"
+        "en": "Crystal Circuit Array",
+        "zh": "结晶循环阵列"
       },
       "twoPiece": [
         {
@@ -1693,7 +1737,8 @@
       "id": "set.dreamvigil",
       "name": {
         "ja": "夢見の寝ずの番",
-        "en": "Dreamwatch Vigil"
+        "en": "Dreamwatch Vigil",
+        "zh": "守梦长夜"
       },
       "twoPiece": [
         {
@@ -1734,7 +1779,8 @@
       "id": "set.tithebound",
       "name": {
         "ja": "供犠の血盟",
-        "en": "Tithebound Blood Pact"
+        "en": "Tithebound Blood Pact",
+        "zh": "献祭血盟"
       },
       "twoPiece": [
         {
@@ -1775,7 +1821,8 @@
       "id": "set.prismdance",
       "name": {
         "ja": "七彩の舞",
-        "en": "Prismatic Dance"
+        "en": "Prismatic Dance",
+        "zh": "七彩之舞"
       },
       "twoPiece": [
         {
@@ -1816,7 +1863,8 @@
       "id": "set.breakoutcorps",
       "name": {
         "ja": "包囲突破隊",
-        "en": "Breakout Corps"
+        "en": "Breakout Corps",
+        "zh": "突围队"
       },
       "twoPiece": [
         {

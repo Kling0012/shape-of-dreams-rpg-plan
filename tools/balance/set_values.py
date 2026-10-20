@@ -47,8 +47,13 @@ def validate_sets(table, path=TABLE_PATH):
             raise ValueError(f"{prefix}/id: unknown or duplicate ordinary set {sid!r}")
         seen.add(sid)
         name = row["name"]
-        if not isinstance(name, dict) or set(name) != {"ja", "en"} or any(not isinstance(v, str) or not v for v in name.values()):
-            raise ValueError(f"{prefix}/name: expected nonempty ja and en strings")
+        if (not isinstance(name, dict) or not {"ja", "en"} <= set(name) <= {"ja", "en", "zh"}
+                or any(not isinstance(v, str) or not v for v in name.values())):
+            raise ValueError(f"{prefix}/name: expected nonempty ja and en strings and optional nonempty zh")
+        if "zh" in name:
+            placeholders = r"(?<!\{)\{\d+(?:,-?\d+)?(?::[^{}]*)?\}(?!\})"
+            if re.findall(placeholders, name["zh"]) != re.findall(placeholders, name["en"]):
+                raise ValueError(f"{prefix}/name/zh: placeholders must match en in count, order and format")
         for stage, kind in (("twoPiece", "stat"), ("threePiece", "power"), ("sixPiece", "power")):
             lines = row[stage]
             if not isinstance(lines, list) or not lines:
@@ -80,8 +85,9 @@ def render_outputs(table=None):
              "        internal const string ContentFingerprintRecord = " + quote(record) + ";",
              "", "        internal static SetDef[] CreateSets() => new[]", "        {"]
     for row in table["sets"]:
+        name = ", ".join(quote(row["name"][language]) for language in ("ja", "en", "zh") if language in row["name"])
         lines.extend(["            new SetDef", "            {",
-                      f'                Id = {quote(row["id"])}, Name = new Txt({quote(row["name"]["ja"])}, {quote(row["name"]["en"])}),'])
+                      f'                Id = {quote(row["id"])}, Name = new Txt({name}),'])
         for field, stage, kind in (("TwoPiece", "twoPiece", "Stat"), ("ThreePiece", "threePiece", "Power"), ("SixPiece", "sixPiece", "Power")):
             effects = ", ".join(f'new {kind}Line({kind}.{line[kind.lower()]}, {line["value"]})' for line in row[stage])
             lines.append(f"                {field} = new[] {{ {effects} }},")
