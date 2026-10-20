@@ -66,6 +66,13 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // #954 の固有品で繰り返し使う訳語（Txt の第3値を書くときの参照用）:
+        // Shrine: 聖堂 → 圣堂 / Crystal: 結晶 → 结晶 / Fireball: 火球 → 火球
+        // Ultimate: 奥義・切り札（技） → 终极技能 / Overflowing healing: 溢れた癒し → 溢出的治疗
+        // Blizzard: 吹雪・雪嵐 → 暴风雪 / Pure White: 純白 → 纯白 / Gold Coin: 金貨 → 金币
+        // Doubt・Suspicion: 疑心・疑い → 疑心 / Cage: 檻 → 牢笼 / Furnace: 炉・溶鉱炉 → 熔炉
+        // Tidecaller's（セット名）: 潮鳴り → 潮鸣 / Prism（光学の語）: プリズム → 棱镜
+        // Dodge: 回避 → 闪避 / Crimson（紅蓮の名）: 紅蓮 → 红莲 / Banquet: 祝宴・饗宴 → 盛宴
         // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
         // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
         // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
