@@ -438,17 +438,17 @@ namespace SodRpg.Core.Game
             string maximum = (cap.Maximum.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "のダメージが" + value + "%増える。星による増加は最大" + maximum + "%まで。", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
+                ? Loc.T(memory + "のダメージが" + value + "%増える。星による増加は最大" + maximum + "%まで。", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)", "记忆伤害加成：" + memory + " +" + value + "%（星之加成上限" + maximum + "%）")
                 : EssenceCapsBalance.MemoryHasteEnabled
-                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown (star cap " + maximum + "%)") + MemoryHasteCapDescription()
-                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown (star cap " + maximum + "%)", "冷却缩减 +" + value + "%：使用" + memory + "时，缩短其剩余冷却时间的" + value + "%（星之缩减上限" + maximum + "%）") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)", "冷却缩减 +" + value + "%：使用" + memory + "时，从剩余冷却时间中减去其最大冷却时间的" + value + "%（星之缩减上限" + maximum + "%）");
         }
 
         private static string MemoryHasteCapDescription()
         {
             string maximum = EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent.ToString("0.##", CultureInfo.InvariantCulture);
             return Loc.T("連携と星を合計して、1回の発動で短縮できる量は残りクールダウンの最大" + maximum + "%まで。",
-                " (Combined with links, removes at most " + maximum + "% of remaining cooldown per cast.)");
+                " (Combined with links, removes at most " + maximum + "% of remaining cooldown per cast.)", "（与联动合计，每次施放最多缩短剩余冷却时间的" + maximum + "%。）");
         }
 
         public static void ValidateTalent(TalentDef talent)
