@@ -118,7 +118,7 @@ namespace SodRpg.Core.Game
         // 出来事・連携・変種の説明で繰り返し使う訳語（#959）。
         // Power: 固有効果 → 固有效果、Unique relic: 固有品 → 固有遗物（レア度とは区別）
         // Milestone: 節目 → 里程碑、Keystone: 到達刻印 → 到达刻印
-        // Barrier: 障壁 → 障壁、Guard reduction: 軽減 → 减伤
+        // Barrier: 障壁 → 护盾、Guard reduction: 軽減 → 减伤
         // Weak to fire / cold / light / dark: 火・冷気・光・闇に弱い → 畏火・畏寒・畏光・畏暗
         // Unsecured: 未確保 → 未存入、まだ持ち帰っていない → 尚未带回
         // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
@@ -681,7 +681,7 @@ namespace SodRpg.Core.Game
                 ["standard"] = "标准",
                 [" (capped)"] = "（上限）",
                 ["  <- this one"] = "  ←此装备",
-                ["That pact is not on offer."] = "该契约不在可选范围内。",
+                ["That pact is not on offer."] = "该契约不在提示之列。",
                 ["Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world)."] = "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。",
                 ["The trade was not made because its record could not be saved. Check the save location and try again."] = "因无法保存交易记录，未执行交易。请确认保存位置后重试。",
             };
