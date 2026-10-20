@@ -62,7 +62,7 @@ namespace SodRpg.Core.Game
                 if (salvaged > 0)
                     events.Add(new GameEvent(EventKind.Warning, Loc.T(
                         $"前の中断遺物を遺失物へ移しました。上限を超えた{salvaged}個を欠片にしました。",
-                        $"Previous interrupted relics moved to Lost & Found; {salvaged} overflow relic(s) became shards.")));
+                        $"Previous interrupted relics moved to Lost & Found; {salvaged} overflow relic(s) became shards.", $"上次中断远征的遗物已移至遗失物；超出容量的{salvaged}件遗物已转为碎片。")));
             }
             ClearInterruptedRelics(p);
             p.InterruptedRelics.AddRange(captured);
@@ -70,7 +70,7 @@ namespace SodRpg.Core.Game
             p.InterruptedRelicsRunId = p.Run.RunId;
             events.Add(new GameEvent(EventKind.Info, Loc.T(
                 $"中断した遠征の遺物{captured.Count}個を受け取れます（現在の遠征で1回まで）。",
-                $"You can claim {captured.Count} relic(s) from the interrupted expedition, once this expedition.")));
+                $"You can claim {captured.Count} relic(s) from the interrupted expedition, once this expedition.", $"可领取中断远征的{captured.Count}件遗物，本次远征限领一次。")));
         }
 
         internal static void ClearInterruptedRelics(Profile p)
@@ -113,7 +113,7 @@ namespace SodRpg.Core.Game
         public static List<GameEvent> ClaimInterruptedRelics(Profile p, ISet<string> reservedUids = null)
         {
             if (!CanClaimInterruptedRelics(p))
-                throw new InvalidOperationException(Loc.T("この遠征では中断遺物を受け取れません。", "Interrupted relics cannot be claimed in this expedition."));
+                throw new InvalidOperationException(Loc.T("この遠征では中断遺物を受け取れません。", "Interrupted relics cannot be claimed in this expedition.", "本次远征无法领取中断远征的遗物。"));
             var next = p.Clone();
             var reservations = InterruptedSalvageReservations(next, reservedUids);
             var relics = next.InterruptedRelics.ToArray();
@@ -125,7 +125,7 @@ namespace SodRpg.Core.Game
                 if (relic == null || string.IsNullOrEmpty(relic.Uid) || !seen.Add(relic.Uid)
                     || next.ContainsRelicUid(relic.Uid) || next.PendingTrades.Any(trade => trade.Uid == relic.Uid || trade.Relic?.Uid == relic.Uid)
                     || (reservedUids != null && reservedUids.Contains(relic.Uid)))
-                    throw new InvalidOperationException(Loc.T("中断遺物の個体IDが予約品または所持品と重複しています。", "Interrupted relic IDs conflict with reserved or owned assets."));
+                    throw new InvalidOperationException(Loc.T("中断遺物の個体IDが予約品または所持品と重複しています。", "Interrupted relic IDs conflict with reserved or owned assets.", "中断远征的遗物ID与已预留或已拥有的资产冲突。"));
             foreach (var relic in relics) AddToSatchelReserved(next, relic, null, false, reservations);
             next.InterruptedRelicsExecuted.Add(receipt);
             next.InterruptedRelicsClaimedRunIds.Add(next.Run.RunId);
@@ -135,7 +135,7 @@ namespace SodRpg.Core.Game
             CoopTradeRules.CopyTradeState(p, next);
             return new List<GameEvent> { new GameEvent(EventKind.Recovered, Loc.T(
                 $"中断した遠征の遺物{relics.Length}個を受け取りました（まだ持ち帰っていません）。",
-                $"Claimed {relics.Length} relic(s) from the interrupted expedition (unsecured).")) };
+                $"Claimed {relics.Length} relic(s) from the interrupted expedition (unsecured).", $"已领取中断远征的{relics.Length}件遗物（尚未存入仓库）。")) };
         }
     }
 }

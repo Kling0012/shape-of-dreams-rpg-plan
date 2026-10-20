@@ -5,7 +5,7 @@ namespace SodRpg.Core.Game
     {
         public static Txt Of(string heroKey)
         {
-            if (string.IsNullOrEmpty(heroKey)) return new Txt("", "");
+            if (string.IsNullOrEmpty(heroKey)) return new Txt("", "", "");
             string en = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
             string ja;
             switch (heroKey)
@@ -21,14 +21,14 @@ namespace SodRpg.Core.Game
                 case "Hero_Bismuth": ja = "ビスマス"; break;
                 default: ja = en; break;
             }
-            return new Txt(ja, en);
+            return new Txt(ja, en, LocZhGlossary.Lookup(en));
         }
 
         /// <summary>刻印の列の見出し（旅人の名前入り）。選んだ数は画面側で「刻印 n/枠数」と添える。</summary>
         public static string KeystoneHeader(string heroKey)
         {
             var name = Of(heroKey);
-            return Loc.T(name.Ja + "の刻印：", name.En + " keystones:");
+            return Loc.T(name.Ja + "の刻印：", name.En + " keystones:", (name.Zh ?? name.En) + "的刻印：");
         }
 
         /// <summary>現在の言語での表示名。</summary>

@@ -90,9 +90,9 @@ namespace SodRpg.Core.Game
         public static string Describe(BossMoveEntry entry)
         {
             if (entry == null || !BossProfiles.TryGetMove(entry.ProfileId, out var p)) return "";
-            string values = string.Join(Loc.T("、", ", "), entry.Channels.Select(c => c.ChannelId + " "
+            string values = string.Join(Loc.T("、", ", ", "、"), entry.Channels.Select(c => c.ChannelId + " "
                 + (c.ValueMilli / 1000m).ToString("0.###", CultureInfo.InvariantCulture)));
-            return p.Description + Loc.T("\n現在のchannel係数：", "\nCurrent channel coefficients: ") + values;
+            return p.Description + Loc.T("\n現在のchannel係数：", "\nCurrent channel coefficients: ", "\n当前通道系数：") + values;
         }
     }
 }
