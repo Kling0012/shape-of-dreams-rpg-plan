@@ -80,3 +80,23 @@ Overload の固有効果名と Overcharge の装備強化用語が、ともに�
 - `git diff origin/dev -- src/SodRpg.Core/Game/Families.cs`：出力なし。`Content.PowerName` の `Frost` は「霜寒」、用語集の家系名は「冰霜」であることをソースで確認した。
 
 ゲーム内での家系名と固有効果名の表示は、この環境ではゲームを起動できないため未実行である。上記の既存テストには両者の中国語名を直接比較する再現テストがなく、表示を直接再現したとは扱っていない。MOD 本体のビルド、.NET 8 上のテスト、null 例外と GlassAegis の直接実行、全テスト・低速テストは、上記「未実行」と同じ理由で実行していない。前ラウンドの広範囲な参照・字体・奥義表記の点検も、対象の文字列を変更していないため再実行していない。
+
+## PR #981 のマージ後に残った改善案
+
+2026年10月21日、L1・L2 をそれぞれ確認し、両方に対応した。
+
+- L1：`rg -n '终极记忆' src/` で、Demon の装飾品1件、Skoll の装飾品・2部位セット効果2件、Nyx の装飾品・靴・2部位と6部位のセット効果4件、用語コメント1件の計8件が見つかった。説明7件を既訳の「奥义记忆」にそろえ、用語集の #961 のコメントも更新した。実績やエッセンスなど、ほかの箇所には該当表記がなかった。変更は訳語だけで、数値や発動条件は変えていない。
+- L2：PR #981 のマージ直前のベース（`7d23dddb^1`）と比べ、一般辞書の Keystone を Legendary の直後、Nightmare を Awakening points と Star experience の間へ戻した。キーと訳は変えていない。
+
+### 今回の検証
+
+- `rg -n '终极记忆|Ultimate记忆' src/`：修正後は一致0件。対象7件と用語コメントが「奥义记忆」になったことも確認した。過去の記録の「奥義の表記」点検には含まれていなかった表記を、今回追加で調べた。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter 'FullyQualifiedName~BossSetsStageATests|FullyQualifiedName~BossSetsStageB12Tests|FullyQualifiedName~CodexTextConsistencyTests|FullyQualifiedName~CodexQueryTests|FullyQualifiedName~CodexNamedCategoriesTests' --nologo --verbosity quiet`：85件成功、失敗0件、スキップ0件。Release ビルドが完了し、既存テストコード由来のコンパイル警告があった。.NET 10 へのロールフォワードで実行した。
+- `git diff --word-diff=plain --unified=0` で、ボス説明3ファイルの変更が訳語7件だけであることを確認した。用語集の差分でも、コメント1件と辞書項目2件の移動だけであることを確認した。
+
+### 今回の未実行
+
+- ゲーム内での中国語表示・フォント・折り返しの確認：この環境ではゲームを起動できない。既存テストの成功を、ゲーム内表示の直接再現とは扱っていない。
+- ゲームDLLを参照するMOD本体のビルド：ゲーム環境がないため。
+- .NET 8 上のテスト：ランタイムがなく、.NET 10 上で代わりに実行したため。
+- 全テスト・低速テスト：作業指示に従い、変更箇所に関係する既存テストだけを実行したため。
