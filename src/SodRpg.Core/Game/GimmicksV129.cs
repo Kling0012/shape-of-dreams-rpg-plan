@@ -64,6 +64,9 @@ namespace SodRpg.Core.Game
             if (Loc.Japanese)
                 return DescribeV129Ja(def, memory, n, duration, woundDuration, primedDuration, ricochetRadius, allyRadius, targets, maximumStun,
                     Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture), triggerText);
+            if (Loc.Language == LocLanguage.Chinese)
+                return DescribeV129Zh(def, memory, n, duration, woundDuration, primedDuration, ricochetRadius, allyRadius, targets, maximumStun,
+                    Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture), triggerText);
             switch (def.Effect)
             {
                 case GimmickEffect.Wound:
@@ -167,6 +170,70 @@ namespace SodRpg.Core.Game
             }
             float cd = Math.Max(MinimumCooldown(def.Effect), def.Cooldown);
             return JaSentence(condition, effect) + extra + JaLimits(cd, cap) + JaNoStarTrigger;
+        }
+
+        /// <summary>V1.29 の仕掛けの中国語の説明（#992）。組み立ては <see cref="DescribeV129Ja"/> と同じ（条件→結果、追記、限度、最後の一文）。
+        /// 用語は #961 の効果用語（ミニボス＝精英、障壁→护盾など）に合わせる。</summary>
+        private static string DescribeV129Zh(GimmickDef def, string memory, string n, string duration, string woundDuration, string primedDuration,
+            string ricochetRadius, string allyRadius, int targets, string maximumStun, string stunSeconds, string triggerText)
+        {
+            string condition = ZhCondition(def, memory, triggerText);
+            string enemy = ZhHitEnemy(condition);
+            string effect, extra = "", cap = "效果数值最高为" + Cap(def.Effect) + "%";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Wound:
+                    effect = "使" + enemy + "在" + woundDuration + "秒内，每3秒受到相当于攻击力与法术强度中较高一方" + n + "%的持续伤害";
+                    extra = "不叠加，保留较强的持续伤害并刷新持续时间。";
+                    break;
+                case GimmickEffect.Daze:
+                    effect = "将" + enemy + "眩晕" + stunSeconds + "秒";
+                    extra = "对精英和首领无效，同一敌人每5秒最多触发1次。";
+                    cap = "眩晕最高" + maximumStun + "秒";
+                    break;
+                case GimmickEffect.Ricochet:
+                    effect = "将命中伤害的" + n + "%作为跳弹伤害，给予" + ricochetRadius + "m以内最多" + targets + "名其他敌人";
+                    break;
+                case GimmickEffect.Siphon:
+                    effect = def.Arg == 1 ? "回复相当于该记忆直接伤害" + n + "%的生命值，并为其" + allyRadius + "m以内的队友旅人回复其中一半"
+                        : "回复相当于该记忆直接伤害" + n + "%的生命值";
+                    extra = "持续伤害不计入，单次回复量最高为" + (def.Arg == 1 ? "各自" : "自己") + "最大生命值的" + SiphonCapText + "%。"
+                        + (def.Arg == 1 && Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange ? CoopDistance.Description : "");
+                    break;
+                case GimmickEffect.Rampart:
+                    effect = "同一次发动中每命中一名不同的敌人，获得相当于最大生命值" + n + "%的护盾，持续" + duration + "秒";
+                    extra = "最多计算" + targets + "名敌人，每名最高" + Cap(def.Effect) + "%。该护盾与普通星之护盾相互独立，只保留1个，保留剩余量与新生成量中较高的一方，并刷新持续时间。";
+                    break;
+                case GimmickEffect.Primed:
+                    effect = "为下一次普通攻击附加相当于攻击力与法术强度中较高一方" + n + "%的额外伤害";
+                    extra = "不叠加，" + primedDuration + "秒后失效。存在多个下一次普通攻击加成时，仅消耗数值最高的1个，其余保留。";
+                    break;
+                case GimmickEffect.Crescendo:
+                    string minimum = Duration(def, CrescendoMinimumSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string factor = Duration(def, CrescendoCooldownFactor).ToString("0.#######", CultureInfo.InvariantCulture);
+                    effect = "该记忆的伤害提升" + n + "%";
+                    extra = "同一次发动只提升1次，最多叠加5次，最高40%。效果持续" + minimum + "秒或该记忆冷却的" + factor
+                        + "倍中较长的一方，使用其他记忆时仍然保留。与其他提升记忆伤害的效果合计最高120%。";
+                    break;
+                case GimmickEffect.ElementEdge:
+                    effect = "计算" + enemy + "身上的火、冰、光、暗种类数，每1种造成相当于攻击力与法术强度中较高一方" + n + "%的额外伤害";
+                    extra = "最多计算4种，不消耗属性。";
+                    break;
+                case GimmickEffect.PackMend:
+                    effect = "回复自己所有存活召唤物各自最大生命值" + n + "%的生命值";
+                    extra = "不回复旅人。";
+                    break;
+                case GimmickEffect.Sap:
+                    effect = "使" + enemy + "造成的伤害降低" + n + "%，持续" + duration + "秒";
+                    extra = "对精英和首领效果减半。不叠加，保留较强的效果并刷新持续时间。";
+                    break;
+                default:
+                    effect = "自己对" + enemy + "的普通攻击与记忆的暴击率提升" + n + "%，持续" + duration + "秒";
+                    extra = "不叠加，保留较强的效果并刷新持续时间。必定暴击不受影响。";
+                    break;
+            }
+            float cooldown = Math.Max(MinimumCooldown(def.Effect), def.Cooldown);
+            return ZhSentence(condition, effect) + extra + ZhLimits(cooldown, cap) + ZhNoStarTrigger;
         }
         public static float SiphonHeal(float damage, float maximumHealth, float percent)
         {

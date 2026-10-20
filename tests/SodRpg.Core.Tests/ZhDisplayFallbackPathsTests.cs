@@ -120,5 +120,48 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain("no cooldown", zh);
             Assert.Equal(ja.Contains('\n'), zh.Contains('\n'));
         }
+
+        [Fact]
+        public void V129_gimmick_description_follows_the_selected_language()
+        {
+            // 跳弾（V1.29 の仕掛け）: 修正前は中国語でも英語の説明文が出た。
+            var def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Ricochet, Value = 20, Arg = 2 };
+            string ja = In(LocLanguage.Japanese, () => Gimmicks.Describe(def, "St_Q_Fleche"));
+            string en = In(LocLanguage.English, () => Gimmicks.Describe(def, "St_Q_Fleche"));
+            string zh = In(LocLanguage.Chinese, () => Gimmicks.Describe(def, "St_Q_Fleche"));
+            Assert.Contains("跳弾ダメージ", ja);
+            Assert.Contains("Ricochet damage", en);
+            Assert.DoesNotContain("Ricochet damage", zh);
+            Assert.True(HasHan(zh), "Chinese output must contain Chinese text, not the English description: " + zh);
+        }
+
+        [Fact]
+        public void Pact_and_daily_dream_descriptions_follow_the_selected_language()
+        {
+            var pact = Pacts.All.First(p => p.Luck > 0 && p.DropBonus > 0);
+            string pactEn = In(LocLanguage.English, () => Pacts.Describe(pact));
+            string pactZh = In(LocLanguage.Chinese, () => Pacts.Describe(pact));
+            Assert.Contains("better relic rarity", pactEn);
+            Assert.DoesNotContain("better relic rarity", pactZh);
+            Assert.DoesNotContain("Cost:", pactZh);
+            Assert.True(HasHan(pactZh), pactZh);
+
+            var dream = DailyDream.All.First(d => d.DropBonus > 0);
+            string dreamEn = In(LocLanguage.English, () => dream.Description);
+            string dreamZh = In(LocLanguage.Chinese, () => dream.Description);
+            Assert.Contains("more relic drops", dreamEn);
+            Assert.DoesNotContain("more relic drops", dreamZh);
+            Assert.True(HasHan(dreamZh), dreamZh);
+        }
+
+        [Fact]
+        public void Star_loadout_default_name_follows_the_selected_language()
+        {
+            Assert.Equal("ロードアウト2", StarLoadouts.DefaultName(1, LocLanguage.Japanese));
+            Assert.Equal("Loadout 2", StarLoadouts.DefaultName(1, LocLanguage.English));
+            Assert.Equal("配装2", StarLoadouts.DefaultName(1, LocLanguage.Chinese));
+            // 既定名はどの言語のものも「名前を付けた扱い」にしない。
+            Assert.Null(StarLoadouts.NormalizeName("配装2", 1));
+        }
     }
 }

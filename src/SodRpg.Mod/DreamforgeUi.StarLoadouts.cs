@@ -26,7 +26,7 @@ namespace SodRpg.Mod
                 string custom = hero.StarLoadouts[i]?.Name;
                 if (!changed && custom == _loadoutCustomNames[i]) continue;
                 _loadoutCustomNames[i] = custom;
-                string name = StarLoadouts.DisplayName(hero, i, Loc.Japanese);
+                string name = StarLoadouts.DisplayName(hero, i, Loc.Language); // #992: 言語3値で渡す（中国語なら中国語の既定名）
                 _loadoutNames[i] = name;
                 string shortName = name.Length > 8 ? name.Substring(0, char.IsHighSurrogate(name[7]) ? 7 : 8) + "…" : name;
                 _loadoutButtons[i].text = (i + 1) + "  " + shortName;

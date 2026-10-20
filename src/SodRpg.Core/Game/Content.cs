@@ -266,10 +266,10 @@ namespace SodRpg.Core.Game
         /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
         public bool HasSixPiece => BossStages.Count == 3 || SixPiece != null && SixPiece.Length > 0;
 
-        /// <summary>能力値の行を並べる。日本語は読点でつないで「。」で終える文にし、英語は従来どおりカンマでつなぐ。</summary>
+        /// <summary>能力値の行を並べる。日本語と中国語は読点でつないで「。」で終える文にし、英語は従来どおりカンマでつなぐ。</summary>
         internal static string JoinStatLines(IEnumerable<string> lines)
         {
-            if (!Loc.Japanese) return string.Join(", ", lines);
+            if (Loc.Language == LocLanguage.English) return string.Join(", ", lines);
             var all = lines.Select(l => l.TrimEnd('。')).ToList();
             // 「冷気属性効果 +10%、移動速度 +5%。」のように読点でつなぐ。注記つきの長い行（すでに文）が混じるときは、1行ずつ文にする。
             return all.Any(l => l.Contains('。')) ? string.Concat(all.Select(l => l + "。")) : string.Join("、", all) + "。";
@@ -460,12 +460,17 @@ namespace SodRpg.Core.Game
         // The TalentDef.RunGrowth property hides the static type name inside this class.
         private static string DescribeRunGrowth(RunGrowthDef def) => global::SodRpg.Core.Game.RunGrowth.Describe(def);
 
-        internal static string DescribeGimmickBoost(string routeMemory, int amount, string heroKey = null) =>
-            Loc.Japanese
+        internal static string DescribeGimmickBoost(string routeMemory, int amount, string heroKey = null)
+        {
+            if (Loc.Language == LocLanguage.Chinese)
+                return "装备" + Links.ItemName(routeMemory) + "时，对应的星的追加效果（" + DescribeRouteEffects(routeMemory, null, heroKey) + "）的数值，各自增加原数值的"
+                    + amount + "%。最终上限遵循各效果的上限。"; // #992: 日本語版と同じ組み立ての中国語版
+            return Loc.Japanese
                 ? Links.ItemName(routeMemory) + "を装着しているとき、対応する星の追加効果（" + DescribeRouteEffects(routeMemory, null, heroKey) + "）の量が、それぞれ元の量の"
                     + amount + "%分増える。最終上限は各効果の上限に従う。"
                 : DescribeRouteEffects(routeMemory, null, heroKey) + $" amount +{amount}% / "
                     + Links.ItemName(routeMemory) + " must be equipped; affects matching stars' additional effects. Increases each effect's original amount, subject to its final cap";
+        }
 
         internal static string DescribeGimmickParameter(string routeMemory, GimmickParam parameter, int amount, string id, string heroKey = null)
         {
@@ -491,6 +496,15 @@ namespace SodRpg.Core.Game
                     : field + "が、元の" + field + "の" + amount + "%分増える";
                 return Links.ItemName(routeMemory) + "を装着しているとき、対応する星の追加効果（" + effects + "）の" + increase
                     + "。同じ記憶への修飾は合算して、最大" + cap + "まで。";
+            }
+            if (Loc.Language == LocLanguage.Chinese)
+            {
+                // #992: 日本語版と同じ組み立ての中国語版（日本語専用の組み立てに足す方針は Issue の要件どおり）。
+                string increase = parameter == GimmickParam.ExtraTargets ? field + "增加" + amount + "个目标"
+                    : parameter == GimmickParam.Chance ? field + "提升" + amount + "%"
+                    : field + "增加原" + field + "的" + amount + "%";
+                return "装备" + Links.ItemName(routeMemory) + "时，对应的星的追加效果（" + effects + "）的" + increase
+                    + "。同一记忆的修饰合算后，最高" + cap + "。";
             }
             return effects + " " + field + " +" + amount + unit + " / " + Links.ItemName(routeMemory)
                 + " must be equipped; affects matching stars' additional effects. "
