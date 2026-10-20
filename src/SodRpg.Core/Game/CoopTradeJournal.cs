@@ -19,24 +19,24 @@ namespace SodRpg.Core.Game
         public CoopTradeJournal(IFileSystem fs, string path, bool requireExisting = false)
         {
             _fs = fs ?? throw new ArgumentNullException(nameof(fs));
-            if (string.IsNullOrEmpty(path)) throw new ArgumentException(Loc.T("協力取引の識別情報がありません。", "Trade journal path is required."), nameof(path));
+            if (string.IsNullOrEmpty(path)) throw new ArgumentException(Loc.T("協力取引の識別情報がありません。", "Trade journal path is required.", "必须指定交易记录路径。"), nameof(path));
             _path = path;
             // Recovery must not mistake a missing or inaccessible journal for a new empty ledger.
             if (!requireExisting && !fs.Exists(path)) return;
             var root = CoopTradeCodec.Object(Json.Parse(fs.ReadAllText(path)));
             if (CoopTradeCodec.String(root, "format") != Format || !(CoopTradeCodec.Value(root, "version") is long version) || version != 1)
-                throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Unsupported cooperative trade journal."));
+                throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Unsupported cooperative trade journal.", "不支持此合作交易记录。"));
             foreach (object value in CoopTradeCodec.Array(root, "receipts"))
             {
                 var receipt = CoopTradeCodec.ParseReceipt(CoopTradeCodec.Object(value));
                 CoopTradeRules.ValidateReceipt(receipt, out _, out _);
-                if (_receipts.ContainsKey(receipt.Id)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Duplicate cooperative trade journal decision."));
+                if (_receipts.ContainsKey(receipt.Id)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Duplicate cooperative trade journal decision.", "合作交易记录中存在重复的决定。"));
                 _receipts.Add(receipt.Id, CoopTradeCodec.WriteReceipt(receipt));
             }
             foreach (object value in CoopTradeCodec.Array(root, "cancelled"))
             {
                 if (!(value is string id) || string.IsNullOrEmpty(id) || !_cancelled.Add(id) || _receipts.ContainsKey(id))
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade cancellation tombstone."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade cancellation tombstone.", "合作交易的取消标记无效。"));
             }
         }
 
@@ -75,10 +75,10 @@ namespace SodRpg.Core.Game
                 string encoded = CoopTradeCodec.WriteReceipt(receipt);
                 if (_receipts.TryGetValue(receipt.Id, out string existing))
                 {
-                    if (existing != encoded) throw new InvalidOperationException(Loc.T("同じ取引IDに別の確定結果が保存されています。", "Trade ID has a different committed decision."));
+                    if (existing != encoded) throw new InvalidOperationException(Loc.T("同じ取引IDに別の確定結果が保存されています。", "Trade ID has a different committed decision.", "此交易ID已保存了不同的确认结果。"));
                     return false;
                 }
-                if (_cancelled.Contains(receipt.Id)) throw new InvalidOperationException(Loc.T("この取引はすでに取り消されています。", "Trade was durably cancelled."));
+                if (_cancelled.Contains(receipt.Id)) throw new InvalidOperationException(Loc.T("この取引はすでに取り消されています。", "Trade was durably cancelled.", "此交易已取消并保存。"));
                 Persist(encoded, null);
                 _receipts.Add(receipt.Id, encoded);
                 return true;
@@ -87,7 +87,7 @@ namespace SodRpg.Core.Game
 
         public bool Cancel(string id)
         {
-            if (string.IsNullOrEmpty(id)) throw new ArgumentException(Loc.T("協力取引の識別情報がありません。", "Trade ID is required."), nameof(id));
+            if (string.IsNullOrEmpty(id)) throw new ArgumentException(Loc.T("協力取引の識別情報がありません。", "Trade ID is required.", "必须提供交易ID。"), nameof(id));
             lock (_sync)
             {
                 EnsureHealthy();
@@ -133,7 +133,7 @@ namespace SodRpg.Core.Game
 
         private void EnsureHealthy()
         {
-            if (_faulted) throw new InvalidOperationException(Loc.T("協力取引の記録を保存できませんでした。記録を読み直すまで取引できません。", "Cooperative trade journal persistence failed; reload the journal before trading."));
+            if (_faulted) throw new InvalidOperationException(Loc.T("協力取引の記録を保存できませんでした。記録を読み直すまで取引できません。", "Cooperative trade journal persistence failed; reload the journal before trading.", "合作交易记录保存失败；请重新载入记录后再交易。"));
         }
     }
 }

@@ -124,11 +124,11 @@ namespace SodRpg.Core.Game
     {
         public AllocationValidationException(EffectiveAllocationPlan plan)
             : base(!plan.CanApply
-                ? Loc.T("効果が上限に達している・無効になる、または前提の星が足りません：", "The effect is capped/disabled or star prerequisites are missing: ") +
-                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.PrerequisiteViolations.Count > 0 ? plan.PrerequisiteViolations : plan.SaturatedChannels))
-                : Loc.T("変更の前に、星をまとめて払い戻す承認が必要です（", "Approve the atomic star refund before changing this configuration (") +
-                    plan.RefundCost.ToString(CultureInfo.InvariantCulture) + Loc.T("ポイント）：", " points): ") +
-                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.AffectedRefundIds)))
+                ? Loc.T("効果が上限に達している・無効になる、または前提の星が足りません：", "The effect is capped/disabled or star prerequisites are missing: ", "效果已达上限、无效或缺少前置星：") +
+                    string.Join(Loc.T("、", ", ", "、"), DisplayNames(plan, plan.PrerequisiteViolations.Count > 0 ? plan.PrerequisiteViolations : plan.SaturatedChannels))
+                : Loc.T("変更の前に、星をまとめて払い戻す承認が必要です（", "Approve the atomic star refund before changing this configuration (", "更改此配置前，需要批准一次性退还星点（") +
+                    plan.RefundCost.ToString(CultureInfo.InvariantCulture) + Loc.T("ポイント）：", " points): ", "点）：") +
+                    string.Join(Loc.T("、", ", ", "、"), DisplayNames(plan, plan.AffectedRefundIds)))
         { Plan = plan; }
 
         /// <summary>内部の星ID（"id#段" の形もある）を、画面に出せる星の名前へ直す。名前が無ければそのまま返す。</summary>
@@ -141,7 +141,7 @@ namespace SodRpg.Core.Game
                 var talent = plan.Owner?.Talent(id);
                 if (talent == null) { yield return raw; continue; }
                 string rank = hash < 0 ? null : raw.Substring(hash + 1);
-                yield return talent.DisplayName.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})"));
+                yield return talent.DisplayName.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})", $"（第{rank}阶）"));
             }
         }
         public EffectiveAllocationPlan Plan { get; }
@@ -332,7 +332,7 @@ namespace SodRpg.Core.Game
                                     if (VerifyPruningStrict ? CanRetainRank(scope, proposed, node, r) != CanRetainRank(scope, original, node, r)
                                         : !CanRetainRank(scope, proposed, node, r) && CanRetainRank(scope, original, node, r))
                                     {
-                                        string message = Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ") + id + "#" + r.ToString(CultureInfo.InvariantCulture);
+                                        string message = Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ", "依赖筛选险些漏掉需退还的星点：") + id + "#" + r.ToString(CultureInfo.InvariantCulture);
                                         if (PruningViolations == null) throw new InvalidOperationException(message);
                                         PruningViolations.Add(message + " (change " + change.CandidateStarId + ")");
                                     }

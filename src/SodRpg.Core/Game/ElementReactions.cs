@@ -7,8 +7,8 @@ namespace SodRpg.Core.Game
     {
         private static readonly Txt[] Epithets =
         {
-            new Txt("蒸気の", "Steaming"), new Txt("蝕の", "Eclipsing"),
-            new Txt("燃え殻の", "Cindered"), new Txt("氷晶の", "Frostbound"),
+            new Txt("蒸気の", "Steaming", "蒸汽的"), new Txt("蝕の", "Eclipsing", "蚀变的"),
+            new Txt("燃え殻の", "Cindered", "余烬的"), new Txt("氷晶の", "Frostbound", "冰晶的"),
         };
         public static bool IsPower(Power power) => power >= Power.Steam && power <= Power.FrostCrystal;
         public static Txt Epithet(Power power) => IsPower(power) ? Epithets[(int)power - (int)Power.Steam] : null;
