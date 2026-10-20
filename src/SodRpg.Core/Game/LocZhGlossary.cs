@@ -61,7 +61,9 @@ namespace SodRpg.Core.Game
         // Nightmare: 悪夢 → 梦魇、Mastery: 熟練度 → 熟练度、Identity memory: 固有記憶 → 身份记忆
         // Shield: 障壁 → 护盾、Ability Power: 魔力 → 法术强度、Crit: 会心 → 暴击
         // Keen: 冴え → 精妙、Dream Ring: 夢輪 → 梦环、Rime: 薄氷 → 霜华
-        // この #960 の単語それ自体は #993 で完全一致辞書から外した。Lookup に渡る呼び出しがなく、参照用にのみ残す
+        // このうち #993 で完全一致辞書の #960 欄から外した語は Keystone・Cluster・Bridge・Rank・Loadout・Training・
+        // Mastery・Shield・Crit・Keen・Rime の 11 語（Lookup に渡る呼び出しがなく、参照用にのみ残す）。
+        // Identity memory・Ability Power・Dream Ring は下の辞書に登録したまま残す
         // （星団名の " Cluster" 接尾辞は英語名だけの組み立てで、中国語は suffix: "星团" を直接足す）。
         // 装備データ 7/8（Content.cs の固有品、#957）で繰り返し使う訳語。同じく参照用で辞書には登録しない。
         // Pack: 群れ → 兽群
