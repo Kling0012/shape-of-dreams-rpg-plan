@@ -61,6 +61,12 @@ namespace SodRpg.Core.Game
         // Nightmare: 悪夢 → 梦魇、Mastery: 熟練度 → 熟练度、Identity memory: 固有記憶 → 身份记忆
         // Shield: 障壁 → 护盾、Ability Power: 魔力 → 法术强度、Crit: 会心 → 暴击
         // Keen: 冴え → 精妙、Dream Ring: 夢輪 → 梦环、Rime: 薄氷 → 霜华
+        // 出来事・連携・変種の説明で繰り返し使う訳語（#959）。
+        // Power: 固有効果 → 固有效果、Unique relic: 固有品 → 固有遗物（レア度とは区別）
+        // Milestone: 節目 → 里程碑、Keystone: 到達刻印 → 到达刻印
+        // Barrier: 障壁 → 障壁、Guard reduction: 軽減 → 减伤
+        // Weak to fire / cold / light / dark: 火・冷気・光・闇に弱い → 畏火・畏寒・畏光・畏暗
+        // Unsecured: 未確保 → 未存入、まだ持ち帰っていない → 尚未带回
         // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
         // セット名の接頭辞: 砕盾騎士 Shardshield → 碎盾骑士、盾誓い Bashbound → 盾誓、陣頭 Frontline → 阵头、
         //   後陣 Rearline → 后阵、輪守り Ringwarden → 环守、継ぎ歌 Relaysong → 接力歌、宴 Feastpack → 狼宴、
