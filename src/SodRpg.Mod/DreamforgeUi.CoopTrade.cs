@@ -373,7 +373,7 @@ namespace SodRpg.Mod
         private void RefreshCoopTradeFilterLabels()
         {
             _tradeFilterLabelsJapanese = Loc.Language;
-            _tradeRarityLabel = Loc.T("レア度：", "Rarity: ")
+            _tradeRarityLabel = Loc.T("レア度：", "Rarity: ", "稀有度：")
                 + (_tradeRarityFilter < 0 ? Loc.T("すべて", "All") : Content.RarityName(TradeRarities[_tradeRarityFilter]));
             _tradeSlotLabel = Loc.T("部位：", "Slot: ")
                 + (_tradeSlotFilter < 0 ? Loc.T("すべて", "All") : Content.SlotName(TradeSlots[_tradeSlotFilter]));

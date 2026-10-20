@@ -53,7 +53,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Level essence settings save failed: " + ex.Message);
-                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }
     }

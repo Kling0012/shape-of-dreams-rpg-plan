@@ -58,14 +58,14 @@ namespace SodRpg.Mod
                 "<color=#73e6b3>● " + StarMapClusters.RegionLabel(ClusterRegionKind.Bridge) + "</color>",
                 "<color=#ffa875>● " + StarMapClusters.RegionLabel(ClusterRegionKind.Outer) + "</color>",
                 "<color=#cc8cff>◆ " + StarMapClusters.RegionLabel(ClusterRegionKind.Keystone) + "</color>",
-                Loc.T("<color=#cc8cff>紫の大きな星＝刻印</color>", "<color=#cc8cff>Large purple = keystone</color>"),
-                Loc.T("<color=#73e6f2>水色＝合わせ技</color>", "<color=#73e6f2>Cyan = combo</color>"),
-                Loc.T("<color=#ffc952>金＝取得済み</color>", "<color=#ffc952>Gold = acquired</color>"),
+                Loc.T("<color=#cc8cff>紫の大きな星＝刻印</color>", "<color=#cc8cff>Large purple = keystone</color>", "<color=#cc8cff>紫色大星＝刻印</color>"),
+                Loc.T("<color=#73e6f2>水色＝合わせ技</color>", "<color=#73e6f2>Cyan = combo</color>", "<color=#73e6f2>青色＝连携技</color>"),
+                Loc.T("<color=#ffc952>金＝取得済み</color>", "<color=#ffc952>Gold = acquired</color>", "<color=#ffc952>金色＝已获得</color>"),
             };
             string[] tips =
             {
                 Loc.T("<b>記憶の星団</b>\n装備する記憶（スキル）ごとの星のまとまりです。星を取ると、その記憶が強くなります。星の右上の青い点が目印です。",
-                    "<b>Memory cluster</b>\nStars grouped by an equippable memory (skill). Acquiring them strengthens that memory. Marked by a blue dot on the star."),
+                    "<b>Memory cluster</b>\nStars grouped by an equippable memory (skill). Acquiring them strengthens that memory. Marked by a blue dot on the star.", "<b>记忆星团</b>\n按可装备的记忆（技能）分组的星群。获得星星后，该记忆会变强。标志是星星右上角的蓝色圆点。"),
                 Loc.T("<b>記憶の橋の星団</b>\n二つの記憶をつなぐ星のまとまりです。両方の記憶を装備すると合わせ技が働きます。星の右上の緑の点が目印です。",
                     "<b>Bridge cluster</b>\nStars that link two memories. Equip both memories to activate the combo. Marked by a green dot on the star."),
                 Loc.T("<b>外縁の星団</b>\n記憶に依らない、旅人全体の能力や仕掛けを伸ばす星のまとまりです。星の右上の橙の点が目印です。",

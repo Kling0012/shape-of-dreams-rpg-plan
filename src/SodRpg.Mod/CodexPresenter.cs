@@ -56,7 +56,7 @@ namespace SodRpg.Mod
         public static string Summary(CodexResult res)
         {
             string Part(CodexCategory c) => CatName(c) + " " + res.CategoryFound[(int)c] + "/" + res.CategoryTotal[(int)c];
-            string sep = Loc.T("　", "   ");
+            string sep = Loc.T("　", "   ", "　");
             return Part(CodexCategory.Bases) + sep + Part(CodexCategory.Uniques) + sep + Part(CodexCategory.Sets) + sep + Part(CodexCategory.Powers)
                 + "\n" + Part(CodexCategory.Named) + sep + Part(CodexCategory.MiniSets);
         }
@@ -65,8 +65,8 @@ namespace SodRpg.Mod
         {
             switch (e.Category)
             {
-                case CodexCategory.Sets: return Loc.T("セット", "Set");
-                case CodexCategory.MiniSets: return Loc.T("組", "Mini set");
+                case CodexCategory.Sets: return Loc.T("セット", "Set", "套装");
+                case CodexCategory.MiniSets: return Loc.T("組", "Mini set", "小套装");
                 case CodexCategory.Powers: return SlotsText(e.SlotMask);
                 default:
                     if (e.Base == null) return "";
@@ -77,12 +77,12 @@ namespace SodRpg.Mod
 
         public static string SlotsText(int mask)
         {
-            if (mask == 0x3F) return Loc.T("全枠", "Any slot");
+            if (mask == 0x3F) return Loc.T("全枠", "Any slot", "任意部位");
             var sb = new StringBuilder();
             foreach (var s in Slots)
                 if ((mask & (1 << (int)s)) != 0)
                 {
-                    if (sb.Length > 0) sb.Append(Loc.T("・", "/"));
+                    if (sb.Length > 0) sb.Append(Loc.T("・", "/", "/"));
                     sb.Append(Content.SlotName(s));
                 }
             return sb.ToString();
@@ -122,15 +122,15 @@ namespace SodRpg.Mod
             if (secret)
             {
                 head = "<size=19><b>？？？</b></size>\n" + Colored(CatName(e.Category) + " · " + Meta(e), Dim)
-                    + "\n" + Colored(Loc.T("まだ見つけていません", "Not found yet"), "#aa8866");
-                sb.Append(Loc.T("手に入れると、名前・効果・詳しい説明がここに載ります。", "Once you obtain it, its name, effects and details are recorded here."));
+                    + "\n" + Colored(Loc.T("まだ見つけていません", "Not found yet", "尚未发现"), "#aa8866");
+                sb.Append(Loc.T("手に入れると、名前・効果・詳しい説明がここに載ります。", "Once you obtain it, its name, effects and details are recorded here.", "获得后，名称・效果・详细说明会显示在这里。"));
             }
             else
             {
                 head = "<size=19><b>" + Colored(e.Name.ToString(), NameColor(e)) + "</b></size>\n"
                     + Colored(Loc.Japanese ? e.Name.En : e.Name.Ja, Dim) + "\n"
                     + Colored(CatName(e.Category) + " · " + Meta(e), Dim)
-                    + (found ? "" : "\n" + Colored(Loc.T("未発見（土台の情報は公開されています）", "Not found yet (base info is public)"), "#aa8866"));
+                    + (found ? "" : "\n" + Colored(Loc.T("未発見（土台の情報は公開されています）", "Not found yet (base info is public)", "未发现（基底信息公开）"), "#aa8866"));
                 switch (e.Category)
                 {
                     case CodexCategory.Bases: AppendBase(sb, e, state); break;
@@ -147,7 +147,7 @@ namespace SodRpg.Mod
         private static void AppendImplicit(StringBuilder sb, BaseDef b)
         {
             sb.Append(Colored(Content.FormatStat(b.ImplicitStat, b.ImplicitValue), "#c8c8ff"))
-              .Append(Colored(Loc.T("  （この土台に必ず付く性能）", "  (always on this base)"), Dim)).Append('\n');
+              .Append(Colored(Loc.T("  （この土台に必ず付く性能）", "  (always on this base)", "  （此基底的固定属性）"), Dim)).Append('\n');
         }
 
         private static void AppendBase(StringBuilder sb, CodexEntry e, CodexState state)
@@ -162,9 +162,9 @@ namespace SodRpg.Mod
             }
             sb.Append('\n').Append(Loc.T(
                 "特性：入手するたびにランダムに決まる。",
-                "Affixes: rolled each time you obtain one.")).Append('\n');
+                "Affixes: rolled each time you obtain one.", "特性：每次获得时随机决定。")).Append('\n');
             if (total > 0)
-                sb.Append('\n').Append(Loc.T($"この土台の固有品：{found}/{total} 発見", $"Legendaries on this base: {found}/{total} found"));
+                sb.Append('\n').Append(Loc.T($"この土台の固有品：{found}/{total} 発見", $"Legendaries on this base: {found}/{total} found", $"此基底的传说：{found}/{total} 已发现"));
         }
 
         private static void AppendUnique(StringBuilder sb, CodexEntry e, CodexState state)
@@ -172,17 +172,17 @@ namespace SodRpg.Mod
             var u = e.Unique;
             if (e.Base != null)
             {
-                sb.Append(Loc.T("土台：", "Base: ")).Append(e.Base.Name.ToString()).Append('\n');
+                sb.Append(Loc.T("土台：", "Base: ", "基底：")).Append(e.Base.Name.ToString()).Append('\n');
                 AppendImplicit(sb, e.Base);
             }
             foreach (var pw in u.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             if (u.BossMove != null)
                 sb.Append(Colored(EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove)), Purple)).Append('\n');
             if (u.Link != null) sb.Append(Colored(Links.Describe(u.Link), Cyan)).Append('\n');
-            sb.Append(Loc.T("特性：入手するたびに3つがランダムに決まる。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T("特性：入手するたびに3つがランダムに決まる。", "Affixes: 3 are rolled each time you obtain one.", "特性：每次获得时随机决定3项。")).Append('\n');
             sb.Append(Colored(Loc.T(
                 $"覚醒：装着して敵を倒すと溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}に達すると覚醒Ⅰ・Ⅱ・Ⅲになる。固有効果は最大{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍、特性は最大{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍になる。",
-                $"Awakening: gathers power as the Traveler wearing it defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} it reaches I, II and III (powers up to x{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}, affixes up to x{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##})."), Dim)).Append('\n');
+                $"Awakening: gathers power as the Traveler wearing it defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} it reaches I, II and III (powers up to x{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}, affixes up to x{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}).", $"觉醒：由穿戴它的旅人击败敌人来积攒，达到{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}后升至觉醒Ⅰ・Ⅱ・Ⅲ。固有效果最高{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍，特性最高{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍。"), Dim)).Append('\n');
             if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
             {
                 sb.Append('\n').Append(Colored($"《{set.Name}》", Orange)).Append('\n');
@@ -205,7 +205,7 @@ namespace SodRpg.Mod
             if (setEntry == null) return;
             int have = 0;
             foreach (var pc in setEntry.Pieces) if (state.Codex.Contains(pc.Id)) have++;
-            sb.Append(Loc.T($"部位（見つけた数 {have}/{setEntry.Pieces.Count}）", $"Pieces ({have}/{setEntry.Pieces.Count} found)")).Append('\n');
+            sb.Append(Loc.T($"部位（見つけた数 {have}/{setEntry.Pieces.Count}）", $"Pieces ({have}/{setEntry.Pieces.Count} found)", $"部位（已发现 {have}/{setEntry.Pieces.Count}）")).Append('\n');
             foreach (var pc in setEntry.Pieces)
             {
                 string slotLine = "";
@@ -214,7 +214,7 @@ namespace SodRpg.Mod
                 sb.Append(got ? "◆ " : "◇ ");
                 sb.Append(got ? Colored(pc.Name.ToString(), Orange) : Colored("？？？", "#6a6a7c"));
                 sb.Append("  ").Append(Colored(slotLine, Dim));
-                if (pc.Id == currentPieceId) sb.Append(Colored(Loc.T("  ←この装備", "  <- this one"), Dim));
+                if (pc.Id == currentPieceId) sb.Append(Colored(Loc.T("  ←この装備", "  <- this one", "  ←此装备"), Dim));
                 sb.Append('\n');
                 if (got)
                     foreach (var pw in pc.Powers)
@@ -228,15 +228,15 @@ namespace SodRpg.Mod
         private static void AppendNamed(StringBuilder sb, CodexEntry e, CodexState state)
         {
             var n = e.Named;
-            sb.Append(Loc.T("レア度：", "Rarity: ")).Append(Colored(Content.RarityName(n.Rarity).ToString(), RarityHex(n.Rarity))).Append('\n');
+            sb.Append(Loc.T("レア度：", "Rarity: ", "稀有度：")).Append(Colored(Content.RarityName(n.Rarity).ToString(), RarityHex(n.Rarity))).Append('\n');
             if (e.Base != null)
             {
-                sb.Append(Loc.T("土台：", "Base: ")).Append(e.Base.Name.ToString()).Append('\n');
+                sb.Append(Loc.T("土台：", "Base: ", "基底：")).Append(e.Base.Name.ToString()).Append('\n');
                 AppendImplicit(sb, e.Base);
             }
             foreach (var pw in n.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             int affixes = Content.AffixCount(n.Rarity);
-            sb.Append(Loc.T($"特性：入手するたびに{affixes}つがランダムに決まる。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T($"特性：入手するたびに{affixes}つがランダムに決まる。", $"Affixes: {affixes} are rolled each time you obtain one.", $"特性：每次获得时随机决定{affixes}项。")).Append('\n');
             if (!string.IsNullOrEmpty(n.Lore.ToString()))
                 sb.Append('\n').Append("<i>").Append(Colored(n.Lore.ToString(), "#c9a86a")).Append("</i>").Append('\n');
             if (n.MiniSetId != null && NamedItems.TryGetMiniSet(n.MiniSetId, out var ms))
@@ -252,7 +252,7 @@ namespace SodRpg.Mod
             sb.Append(Colored(set.Describe(), "#c8c8e0")).Append('\n').Append('\n');
             int have = 0;
             foreach (var id in set.PieceIds) if (state.Codex.Contains(NamedItems.CodexId(id))) have++;
-            sb.Append(Loc.T($"部位（見つけた数 {have}/{set.PieceCount}）", $"Pieces ({have}/{set.PieceCount} found)")).Append('\n');
+            sb.Append(Loc.T($"部位（見つけた数 {have}/{set.PieceCount}）", $"Pieces ({have}/{set.PieceCount} found)", $"部位（已发现 {have}/{set.PieceCount}）")).Append('\n');
             foreach (var id in set.PieceIds)
             {
                 bool got = state.Codex.Contains(NamedItems.CodexId(id));
@@ -266,7 +266,7 @@ namespace SodRpg.Mod
                 sb.Append(got ? "◆ " : "◇ ");
                 sb.Append(got ? Colored(pc.Name.ToString(), RarityHex(pc.Rarity)) : Colored("？？？", "#6a6a7c"));
                 sb.Append("  ").Append(Colored(slotLine, Dim));
-                if (id == currentNamedId) sb.Append(Colored(Loc.T("  ←この装備", "  <- this one"), Dim));
+                if (id == currentNamedId) sb.Append(Colored(Loc.T("  ←この装備", "  <- this one", "  ←此装备"), Dim));
                 sb.Append('\n');
             }
         }
@@ -278,11 +278,11 @@ namespace SodRpg.Mod
                 if (min == max) sb.Append(Colored(Content.FormatPowerBullets(e.Power, max), Purple)).Append('\n');
                 else
                 {
-                    sb.Append(Colored(Content.FormatPower(e.Power, min), Purple)).Append(Colored(Loc.T("  （最小）", "  (min)"), Dim)).Append('\n');
-                    sb.Append(Colored(Content.FormatPower(e.Power, max), Purple)).Append(Colored(Loc.T("  （最大）", "  (max)"), Dim)).Append('\n');
+                    sb.Append(Colored(Content.FormatPower(e.Power, min), Purple)).Append(Colored(Loc.T("  （最小）", "  (min)", "  （最小）"), Dim)).Append('\n');
+                    sb.Append(Colored(Content.FormatPower(e.Power, max), Purple)).Append(Colored(Loc.T("  （最大）", "  (max)", "  （最大）"), Dim)).Append('\n');
                 }
             }
-            sb.Append('\n').Append(Loc.T("付く枠：", "Found on: ")).Append(SlotsText(e.SlotMask)).Append('\n');
+            sb.Append('\n').Append(Loc.T("付く枠：", "Found on: ", "出现部位：")).Append(SlotsText(e.SlotMask)).Append('\n');
             var names = new System.Collections.Generic.List<string>();
             foreach (var u in e.Carriers)
                 if (state.Codex.Contains(u.Id)) names.Add(u.Name.ToString());
@@ -291,10 +291,10 @@ namespace SodRpg.Mod
                     if (se.Set == s && state.IsFound(se)) names.Add("《" + s.Name + "》");
             if (names.Count > 0)
             {
-                sb.Append('\n').Append(Loc.T("この固有効果が付く、発見済みの装備：", "Found gear carrying it: ")).Append('\n');
+                sb.Append('\n').Append(Loc.T("この固有効果が付く、発見済みの装備：", "Found gear carrying it: ", "携带此固有效果的已发现装备：")).Append('\n');
                 int shown = Math.Min(names.Count, 12);
                 for (int i = 0; i < shown; i++) sb.Append("・").Append(names[i]).Append('\n');
-                if (names.Count > shown) sb.Append(Loc.T($"…ほか{names.Count - shown}件", $"...and {names.Count - shown} more")).Append('\n');
+                if (names.Count > shown) sb.Append(Loc.T($"…ほか{names.Count - shown}件", $"...and {names.Count - shown} more", $"…还有{names.Count - shown}件")).Append('\n');
             }
         }
     }
