@@ -91,6 +91,7 @@ namespace SodRpg.Mod
             nativeEnemyHitFxBudget = true,
             nativeTimescaleIdle = true,
             nativeRedGiantDamageText = true,
+            nativeMerchantPropIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,

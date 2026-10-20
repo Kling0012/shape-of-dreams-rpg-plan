@@ -724,6 +724,13 @@ namespace SodRpg.Mod
         internal float _currentYVelocity;
         internal void ActiveFrameUpdate() { }
     }
+    // NativeMerchantPropIdlePerf の受け口。本体 Dew.Core PropEnt_Merchant_Base（2026-10-21
+    // 逆コンパイル確認）のうち、Prepare が探す宣言と引数の形だけを置く。ActiveLogicUpdate は
+    // 本体では protected override で、中身は呼ばれないので空でよい（PickupInstance と同じ扱い）。
+    internal abstract class PropEnt_Merchant_Base
+    {
+        protected void ActiveLogicUpdate(float dt) { }
+    }
     // NativeTimescaleIdlePerf の受け口。本体 Dew.Core TimescaleManager（2026-10-20 逆コンパイル確認）
     // のうちパッチが触る範囲の模倣: FrameUpdate の宣言と、Postfix が読む effectTimescale。
     // 実機の weaver 生成セッター Network<effectTimescale>k__BackingField は <> 入りのため
