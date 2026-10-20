@@ -179,6 +179,55 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expected, Incoming(affixes, distance: distance, dot: dot), 5);
         }
 
+        /// <summary>
+        /// 悪夢の被ダメージ処理（HostAuthority）は、Veiled・Hollow・Facing がどれも付いていない接辞では
+        /// 攻撃者位置の辿りと距離・向きの計算を省き、-1f を渡す（#1000）。
+        /// 省いた距離・向きを IncomingMultiplier が読み込んでいないことを、
+        /// 省略の判定（MonsterBehavior.ReadsHitGeometry）と同じ条件で全接辞組み合わせについて確かめる。
+        /// 将来ほかの接辞が距離か向きを読むように変わると、ここで落ちる。
+        /// </summary>
+        [Fact]
+        public void Distance_and_facing_are_ignored_without_geometry_affixes_across_all_affix_combinations()
+        {
+            float inner = B("InnerRange"), range = B("Range"), facingDot = B("FacingDot");
+            float[] distances = { -1f, 0f, MathF.BitDecrement(inner), MathF.BitIncrement(inner),
+                MathF.BitDecrement(range), MathF.BitIncrement(range), range * 10f, float.MaxValue };
+            float[] dots = { -1f, MathF.BitDecrement(facingDot), MathF.BitIncrement(facingDot), 1f };
+            float guardedAge = B("WarmupSeconds") + B("PulseHalfPeriod") / 2f; // Pulsing の守りの窓の中の年齢
+            foreach (var affixes in AllAffixCombinations())
+            {
+                if (MonsterBehavior.ReadsHitGeometry(affixes)) continue;
+                float sentinel = Incoming(affixes, -1f, -1f);
+                foreach (float distance in distances)
+                    foreach (float dot in dots)
+                        Assert.True(Incoming(affixes, distance, dot) == sentinel,
+                            $"affixes={affixes} distance={distance} dot={dot}: 幾何の接辞がないのに距離か向きが倍率を動かしている");
+                // 軽減がほかの守りで上限に張り付く経路と、Committed の回復中の早期リターンでも読まない。
+                float saturated = Incoming(affixes, -1f, -1f, true, true, age: guardedAge, boss: true);
+                Assert.True(Incoming(affixes, range * 10f, 1f, true, true, age: guardedAge, boss: true) == saturated,
+                    $"affixes={affixes}: 軽減が飽和した経路で距離か向きが倍率を動かしている");
+                float recovering = Incoming(affixes, -1f, -1f, true, true, recovering: true, age: guardedAge);
+                Assert.True(Incoming(affixes, range * 10f, 1f, true, true, recovering: true, age: guardedAge) == recovering,
+                    $"affixes={affixes}: 早期リターンの経路で距離か向きが倍率を動かしている");
+            }
+        }
+
+        /// <summary>
+        /// 省略の判定（ReadsHitGeometry）が Veiled・Hollow・Facing のビットでのみ真になることを確かめる。
+        /// 判定が誤って狭くなると同値性テストは空で通ってしまうため、こちらで穴を防ぐ。
+        /// </summary>
+        [Fact]
+        public void Hit_geometry_gate_is_true_exactly_for_veiled_hollow_and_facing()
+        {
+            Assert.False(MonsterBehavior.ReadsHitGeometry(NightmareAffix.None));
+            foreach (NightmareAffix affix in Enum.GetValues(typeof(NightmareAffix)).Cast<NightmareAffix>())
+            {
+                if (affix == NightmareAffix.None) continue;
+                Assert.Equal(affix == NightmareAffix.Veiled || affix == NightmareAffix.Hollow
+                    || affix == NightmareAffix.Facing, MonsterBehavior.ReadsHitGeometry(affix));
+            }
+        }
+
         [Fact]
         public void Allied_and_channel_guards_require_their_state_and_total_reduction_is_capped()
         {
@@ -292,6 +341,19 @@ namespace SodRpg.Core.Tests
         }
 
         private static float B(string field) => MonsterBalanceTableTests.Float("behavior", field);
+
+        private static IEnumerable<NightmareAffix> AllAffixCombinations()
+        {
+            var bits = Enum.GetValues(typeof(NightmareAffix)).Cast<NightmareAffix>()
+                .Where(a => a != NightmareAffix.None).ToArray();
+            for (int mask = 0; mask < 1 << bits.Length; mask++)
+            {
+                var affixes = NightmareAffix.None;
+                for (int i = 0; i < bits.Length; i++)
+                    if ((mask & (1 << i)) != 0) affixes |= bits[i];
+                yield return affixes;
+            }
+        }
 
         private static float Incoming(NightmareAffix affixes, float distance = 4, float dot = 0,
             bool ally = false, bool channeling = false, bool recovering = false, float age = 0,
