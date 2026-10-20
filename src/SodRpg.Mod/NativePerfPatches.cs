@@ -5128,16 +5128,15 @@ namespace SodRpg.Mod
     //
     // The transpiler swaps the single SetPositionAndRotation call site for a guard with
     // the same argument stack: the native write runs only when the prop's live transform
-    // differs from the pose about to be written. Position compares per component with
-    // float == (prop and entity are root transforms — Awake reparents the props to the
-    // scene root — whose position getter reads the stored bits back exactly; +0/-0
+    // differs from the pose about to be written. Both position (x/y/z) and rotation
+    // (x/y/z/w) compare per component with float ==, so the write is skipped only when
+    // the pose is bit-identical to what the prop already holds — any change, however
+    // small, still writes exactly as vanilla (Quaternion's == (dot product) is not used
+    // because its real-Unity tolerance (~0.1°) would let small rotations through).
+    // Prop and entity are root transforms — Awake reparents the props to the scene
+    // root — whose position/rotation getters read the stored bits back exactly; +0/-0
     // compare equal and a sign flip cannot matter numerically; NaN fails every compare
-    // and reaches the native write, which recovers it the way vanilla does). Rotation
-    // compares with Quaternion's == (dot product), whose real-Unity tolerance is about
-    // 0.1° — looser than, and in the same class as, the 0.05° freeze the accepted
-    // entity-rotation-idle patch allows; in the steady state it never materializes,
-    // because the first native write stores the merchant pose and every later read
-    // returns those same bits, so the props simply hold the pose vanilla last wrote.
+    // and reaches the native write, which recovers it the way vanilla does.
     // Because the comparison is against the live transform, anything that moves a prop
     // between two calls makes the next comparison fail and the native write runs,
     // exactly as without the patch; a merchant that actually moves or turns
@@ -5184,8 +5183,10 @@ namespace SodRpg.Mod
                 try
                 {
                     Vector3 current = transform.position;
+                    Quaternion currentRotation = transform.rotation;
                     if (current.x == position.x && current.y == position.y && current.z == position.z
-                        && transform.rotation == rotation)
+                        && currentRotation.x == rotation.x && currentRotation.y == rotation.y
+                        && currentRotation.z == rotation.z && currentRotation.w == rotation.w)
                         return;
                 }
                 catch (Exception ex)

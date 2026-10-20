@@ -9,10 +9,14 @@ namespace UnityEngine
     // （#763）Quaternion の境界。実物の Euler はテスト環境で動かせないため、
     // 入力角度をそのまま記録し、等価比較の材料にする。回転の意味（成分への変換）は
     // この検証では不要で、見本・FollowRotation が同じ呼び出し形をとることだけが要る。
+    // （#983）実物と同じ x/y/z/w の4成分に揃え、等価も4成分の完全一致で比べる
+    // （NativeMerchantPropIdlePerf が回転を成分ごとの float == で比べるため）。
+    // 既存の使い手（Euler と既定値）は w を 0 のまま持つので、挙動は変わらない。
     internal struct Quaternion : IEquatable<Quaternion>
     {
-        public float x, y, z;
-        public Quaternion(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public float x, y, z, w;
+        public Quaternion(float x, float y, float z) { this.x = x; this.y = y; this.z = z; w = 0f; }
+        public Quaternion(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
         public static Quaternion identity => default;
         public static Quaternion Euler(float x, float y, float z) => new Quaternion(x, y, z);
         // NativeEntityRotationIdlePerf の Prefix が読む本体 API の受け口。この境界の
@@ -20,12 +24,12 @@ namespace UnityEngine
         // そのまま返す（EntityRotationIdlePerfTests が向きを設定するのに使う）。
         public Vector3 eulerAngles => new Vector3(x, y, z);
         public static Vector3 operator *(Quaternion rotation, Vector3 point) => point;
-        public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z;
+        public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z && w == other.w;
         public override bool Equals(object obj) => obj is Quaternion other && Equals(other);
-        public override int GetHashCode() => (x.GetHashCode() * 397) ^ (y.GetHashCode() * 31) ^ z.GetHashCode();
+        public override int GetHashCode() => (((x.GetHashCode() * 397) ^ y.GetHashCode()) * 397 ^ z.GetHashCode()) * 397 ^ w.GetHashCode();
         public static bool operator ==(Quaternion a, Quaternion b) => a.Equals(b);
         public static bool operator !=(Quaternion a, Quaternion b) => !a.Equals(b);
-        public override string ToString() => "Euler(" + x + ", " + y + ", " + z + ")";
+        public override string ToString() => "Euler(" + x + ", " + y + ", " + z + ", " + w + ")";
     }
 
     // NativeOcclusionShaderIdlePerf のコンパイル用の境界。実物の Vector4.operator== は

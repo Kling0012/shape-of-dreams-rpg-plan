@@ -24,8 +24,13 @@ namespace UnityEngine
         internal Transform parent { get; set; }
     }
     // NativeProjectileIdleRpcPerf の Prefix が読む効果プレハブ字段の境界。実機では
-    // UnityEngine.GameObject（ prefab 参照）。中身は読まないので空でよい。
-    internal class GameObject { }
+    // UnityEngine.GameObject（ prefab 参照）。中身は読まない。
+    // （#983）PropEnt_Merchant_Base の境界ループが各 props の transform を読むため、
+    // 自身の Transform を返す受け口を足した（実機の GameObject.transform と同じ意味）。
+    internal class GameObject
+    {
+        public Transform transform;
+    }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
     internal static class Debug
