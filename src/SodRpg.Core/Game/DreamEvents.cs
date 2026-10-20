@@ -357,15 +357,15 @@ namespace SodRpg.Core.Game
                     else if (TradeTarget(p, e, trades) == null) reason = NoTradeTarget();
                     break;
                 default:
-                    reason = Loc.T("この出来事は今はありません。", "That event is not available.");
+                    reason = Loc.T("この出来事は今はありません。", "That event is not available.", "此事件现在不存在。");
                     break;
             }
             return reason;
         }
 
-        private static string NeedShards(int count) => Loc.T($"未確保の欠片{count}が必要です。", $"Need {count} unsecured shards.");
-        private static string NoTradeTarget() => Loc.T("取引の対象になる遺物がありません。", "No eligible relic for this trade.");
-        private static string NoSatchelRoom() => Loc.T("鞄に必要な空きがありません。", "Not enough room in the satchel.");
+        private static string NeedShards(int count) => Loc.T($"未確保の欠片{count}が必要です。", $"Need {count} unsecured shards.", $"需要{count}枚未存入的碎片。");
+        private static string NoTradeTarget() => Loc.T("取引の対象になる遺物がありません。", "No eligible relic for this trade.", "没有符合条件的交易对象遗物。");
+        private static string NoSatchelRoom() => Loc.T("鞄に必要な空きがありません。", "Not enough room in the satchel.", "背包空间不足。");
 
         internal static bool SafeTradeRelic(Profile p, Relic r, TradeLedger trades, bool equipped = false) =>
             !r.Locked && r.Uid != p.RetuneOffer?.Uid && (trades == null || !trades.IsReserved(r.Uid))
