@@ -52,6 +52,15 @@ namespace SodRpg.Core.Game
             return 1f - Math.Min(reduction, boss ? BossGuardReduction : MaxGuardReduction);
         }
 
+        /// <summary>
+        /// 被ダメージ処理（HostAuthority）が距離と向きを計算すべきか。
+        /// IncomingMultiplier が距離・向きを読むのは Veiled・Hollow・Facing のビットだけなので、
+        /// これが false の接辞では呼び出し側は計算を省いて -1f を渡してよい（#1000）。
+        /// 引数を読まないことは MonstersV129Tests が全ビット組み合わせで確かめる。
+        /// </summary>
+        public static bool ReadsHitGeometry(NightmareAffix affixes) =>
+            (affixes & (NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing)) != 0;
+
         public static float MovementPct(NightmareAffix affixes, bool recentlyHit) =>
             (affixes & NightmareAffix.Skittish) == 0 ? 0f : recentlyHit ? HitMovementPct : UnhitMovementPct;
 
@@ -118,6 +127,28 @@ namespace SodRpg.Core.Game
             if ((tags & VariantTag.SummonHunter) != 0 && targetIsSummon) bonus += TagHunterDealtBonus;
             return 1f + bonus;
         }
+
+        /// <summary>
+        /// 変種の被ダメージ処理（HostAuthority）が攻撃者の作成元鎖を MemorySource で走査すべきか。
+        /// WeaknessIncomingMultiplier が fromMemory を読むのは Armored・Spellward のビットだけなので、
+        /// これが false のタグでは走査を省いて false を渡してよい（#1000）。
+        /// </summary>
+        public static bool WeaknessReadsMemory(VariantTag tags) =>
+            (tags & (VariantTag.Armored | VariantTag.Spellward)) != 0;
+
+        /// <summary>
+        /// 被ダメージ処理が攻撃者側の障壁を親鎖走査で調べるべきか（attackerShielded）、
+        /// 与ダメージ処理が対象の障壁を読むべきか（shielded）。ShieldBreaker のビットだけが読む（#1000）。
+        /// </summary>
+        public static bool WeaknessReadsShield(VariantTag tags) =>
+            (tags & VariantTag.ShieldBreaker) != 0;
+
+        /// <summary>
+        /// 被ダメージ処理が攻撃者の親鎖に召喚獣を探すべきか（fromSummon）、
+        /// 与ダメージ処理が対象の祖先に召喚獣を探すべきか（summon）。SummonHunter のビットだけが読む（#1000）。
+        /// </summary>
+        public static bool WeaknessReadsSummon(VariantTag tags) =>
+            (tags & VariantTag.SummonHunter) != 0;
     }
 
     /// <summary>ダメージの元素（本体の ElementalType を Core へ移したもの）。None=無元素。</summary>

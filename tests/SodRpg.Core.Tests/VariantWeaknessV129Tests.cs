@@ -102,6 +102,109 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1.0, MonsterBehavior.WeaknessDealtMultiplier(VariantTag.None, true, true), 5);
         }
 
+        // ─── #1000: 被ダメージ・与ダメージ処理の計算省略と倍率関数の同値性 ───
+
+        /// <summary>
+        /// 変種の被ダメージ処理（HostAuthority）は、値を読むタグがないとき親鎖の走査を伴う3つの判定
+        /// （MemorySource・FindFirstOfType&lt;Summon&gt;・AttackerShielded）を省き、false を渡す。
+        /// 省いた引数を WeaknessIncomingMultiplier が読み込んでいないことを、
+        /// 読み取りの有無の判定（MonsterBehavior.WeaknessReads*）と同じ条件で全タグ組み合わせについて確かめる。
+        /// 将来どれかの引数が対応ビットなしで読まれるように変わると、ここで落ちる。
+        /// </summary>
+        [Fact]
+        public void Incoming_arguments_are_ignored_without_their_reading_tags_across_all_tag_combinations()
+        {
+            foreach (var tags in AllTagCombinations())
+            {
+                bool readsMemory = MonsterBehavior.WeaknessReadsMemory(tags);
+                bool readsSummon = MonsterBehavior.WeaknessReadsSummon(tags);
+                bool readsShield = MonsterBehavior.WeaknessReadsShield(tags);
+                foreach (var element in new[] { VariantElement.None, VariantElement.Fire, VariantElement.Light })
+                {
+                    foreach (var stacks in new[] {
+                        (fire: 0, cold: false, light: 0, dark: 0),
+                        (fire: 2, cold: true, light: 3, dark: 4) })
+                    {
+                        var mult = new float[8];
+                        for (int flags = 0; flags < 8; flags++)
+                            mult[flags] = MonsterBehavior.WeaknessIncomingMultiplier(tags, element,
+                                stacks.fire, stacks.cold, stacks.light, stacks.dark,
+                                (flags & 1) != 0, (flags & 2) != 0, (flags & 4) != 0);
+                        for (int flags = 0; flags < 8; flags++)
+                        {
+                            if (!readsShield)
+                                Assert.True(mult[flags] == mult[flags ^ 1],
+                                    $"tags={tags} element={element} flags={flags}: ShieldBreaker がないのに attackerShielded が倍率を動かしている");
+                            if (!readsSummon)
+                                Assert.True(mult[flags] == mult[flags ^ 2],
+                                    $"tags={tags} element={element} flags={flags}: SummonHunter がないのに fromSummon が倍率を動かしている");
+                            if (!readsMemory)
+                                Assert.True(mult[flags] == mult[flags ^ 4],
+                                    $"tags={tags} element={element} flags={flags}: Armored/Spellward がないのに fromMemory が倍率を動かしている");
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 与ダメージ処理の省略（対象の障壁の読み・祖先の走査）も同値であることを全タグ組み合わせで確かめる。
+        /// </summary>
+        [Fact]
+        public void Dealt_arguments_are_ignored_without_their_reading_tags_across_all_tag_combinations()
+        {
+            foreach (var tags in AllTagCombinations())
+            {
+                float bothOff = MonsterBehavior.WeaknessDealtMultiplier(tags, false, false);
+                float shielded = MonsterBehavior.WeaknessDealtMultiplier(tags, true, false);
+                float summon = MonsterBehavior.WeaknessDealtMultiplier(tags, false, true);
+                float bothOn = MonsterBehavior.WeaknessDealtMultiplier(tags, true, true);
+                if (!MonsterBehavior.WeaknessReadsShield(tags))
+                {
+                    Assert.True(bothOff == shielded, $"tags={tags}: ShieldBreaker がないのに shielded が倍率を動かしている");
+                    Assert.True(summon == bothOn, $"tags={tags}: ShieldBreaker がないのに shielded が倍率を動かしている");
+                }
+                if (!MonsterBehavior.WeaknessReadsSummon(tags))
+                {
+                    Assert.True(bothOff == summon, $"tags={tags}: SummonHunter がないのに summon が倍率を動かしている");
+                    Assert.True(shielded == bothOn, $"tags={tags}: SummonHunter がないのに summon が倍率を動かしている");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 省略の判定（WeaknessReads*）が自分のタグのビットでのみ真になることを確かめる。
+        /// 判定が誤って狭くなると同値性テストは空で通ってしまうため、こちらで穴を防ぐ。
+        /// </summary>
+        [Fact]
+        public void Lazy_gate_predicates_are_true_only_for_their_own_single_tags()
+        {
+            Assert.False(MonsterBehavior.WeaknessReadsMemory(VariantTag.None));
+            Assert.False(MonsterBehavior.WeaknessReadsShield(VariantTag.None));
+            Assert.False(MonsterBehavior.WeaknessReadsSummon(VariantTag.None));
+            foreach (VariantTag tag in Enum.GetValues(typeof(VariantTag)).Cast<VariantTag>())
+            {
+                if (tag == VariantTag.None) continue;
+                Assert.Equal(tag == VariantTag.Armored || tag == VariantTag.Spellward,
+                    MonsterBehavior.WeaknessReadsMemory(tag));
+                Assert.Equal(tag == VariantTag.ShieldBreaker, MonsterBehavior.WeaknessReadsShield(tag));
+                Assert.Equal(tag == VariantTag.SummonHunter, MonsterBehavior.WeaknessReadsSummon(tag));
+            }
+        }
+
+        private static IEnumerable<VariantTag> AllTagCombinations()
+        {
+            var bits = Enum.GetValues(typeof(VariantTag)).Cast<VariantTag>()
+                .Where(t => t != VariantTag.None).ToArray();
+            for (int mask = 0; mask < 1 << bits.Length; mask++)
+            {
+                var tags = VariantTag.None;
+                for (int i = 0; i < bits.Length; i++)
+                    if ((mask & (1 << i)) != 0) tags |= bits[i];
+                yield return tags;
+            }
+        }
+
         private static double Mult(VariantTag tags, VariantElement element = VariantElement.None,
             int fireStacks = 0, bool hasCold = false, int lightStacks = 0, int darkStacks = 0,
             bool attackerShielded = false, bool fromSummon = false, bool fromMemory = false) =>
