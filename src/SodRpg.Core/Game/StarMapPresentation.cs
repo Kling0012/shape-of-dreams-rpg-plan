@@ -21,8 +21,8 @@ namespace SodRpg.Core.Game
         {
             // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
             // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
-            string text = (chosen < 0 ? Loc.T("まだ選んでいない。どちらか1つを選ぶ。", "Unselected: choose one option.")
-                : Loc.T("選択中の効果：", "Chosen effect:"))
+            string text = (chosen < 0 ? Loc.T("まだ選んでいない。どちらか1つを選ぶ。", "Unselected: choose one option.", "尚未选择：请选择其中一项。")
+                : Loc.T("選択中の効果：", "Chosen effect:", "已选效果："))
                 + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen, bulleted)
                 + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen, bulleted);
             // 段数で強さが変わる二択（#101）：候補本文が段数を書かない型（Mechanism）のときだけ、親星の段数・費用を添える。
@@ -35,12 +35,12 @@ namespace SodRpg.Core.Game
         /// <summary>星図の本文の末尾に付ける段数と費用の注記（通常星と二択で同じ言葉を使う）。</summary>
         internal static string RanksNote(TalentDef star) => Loc.T(
             $"（数値は1段ごと。最大{star.MaxRank}段、1段につき{star.RankCost}ポイント）",
-            $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)");
+            $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)", $"（数值按每阶计算；最高{star.MaxRank}{(star.MaxRank == 1 ? "阶" : "阶")}；每阶消耗{star.RankCost}{(star.RankCost == 1 ? "点" : "点")}）");
 
         private static string ChoiceOptionHeading(int option)
         {
             char letter = (char)('A' + option);
-            return Loc.T($"<color=#9fe0ff><b>■ 効果 {letter}</b></color>", $"<color=#9fe0ff><b>■ Effect {letter}</b></color>");
+            return Loc.T($"<color=#9fe0ff><b>■ 効果 {letter}</b></color>", $"<color=#9fe0ff><b>■ Effect {letter}</b></color>", $"<color=#9fe0ff><b>■ 效果 {letter}</b></color>");
         }
 
         public static string ChoiceOptionLabel(TalentDef star, int option, int chosen, bool bulleted = false)
@@ -48,8 +48,8 @@ namespace SodRpg.Core.Game
             ValidateChoice(star, chosen);
             if (option < 0 || option > 1) throw new ArgumentOutOfRangeException(nameof(option));
             TalentDef selected = star.Choices[option];
-            return (option == chosen ? Loc.T("［選択中］", "[Chosen] ") : Loc.T("［未選択］", "[Unselected] "))
-                + selected.Name + Loc.T("：", ": ") + (bulleted ? DisplayDescription(selected) : EffectDescription(selected));
+            return (option == chosen ? Loc.T("［選択中］", "[Chosen] ", "［已选］") : Loc.T("［未選択］", "[Unselected] ", "［未选］"))
+                + selected.Name + Loc.T("：", ": ", "：") + (bulleted ? DisplayDescription(selected) : EffectDescription(selected));
         }
 
         /// <summary>
@@ -120,10 +120,10 @@ namespace SodRpg.Core.Game
         {
             switch (star.Stat)
             {
-                case Stat.ShieldPower: return Loc.T($"自分が与える障壁の量が{star.PerRank}%増える。", $"Increases shields you grant by {star.PerRank}%.");
-                case Stat.Haste: return Loc.T($"スキル加速が{star.PerRank}増え、記憶のクールダウン回復が速くなる。", $"Gain {star.PerRank} ability haste, speeding up memory cooldown recovery.");
-                case Stat.Armor: return Loc.T($"自分の防御が{star.PerRank}増える。", $"Gain {star.PerRank} armor.");
-                case Stat.SummonPower: return Loc.T($"自分の召喚体が与えるダメージが{star.PerRank}%増える。", $"Your summons deal {star.PerRank}% more damage.");
+                case Stat.ShieldPower: return Loc.T($"自分が与える障壁の量が{star.PerRank}%増える。", $"Increases shields you grant by {star.PerRank}%.", $"你提供的护盾量增加{star.PerRank}%。");
+                case Stat.Haste: return Loc.T($"スキル加速が{star.PerRank}増え、記憶のクールダウン回復が速くなる。", $"Gain {star.PerRank} ability haste, speeding up memory cooldown recovery.", $"技能急速增加{star.PerRank}，加快记忆冷却恢复。");
+                case Stat.Armor: return Loc.T($"自分の防御が{star.PerRank}増える。", $"Gain {star.PerRank} armor.", $"护甲增加{star.PerRank}。");
+                case Stat.SummonPower: return Loc.T($"自分の召喚体が与えるダメージが{star.PerRank}%増える。", $"Your summons deal {star.PerRank}% more damage.", $"你的召唤物造成的伤害增加{star.PerRank}%。");
                 default: return Content.FormatStat(star.Stat, star.PerRank);
             }
         }
@@ -131,20 +131,20 @@ namespace SodRpg.Core.Game
         /// <summary>効果・必要ポイントを組み立てる。</summary>
         public static string KeystoneSections(string benefit, int cost)
         {
-            return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>") + NL + benefit
-                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}");
+            return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>", "<color=#9fe0b0><b>效果</b></color>") + NL + benefit
+                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}", $"消耗：{cost}{(cost == 1 ? "点" : "点")}");
         }
 
         /// <summary>次の枠が開く星のレベルの1文。開く枠がなければ空文字。</summary>
         public static string NextSlotText(int starLevel)
         {
             int next = KeystoneSlots.NextUnlockLevel(starLevel);
-            return next < 0 ? "" : Loc.T($"次の枠は星のレベル{next}で開く。", $"The next slot unlocks at star level {next}.");
+            return next < 0 ? "" : Loc.T($"次の枠は星のレベル{next}で開く。", $"The next slot unlocks at star level {next}.", $"下一个槽位在星之等级{next}时解锁。");
         }
 
         /// <summary>刻印の帯に出す「刻印 n/枠数」。</summary>
         public static string KeystoneSlotStatus(int selected, int slots)
-            => Loc.T($"刻印 {selected}/{slots}", $"Keystones {selected}/{slots}");
+            => Loc.T($"刻印 {selected}/{slots}", $"Keystones {selected}/{slots}", $"刻印 {selected}/{slots}");
 
         /// <summary>選択の星の1つの選択肢を、名前と効果の本文で（選択中の印は付けない。印は画面側で色と ✓ で出す）。</summary>
         public static string ChoiceOptionBody(TalentDef star, int option, bool bulleted = false)
@@ -168,7 +168,7 @@ namespace SodRpg.Core.Game
             catch (Exception error)
             {
                 DescriptionFallback(star, error);
-                return Loc.T("星の効果", "Star effect");
+                return Loc.T("星の効果", "Star effect", "星之效果");
             }
         }
 
@@ -182,21 +182,21 @@ namespace SodRpg.Core.Game
                 AuthoredMechanisms.Validate(star.Mechanism);
                 switch (star.Mechanism.Kind)
                 {
-                    case AuthoredMechanismKind.Gimmick: return Loc.T("記憶の追加効果", "Additional memory effect");
-                    case AuthoredMechanismKind.DirectedRecharge: return Loc.T("記憶間のクールダウン短縮", "Cooldown reduction between memories");
-                    case AuthoredMechanismKind.BridgeSuccess: return Loc.T("記憶を組み合わせた追加効果", "Combined memory effect");
-                    case AuthoredMechanismKind.MemoryPrimed: return Loc.T("次の通常攻撃の強化", "Next basic attack enhancement");
-                    case AuthoredMechanismKind.RelayWindow: return Loc.T("次に使う記憶の強化", "Enhancement for the next memory used");
-                    case AuthoredMechanismKind.SacrificeShield: return Loc.T("HP支払いから障壁へ", "HP payment converted to shield");
-                    case AuthoredMechanismKind.AlliedWard: return Loc.T("味方への障壁付与", "Shield for allies");
-                    case AuthoredMechanismKind.PressureDividend: return Loc.T("強化された敵からの追加報酬", "Extra rewards from strengthened enemies");
-                    case AuthoredMechanismKind.StunSourceFilter: return Loc.T("記憶のスタンによる障壁", "Shield when a memory stuns an enemy");
-                    case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の挙動の変更", "Memory behavior change");
-                    case AuthoredMechanismKind.IdentityStrike: return Loc.T("アイデンティティ記憶の追加攻撃", "Identity memory strike");
+                    case AuthoredMechanismKind.Gimmick: return Loc.T("記憶の追加効果", "Additional memory effect", "记忆附加效果");
+                    case AuthoredMechanismKind.DirectedRecharge: return Loc.T("記憶間のクールダウン短縮", "Cooldown reduction between memories", "记忆间的冷却缩减");
+                    case AuthoredMechanismKind.BridgeSuccess: return Loc.T("記憶を組み合わせた追加効果", "Combined memory effect", "记忆组合附加效果");
+                    case AuthoredMechanismKind.MemoryPrimed: return Loc.T("次の通常攻撃の強化", "Next basic attack enhancement", "强化下次普通攻击");
+                    case AuthoredMechanismKind.RelayWindow: return Loc.T("次に使う記憶の強化", "Enhancement for the next memory used", "强化下次使用的记忆");
+                    case AuthoredMechanismKind.SacrificeShield: return Loc.T("HP支払いから障壁へ", "HP payment converted to shield", "生命消耗转为护盾");
+                    case AuthoredMechanismKind.AlliedWard: return Loc.T("味方への障壁付与", "Shield for allies", "为队友提供护盾");
+                    case AuthoredMechanismKind.PressureDividend: return Loc.T("強化された敵からの追加報酬", "Extra rewards from strengthened enemies", "强化敌人的额外奖励");
+                    case AuthoredMechanismKind.StunSourceFilter: return Loc.T("記憶のスタンによる障壁", "Shield when a memory stuns an enemy", "记忆眩晕敌人时获得护盾");
+                    case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の挙動の変更", "Memory behavior change", "改变记忆的行为");
+                    case AuthoredMechanismKind.IdentityStrike: return Loc.T("アイデンティティ記憶の追加攻撃", "Identity memory strike", "身份记忆的追加攻击");
                     default: throw new InvalidOperationException("Unknown mechanism: " + star.Id);
                 }
             }
-            if (star.RunGrowth != null) return Loc.T("遠征を通して成長", "Run-long growth");
+            if (star.RunGrowth != null) return Loc.T("遠征を通して成長", "Run-long growth", "远征期间持续成长");
             if (star.RunGrowthModifier != null) return Loc.T("遠征の鍛錬の強化", "Expedition training enhancement");
             if (star.KeystoneDefinition != null || star.IsKeystone) return Loc.T("刻印", "Keystone");
             if (star.IsChoice) { ValidateChoice(star, -1); return Loc.T("二択の効果", "Choice of two effects"); }
