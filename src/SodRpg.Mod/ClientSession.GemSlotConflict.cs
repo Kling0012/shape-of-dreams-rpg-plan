@@ -50,13 +50,17 @@ namespace SodRpg.Mod
                 foreach (var button in buttons.skillButtons)
                 {
                     if (button == null) { if (log) AppendHudPart(parts, "null"); continue; }
+                    bool isMovement = button.skillType == HeroSkillLocation.Movement;
+                    // 記録用の最初の1回を過ぎたら、移動（Movement）以外のボタンの group はどこにも使わない。
+                    // 親の副木を毎秒走査し続けないよう、その時点で先に飛ばす。
+                    if (!log && !isMovement) continue;
                     var group = button.transform.parent != null
                         ? button.transform.parent.GetComponentInChildren<UI_InGame_SkillButton_GemGroup>(true)
                         : null;
                     if (log)
                         AppendHudPart(parts, button.skillType + ":" + (group != null && group.groups != null ? group.groups.Length.ToString() : "no-group")
                             + (group != null ? (group.gameObject.activeInHierarchy ? "" : "(hidden)") : ""));
-                    if (button.skillType != HeroSkillLocation.Movement) continue;
+                    if (!isMovement) continue;
                     movementButton = true;
                     HealMovementGroup(button, group);
                 }

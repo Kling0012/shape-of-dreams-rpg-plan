@@ -21,6 +21,19 @@ def help_decay_percent_by_world(value):
     return value
 
 
+def max_factor_by_world(value):
+    """Validate the per-world dynamic-factor cap (multiplier, one entry per world in run order)."""
+    path = "coop.dynamicDifficulty.maxFactorByWorld"
+    if not isinstance(value, list) or not value:
+        raise ValueError(path + ": expected a non-empty list")
+    for index, cap in enumerate(value):
+        if type(cap) not in (int, Decimal) or not 1 <= cap <= 100:
+            raise ValueError(f"{path}[{index}]: expected a multiplier from 1 to 100")
+        if index > 0 and cap < value[index - 1]:
+            raise ValueError(f"{path}[{index}]: expected a non-decreasing list")
+    return value
+
+
 def render_outputs(data=None):
     data = read_json(PATH) if data is None else data
     fields = (("fullRange", "FullRange"), ("outerRange", "OuterRange"),
@@ -95,12 +108,13 @@ def render_outputs(data=None):
     lines += ["        }", "", "        public static class DynamicDifficulty", "        {"]
     dynamic = data["dynamicDifficulty"]
     dynamic_fields = (("activeBucketSeconds", "ActiveBucketSeconds"), ("targetSeconds", "TargetSeconds"),
-                      ("alpha", "Alpha"), ("alphaDown", "AlphaDown"), ("strength", "Strength"),
+                      ("alpha", "Alpha"), ("alphaDown", "AlphaDown"),
+                      ("strengthUp", "StrengthUp"), ("strengthDown", "StrengthDown"),
                       ("minFactor", "MinFactor"), ("rewardMaxMultiplier", "RewardMaxMultiplier"),
                       ("safetyMaxFactor", "SafetyMaxFactor"),
                       ("minActiveSeconds", "MinActiveSeconds"), ("minRooms", "MinRooms"),
                       ("damageExponent", "DamageExponent"), ("rewardShare", "RewardShare"))
-    if not isinstance(dynamic, dict) or set(dynamic) != {"heroTargetScale", *(key for key, _ in dynamic_fields)}:
+    if not isinstance(dynamic, dict) or set(dynamic) != {"heroTargetScale", "maxFactorByWorld", *(key for key, _ in dynamic_fields)}:
         raise ValueError("coop.dynamicDifficulty: invalid schema")
     for key, name in dynamic_fields:
         value = dynamic[key]
@@ -109,15 +123,25 @@ def render_outputs(data=None):
             raise ValueError("coop.dynamicDifficulty." + key + f": expected positive number <= {maximum}")
         if key == "safetyMaxFactor":
             lines.append("            // Numeric overflow guard for factors and float HP, not a balance cap.")
-        if key in ("alpha", "alphaDown", "strength", "damageExponent", "rewardShare") and value > 1:
+        if key in ("alpha", "alphaDown", "strengthUp", "strengthDown", "damageExponent", "rewardShare") and value > 1:
             raise ValueError("coop.dynamicDifficulty." + key + ": expected fraction <= 1")
         if key == "minRooms" and (type(value) is not int or value < 1):
             raise ValueError("coop.dynamicDifficulty.minRooms: expected positive integer")
         kind, suffix = ("int", "") if key == "minRooms" else ("double", "d")
         lines.append(f"            public const {kind} {name} = {value:g}{suffix};")
+    caps = max_factor_by_world(dynamic["maxFactorByWorld"])
+    lines += ["            // The per-world balance cap on the dynamic factor, by the run's 0-based world order; the last entry repeats.",
+              f"            public const int MaxFactorWorlds = {len(caps)};",
+              "            public static double MaxFactor(int world)", "            {",
+              "                switch (world < 0 ? 0 : world)", "                {"]
+    for index, cap in enumerate(caps[:-1]):
+        lines.append(f"                    case {index}: return {cap:g}d;")
+    lines += [f"                    default: return {caps[-1]:g}d;", "                }", "            }"]
     if (dynamic["minFactor"] > 1 or dynamic["rewardMaxMultiplier"] < 1
-            or dynamic["safetyMaxFactor"] < 1000 or dynamic["alphaDown"] < dynamic["alpha"]):
-        raise ValueError("coop.dynamicDifficulty: invalid bounds or downward weight")
+            or dynamic["safetyMaxFactor"] < 1000 or dynamic["alphaDown"] < dynamic["alpha"]
+            or dynamic["minFactor"] > caps[0]
+            or dynamic["strengthUp"] <= 0 or dynamic["strengthDown"] <= 0):
+        raise ValueError("coop.dynamicDifficulty: invalid bounds or directional weights")
     heroes = dynamic["heroTargetScale"]
     expected = {"Hero_" + name for name in ("Aurena", "Bismuth", "Cetus", "Husk", "Lacerta", "Mist", "Nachia", "Vesper", "Yubar")}
     if not isinstance(heroes, dict) or set(heroes) != expected:

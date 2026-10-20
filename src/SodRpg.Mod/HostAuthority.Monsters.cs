@@ -238,30 +238,32 @@ namespace SodRpg.Mod
             var state = rt.Behavior;
             var m = rt.Monster;
             if (m == null || !m.isActive || _registeredOn == null) return;
-            if (state == null)
+            // A stateless monster's cue is 0 by definition, so its replay case folds into the one
+            // emit decision below instead of a separate branch: broadcasts still carry the
+            // clearing 0, per-peer replay omits zeros.
+            int cue = 0;
+            if (state != null)
             {
-                if (target != null && ReserveMonsterSyncMessage())
-                    _registeredOn.CustomRpc_SendMessageToClient(target, new DreamforgeMonsterCueMsg
-                    {
-                        protocol = Protocol.Version, netId = m.netId, cue = 0,
-                        authorityGeneration = ClientSession.HostAuthorityGeneration,
-                    });
-                return;
+                float now = Time.time;
+                bool warning = ((state.Affixes & NightmareAffix.Beacon) != 0 && !state.BeaconSpent)
+                    || (state.LastStandWarned && !state.LastStandSpent);
+                bool recovering = now < state.PhaseUntil
+                    || ((state.Affixes & NightmareAffix.Committed) != 0 && now < state.RecoveryUntil);
+                bool guarding = (state.Affixes & (NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing)) != 0
+                    || ((state.Affixes & NightmareAffix.Pulsing) != 0 && MonsterBehavior.PulseGuarded(state.Age))
+                    || ((state.Affixes & NightmareAffix.Packbound) != 0 && PackboundAllyNear(rt))
+                    || ((state.Affixes & NightmareAffix.Committed) != 0 && m.Control != null && m.Control.ongoingChannels.Count > 0);
+                bool healing = (state.Affixes & NightmareAffix.Recuperating) != 0 && state.HealBudget > 0f
+                    && now - state.LastHit >= MonsterBehavior.HealDelaySeconds && m.currentHealth < m.maxHealth;
+                bool slowed = (state.Affixes & NightmareAffix.Skittish) != 0 && state.HasBeenHit
+                    && now - state.LastHit < MonsterBehavior.HitSlowSeconds;
+                cue = recovering ? 3 : warning ? 1 : healing ? 4 : guarding ? 2 : slowed ? 3 : 0;
             }
-            float now = Time.time;
-            bool warning = ((state.Affixes & NightmareAffix.Beacon) != 0 && !state.BeaconSpent)
-                || (state.LastStandWarned && !state.LastStandSpent);
-            bool recovering = now < state.PhaseUntil
-                || ((state.Affixes & NightmareAffix.Committed) != 0 && now < state.RecoveryUntil);
-            bool guarding = (state.Affixes & (NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing)) != 0
-                || ((state.Affixes & NightmareAffix.Pulsing) != 0 && MonsterBehavior.PulseGuarded(state.Age))
-                || ((state.Affixes & NightmareAffix.Packbound) != 0 && PackboundAllyNear(rt))
-                || ((state.Affixes & NightmareAffix.Committed) != 0 && m.Control != null && m.Control.ongoingChannels.Count > 0);
-            bool healing = (state.Affixes & NightmareAffix.Recuperating) != 0 && state.HealBudget > 0f
-                && now - state.LastHit >= MonsterBehavior.HealDelaySeconds && m.currentHealth < m.maxHealth;
-            bool slowed = (state.Affixes & NightmareAffix.Skittish) != 0 && state.HasBeenHit
-                && now - state.LastHit < MonsterBehavior.HitSlowSeconds;
-            int cue = recovering ? 3 : warning ? 1 : healing ? 4 : guarding ? 2 : slowed ? 3 : 0;
+            // False for every stateless call, so state is non-null below. Per-peer replay only:
+            // a replayed 0 just removes the target's cue entry, and the same-state broadcast that
+            // preceded this replay on the ordered connection already removed it. Nonzero cues
+            // still re-establish the entry after the peer's clear.
+            if (!ShouldSendMonsterBehaviorCue(state != null, cue, target != null)) return;
             if (target == null && !force && state.CueQueued && state.CueNetId == m.netId && cue == state.Cue)
             {
                 // Model loading/replacement is a visual change, not a reason to resend every cue periodically.

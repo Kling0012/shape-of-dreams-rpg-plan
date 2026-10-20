@@ -36,6 +36,9 @@ namespace SodRpg.Mod
 
         private void FlushPendingPressureDividends()
         {
+            // 毎フレーム Tick から呼ばれる。空のときは精算できないので、
+            // RunActive（文字列比較と HashSet.Contains を含む）や Drain の runId 比較に入らずに抜ける。
+            if (_pendingPressureDividends.Count == 0) return;
             if (!RunActive) return;
             // #124: this entry is shared by the direct receipt RPC and the normal reward tick.
             // While Infinity rewards are halted, authenticated receipts stay queued (AddAuthenticated

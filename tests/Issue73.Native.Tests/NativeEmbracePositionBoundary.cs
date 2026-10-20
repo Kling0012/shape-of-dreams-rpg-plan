@@ -84,6 +84,10 @@ namespace SodRpg.Mod
             nativeHeroWeaponIdle = true,
             nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
+            nativeRoomStartDependency = true,
+            nativeChatMuteCheckAlloc = true,
+            nativeProxyPositionIdle = true,
+            nativeEnemyHitFxBudget = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;

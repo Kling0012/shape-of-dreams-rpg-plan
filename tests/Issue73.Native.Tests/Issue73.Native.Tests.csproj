@@ -53,6 +53,7 @@
     <Compile Include="../../src/SodRpg.Mod/CoopTradeTransport.cs" Link="ModUnderTest/CoopTradeTransport.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeMessages.cs" Link="ModUnderTest/CoopTradeMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.RunGrowth.cs" Link="ModUnderTest/NetMessages.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/BountyReportBatching.cs" Link="ModUnderTest/BountyReportBatching.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativeCharacterModelDisplayBounds.cs" Link="ModUnderTest/NativeCharacterModelDisplayBounds.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeLobbyAccessoryIdle.cs" Link="ModUnderTest/NativeLobbyAccessoryIdle.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.CrowdControlRecovery.cs" Link="ModUnderTest/HostAuthority.CrowdControlRecovery.cs" />
+    <Compile Include="../../src/SodRpg.Mod/BossSegmentPlacement.cs" Link="ModUnderTest/BossSegmentPlacement.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
     <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
   </ItemGroup>
