@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.38 — Chinese translations for star chart, Daily Dreams, Nightmares, pacts and expedition training（2026-10-21）
+
+### 不具合の修正 / Bug fixes
+- 中国語で、ボス装備の説明にある奥義の記憶の表記を、固有効果やセット効果の説明とそろえました。 / Standardized the Chinese term for Ultimate memories in boss equipment descriptions to match power and set effect descriptions.
+
+---
+
 ## v3.8.37 — Chinese codex and terminology fixes（2026-10-21）
 
 ### 不具合の修正 / Bug fixes
