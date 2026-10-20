@@ -42,6 +42,18 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 装備データ 7/8（Content.cs の固有品、#957）で繰り返し使う訳語。同じく参照用で辞書には登録しない。
+        // Pack: 群れ → 兽群
+        // Ward / 護り: 守护（障壁はそのまま障壁）
+        // Vanguard / 前衛: 前卫
+        // Thorns: 棘 → 荆棘（Power と同じ）
+        // Pilgrim / 巡礼: 朝圣
+        // Strafing / 歩き撃ち: 移动射击
+        // Ultimate / 奥義: 奥义
+        // Sunpin / 陽飾り: 阳针
+        //部位の訳し分け: 手袋→手套、拳→拳甲、籠手・手甲→手甲、腕当て→护腕、手巻き→缠手、指→指套、
+        // 指輪・指環→戒指・指环、長靴→长靴、鉄靴→铁靴、脛当て・鉄脛→胫甲、草履→草履、下駄→木屐、
+        // 上履き→便鞋、鋲靴→钉鞋、歩み靴・追い足→疾行靴、ロケット→坠盒、首飾り→项链、飾り→坠饰
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
