@@ -10,9 +10,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v3.8.28 — Lighter chat receiving and enemy targeting（2026-10-20）
+## v3.8.28 — Lighter enemy targeting（2026-10-20）
 
-チャットや実績解除の知らせを受け取るときと、敵が狙う相手を決めるときの余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when it receives chat messages and achievement notices and when enemies pick a target, making it a little lighter.
+敵が狙う相手を決めるときの余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when enemies pick a target, making it a little lighter.
 
 ### 更新前に確認 / Before updating
 
@@ -22,7 +22,6 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 不具合の修正 / Bug fixes
 
-- チャットのメッセージや実績解除の知らせを受け取るたびに、送り主をミュートしているかを確かめていました。この確認で毎回わずかに余分なメモリを使っていたので、この問題を直しました。ホストと参加者のどちらのゲームでも、受け取るときの処理が少し軽くなります。こうしたメッセージが届く回数は多くないため、効果は小さめです。ミュートの効き方や表示されるメッセージは、これまでと変わりません。 / Fixed the game using a little extra memory every time it received a chat message or achievement notice, while checking whether the sender was muted. Receiving these messages is now slightly lighter for both host and guests. These messages arrive only occasionally, so the gain is small. How muting works and which messages are shown are unchanged.
 - 敵が狙う相手を決めるたびに、召喚体に関係しない敵でも、プレイヤー全員の状態を確かめる余分な処理が走っていました。この問題を直しました。敵が多い部屋ほどホストのゲームが少し軽くなりますが、1回あたりの効果は小さめです。敵が狙う相手や召喚体の動きは、これまでと変わりません。 / Fixed the game checking every player's state each time an enemy picked a target, even for enemies unrelated to summons. Rooms with many enemies are now slightly lighter for the host, though the gain per check is small. Which targets enemies choose and how summons behave are unchanged.
 
 この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
