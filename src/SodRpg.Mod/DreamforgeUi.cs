@@ -2457,11 +2457,11 @@ namespace SodRpg.Mod
                 int tcost = Rules.TransmuteCost(r, target != null);
                 int need = Content.TransmuteInputs(r), ttune = Rules.TransmuteTuning(r);
                 GUI.enabled = n >= need && p.Material(Materials.Shard) >= tcost && p.Material(Materials.Tuning) >= ttune;
-                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "", tuneZh = ttune > 0 ? $"・调律石{ttune}" : "";
+                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "";
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/{need}\n"
                     + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}",
-                    $"→{Content.SlotName(target.Value)}·碎片{tcost}{tuneZh}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}",
-                    $"碎片{tcost}{tuneZh}"));
+                    $"→{Content.SlotName(target.Value)}·碎片{tcost}{(ttune > 0 ? $"・调律石{ttune}" : "")}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}",
+                    $"碎片{tcost}{(ttune > 0 ? $"・调律石{ttune}" : "")}"));
                 if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin44)) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }
