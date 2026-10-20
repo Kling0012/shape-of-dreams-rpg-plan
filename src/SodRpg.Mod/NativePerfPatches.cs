@@ -3122,9 +3122,15 @@ namespace SodRpg.Mod
         // (Type.IsInstanceOfType is exactly the `is` operator, null included), the same
         // short-circuit and the same result — with the struct enumerator and no delegate
         // call. Everything else in the native body (base.CanInteract, the used-players
-        // list, the negation) is left untouched, so no game logic is replicated. With the
-        // option off, or on any exception inside the loop, the helper falls back to the
-        // native Enumerable.Any call, which is the original behaviour unchanged.
+        // list, the negation) is left untouched, so no game logic is replicated. The
+        // call shape alone would not be enough — the fast path below ignores the
+        // predicate, so a game update that keeps the one Any call but changes the lambda
+        // (say `e is BossMonster && e.isActive`) would leave the patch applied while
+        // silently answering a different question. The transpiler therefore also pins
+        // the predicate itself (see IsBareIsTest) and skips the swap when the lambda is
+        // not exactly the bare boss test. With the option off, or on any exception
+        // inside the loop, the helper falls back to the native Enumerable.Any call,
+        // which is the original behaviour unchanged.
         private static MethodBase _target;
         private static Type _bossType;
         private static bool _disabled;
@@ -3132,11 +3138,12 @@ namespace SodRpg.Mod
 
         private static bool Prepare() => TryPrepare("Shrine_BossSoul", "BossMonster");
 
-        // Split out with the type names as arguments so the tests can point the same wiring
-        // at stand-in classes and at missing names (the fail-soft path), exactly like
-        // NativeChaosShrineHitScanPerf. The name-only lookups stay: the mod never references
-        // these native classes, and TypeByName resolves the harness stand-ins in tests
-        // exactly like the real classes in the game.
+        // Split out with the type names as arguments so the tests
+        // (BossSoulShrineScanPerfTests) can point the same wiring at stand-in classes
+        // and at missing names (the fail-soft path), exactly like
+        // NativeChaosShrineHitScanPerf. The name-only lookups stay: the mod never
+        // references these native classes, and TypeByName resolves the harness stand-ins
+        // in tests exactly like the real classes in the game.
         internal static bool TryPrepare(string shrineTypeName, string bossTypeName)
         {
             try
@@ -3200,10 +3207,92 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", "native boss scan callsite changed or already patched");
                 return code;
             }
+            // The call shape alone cannot tell what the predicate asks, and the hand loop
+            // below answers with the boss-type test only. Pin the lambda the same way the
+            // call itself constructs it — the compiler emits the delegate as
+            // `ldftn <lambda>` + `newobj Func<T,bool>(object, native int)` (the cached
+            // delegate block in front of the Any call) — and require exactly that one
+            // construction, then verify the lambda body is the bare `is <boss type>` test.
+            // A body that asks anything else (or a predicate whose construction cannot be
+            // located here) skips the swap with one warning, so the native Any keeps
+            // deciding with its own predicate instead of this loop silently changing the
+            // shrine's availability.
+            var funcCtor = typeof(Func<,>).MakeGenericType(elementType, typeof(bool))
+                .GetConstructor(new[] { typeof(object), typeof(IntPtr) });
+            MethodInfo lambda = null;
+            int lambdas = 0;
+            for (int i = 1; i < code.Count; i++)
+            {
+                if (code[i].opcode != OpCodes.Newobj || !(code[i].operand is ConstructorInfo ctor) || ctor != funcCtor) continue;
+                if (code[i - 1].opcode != OpCodes.Ldftn || !(code[i - 1].operand is MethodInfo candidate)) continue;
+                lambda = candidate;
+                lambdas++;
+            }
+            if (lambdas != 1 || !IsBareIsTest(lambda))
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan",
+                    "native boss scan predicate is not the bare boss test");
+                return code;
+            }
             code[site].opcode = OpCodes.Call;
             code[site].operand = AccessTools.Method(typeof(NativeBossSoulShrineScanPerf), nameof(BossScan))
                 .MakeGenericMethod(elementType);
             return code;
+        }
+
+        // `e => e is <boss type>` compiles to exactly five instructions:
+        // ldarg.<the predicate argument>, isinst <boss type>, ldnull, cgt.un, ret
+        // (the shipped Dew.Core body is exactly this; nops from debug builds are
+        // tolerated). The walk is over the raw body bytes with the isinst token resolved
+        // and compared against the boss type the loop tests with, so any other predicate —
+        // or an unreadable body — fails and the transpiler leaves the native call alone.
+        private static bool IsBareIsTest(MethodBase lambda)
+        {
+            try
+            {
+                var il = lambda.GetMethodBody()?.GetILAsByteArray();
+                if (il == null) return false;
+                int i = SkipNops(il, 0);
+                i = ReadArgument(il, i, lambda.IsStatic ? 0 : 1);
+                if (i < 0) return false;
+                i = SkipNops(il, i);
+                if (i + 5 > il.Length || il[i] != 0x75) return false; // isinst
+                uint token = BitConverter.ToUInt32(il, i + 1);
+                var declaring = lambda.DeclaringType;
+                var typeArguments = declaring != null && declaring.IsGenericType ? declaring.GetGenericArguments() : null;
+                var methodArguments = lambda.IsGenericMethod ? lambda.GetGenericArguments() : null;
+                if (lambda.Module.ResolveType(unchecked((int)token), typeArguments, methodArguments) != _bossType) return false;
+                i = SkipNops(il, i + 5);
+                if (i >= il.Length || il[i] != 0x14) return false; // ldnull
+                i = SkipNops(il, i + 1);
+                if (i + 1 >= il.Length || il[i] != 0xFE || il[i + 1] != 0x03) return false; // cgt.un
+                i = SkipNops(il, i + 2);
+                if (i >= il.Length || il[i] != 0x2A) return false; // ret
+                return SkipNops(il, i + 1) == il.Length;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static int SkipNops(byte[] il, int index)
+        {
+            while (index < il.Length && il[index] == 0x00) index++;
+            return index;
+        }
+
+        // New index after a load of the given argument slot (ldarg.s/ldarg forms
+        // included), or -1 when the bytes at index are anything else.
+        private static int ReadArgument(byte[] il, int index, int slot)
+        {
+            if (index >= il.Length) return -1;
+            if (slot == 0 && il[index] == 0x02) return index + 1; // ldarg.0
+            if (slot == 1 && il[index] == 0x03) return index + 1; // ldarg.1
+            if (index + 1 < il.Length && il[index] == 0x0E && il[index + 1] == slot) return index + 2; // ldarg.s
+            if (index + 3 < il.Length && il[index] == 0xFE && il[index + 1] == 0x09
+                && il[index + 2] == slot && il[index + 3] == 0) return index + 4; // ldarg
+            return -1;
         }
 
         // Same call shape as Enumerable.Any<TSource>(IEnumerable<TSource>, Func<TSource, bool>):
