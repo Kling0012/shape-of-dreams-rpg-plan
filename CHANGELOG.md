@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.40 — Lighter performance for enemy hits and food pickups（2026-10-21）
+
+敵が攻撃を受けるときと食材が出てくるときの余分な処理を減らし、ホストと参加者のゲームが少し軽くなるようにしました。 / This version cuts extra work when enemies take hits and when food pickups spawn, making the game a little lighter for the host and guests.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が攻撃を受けるたびに、その敵の特性では使わない距離や向きなどの判定まで毎回行っていました。必要な特性を持つ敵のときだけ判定するように直したため、敵の多い波や深い階で戦っている間、ホストのゲームが少し軽くなる見込みです。効果の大きさは敵の構成によって変わります。敵が受けるダメージは、これまでと変わりません。 / Fixed the host running distance, facing and similar checks on every hit, even for enemies whose traits never use them. These checks now run only for enemies that need them, which should make the game a little lighter for the host during big waves and deep floors. How much this helps depends on the enemy mix. Damage dealt to enemies is unchanged.
+- 食材が出てくるたびに、ホストと参加者のゲームで余分に重い処理をしていました。これを軽い処理に置き換えたため、食材が次々に出てくる戦闘で、ホストと参加者のゲームが少し軽くなる見込みです。食材の吸い寄せの動きは、これまでと変わりません。 / Fixed the host's and guests' games doing unnecessarily heavy work each time a food pickup spawned. This work is now lighter, which should make the game a little lighter for both the host and guests in fights where food keeps spawning. Food pickup attraction behaves as before.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.39 — Chinese display fixes and lighter guest performance（2026-10-21）
 
 ### 不具合の修正 / Bug fixes
