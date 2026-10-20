@@ -14,22 +14,22 @@ namespace SodRpg.Core.Game
         public const int KeystoneMastery = 3;
 
         private static TalentDef Node(string hero, string id, string ja, string en, Stat stat, int perRank, int maxRank = 3)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), stat, perRank, maxRank) { HeroKey = hero };
+            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), stat, perRank, maxRank) { HeroKey = hero };
 
         public static TalentDef DeepNode(string hero, string id, string ja, string en, Stat stat, int perRank, int maxRank = 3)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), stat, perRank, maxRank) { HeroKey = hero, Tier = 2 };
+            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), stat, perRank, maxRank) { HeroKey = hero, Tier = 2 };
 
         public static TalentDef DeepPower(string hero, string id, string ja, string en, Power power, int perRank, int maxRank = 3)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), power, perRank, maxRank) { HeroKey = hero, Tier = 2 };
+            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), power, perRank, maxRank) { HeroKey = hero, Tier = 2 };
 
         /// <summary>奥の星のうち、強すぎるので1段だけ・高い費用にしたもの（連装・四の型）。</summary>
         public const int CostlyRankCost = 4;
 
         private static TalentDef DeepCostly(string hero, string id, string ja, string en, Stat stat, int perRank)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), stat, perRank, 1) { HeroKey = hero, Tier = 2, RankCost = CostlyRankCost };
+            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), stat, perRank, 1) { HeroKey = hero, Tier = 2, RankCost = CostlyRankCost };
 
         private static TalentDef Key(string hero, string id, string ja, string en, Power power, int value, string descJa, string descEn)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), power, value, new Txt(descJa, descEn)) { HeroKey = hero };
+            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), power, value, new Txt(descJa, descEn, LocZhGlossary.Lookup(descEn))) { HeroKey = hero };
 
         private static readonly TalentDef[] Core = new[]
         {

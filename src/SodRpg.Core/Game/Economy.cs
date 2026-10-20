@@ -410,7 +410,7 @@ namespace SodRpg.Core.Game
                 int limit = ManualHeldCount >= MaxHeld ? MaxHeld : MaxRestored;
                 throw new InvalidOperationException(Loc.T(
                     $"未確定の取引が{limit}件に達しています。結果が確認できるまで、新しい取引はできません。",
-                    $"There are already {limit} unresolved trades. New trades are paused until their results are confirmed."));
+                    $"There are already {limit} unresolved trades. New trades are paused until their results are confirmed.", $"已有{limit}笔未确定的交易。确认结果前暂停新交易。"));
             }
         }
 
@@ -429,7 +429,7 @@ namespace SodRpg.Core.Game
             if (heat < 0 || heat > Content.MaxHeat) throw new ArgumentOutOfRangeException(nameof(heat));
             if (price < 1) throw new ArgumentOutOfRangeException(nameof(price));
             if (!string.IsNullOrEmpty(offerId) && IsMerchantReserved(offerId))
-                throw new InvalidOperationException(Loc.T("この商人の取引は未確定です。", "This merchant's trade is unresolved."));
+                throw new InvalidOperationException(Loc.T("この商人の取引は未確定です。", "This merchant's trade is unresolved.", "此商人的交易尚未确定。"));
             EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.MerchantGold, SpendGold = price, Heat = heat, StartedAt = now, MerchantOfferId = offerId };
             _pending[t.Token] = t;
