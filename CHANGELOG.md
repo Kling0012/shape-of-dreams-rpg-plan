@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.30 — Lighter enemy HP checks for the co-op host（2026-10-20）
+
+協力プレイでホストが敵の体力を確かめるときの余分な計算を省き、ホストのゲームを少し軽くしました。 / The host now does less extra work when checking enemy HP in co-op, making the host's game a little lighter. / 去掉了多人合作时主机检查敌人生命值时多余的计算，主机的游戏会稍微流畅一些。
+
+### 更新前に確認 / Before updating / 更新前须知
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version. / 多人合作时，所有玩家都需要更新到此版本。
+- セーブデータはそのまま引き継げます。 / Saves carry over. / 存档可以直接继承。
+- 更新後はゲームを再起動してください。 / Restart the game after updating. / 更新后请重新启动游戏。
+
+### 不具合の修正 / Bug fixes / 错误修复
+
+- 協力プレイでホストが敵の体力を確かめるとき、多くの場合は使わない計算まで毎回していました。この問題を直し、必要なときにだけ計算するようにしました。ホストのゲームが少し軽くなりますが、効果は小さめです。敵の体力の決まり方は、これまでと変わりません。 / Fixed the host doing a calculation that usually goes unused every time it checked enemy HP in co-op. It now runs only when needed. The host's game is a little lighter, though the gain is small. How enemy HP is determined is unchanged. / 修复了多人合作时主机每次检查敌人生命值时，都会进行通常用不到的计算的问题。现在只在需要时才计算。主机的游戏会稍微流畅一些，但效果较小。敌人生命值的确定方式与以前相同。
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd. / 本版本的改动已通过代码和测试确认，尚未在实际游戏和多人合作中确认。如发现异常，请告诉我们。
+
+---
+
 ## v3.8.29 — Gentler dynamic difficulty and lighter performance（2026-10-20）
 
 ### 新機能 / New features
