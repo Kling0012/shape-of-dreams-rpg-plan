@@ -1653,7 +1653,7 @@ namespace SodRpg.Core.Game
             r.FusionLevel++;
             return new GameEvent(EventKind.Fused, Loc.T(
                 $"「{r.DisplayName}」を融合しました（能力値+{Fusion.BonusPct(r.FusionLevel)}%。材料「{material.DisplayName}」は消費されました）。",
-                $"Fused \"{r.DisplayName}\" (stats +{Fusion.BonusPct(r.FusionLevel)}%; consumed \"{material.DisplayName}\")."), r.Rarity);
+                $"Fused \"{r.DisplayName}\" (stats +{Fusion.BonusPct(r.FusionLevel)}%; consumed \"{material.DisplayName}\").", $"已融合“{r.DisplayName}”（属性+{Fusion.BonusPct(r.FusionLevel)}%。材料“{material.DisplayName}”已被消耗）。"), r.Rarity);
         }
 
         /// <summary>
@@ -1664,25 +1664,25 @@ namespace SodRpg.Core.Game
         {
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
             int maxBreaks = Content.MaxLimitBreaks(r.Rarity);
-            if (maxBreaks <= 0) throw new InvalidOperationException(Loc.T("このレア度の遺物は限界突破できません。", "Relics of this rarity cannot limit break."));
-            if (r.LimitBreaks >= maxBreaks) throw new InvalidOperationException(Loc.T("限界突破の回数が上限です。", "No limit breaks left."));
-            if (r.Enhance < Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("強化が上限に達してから限界突破できます。", "Limit break is available at maximum enhancement."));
-            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash."));
+            if (maxBreaks <= 0) throw new InvalidOperationException(Loc.T("このレア度の遺物は限界突破できません。", "Relics of this rarity cannot limit break.", "此稀有度的遗物无法极限突破。"));
+            if (r.LimitBreaks >= maxBreaks) throw new InvalidOperationException(Loc.T("限界突破の回数が上限です。", "No limit breaks left.", "极限突破次数已达上限。"));
+            if (r.Enhance < Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("強化が上限に達してから限界突破できます。", "Limit break is available at maximum enhancement.", "强化达到上限后才能极限突破。"));
+            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash.", "材料遗物不在仓库中。"));
             if (!LimitBreakCandidates(p, r, trades).Contains(material))
-                throw new InvalidOperationException(Loc.T("材料は同じ枠で同じレア度以上の、鍵なし・未装着・取引中でない遺物です。", "The material must be an unlocked, unequipped, unreserved relic of the same slot and equal or higher rarity."));
+                throw new InvalidOperationException(Loc.T("材料は同じ枠で同じレア度以上の、鍵なし・未装着・取引中でない遺物です。", "The material must be an unlocked, unequipped, unreserved relic of the same slot and equal or higher rarity.", "材料须为同部位、同稀有度以上，且未上锁、未装备、不在交易中的遗物。"));
             int n = r.LimitBreaks + 1;
             int tuningCost = Content.LimitBreakTuningCost(n, r.Rarity), shardCost = Content.LimitBreakShardCost(n, r.Rarity);
-            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
-            if (p.Material(Materials.Shard) < shardCost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{shardCost}必要）。", $"Not enough shards ({shardCost} needed)."));
+            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed).", $"调律石不足（需要{tuningCost}）。"));
+            if (p.Material(Materials.Shard) < shardCost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{shardCost}必要）。", $"Not enough shards ({shardCost} needed).", $"碎片不足（需要{shardCost}）。"));
             p.AddMaterial(Materials.Tuning, -tuningCost);
             p.AddMaterial(Materials.Shard, -shardCost);
             p.Stash.Remove(material);
             r.LimitBreaks = n;
             return WithBountyProgress(p, new GameEvent(EventKind.LevelUp, Loc.T(
                 $"「{r.PlainName}」を限界突破しました（{n}/{maxBreaks}。素材「{material.PlainName}」。強化上限+{Content.MaxEnhanceFor(r)}）。",
-                $"Limit broke \"{r.PlainName}\" ({n}/{maxBreaks}, used \"{material.PlainName}\". Enhancement cap +{Content.MaxEnhanceFor(r)})."), r.Rarity), BountyKind.LimitBreaker);
+                $"Limit broke \"{r.PlainName}\" ({n}/{maxBreaks}, used \"{material.PlainName}\". Enhancement cap +{Content.MaxEnhanceFor(r)}).", $"“{r.PlainName}”完成了极限突破（{n}/{maxBreaks}，材料“{material.PlainName}”。强化上限+{Content.MaxEnhanceFor(r)}）。"), r.Rarity), BountyKind.LimitBreaker);
         }
 
         /// <summary>
@@ -1699,7 +1699,7 @@ namespace SodRpg.Core.Game
             {
                 r.EnhanceMilestones = 1;
                 var line = AddMilestoneAffix(rng, r);
-                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\".", $"词条“{Content.FormatStat(line.Stat, line.Value)}”增加了。"));
             }
             if (r.Enhance >= Content.EnhanceMilestoneSecond && r.EnhanceMilestones < 2)
             {
@@ -1711,25 +1711,25 @@ namespace SodRpg.Core.Game
                     var pool = Content.PowerPool(r.Slot).Where(x => Content.PowerAllowedForRarity(x.Power, r.Rarity)).ToList();
                     var pr = pool[rng.Range(0, pool.Count - 1)];
                     r.Powers.Add(new PowerLine(pr.Power, pr.Min));
-                    notes.Add(Loc.T($"固有効果「{Content.PowerName(pr.Power)}」が宿りました。", $"gained the power \"{Content.PowerName(pr.Power)}\"."));
+                    notes.Add(Loc.T($"固有効果「{Content.PowerName(pr.Power)}」が宿りました。", $"gained the power \"{Content.PowerName(pr.Power)}\".", $"获得了固有效果“{Content.PowerName(pr.Power)}”。"));
                 }
                 else
                 {
                     var line = AddMilestoneAffix(rng, r);
-                    if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+                    if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\".", $"词条“{Content.FormatStat(line.Stat, line.Value)}”增加了。"));
                 }
             }
             if (r.Enhance >= Content.EnhanceMilestoneThird && r.EnhanceMilestones < 3)
             {
                 r.EnhanceMilestones = 3;
                 var line = AddMilestoneAffix(rng, r);
-                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\".", $"词条“{Content.FormatStat(line.Stat, line.Value)}”增加了。"));
             }
             if (r.Enhance >= Content.EnhanceMilestoneFourth && r.EnhanceMilestones < 4)
             {
                 r.EnhanceMilestones = 4;
                 var line = AddMilestoneAffix(rng, r);
-                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\".", $"词条“{Content.FormatStat(line.Stat, line.Value)}”增加了。"));
             }
             if (r.Enhance >= Content.EnhanceMilestoneFifth && !r.MilestonePowerApplied && r.Rarity == Rarity.Legendary)
             {
@@ -1738,15 +1738,15 @@ namespace SodRpg.Core.Game
                     r.MilestonePowerApplied = true;
                     r.EnhanceMilestones = 5;
                     notes.Add(Loc.T($"固有技のdamage/heal/shield係数に{Content.LimitBreakPowerPct / 100m:0.##}倍の節目を適用しました（時間・距離・CDは固定）。",
-                        $"Applied the authored move's {Content.LimitBreakPowerPct / 100m:0.##}x damage/heal/shield milestone (time, range and cooldown stay fixed)."));
+                        $"Applied the authored move's {Content.LimitBreakPowerPct / 100m:0.##}x damage/heal/shield milestone (time, range and cooldown stay fixed).", $"对固有技的damage/heal/shield系数应用了{Content.LimitBreakPowerPct / 100m:0.##}倍的里程碑（时间、距离、冷却固定不变）。"));
                 }
                 else
                 {
                     var boosted = BoostMilestonePower(r);
-                    if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が{Content.LimitBreakPowerPct / 100m:0.##}倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew {Content.LimitBreakPowerPct / 100m:0.##}x stronger."));
+                    if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が{Content.LimitBreakPowerPct / 100m:0.##}倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew {Content.LimitBreakPowerPct / 100m:0.##}x stronger.", $"固有效果“{Content.PowerName(boosted.Power)}”的数值变为{Content.LimitBreakPowerPct / 100m:0.##}倍。"));
                 }
             }
-            return notes.Count == 0 ? null : string.Join(Loc.T("", " "), notes);
+            return notes.Count == 0 ? null : string.Join(Loc.T("", " ", " "), notes);
         }
 
         private static StatLine AddMilestoneAffix(Rng rng, Relic r)
@@ -1790,7 +1790,7 @@ namespace SodRpg.Core.Game
         private static void RequireNoRetuneOffer(Profile p, string uid)
         {
             if (p.RetuneOffer != null && p.RetuneOffer.Uid == uid)
-                throw new InvalidOperationException(Loc.T("この遺物は再調律の候補を選んでいる途中です。先に候補を選んでください。", "Choose a retune option for this relic first."));
+                throw new InvalidOperationException(Loc.T("この遺物は再調律の候補を選んでいる途中です。先に候補を選んでください。", "Choose a retune option for this relic first.", "此遗物正在选择再调律候选。请先完成选择。"));
         }
 
         /// <summary>
@@ -1800,13 +1800,13 @@ namespace SodRpg.Core.Game
         public static GameEvent Retune(Profile p, string uid, int affixIndex, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
-            if (p.RetuneOffer != null) throw new InvalidOperationException(Loc.T("先に、出ている再調律の候補を選んでください。", "Choose from the pending retune options first."));
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
-            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は再調律できません。", "Forbidden relics cannot be retuned."));
-            if (r.Retunes >= Forbidden.RetuneCap(p, r)) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
+            if (p.RetuneOffer != null) throw new InvalidOperationException(Loc.T("先に、出ている再調律の候補を選んでください。", "Choose from the pending retune options first.", "请先从已出现的再调律候选中选择。"));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
+            if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix.", "请选择词条。"));
+            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は再調律できません。", "Forbidden relics cannot be retuned.", "禁忌化的遗物无法再调律。"));
+            if (r.Retunes >= Forbidden.RetuneCap(p, r)) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left.", "再调律次数已用完。"));
             int cost = Content.RetuneCost(r);
-            if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
+            if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed).", $"调律石不足（需要{cost}）。"));
             var others = new HashSet<Stat> { r.Base.ImplicitStat };
             for (int i = 0; i < r.Affixes.Count; i++) if (i != affixIndex) others.Add(r.Affixes[i].Stat);
             var rng = p.TakeRng();
@@ -1821,30 +1821,30 @@ namespace SodRpg.Core.Game
                 offer.Options.Add(line);
             }
             p.StoreRng(rng);
-            if (offer.Options.Count == 0) throw new InvalidOperationException(Loc.T("候補を作れませんでした。", "No options available."));
+            if (offer.Options.Count == 0) throw new InvalidOperationException(Loc.T("候補を作れませんでした。", "No options available.", "无法生成候选。"));
             p.AddMaterial(Materials.Tuning, -cost);
             r.Retunes++;
             p.RetuneOffer = offer;
             return new GameEvent(EventKind.Info, Loc.T($"再調律の候補が{offer.Options.Count}つ出ました。1つ選ぶか、元のままにしてください。",
-                $"{offer.Options.Count} retune options are ready. Pick one, or keep the original."), r.Rarity);
+                $"{offer.Options.Count} retune options are ready. Pick one, or keep the original.", $"出现了{offer.Options.Count}个再调律候选。请选择其一，或保持原状。"), r.Rarity);
         }
 
         /// <summary>再調律の候補を選ぶ（choice が範囲外なら元のまま）。候補は消える。</summary>
         public static GameEvent ChooseRetune(Profile p, int choice)
         {
-            var offer = p.RetuneOffer ?? throw new InvalidOperationException(Loc.T("再調律の候補がありません。", "No retune options pending."));
+            var offer = p.RetuneOffer ?? throw new InvalidOperationException(Loc.T("再調律の候補がありません。", "No retune options pending.", "没有待选择的再调律候选。"));
             p.RetuneOffer = null;
             var r = p.FindStash(offer.Uid);
             if (r == null || offer.Index >= r.Affixes.Count)
-                return new GameEvent(EventKind.Info, Loc.T("候補の遺物が見つからないため、再調律を取りやめました。", "The relic is gone; the retune was cancelled."));
+                return new GameEvent(EventKind.Info, Loc.T("候補の遺物が見つからないため、再調律を取りやめました。", "The relic is gone; the retune was cancelled.", "找不到候选遗物，再调律已取消。"));
             if (choice < 0 || choice >= offer.Options.Count)
-                return new GameEvent(EventKind.Info, Loc.T($"「{r.PlainName}」の特性は元のままにしました。", $"Kept the original affix on \"{r.PlainName}\"."), r.Rarity);
+                return new GameEvent(EventKind.Info, Loc.T($"「{r.PlainName}」の特性は元のままにしました。", $"Kept the original affix on \"{r.PlainName}\".", $"“{r.PlainName}”的词条保持了原状。"), r.Rarity);
             var old = r.Affixes[offer.Index];
             var line = offer.Options[choice];
             r.Affixes[offer.Index] = line;
             return new GameEvent(EventKind.Info, Loc.T(
                 $"再調律しました：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}",
-                $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
+                $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}", $"已再调律：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
         /// <summary>表の基本費用にレア度と素材倍率を掛け、済ませた回数ぶん正確な有理数で増加（最後に切り上げ）。</summary>
@@ -1888,16 +1888,16 @@ namespace SodRpg.Core.Game
         {
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
-            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
-            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
-            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は洗い直せません。", "Forbidden relics cannot be rerolled."));
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。"));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled.", "上锁的遗物无法重洗。"));
+            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled.", "装备中的遗物无法重洗。"));
+            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は洗い直せません。", "Forbidden relics cannot be rerolled.", "禁忌化的遗物无法重洗。"));
             var (shards, tuning) = AffixRerollCost(r);
-            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.")); // 負の費用は支払いが加算になるので受け付けない
+            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.", "重洗费用无效。")); // 負の費用は支払いが加算になるので受け付けない
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
-                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed)."));
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed).", $"素材不足（碎片{shards}、调律石{tuning}）。"));
             int count = r.Affixes.Count;
-            string sep = Loc.T("、", ", ");
+            string sep = Loc.T("、", ", ", "、");
             var before = r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)).ToList();
             var rng = p.TakeRng();
             r.Affixes.Clear();
@@ -1916,7 +1916,7 @@ namespace SodRpg.Core.Game
             string after = string.Join(sep, r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)));
             return new GameEvent(EventKind.Info, Loc.T(
                 $"「{r.PlainName}」の特性を洗い直しました：{string.Join(sep, before)} → {after}",
-                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}"), r.Rarity);
+                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}", $"重洗了“{r.PlainName}”的全部词条：{string.Join(sep, before)} → {after}"), r.Rarity);
         }
 
         /// <summary>
@@ -1940,17 +1940,17 @@ namespace SodRpg.Core.Game
             string detail = Forbidden.PatternDescription(mark.Pattern);
             if (Forbidden.IsTransmute(r))
                 detail = Loc.T($"血の転化：シールドを得られず、受けた回復の{Forbidden.TransmuteHealPct}%を攻撃力に変換",
-                    $"Blood Transmutation: no shields; {Forbidden.TransmuteHealPct}% of healing received becomes attack");
+                    $"Blood Transmutation: no shields; {Forbidden.TransmuteHealPct}% of healing received becomes attack", $"血液转化：无法获得护盾，受到的治疗{Forbidden.TransmuteHealPct}%转化为攻击力");
             else if (mark.Pattern == ForbiddenPattern.Pact)
             {
                 var pair = Forbidden.PactVariants[mark.Variant];
-                detail = Content.FormatStat(pair.Boon.Stat, pair.Boon.Value) + Loc.T("、", ", ") + Content.FormatStat(pair.Bane.Stat, pair.Bane.Value);
+                detail = Content.FormatStat(pair.Boon.Stat, pair.Boon.Value) + Loc.T("、", ", ", "、") + Content.FormatStat(pair.Bane.Stat, pair.Bane.Value);
             }
             else if (mark.Pattern == ForbiddenPattern.Severance)
-                detail = Loc.T($"固有効果「{Content.PowerName(mark.AddedPower)}」を得て、特性を1つ失った", $"gained the power \"{Content.PowerName(mark.AddedPower)}\" and lost one affix");
+                detail = Loc.T($"固有効果「{Content.PowerName(mark.AddedPower)}」を得て、特性を1つ失った", $"gained the power \"{Content.PowerName(mark.AddedPower)}\" and lost one affix", $"获得了固有效果“{Content.PowerName(mark.AddedPower)}”，失去了一条词条");
             return new GameEvent(EventKind.LevelUp, Loc.T(
                 $"「{r.PlainName}」を禁忌化しました：{Forbidden.PatternName(mark.Pattern)}（{detail}）",
-                $"\"{r.PlainName}\" became forbidden: {Forbidden.PatternName(mark.Pattern)} ({detail})"), r.Rarity);
+                $"\"{r.PlainName}\" became forbidden: {Forbidden.PatternName(mark.Pattern)} ({detail})", $"“{r.PlainName}”已禁忌化：{Forbidden.PatternName(mark.Pattern)}（{detail}）"), r.Rarity);
         }
 
         public static int CraftShardCost(bool fine) => ForgeBalance.CraftShardCosts[fine ? 1 : 0];
@@ -1962,9 +1962,9 @@ namespace SodRpg.Core.Game
         {
             int shards = CraftShardCost(fine);
             int tuning = CraftTuningCost(fine);
-            if (p.Stash.Count >= Workshop.StashCapacity(p)) throw new InvalidOperationException(Loc.T("保管庫が一杯です。", "Your stash is full."));
+            if (p.Stash.Count >= Workshop.StashCapacity(p)) throw new InvalidOperationException(Loc.T("保管庫が一杯です。", "Your stash is full.", "仓库已满。"));
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
-                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning).", $"素材不足（碎片{shards}、调律石{tuning}）。"));
             var rng = p.TakeRng();
             var rarity = Loot.RollRarity(rng, CraftLuck(fine), allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
             var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot, ownedRelics: p.Stash, unsecuredRelics: p.Run?.Satchel, codex: p.Codex);
@@ -1975,7 +1975,7 @@ namespace SodRpg.Core.Game
             p.Codex.Add(relic.CodexId);
             return new GameEvent(EventKind.Drop, Loc.T(
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を作りました。",
-                $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
+                $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\"", $"制作了{Content.RarityName(relic.Rarity)}“{relic.DisplayName}”。"), relic.Rarity);
         }
 
         public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? ForgeBalance.SynthesisShardCosts[3]
@@ -2000,14 +2000,14 @@ namespace SodRpg.Core.Game
 
         public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null, Slot? target = null)
         {
-            if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
+            if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted.", "传说遗物无法合成。"));
             int need = Content.TransmuteInputs(r);
             var parts = TransmuteCandidates(p, r, trades).Take(need).ToList();
-            if (parts.Count < need) throw new InvalidOperationException(Loc.T($"材料が足りません（鍵なし・未装着の同じレア度が{need}つ必要）。", $"Need {need} unlocked, unequipped relics of the same rarity."));
+            if (parts.Count < need) throw new InvalidOperationException(Loc.T($"材料が足りません（鍵なし・未装着の同じレア度が{need}つ必要）。", $"Need {need} unlocked, unequipped relics of the same rarity.", $"材料不足（需要{need}件未上锁、未装备的同稀有度遗物）。"));
             int cost = TransmuteCost(r, target != null);
             int tuningCost = TransmuteTuning(r);
-            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
-            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
+            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed).", $"碎片不足（需要{cost}）。"));
+            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed).", $"调律石不足（需要{tuningCost}）。"));
             int ilvl = parts.Max(x => x.ItemLevel);
             foreach (var x in parts) p.Stash.Remove(x);
             p.AddMaterial(Materials.Shard, -cost);
@@ -2020,7 +2020,7 @@ namespace SodRpg.Core.Game
             if (result.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             return new GameEvent(EventKind.Drop, Loc.T(
                 $"合成して、{Content.RarityName(result.Rarity)}「{result.DisplayName}」ができました。",
-                $"Transmuted into {Content.RarityName(result.Rarity)} \"{result.DisplayName}\""), result.Rarity);
+                $"Transmuted into {Content.RarityName(result.Rarity)} \"{result.DisplayName}\"", $"合成完成，得到了{Content.RarityName(result.Rarity)}“{result.DisplayName}”。"), result.Rarity);
         }
 
         public static void ToggleLock(Profile p, string uid, TradeLedger trades = null)
@@ -2033,7 +2033,7 @@ namespace SodRpg.Core.Game
         private static void RequireUnreserved(TradeLedger trades, string uid)
         {
             if (trades != null && trades.IsReserved(uid))
-                throw new InvalidOperationException(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."));
+                throw new InvalidOperationException(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.", "正在等待交易的回应。"));
         }
 
         // ───────────── 専門化 ─────────────
@@ -2138,7 +2138,7 @@ namespace SodRpg.Core.Game
             var talent = engine.Talent(change.CandidateStarId);
             if (p.Run != null && (change.Kind == AllocationChangeKind.Choice ||
                 change.Kind == AllocationChangeKind.Purchase && talent?.IsChoice == true))
-                throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
+                throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition.", "远征中无法更改选择之星。"));
             return engine.Preview(p, heroKey, change);
         }
 
