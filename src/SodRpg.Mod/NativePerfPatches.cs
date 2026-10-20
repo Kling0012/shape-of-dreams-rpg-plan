@@ -4711,8 +4711,10 @@ namespace SodRpg.Mod
         // While the option is off or the server is inactive, both postfixes stand down and
         // the game runs this path vanilla: deltas still deliver whatever the weaver setter
         // raised, but the baseline no longer follows what the guests hold. Each side
-        // therefore forgets the baseline (_hasSent=false) on its way out, so a stale
-        // baseline can never drop the bit of a change raised inside such a window. After
+        // therefore forgets the baseline (_hasSent=false) and drops the owner slot
+        // (_owner=null) on its way out, so a stale baseline can never drop the bit of a
+        // change raised inside such a window, and a manager torn down with its scene is not
+        // pinned by this static reference until the next owner appears. After
         // the option returns (or the same TimescaleManager instance survives a server
         // restart), the first frame-end comparison sees an unknown baseline and keeps the
         // bit until the next delta delivers the value and re-establishes it.
@@ -4728,6 +4730,15 @@ namespace SodRpg.Mod
         // tool that counts per-behaviour delta messages would see fewer of them; nothing in
         // the game reads effectTimescale per message. The nativeTimescaleIdle option turns the
         // skip off.
+        //
+        // One static slot, not a per-instance map: TimescaleManager is the game's
+        // NetworkedManagerBase<TimescaleManager> singleton (2026-10-20 decompile check —
+        // every caller goes through the static instance/softInstance accessor, one manager
+        // per scene), so at most one owner is live at a time. If two instances ever did
+        // alternate, each switch only demotes the baseline to unknown (_hasSent=false) and
+        // the skip stops engaging — it can never drop the bit of a real change. The
+        // stand-down windows below also null the slot so a destroyed manager is not pinned
+        // by this static reference until the next owner appears.
         internal static Mirror.NetworkBehaviour _owner;
         internal static float _sent;
         internal static bool _hasSent;
@@ -4799,6 +4810,12 @@ namespace SodRpg.Mod
 
         private static bool ResolveBitAccess()
         {
+            // The game's Mirror exposes syncVarDirtyBits as a property, not a field:
+            // Mirror.dll r1.4.1.2 (checked 2026-10-20 with ilspycmd against the shipped
+            // assembly) declares `protected ulong syncVarDirtyBits { get; private set; }` in
+            // Mirror.NetworkBehaviour, so PropertyGetter/PropertySetter is the right
+            // accessor pair. A future Mirror that turns it into a field fails this
+            // resolution and the skip stands down (one warning, vanilla behavior).
             var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
             var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
             if (getter == null || setter == null)
@@ -4826,10 +4843,12 @@ namespace SodRpg.Mod
             // Stand-down window (option off / server down): the off-window itself runs
             // vanilla, so the baseline stops tracking what the guests hold. Forget it on
             // the way out — a stale baseline must not drop the bit of a change raised
-            // inside the window once the option comes back on.
+            // inside the window once the option comes back on — and drop the owner slot
+            // so a manager destroyed with its scene is not pinned until the next owner.
             if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
             {
                 _hasSent = false;
+                _owner = null;
                 return;
             }
             try
@@ -4883,11 +4902,12 @@ namespace SodRpg.Mod
         {
             if (!__runOriginal || NativeTimescaleIdlePerf._disabled) return;
             // Same stand-down as the clear side: while the option is off or the server is
-            // down, forget the baseline so it cannot drop a change raised during the
-            // window once the option comes back on.
+            // down, forget the baseline and the owner slot so neither a stale baseline nor
+            // a destroyed manager survives the window.
             if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
             {
                 NativeTimescaleIdlePerf._hasSent = false;
+                NativeTimescaleIdlePerf._owner = null;
                 return;
             }
             try

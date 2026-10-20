@@ -22,6 +22,9 @@ namespace Issue73.Native.Tests
     /// (d) 管理対象（owner）の切替で基線が未知に戻り、同値でもビットを落とさないこと、
     /// (e) 設定が OFF の間・サーバが active でない間も基線が未知に戻り、ON へ戻った
     ///     直後の同値比較でビットを落とさないこと、
+    /// (f) 基線が未知に戻る窓で管理対象への参照（_owner）も null に戻ること、
+    /// (g) 境界 Mirror の syncVarDirtyBits が本体 Mirror.dll と同じ「プロパティ」の形を
+    ///     保つこと（Prepare のデリゲート解決の前提）、
     /// を確かめる。特に (c) の初期状態の経路は、変更ビットが立ったまま途中参加が起きたとき
     /// 既存参加者への差分が消える事故（前ラウンドの指摘）の回帰検査になる。
     /// </summary>
@@ -267,6 +270,58 @@ namespace Issue73.Native.Tests
             RunSerialized(manager, initialState: false);
             Assert.True(HasSent);
             Assert.Equal(0.1f, Sent);
+        }
+
+        // (f) 基線が未知に戻る窓（設定 OFF・サーバ停止）では、管理対象への参照（_owner）も
+        // null に戻る。シーンの破棄で TimescaleManager が消えた後も、静的欄が破棄済みの
+        // オブジェクトを次の管理対象が現れるまで握り続けないようにする確認。
+        [Fact]
+        public void AStandDownWindowReleasesTheOwnerReference()
+        {
+            Arm();
+            var manager = new TimescaleManager();
+            Deliver(manager, 0.1f);
+            Assert.Equal(manager, Owner);
+            // 設定 OFF の窓: フレーム末の Postfix も差分の serialize の Postfix も参照を離す。
+            NativePerfOptions.TimescaleIdle = false;
+            RunFrameEnd(manager);
+            Assert.Null(Owner);
+            manager.Network_effectTimescale(0.05f);
+            RunSerialized(manager, initialState: false);
+            Assert.Null(Owner);
+            // サーバ停止の窓も同じ。
+            NativePerfOptions.TimescaleIdle = true;
+            Deliver(manager, 0.2f);
+            Assert.Equal(manager, Owner);
+            Assert.True(HasSent);
+            Mirror.NetworkServer.active = false;
+            RunFrameEnd(manager);
+            Assert.Null(Owner);
+            Assert.False(HasSent);
+            // 再開後の最初の差分で、基線は新しい管理対象に結ばれる。
+            Mirror.NetworkServer.active = true;
+            manager.Network_effectTimescale(1f);
+            RunSerialized(manager, initialState: false);
+            Assert.Equal(manager, Owner);
+            Assert.True(HasSent);
+            Assert.Equal(1f, Sent);
+        }
+
+        // (g) 境界 Mirror の syncVarDirtyBits は、本体 Mirror.dll r1.4.1.2（2026-10-20 に
+        // ilspycmd で確認: protected ulong syncVarDirtyBits { get; private set; }）と同じ
+        // 「プロパティ」の形を保つ。Prepare の ResolveBitAccess は PropertyGetter/PropertySetter
+        // で解決するため、欄（field）に変わると警告1回でこの軽量化が黙って効かなくなる。
+        // 境界が実物と同じ形であることを固定しておく。
+        [Fact]
+        public void TheBoundaryMirrorKeepsSyncVarDirtyBitsAProperty()
+        {
+            var type = typeof(Mirror.NetworkBehaviour);
+            var property = type.GetProperty("syncVarDirtyBits", Hidden);
+            Assert.NotNull(property);
+            Assert.NotNull(property.GetGetMethod(true));
+            Assert.NotNull(property.GetSetMethod(true));
+            Assert.Equal(typeof(ulong), property.PropertyType);
+            Assert.Null(type.GetField("syncVarDirtyBits", Hidden));
         }
     }
 }
