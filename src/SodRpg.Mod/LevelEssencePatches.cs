@@ -17,6 +17,8 @@ namespace SodRpg.Mod
     internal static class LevelEssenceChaosTargetInfo
     {
         private static bool _failed;
+        // 編集UIが毎ロジックフレーム呼ぶので、言語と枠数が同じなら書式結果を使い回す。
+        private static readonly LevelEssenceTextCache _tooltipCache = new LevelEssenceTextCache();
         private static void Postfix(Shrine_CorruptedChaos __instance, DewPlayer player, HeroSkillLocation loc,
             ref EditSkillTargetInfo __result)
         {
@@ -30,8 +32,13 @@ namespace SodRpg.Mod
                 __result.rejectReasonRawText = current >= LevelEssenceRuntime.CapForLocation(loc)
                     ? DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_MaxReached") : null;
                 __result.actionTypeRawText = DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_ActionVerb");
-                __result.tooltipRawText = __result.rejectReasonRawText == null ? string.Format("{0} {1}<sprite=0>{2}",
-                    DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_Tooltip"), current, current + 1) : null;
+                if (__result.rejectReasonRawText != null)
+                {
+                    __result.tooltipRawText = null;
+                    return;
+                }
+                __result.tooltipRawText = _tooltipCache.Tooltip(
+                    DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_Tooltip"), current);
             }
             catch (Exception ex)
             {
@@ -66,9 +73,16 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Shrine_CorruptedChaos), nameof(Shrine_CorruptedChaos.GetEditSkillIndicatorRawText))]
     internal static class LevelEssenceChaosIndicator
     {
+        // 表示中は毎ロジックフレーム呼ばれるので、上限と言語が同じなら書式結果を使い回す。
+        private static readonly LevelEssenceTextCache _indicatorCache = new LevelEssenceTextCache();
         private static void Postfix(ref string __result)
         {
-            try { __result = string.Format(DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_EditSkill"), LevelEssenceRuntime.EffectiveCap); }
+            try
+            {
+                __result = _indicatorCache.Indicator(
+                    DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_EditSkill"),
+                    LevelEssenceRuntime.EffectiveCap);
+            }
             catch (Exception) { }
         }
     }
