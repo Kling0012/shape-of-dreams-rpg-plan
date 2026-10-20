@@ -59,6 +59,11 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // #952 の基本装備・固有品で繰り返し使う訳語（名前の一部なので参照用）:
+        // Hoarfrost / Rime: 霧氷 → 雾凇 / Remembrance・Nostalgia: 追憶 → 追忆
+        // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
+        // Fingerless / Mitts: 指抜き・指なし → 露指手套 / Wraps: 手巻き → 缠手
+        // Band: 鉢巻 → 头带、腕輪 → 腕环 / Greaves: 脛当て → 护胫
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
