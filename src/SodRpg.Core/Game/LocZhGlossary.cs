@@ -315,21 +315,10 @@ namespace SodRpg.Core.Game
                 ["Melee co-op effects (while the basic attack is melee)"] = "近战协作效果（通常攻击为近战时）",
                 ["Automatic casting"] = "自动施放",
 
-                // 星図で共有する名前と用語（#960）。
-                ["Keystone"] = "刻印",
-                ["Cluster"] = "星团",
-                ["Bridge"] = "记忆之桥",
-                ["Rank"] = "阶",
-                ["Loadout"] = "配置",
-                ["Training"] = "锻炼",
-                ["Mastery"] = "熟练度",
+                // 星図で共有する複合語と名前（#960）。汎用の単語は上の参照表だけに残す。
                 ["Identity memory"] = "身份记忆",
-                ["Shield"] = "护盾",
                 ["Ability Power"] = "法术强度",
-                ["Crit"] = "暴击",
-                ["Keen"] = "精妙",
                 ["Dream Ring"] = "梦环",
-                ["Rime"] = "霜华",
                 ["Dream Ring Strength"] = "梦环之力",
                 ["Dream Ring Wisdom"] = "梦环之智",
                 ["Dream Ring Vessel"] = "梦环之器",

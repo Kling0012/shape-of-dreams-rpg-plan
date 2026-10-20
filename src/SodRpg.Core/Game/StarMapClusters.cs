@@ -149,8 +149,8 @@ namespace SodRpg.Core.Game
             if (zh == null && name?.En != null)
             {
                 zh = LocZhGlossary.Lookup(name.En);
-                if (string.Equals(zh, name.En, StringComparison.Ordinal)) zh = null;
             }
+            if (string.Equals(zh, name?.En, StringComparison.Ordinal)) zh = null;
             return zh == null ? null : prefix + zh + suffix;
         }
 
