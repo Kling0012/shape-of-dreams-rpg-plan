@@ -13,6 +13,13 @@
 - 書くのは新機能と不具合の修正だけ。バランスの変更や改善は書かない。日英を併記する。
 - 分類と項目の書き方は `changelog.d/README.md` に従う。リリース時に集約し、`CHANGELOG.md` の「未リリース / Unreleased」の欄は残す。
 
+## 画面に出す文字列は3言語で書く
+
+- ゲーム内に表示する文字列は、日本語・英語・中国語（简体）の3つを書く。`Loc.T(ja, en, zh)`、`new Txt(ja, en, zh)` の形にする。中国語を省くと、中国語を選んだ人には英語で表示される。
+- 用語は `src/SodRpg.Core/Game/LocZhGlossary.cs` と既存の訳に合わせる。
+- 生成ファイル（`*.g.cs`、`NamedItems.Data.cs`）は手で直さず、生成元（`tools/balance/equipment/sets.json`、`tools/lowrarity/named.json`）に中国語を書いてから生成し直す。
+- `Loc.Japanese ? 日本語 : 英語` のように、`Loc.T` を通さず日本語と英語だけで分けない。中国語の分岐も書く。
+
 ## 原則
 
 - すべての変更は [docs/constitution.md](docs/constitution.md) の原則に従う。MUST の原則に反する変更はマージしない。
