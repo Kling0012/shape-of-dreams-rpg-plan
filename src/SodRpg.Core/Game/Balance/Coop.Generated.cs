@@ -73,8 +73,9 @@ namespace SodRpg.Core.Game
             public const double TargetSeconds = 2.4d;
             public const double Alpha = 0.3d;
             public const double AlphaDown = 0.5d;
-            public const double Strength = 0.3d;
-            public const double MinFactor = 0.6d;
+            public const double StrengthUp = 0.2d;
+            public const double StrengthDown = 0.6d;
+            public const double MinFactor = 0.4d;
             public const double RewardMaxMultiplier = 2.0d;
             // Numeric overflow guard for factors and float HP, not a balance cap.
             public const double SafetyMaxFactor = 1e+06d;
@@ -82,6 +83,18 @@ namespace SodRpg.Core.Game
             public const int MinRooms = 2;
             public const double DamageExponent = 0.2d;
             public const double RewardShare = 0.5d;
+            // The per-world balance cap on the dynamic factor, by the run's 0-based world order; the last entry repeats.
+            public const int MaxFactorWorlds = 4;
+            public static double MaxFactor(int world)
+            {
+                switch (world < 0 ? 0 : world)
+                {
+                    case 0: return 1.15d;
+                    case 1: return 1.3d;
+                    case 2: return 1.5d;
+                    default: return 1.75d;
+                }
+            }
 
             public static double HeroTargetScale(string hero)
             {
