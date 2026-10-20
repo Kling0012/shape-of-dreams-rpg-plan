@@ -86,6 +86,7 @@ namespace SodRpg.Mod
             nativeRoomStartDependency = true,
             nativeChatMuteCheckAlloc = true,
             nativeProxyPositionIdle = true,
+            nativePickupIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;

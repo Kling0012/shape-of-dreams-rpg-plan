@@ -684,6 +684,18 @@ namespace SodRpg.Mod
             proxy.transform.position = new UnityEngine.Vector3(position.x, position.z, 0f);
         }
     }
+    // NativePickupIdlePerf の受け口。本体 Dew.Core PickupInstance（2026-10-20 逆コンパイル確認）の、
+    // パッチが触る範囲の模倣: 毎フレーム更新の対象判定（Network_target）と速度の2フィールド。
+    // Network_target は本体では SyncVar の生成 getter だが、ゲートが読むのは null 判定だけなので
+    // 単純なプロパティで足りる。ActiveFrameUpdate は本体では protected override だが、
+    // NativePerfPatch.Find の DeclaredMethod 解決に必要なのは宣言と本体だけで、ここでは内部メソッドでよい。
+    internal class PickupInstance : Actor
+    {
+        public Hero Network_target { get; set; }
+        internal Vector2 _currentFlatVelocity;
+        internal float _currentYVelocity;
+        internal void ActiveFrameUpdate() { }
+    }
     internal static class EntityLifetimeExtensions
     {
         // 本体の拡張と同じ意味: 消失・非アクティブ・死亡・KO を無効対象とする。
