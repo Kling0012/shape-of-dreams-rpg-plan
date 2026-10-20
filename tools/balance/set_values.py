@@ -40,15 +40,24 @@ def validate_sets(table, path=TABLE_PATH):
     seen = set()
     for index, row in enumerate(rows):
         prefix = f"{path}/sets/{index}"
-        if not isinstance(row, dict) or set(row) != {"id", "name", "twoPiece", "threePiece", "sixPiece"}:
-            raise ValueError(f"{prefix}: expected id, name, twoPiece, threePiece, sixPiece")
+        required = {"id", "name", "twoPiece", "threePiece", "sixPiece"}
+        if not isinstance(row, dict) or not required <= set(row) <= required | {"description"}:
+            raise ValueError(f"{prefix}: expected id, name, twoPiece, threePiece, sixPiece and optional description")
         sid = row["id"]
         if not isinstance(sid, str) or sid not in expected or sid in seen:
             raise ValueError(f"{prefix}/id: unknown or duplicate ordinary set {sid!r}")
         seen.add(sid)
-        name = row["name"]
-        if not isinstance(name, dict) or set(name) != {"ja", "en"} or any(not isinstance(v, str) or not v for v in name.values()):
-            raise ValueError(f"{prefix}/name: expected nonempty ja and en strings")
+        for field in ("name", "description"):
+            if field not in row:
+                continue
+            text = row[field]
+            if (not isinstance(text, dict) or not {"ja", "en"} <= set(text) <= {"ja", "en", "zh"}
+                    or any(not isinstance(v, str) or not v.strip() for v in text.values())):
+                raise ValueError(f"{prefix}/{field}: expected nonempty ja and en strings and optional nonempty zh")
+            if "zh" in text:
+                placeholders = r"(?<!\{)\{\d+(?:,-?\d+)?(?::[^{}]*)?\}(?!\})"
+                if re.findall(placeholders, text["zh"]) != re.findall(placeholders, text["en"]):
+                    raise ValueError(f"{prefix}/{field}/zh: placeholders must match en in count, order and format")
         for stage, kind in (("twoPiece", "stat"), ("threePiece", "power"), ("sixPiece", "power")):
             lines = row[stage]
             if not isinstance(lines, list) or not lines:
@@ -80,8 +89,12 @@ def render_outputs(table=None):
              "        internal const string ContentFingerprintRecord = " + quote(record) + ";",
              "", "        internal static SetDef[] CreateSets() => new[]", "        {"]
     for row in table["sets"]:
+        name = ", ".join(quote(row["name"][language]) for language in ("ja", "en", "zh") if language in row["name"])
         lines.extend(["            new SetDef", "            {",
-                      f'                Id = {quote(row["id"])}, Name = new Txt({quote(row["name"]["ja"])}, {quote(row["name"]["en"])}),'])
+                      f'                Id = {quote(row["id"])}, Name = new Txt({name}),'])
+        if "description" in row:
+            description = ", ".join(quote(row["description"][language]) for language in ("ja", "en", "zh") if language in row["description"])
+            lines.append(f"                Description = new Txt({description}),")
         for field, stage, kind in (("TwoPiece", "twoPiece", "Stat"), ("ThreePiece", "threePiece", "Power"), ("SixPiece", "sixPiece", "Power")):
             effects = ", ".join(f'new {kind}Line({kind}.{line[kind.lower()]}, {line["value"]})' for line in row[stage])
             lines.append(f"                {field} = new[] {{ {effects} }},")
