@@ -229,6 +229,7 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoAttackHit> _onAttackHit;
         private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
+        private float _nextBountyFlush;
         private readonly HashSet<Power> _triggeredPowers = new HashSet<Power>();
         private readonly HashSet<Shrine> _shrines = new HashSet<Shrine>();
         private readonly Action<Actor> _onActorAdd;
@@ -384,7 +385,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens, FlushBountyReports,
+                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens, TickBountyReports,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
