@@ -22,6 +22,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.GuestPublishLimit = config.nativeGuestPublishLimit;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
             NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
@@ -65,6 +66,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool GuestPublishLimit = true;
         internal static bool AttachFaceIdle = true;
         internal static bool EmbracePosition = true;
         internal static bool AccessoryOffset = true;
