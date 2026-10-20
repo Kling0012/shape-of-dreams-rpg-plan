@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using Mirror;
@@ -17,7 +18,9 @@ namespace SodRpg.Mod
     {
         private static Harmony _harmony;
         private static MethodInfo _create, _hook;
-        private static FieldInfo _range, _delay, _speed, _accelerationMin, _accelerationMax;
+        // Cached typed setters so the per-creation field writes on host and guests avoid
+        // reflection invocation and float boxing each time a pickup spawns.
+        private static Action<object, float> _range, _delay, _speed, _accelerationMin, _accelerationMax;
         private static bool _enabled, _warned;
         // Host only: live ingredient pickups. The main attraction path moves pickups more than 3m away
         // onto their living owner each tick, then leaves collection to the native pickup logic.
@@ -36,11 +39,11 @@ namespace SodRpg.Mod
                 _create = AccessTools.DeclaredMethod(pickup, "OnCreate", Type.EmptyTypes);
                 if (_create == null || _create.ReturnType != typeof(void))
                     throw new MissingMethodException(pickup.FullName, "OnCreate");
-                _range = RequireField(motor, "attractionRange");
-                _delay = RequireField(motor, "pickupDelay");
-                _speed = RequireField(motor, "maxVelocity");
-                _accelerationMin = RequireField(motor, "velocityAccelerationMin");
-                _accelerationMax = RequireField(motor, "velocityAccelerationMax");
+                _range = Setter(RequireField(motor, "attractionRange"));
+                _delay = Setter(RequireField(motor, "pickupDelay"));
+                _speed = Setter(RequireField(motor, "maxVelocity"));
+                _accelerationMin = Setter(RequireField(motor, "velocityAccelerationMin"));
+                _accelerationMax = Setter(RequireField(motor, "velocityAccelerationMax"));
                 _hook = AccessTools.DeclaredMethod(typeof(CulinaryMagnet), nameof(AfterCreate));
                 _harmony = new Harmony(owner.Id + ".CulinaryMagnet");
                 _harmony.Patch(_create, postfix: new HarmonyMethod(_hook));
@@ -60,6 +63,16 @@ namespace SodRpg.Mod
             return field;
         }
 
+        /// <summary>float フィールドへの代入をボックス化なしのデリゲートにまとめ、生成ごとのリフレクション呼び出しを避ける。</summary>
+        private static Action<object, float> Setter(FieldInfo field)
+        {
+            var instance = Expression.Parameter(typeof(object));
+            var value = Expression.Parameter(typeof(float));
+            return Expression.Lambda<Action<object, float>>(
+                Expression.Assign(Expression.Field(Expression.Convert(instance, field.DeclaringType), field), value),
+                instance, value).Compile();
+        }
+
         private static void AfterCreate(object __instance)
         {
             if (!_enabled) return;
@@ -68,11 +81,11 @@ namespace SodRpg.Mod
                 // Applied after native variation on both host and clients. The native motor,
                 // eligibility, pickup effects and Network_target synchronization stay native;
                 // SnapToOwners supplies the main host-side attraction path.
-                _range.SetValue(__instance, 500f);
-                _delay.SetValue(__instance, 0f);
-                _speed.SetValue(__instance, 120f);
-                _accelerationMin.SetValue(__instance, 150f);
-                _accelerationMax.SetValue(__instance, 300f);
+                _range(__instance, 500f);
+                _delay(__instance, 0f);
+                _speed(__instance, 120f);
+                _accelerationMin(__instance, 150f);
+                _accelerationMax(__instance, 300f);
                 if (NetworkServer.active && __instance is Actor actor) Tracked.Add(actor);
             }
             catch (Exception ex)
