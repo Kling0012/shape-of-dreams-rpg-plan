@@ -69,6 +69,7 @@ namespace SodRpg.Mod
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
             nativeGemCooldownSync = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
+            nativeGuestPublishLimit = true,
             nativeAttachFaceIdle = true, nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCameraZoomRotation = true,
@@ -83,6 +84,10 @@ namespace SodRpg.Mod
             nativeHeroWeaponIdle = true,
             nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
+            nativeRoomStartDependency = true,
+            nativeChatMuteCheckAlloc = true,
+            nativeProxyPositionIdle = true,
+            nativeEnemyHitFxBudget = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;

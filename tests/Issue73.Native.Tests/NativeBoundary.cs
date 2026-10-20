@@ -129,6 +129,8 @@ namespace Mirror
         public static Vector2 zero => new Vector2();
         public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.x - b.x, a.y - b.y);
         public float sqrMagnitude => x * x + y * y;
+        // 本体 UnityEngine.Vector2 と同じ式（BossSegmentPlacement の線分の長さが参照）。
+        public float magnitude => (float)Math.Sqrt(x * x + y * y);
         public static float Distance(Vector2 a, Vector2 b)
         {
             float dx = a.x - b.x, dy = a.y - b.y;
@@ -166,6 +168,9 @@ namespace Mirror
             => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
         // NativePositionSyncIdlePerf（位置同期のゲート置き換え）が参照する本体 API。本体と同じ式。
         public static float Abs(float value) => Math.Abs(value);
+        // BossSegmentPlacement（リンク。#890 のボス予告線分の矩形・回転）が参照する本体 API。
+        public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
+        public const float Rad2Deg = (float)(180.0 / Math.PI);
         public static float DeltaAngle(float current, float target)
         {
             float delta = target - current;
@@ -663,6 +668,22 @@ namespace SodRpg.Mod
         public bool isFriendly;
         public Entity target;
     }
+    // NativeProxyPositionIdlePerf の受け口。本体 Dew.Core DewPhysics.UpdateProxyPosition /
+    // ProxyCollider（2026-10-19 逆コンパイル確認）の、パッチが触る範囲の模倣:
+    // プロキシの transform への (x, z, 0) 代入だけ。Transform.position の getter/setter は
+    // 境界の UnityEngine.Transform（CharacterModelDisplayBoundsBoundary）を使う。
+    internal sealed class ProxyCollider
+    {
+        public UnityEngine.Transform transform;
+    }
+    internal static class DewPhysics
+    {
+        // 本体と同じ代入（引数の y は捨てて 0 を書く）。
+        internal static void UpdateProxyPosition(ProxyCollider proxy, UnityEngine.Vector3 position)
+        {
+            proxy.transform.position = new UnityEngine.Vector3(position.x, position.z, 0f);
+        }
+    }
     internal static class EntityLifetimeExtensions
     {
         // 本体の拡張と同じ意味: 消失・非アクティブ・死亡・KO を無効対象とする。
@@ -856,6 +877,23 @@ namespace SodRpg.Mod
             BeforeCurrencyChange?.Invoke();
             dreamDust += amount;
             AfterCurrencyChange?.Invoke();
+        }
+    }
+    // NativeChatMuteAllocPerf（リンク）が typeof で探す本体のチャット受信のミュート判定。
+    // 実物は allHumanPlayers.Find(ラムダ) で送信者を探し、見つからなければミュート扱いとする。
+    // ミュート一覧の中身（IsPlayerMuted）はパッチがネイティブ呼び出しのまま残すので、
+    // この境界では判決の形だけを実物どおりに模倣する。一覧の中身は mutedPlayers として
+    // 外から差し替えられる形にし、既定は空（誰もミュートしていない）。テストはこの一覧で
+    // ミュート済み（true）・未ミュート（false）の両方を本体と Prefix の両方に同じように出す。
+    internal class ChatManager
+    {
+        public readonly HashSet<DewPlayer> mutedPlayers = new HashSet<DewPlayer>();
+        public bool IsPlayerMuted(DewPlayer player) => mutedPlayers.Contains(player);
+        public bool IsPlayerMutedByNetId(uint playerNetId)
+        {
+            foreach (DewPlayer p in DewPlayer.allHumanPlayers)
+                if (p.netId == playerNetId) return IsPlayerMuted(p);
+            return true;
         }
     }
     // NativePlayerTimerIdlePerf（リンク）の Prepare が typeof で探す本体の画面内タイマーの

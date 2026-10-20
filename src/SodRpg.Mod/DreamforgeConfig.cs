@@ -126,6 +126,11 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Limit guest publication of same-frame duplicate actors (host) / 同じフレームに同じ形で作った飛び道具などの参加者への公開を減らす（ホスト）")]
+        [Description("The server still creates and simulates every actor as in the base game; only the number published to remote guests is reduced. No type is enrolled yet, so nothing changes for now. / "
+            + "サーバでは本体どおりすべて生成・処理し、参加者へ公開する個数だけを減らす。対象の型はまだ登録していないため、現時点では何も変わらない。")]
+        public bool nativeGuestPublishLimit = true;
+
         [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
         public bool nativeAttachFaceIdle = true;
 
@@ -206,6 +211,18 @@ namespace SodRpg.Mod
 
         [LabelText("Skip settled entity rotation rewrites / 向きが止まった実体の同じ回転の書き込みを省く")]
         public bool nativeEntityRotationIdle = true;
+
+        [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
+        public bool nativeRoomStartDependency = true;
+
+        [LabelText("Allocate no closure for the per-message chat mute check / チャット受信ごとのミュート判定でクロージャを確保しない")]
+        public bool nativeChatMuteCheckAlloc = true;
+
+        [LabelText("Skip unchanged physics-proxy position writes / 止まっている実体の物理プロキシ位置の同じ書き込みを省く")]
+        public bool nativeProxyPositionIdle = true;
+
+        [LabelText("Reduce overlapping enemy hit effects (local) / 敵への命中演出の重なりを減らす（各端末）")]
+        public bool nativeEnemyHitFxBudget = true;
 
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;

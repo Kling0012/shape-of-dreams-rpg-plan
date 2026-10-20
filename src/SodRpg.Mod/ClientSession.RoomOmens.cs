@@ -35,11 +35,27 @@ namespace SodRpg.Mod
         private readonly float[] _coopResonantUntil = new float[3];
         private float _coopSnapshotExpires;
         private int _coopDisplayZone = -1, _coopDisplayNode = -1;
-        public uint CoopWardId(int slot) => slot >= 0 && slot < _coopWardIds.Length
-            && CurrentRoomOmen == RoomOmen.ResonantWard && _zone != null
-            && _coopDisplayZone == _zone.currentZoneIndex && _coopDisplayNode == _zone.currentNodeIndex
-            && UnityEngine.Time.unscaledTime <= _coopSnapshotExpires
-            ? _coopWardIds[slot] : 0;
+        // 名札描画は 1 フレームに敵の数×3 回呼ぶため、盾の表示条件の確定は 1 フレーム 1 回にする。
+        // _coopDisplayZone・_coopDisplayNode・_coopSnapshotExpires と盾の情報は ReceiveCoopOmen だけで
+        // 更新し、その際に無効化する。SetRoomOmen で表示が変わる場合も ReceiveCoopOmen(null) を通る。
+        // 遠征状態（RunActive）や本体側の区域・部屋・ノードが同じフレーム内で変わった場合は、
+        // 次のフレームで反映する。最大 1 フレームの遅れは表示だけで、判定や通信には使わない。
+        private int _coopGateFrame = -1;
+        private readonly uint[] _coopGateIds = new uint[3];
+        public uint CoopWardId(int slot)
+        {
+            if (slot < 0 || slot >= _coopGateIds.Length) return 0;
+            if (_coopGateFrame != UnityEngine.Time.frameCount)
+            {
+                bool live = CurrentRoomOmen == RoomOmen.ResonantWard && _zone != null
+                    && _coopDisplayZone == _zone.currentZoneIndex && _coopDisplayNode == _zone.currentNodeIndex
+                    && UnityEngine.Time.unscaledTime <= _coopSnapshotExpires;
+                for (int i = 0; i < _coopGateIds.Length; i++)
+                    _coopGateIds[i] = live ? _coopWardIds[i] : 0u;
+                _coopGateFrame = UnityEngine.Time.frameCount;
+            }
+            return _coopGateIds[slot];
+        }
         public float CoopResonanceRemaining(int slot) => slot >= 0 && slot < _coopResonantUntil.Length
             ? Math.Max(0, _coopResonantUntil[slot] - UnityEngine.Time.unscaledTime) : 0;
         private string _notifiedOmenRun;
@@ -83,6 +99,7 @@ namespace SodRpg.Mod
 
         private void ReceiveCoopOmen(DreamforgeRoomOmenMsg msg)
         {
+            _coopGateFrame = -1;
             for (int i = 0; i < _coopWardIds.Length; i++)
             {
                 _coopWardIds[i] = 0;

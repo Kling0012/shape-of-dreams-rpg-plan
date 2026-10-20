@@ -157,7 +157,10 @@ namespace SodRpg.Mod
                 string mood = f < 0.995 ? Loc.T("やさしめ", "easier") : f > 1.005 ? Loc.T("きびしめ", "harder") : Loc.T("標準", "standard");
                 text.Append("  ").Append(Times(f)).Append(Loc.T("（", " (")).Append(mood).Append(Loc.T("）", ")"));
                 // 2026-10-19：動的難易度は敵の攻撃を変えない。体力と報酬は差の割合も併記する。
-                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f)).Append(SignedPercent(f));
+                // 2026-10-20：世界ごとの上限に達しているときは（上限）を添える（表示は結果の f をそのまま使う）。
+                bool capped = status != null && f >= CoopBalance.DynamicDifficulty.MaxFactor(status.world) - 0.005;
+                string cappedText = capped ? Loc.T("（上限）", " (capped)") : "";
+                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f)).Append(SignedPercent(f)).Append(cappedText);
                 text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(status == null ? none : Times(1));
                 double rewardMultiplier = double.IsNaN(reward) ? double.NaN
                     : Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, 1 + reward * Math.Max(0, f - 1));
@@ -250,6 +253,9 @@ namespace SodRpg.Mod
             else
             {
                 sb.Append(Loc.T("敵の体力 ", "Enemy HP ")).Append(SignedPercent(f));
+                // 2026-10-20：世界ごとの上限に達しているときは（上限）を添える（参加者も同期された世界番号から分かる）。
+                if (status != null && f >= CoopBalance.DynamicDifficulty.MaxFactor(status.world) - 0.005)
+                    sb.Append(Loc.T("（上限）", " (capped)"));
                 double rewardMultiplier = Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
                     1 + status.rewardShare / 1000d * Math.Max(0, f - 1));
                 string rewardPercent = SignedPercent(rewardMultiplier);
@@ -293,15 +299,27 @@ namespace SodRpg.Mod
             if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Language)
             {
                 _dynamicLimitsJa = Loc.Language;
-                int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.Strength * 100);
-                _dynamicGap = Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強さの差の{dynamicClose}%だけを埋めます。",
-                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap.",
-                    $"根据战斗房间的伤害调整下一个房间的敌人，只弥补强度差距的{dynamicClose}%。");
+                // 2026-10-20：上がるときと下がるときで埋め方の強さが違う。上限は世界ごとの段階。
+                int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthUp * 100);
+                int dynamicRelief = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthDown * 100);
+                _dynamicGap = Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強くなるときは差の{dynamicClose}%、楽になるときは{dynamicRelief}%を埋めます。",
+                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap upward and {dynamicRelief}% downward.",
+                    $"根据战斗房间的伤害调整下一个房间的敌人。增强时弥补强度差距的{dynamicClose}%，变简单时弥补{dynamicRelief}%。");
                 string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                 string rewardMax = CoopBalance.DynamicDifficulty.RewardMaxMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-                _dynamicLimits = Loc.T($"係数は{dynamicMin}以上で上限はありません。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
-                    $"Factor starts at {dynamicMin} with no upper limit. Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.",
-                    $"系数下限为{dynamicMin}，没有上限。变强会增加奖励（最高×{rewardMax}），变简单也不会减少奖励。");
+                var capStages = new System.Text.StringBuilder();
+                for (int i = 0; i < CoopBalance.DynamicDifficulty.MaxFactorWorlds; i++)
+                {
+                    if (i > 0) capStages.Append(Loc.T(" ・ ", " · ", " ・ "));
+                    if (i == 0) capStages.Append(Loc.T("世界", "World ", "世界"));
+                    capStages.Append(i + 1);
+                    if (i == CoopBalance.DynamicDifficulty.MaxFactorWorlds - 1) capStages.Append(Loc.T("以降", "+", "及以后"));
+                    capStages.Append(" ×").Append(CoopBalance.DynamicDifficulty.MaxFactor(i)
+                        .ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
+                }
+                _dynamicLimits = Loc.T($"係数は{dynamicMin}以上で、上限は世界ごとに変わります（{capStages}）。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
+                    $"Factor starts at {dynamicMin} and is capped per world ({capStages}). Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.",
+                    $"系数下限为{dynamicMin}，上限随世界变化（{capStages}）。变强会增加奖励（最高×{rewardMax}），变简单也不会减少奖励。");
             }
             GUILayout.Label(_dynamicGap, _st.Small);
             GUILayout.Label(_dynamicLimits, _st.Small);
