@@ -2202,7 +2202,7 @@ namespace SodRpg.Mod
         private void Comparison(Relic sel, Relic cur)
         {
             GUILayout.Space(6);
-            GUILayout.Label(Loc.T("いま装着している物と比べると", "Compared with what you have equipped"), _st.Header);
+            GUILayout.Label(Loc.T("いま装着している物と比べると", "Compared with what you have equipped", "与当前装备的比较"), _st.Header);
             var diff = RelicComparison.Compare(sel, cur);
             foreach (var d in diff.StatDeltas)
                 GUILayout.Label(UiStyles.Colored(Content.FormatStat(d.Stat, d.Value), d.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
@@ -2222,7 +2222,7 @@ namespace SodRpg.Mod
 
             GUILayout.BeginVertical(_st.Panel, ForgeColumnSize);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) { _forgeAllSlots = true; _confirmEnhance = null; }
+            if (GUILayout.Button(Loc.T("すべて", "All", "全部"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) { _forgeAllSlots = true; _confirmEnhance = null; }
             for (int i = 0; i < Content.SlotOrder.Count; i++)
             {
                 if (i == 3)
@@ -2298,7 +2298,8 @@ namespace SodRpg.Mod
                 string sv = sel.Locked ? Loc.T("鍵を外すと分解できます", "Unlock to salvage", "解锁后可分解")
                     : salvageBlocked ? Loc.T("装着中の物は確保地点で分解できます", "Equipped: salvage at a secure point", "装备中的物品可在存仓点分解")
                     : _confirmSalvage != sel.Uid ? Loc.T($"分解（{svGain}）", $"Salvage ({svGain})", $"分解（{svGain}）")
-                    : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します{(sel.Awakened ? "（覚醒も失われます）" : sel.AwakenPoints > 0 ? "（覚醒の力も失われます）" : "")}。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"{(sel.AwakenPoints > 0 ? " (awakening is lost)" : "")}? Press again</color>")
+                    : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します{(sel.Awakened ? "（覚醒も失われます）" : sel.AwakenPoints > 0 ? "（覚醒の力も失われます）" : "")}。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"{(sel.AwakenPoints > 0 ? " (awakening is lost)" : "")}? Press again</color>",
+                    $"<color=#ff8080>将分解{(equippedSel ? "已装备的" : "")}“{sel.PlainName}”{(sel.AwakenPoints > 0 ? "（觉醒也会失去）" : "")}？再按一次确认</color>")
                     : Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>", "<color=#ff8080>再按一次即可分解</color>");
                 if (GUILayout.Button(sv, _st.ButtonWrap, ShrinkMin32))
                 {
@@ -2325,7 +2326,7 @@ namespace SodRpg.Mod
                     DrawLimitBreak(sel);
 
                 string nextMilestone = NextMilestone(sel);
-                if (nextMilestone != null) GUILayout.Label(UiStyles.Colored(Loc.T("次の節目：", "Next milestone: ") + nextMilestone, "#ffd36e"), _st.Small);
+                if (nextMilestone != null) GUILayout.Label(UiStyles.Colored(Loc.T("次の節目：", "Next milestone: ", "下一里程碑：") + nextMilestone, "#ffd36e"), _st.Small);
 
                 var offer = p.RetuneOffer;
                 if (offer != null && offer.Uid == sel.Uid && offer.Index < sel.Affixes.Count)
@@ -2355,7 +2356,8 @@ namespace SodRpg.Mod
                 }
                 else if (sel.Forbidden != null) { } // 禁忌化した遺物は再調律できない（理由は遺物の詳細に表示済み）
                 else if (sel.Retunes >= Forbidden.RetuneCap(p, sel))
-                    GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)}）。", $"No retunes left on this relic ({Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)})."), _st.Small);
+                    GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)}）。", $"No retunes left on this relic ({Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)}).",
+                    $"这件遗物的再调律已用完（{Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)}）。"), _st.Small);
                 else if (sel.Affixes.Count > 0)
                 {
                     GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます。調律石を払うと候補が{Content.RetuneChoices}つ出て、そこから選べます（この遺物はあと{Forbidden.RetuneCap(p, sel) - sel.Retunes}回）", $"Retune: pick an affix, pay tuning stones, then choose from {Content.RetuneChoices} options ({Forbidden.RetuneCap(p, sel) - sel.Retunes} left on this relic)", $"再调律：选择1个想重抽的特性。支付调律石后会出现{Content.RetuneChoices}个候选（这件遗物还剩{Forbidden.RetuneCap(p, sel) - sel.Retunes}次）"), _st.Small);
@@ -2389,10 +2391,12 @@ namespace SodRpg.Mod
                     bool rrConfirm = _confirmAffixReroll == sel.Uid;
                     GUI.enabled = rrAfford && !_s.Trades.IsReserved(sel.Uid); // 鍵つき・装着中は押したときに理由が表示される
                     string rrLabel = !rrAfford
-                        ? Loc.T($"素材が足りません（欠片{rrShards}・調律石{rrTuning}必要）", $"Not enough materials ({rrShards} shards and {rrTuning} tuning stones needed)")
+                        ? Loc.T($"素材が足りません（欠片{rrShards}・調律石{rrTuning}必要）", $"Not enough materials ({rrShards} shards and {rrTuning} tuning stones needed)",
+                        $"材料不足（需要碎片{rrShards}·调律石{rrTuning}）")
                         : rrConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」の特性を全部引き直します（欠片{rrShards}・調律石{rrTuning}・取り消せません）</color>",
-                            $"<color=#ff8080>Press again to reroll every affix on \"{sel.PlainName}\" ({rrShards} shards, {rrTuning} tuning; cannot be undone)</color>")
-                        : Loc.T($"特性を洗い直す（欠片{rrShards}・調律石{rrTuning}）", $"Reroll all affixes ({rrShards} shards, {rrTuning} tuning)");
+                            $"<color=#ff8080>Press again to reroll every affix on \"{sel.PlainName}\" ({rrShards} shards, {rrTuning} tuning; cannot be undone)</color>",
+                            $"<color=#ff8080>再按一次将重洗“{sel.PlainName}”的全部词条（碎片{rrShards}·调律石{rrTuning}·无法撤销）</color>")
+                        : Loc.T($"特性を洗い直す（欠片{rrShards}・調律石{rrTuning}）", $"Reroll all affixes ({rrShards} shards, {rrTuning} tuning)", $"重洗全部词条（碎片{rrShards}·调律石{rrTuning}）");
                     if (GUILayout.Button(rrLabel, _st.ButtonWrap, ShrinkMin30))
                     {
                         if (rrConfirm)
@@ -2414,12 +2418,15 @@ namespace SodRpg.Mod
                     bool fbConfirm = _confirmForbid == sel.Uid;
                     GUI.enabled = fbAfford && !_s.Trades.IsReserved(sel.Uid);
                     string fbCost = Loc.T($"禁忌の核{Forbidden.CoreCost}・欠片{Forbidden.ShardCost}・調律石{Forbidden.TuningCost}",
-                        $"{Forbidden.CoreCost} forbidden cores, {Forbidden.ShardCost} shards, {Forbidden.TuningCost} tuning");
+                        $"{Forbidden.CoreCost} forbidden cores, {Forbidden.ShardCost} shards, {Forbidden.TuningCost} tuning",
+                        $"禁忌之核{Forbidden.CoreCost}·碎片{Forbidden.ShardCost}·调律石{Forbidden.TuningCost}");
                     string fbLabel = !fbAfford
-                        ? Loc.T($"禁忌化：素材が足りません（{fbCost}。禁忌の核は宿敵化したボスから）", $"Forbid: not enough materials ({fbCost}; cores come from nemesis bosses)")
+                        ? Loc.T($"禁忌化：素材が足りません（{fbCost}。禁忌の核は宿敵化したボスから）", $"Forbid: not enough materials ({fbCost}; cores come from nemesis bosses)",
+                        $"禁忌化：材料不足（{fbCost}。禁忌之核来自宿敌化Boss）")
                         : fbConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」を禁忌化します（結果は4つの型からランダム・以後は再調律不可・取り消せません）</color>",
-                            $"<color=#ff8080>Press again to make \"{sel.PlainName}\" forbidden (random result of 4 types; no more retunes; cannot be undone)</color>")
-                        : Loc.T($"禁忌化する（{fbCost}）", $"Make forbidden ({fbCost})");
+                            $"<color=#ff8080>Press again to make \"{sel.PlainName}\" forbidden (random result of 4 types; no more retunes; cannot be undone)</color>",
+                            $"<color=#ff8080>再按一次将把“{sel.PlainName}”禁忌化（结果从4种型中随机·此后不可再调律·无法撤销）</color>")
+                        : Loc.T($"禁忌化する（{fbCost}）", $"Make forbidden ({fbCost})", $"禁忌化（{fbCost}）");
                     if (GUILayout.Button(fbLabel, _st.ButtonWrap, ShrinkMin30))
                     {
                         if (fbConfirm)
@@ -2440,7 +2447,8 @@ namespace SodRpg.Mod
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("合成：同じレア度の遺物を決まった個数集めて、1つ上のレア度の遺物1つに変えます", "Transmute: turn a set number of relics of one rarity into 1 of the next", "合成：集齐一定数量的同稀有度遗物，可变为1件更高稀有度的遗物"), _st.Header);
             GUILayout.Label(Loc.T($"鍵をかけた物・装着中の物は使わず、残りの中から弱い順に必要な個数を使います。エピックからは固有品が生まれます（欠片と調律石が要ります）。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片{Content.TransmuteTargetCostPct / 100m:0.##}倍）。",
-                $"Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot ({Content.TransmuteTargetCostPct / 100m:0.##}x shards)."), _st.Small);
+                $"Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot ({Content.TransmuteTargetCostPct / 100m:0.##}x shards).",
+                $"已锁定与装备中的遗物不会被使用；从其余遗物中由弱到强取用所需件数。史诗以上会诞生传说（需要碎片与调律石）。在上方的筛选中指定部位，可决定结果的部位（碎片{Content.TransmuteTargetCostPct / 100m:0.##}倍）。"), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
@@ -2449,14 +2457,17 @@ namespace SodRpg.Mod
                 int tcost = Rules.TransmuteCost(r, target != null);
                 int need = Content.TransmuteInputs(r), ttune = Rules.TransmuteTuning(r);
                 GUI.enabled = n >= need && p.Material(Materials.Shard) >= tcost && p.Material(Materials.Tuning) >= ttune;
-                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "";
+                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "", tuneZh = ttune > 0 ? $"・调律石{ttune}" : "";
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/{need}\n"
-                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}"));
+                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}",
+                    $"→{Content.SlotName(target.Value)}·碎片{tcost}{tuneZh}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}",
+                    $"碎片{tcost}{tuneZh}"));
                 if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin44)) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
-            GUILayout.Label(Loc.T($"製作：欠片で新しい遺物を作ります（Lv{Math.Max(1, p.BestItemLevel)}＝これまでの最高）", $"Craft: make a new relic with shards (Lv{Math.Max(1, p.BestItemLevel)}, your best so far)"), _st.Header);
+            GUILayout.Label(Loc.T($"製作：欠片で新しい遺物を作ります（Lv{Math.Max(1, p.BestItemLevel)}＝これまでの最高）", $"Craft: make a new relic with shards (Lv{Math.Max(1, p.BestItemLevel)}, your best so far)",
+            $"制作：用碎片制作新遗物（Lv{Math.Max(1, p.BestItemLevel)}＝迄今最高）"), _st.Header);
             // Rules.Craft と同じ空き容量の条件。Core の拒否条件を変えるときはボタンの条件も見直す。
             bool stashRoom = p.Stash.Count < Workshop.StashCapacity(p);
             foreach (Slot slot in Content.SlotOrder)
@@ -2464,10 +2475,12 @@ namespace SodRpg.Mod
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
                 GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
-                if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.ButtonWrap, ShrinkWidth))
+                if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)",
+                $"普通：优秀以上（碎片{Rules.CraftShardCost(false)}）"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, false), false);
                 GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
-                if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.ButtonWrap, ShrinkWidth))
+                if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)",
+                $"上等：稀有以上（碎片{Rules.CraftShardCost(true)}·调律石{Rules.CraftTuningCost(true)}）"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, true), false);
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
@@ -2484,17 +2497,23 @@ namespace SodRpg.Mod
             // そのレア度で届く一番高い強化値（限界突破の回数上限まで）。
             int ceiling = Content.MaxEnhanceFor(r.Rarity, Content.MaxLimitBreaks(r.Rarity));
             if (r.EnhanceMilestones < 1)
-                return Loc.T($"+{Content.EnhanceMilestoneFirst}で特性が1行増えます。", $"+{Content.EnhanceMilestoneFirst}: one more affix.");
+                return Loc.T($"+{Content.EnhanceMilestoneFirst}で特性が1行増えます。", $"+{Content.EnhanceMilestoneFirst}: one more affix.",
+                $"+{Content.EnhanceMilestoneFirst}：增加1行词条。");
             if (r.EnhanceMilestones < 2)
                 return r.AuthoredEffectCount == 0
-                    ? Loc.T($"+{Content.EnhanceMilestoneSecond}でこの枠の固有効果が1つ宿ります。", $"+{Content.EnhanceMilestoneSecond}: gains a power for this slot.")
-                    : Loc.T($"+{Content.EnhanceMilestoneSecond}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneSecond}: one more affix.");
+                    ? Loc.T($"+{Content.EnhanceMilestoneSecond}でこの枠の固有効果が1つ宿ります。", $"+{Content.EnhanceMilestoneSecond}: gains a power for this slot.",
+                    $"+{Content.EnhanceMilestoneSecond}：获得该部位的固有效果。")
+                    : Loc.T($"+{Content.EnhanceMilestoneSecond}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneSecond}: one more affix.",
+                    $"+{Content.EnhanceMilestoneSecond}：再增加1行词条。");
             if (r.EnhanceMilestones < 3 && Content.EnhanceMilestoneThird <= ceiling)
-                return Loc.T($"+{Content.EnhanceMilestoneThird}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneThird}: one more affix.");
+                return Loc.T($"+{Content.EnhanceMilestoneThird}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneThird}: one more affix.",
+                $"+{Content.EnhanceMilestoneThird}：再增加1行词条。");
             if (r.EnhanceMilestones < 4 && Content.EnhanceMilestoneFourth <= ceiling)
-                return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.");
+                return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.",
+                $"+{Content.EnhanceMilestoneFourth}：再增加1行词条。");
             if (!r.MilestonePowerApplied && r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
-                return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が{Content.LimitBreakPowerPct / 100m:0.##}倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows {Content.LimitBreakPowerPct / 100m:0.##}x.");
+                return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が{Content.LimitBreakPowerPct / 100m:0.##}倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows {Content.LimitBreakPowerPct / 100m:0.##}x.",
+                $"+{Content.EnhanceMilestoneFifth}：1个固有效果的值变为{Content.LimitBreakPowerPct / 100m:0.##}倍。");
             return null;
         }
 
@@ -2517,8 +2536,10 @@ namespace SodRpg.Mod
                 _confirmLimitBreak = false;
             }
             if (GUILayout.Button(_limitBreakOpen
-                    ? Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}　△ 閉じる", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}   close")
-                    : Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}"),
+                    ? Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}　△ 閉じる", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}   close",
+                    $"极限突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} -> +{capNext}　关闭")
+                    : Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}",
+                    $"极限突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} -> +{capNext}"),
                     _st.ButtonWrap, ShrinkMin30))
             {
                 _limitBreakOpen = !_limitBreakOpen;
@@ -2552,12 +2573,13 @@ namespace SodRpg.Mod
             GUI.enabled = _limitBreakMaterial != null && afford && !_s.Trades.IsReserved(sel.Uid);
             string materialName = _limitBreakMaterial != null ? p.FindStash(_limitBreakMaterial)?.PlainName : null;
             string label = _limitBreakMaterial == null
-                ? Loc.T("素材を選んでください", "Pick a material")
+                ? Loc.T("素材を選んでください", "Pick a material", "选择材料")
                 : !afford
-                    ? Loc.T($"調律石{tuningCost}と欠片{shardCost}が必要です", $"Need {tuningCost} tuning and {shardCost} shards")
+                    ? Loc.T($"調律石{tuningCost}と欠片{shardCost}が必要です", $"Need {tuningCost} tuning and {shardCost} shards", $"需要调律石{tuningCost}与碎片{shardCost}")
                     : _confirmLimitBreak
-                        ? Loc.T($"<color=#ff8080>「{materialName}」を素材に限界突破します。もう一度押すと確定</color>", $"<color=#ff8080>Limit break using \"{materialName}\"? Press again</color>")
-                        : Loc.T($"限界突破する（上限 +{capNext}）", $"Limit break (cap becomes +{capNext})");
+                        ? Loc.T($"<color=#ff8080>「{materialName}」を素材に限界突破します。もう一度押すと確定</color>", $"<color=#ff8080>Limit break using \"{materialName}\"? Press again</color>",
+                        $"<color=#ff8080>以“{materialName}”为材料进行极限突破。再按一次确认</color>")
+                        : Loc.T($"限界突破する（上限 +{capNext}）", $"Limit break (cap becomes +{capNext})", $"极限突破（上限变为 +{capNext}）");
             if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin30))
             {
                 if (!_confirmLimitBreak) _confirmLimitBreak = true;
@@ -2737,7 +2759,7 @@ namespace SodRpg.Mod
                     PairDefinition = pair,
                     Region = t?.Cluster?.Region.Kind,
                 };
-                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : t.DisplayName.ToString();
+                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start", "起点") : t.DisplayName.ToString();
                 _starNodes[i].EffectSummary = t == null ? "" : t.IsChoice ? StarMapPresentation.EffectSummary(t)
                     : StarMapPresentation.EffectSummary(_starNodes[i].Description);
                 if (t != null && t.IsKeystone) keystones.Add(i);
@@ -2847,13 +2869,17 @@ namespace SodRpg.Mod
             int earned = StarProgression.Points(hs.StarXp);
             string damageRank = StarDamageScaling.Multiplier(spent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
             _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}　星ダメージ ×{damageRank}",
-                $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total   Star damage ×{damageRank}");
+                $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total   Star damage ×{damageRank}",
+                $"可用点数：剩余 {_starFree} / 合计 {p.TalentPoints(hero)}　星伤害 ×{damageRank}");
             _starPoints.tooltip = Loc.T("使用済み1点ごとに星由来のダメージ量+0.3%。500点で2.5倍、504点で2.512倍。装備・加速・CD・軽減・発動条件は対象外。星の記憶ダメージはCrescendoの合計上限120%の外へ加える。",
-                "Star damage quantities gain 0.3% per spent point: ×2.5 at 500, ×2.512 at 504. Equipment, haste, cooldowns, reduction and activation conditions are unchanged. Star memory damage is added outside Crescendo's combined 120% cap.");
-            _starProgress.text = Loc.T($"星のレベル {earned}/{StarProgression.MaxPoints}　", $"Star level {earned}/{StarProgression.MaxPoints}   ")
-                + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
+                "Star damage quantities gain 0.3% per spent point: ×2.5 at 500, ×2.512 at 504. Equipment, haste, cooldowns, reduction and activation conditions are unchanged. Star memory damage is added outside Crescendo's combined 120% cap.",
+                "每消耗1点，星伤害量+0.3%。500点时×2.5、504点时×2.512。装备、加速、冷却、减免与发动条件不受影响。星的记忆伤害加在Crescendo合计120%上限之外。");
+            _starProgress.text = Loc.T($"星のレベル {earned}/{StarProgression.MaxPoints}　", $"Star level {earned}/{StarProgression.MaxPoints}   ",
+            $"星等级 {earned}/{StarProgression.MaxPoints}　")
+                + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached", "已达到点数上限")
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
-                    $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
+                    $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
+                    $"距下一级 {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
             var reachable = _starReachable = _starLayout.ReachabilitySnapshot(hs);
             int slots = hs.KeystoneSlotCount;
             bool freeSlot = hs.KeystoneCount < slots;
@@ -2867,7 +2893,7 @@ namespace SodRpg.Mod
                 {
                     n.RankLabel.text = "+";
                     n.Tooltip.text = Loc.T("<b>始まりの星</b>\n取得済み。ここからつながる星へ伸ばせます。",
-                        "<b>Starting star</b>\nAlready acquired. Grow along its connections.");
+                        "<b>Starting star</b>\nAlready acquired. Grow along its connections.", "<b>起始之星</b>\n已获得。可沿其连接向外延伸。");
                     continue;
                 }
                 bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
@@ -2877,10 +2903,10 @@ namespace SodRpg.Mod
                 bool slotsFull = t.IsKeystone && !n.Allocated && !freeSlot;
                 if (t.IsKeystone)
                 {
-                    string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
-                        : !unlocked ? Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>")
-                        : slotsFull ? Loc.T("<color=#ffb090>枠がいっぱい</color>", "<color=#ffb090>no free slot</color>")
-                        : Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>");
+                    string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>", "<color=#ffc952>选择中</color>")
+                        : !unlocked ? Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>", "<color=#ffb090>条件未达成</color>")
+                        : slotsFull ? Loc.T("<color=#ffb090>枠がいっぱい</color>", "<color=#ffb090>no free slot</color>", "<color=#ffb090>部位已满</color>")
+                        : Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>", "<color=#9fe0ff>可选择</color>");
                     n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
                 }
                 n.Available = unlocked && n.Rank < t.MaxRank && !slotsFull && _starFree >= cost;
@@ -2908,33 +2934,34 @@ namespace SodRpg.Mod
             if (t == null) return;
             n.MissingRequirements = StarMapPresentation.MissingRequirements(_starLayout, index, _starTextState, _starFree, _starReachable[index]);
             string condition = n.MissingRequirements;
-            string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
-                : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
+            string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)", "已获得（最高段）")
+                : n.Available ? Loc.T("取得可能", "Available", "可获取") : Loc.T("条件不足", "Requirements missing", "条件不足");
             var pair = n.PairDefinition;
             string title = t.DisplayName.ToString();
             string description = n.DisplayBody;
             if (pair != null)
             {
                 description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.ItemName(pair.RouteA)
-                    + Loc.T("を装着", " equipped")
+                    + Loc.T("を装着", " equipped", "（已装备）")
                     + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
-                    + Loc.T("を装着", " equipped");
+                    + Loc.T("を装着", " equipped", "（已装备）");
             }
             int keyCost = t.KeystoneCost;
             int cost = t.IsKeystone ? keyCost : t.RankCost;
             bool slotsFull = t.IsKeystone && !n.Allocated && _starTextState.KeystoneCount >= _starTextState.KeystoneSlotCount;
-            bool costInBody = description.Contains(Loc.T("ポイント", "point"));
+            bool costInBody = description.Contains(Loc.T("ポイント", "point", "点"));
             string readyColor = !n.Unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
             n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
                 + "\n" + description
                 + "\n" + StarMapPresentation.DamageRankNote(t, n.Choice, _starSpent)
-                + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
+                + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}",
+                $"\n必要点数：{(t.IsKeystone ? keyCost : t.RankCost)}"))
                 + (condition.Length == 0 ? "" : "\n" + condition)
                 + "\n<color=" + readyColor + ">" + state + "</color>"
                 + (t.IsKeystone ? Loc.T("\n左クリック：選ぶ　右クリック：外す（費用は戻ります）",
-                    "\nLeft click: select. Right click: remove (its cost is refunded).")
+                    "\nLeft click: select. Right click: remove (its cost is refunded).", "\n左键：选择　右键：移除（费用返还）")
                     : t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
-                    "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.")
+                    "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.", "\n左键：打开选项面板（远征外可免费切换）　右键：退回1段")
                     : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
                         "\nLeft click: allocate one rank. Right click: refund one rank."))
                 + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
