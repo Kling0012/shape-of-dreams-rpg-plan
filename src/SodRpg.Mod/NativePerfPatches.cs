@@ -4708,6 +4708,15 @@ namespace SodRpg.Mod
         // that carries it (the baseline only advances when one does), and is therefore always
         // sent.
         //
+        // While the option is off or the server is inactive, both postfixes stand down and
+        // the game runs this path vanilla: deltas still deliver whatever the weaver setter
+        // raised, but the baseline no longer follows what the guests hold. Each side
+        // therefore forgets the baseline (_hasSent=false) on its way out, so a stale
+        // baseline can never drop the bit of a change raised inside such a window. After
+        // the option returns (or the same TimescaleManager instance survives a server
+        // restart), the first frame-end comparison sees an unknown baseline and keeps the
+        // bit until the next delta delivers the value and re-establishes it.
+        //
         // Bit 1 (_finalTimescale) and every other bit are left untouched, and no field value,
         // hook call or Time.timeScale assignment differs from vanilla: guests sample the
         // behaviour only through the initial state and the delta stream, and a suppressed
@@ -4813,8 +4822,16 @@ namespace SodRpg.Mod
 
         private static void Postfix(TimescaleManager __instance, bool __runOriginal)
         {
-            if (!__runOriginal || _disabled || !NativePerfOptions.TimescaleIdle) return;
-            if (!Mirror.NetworkServer.active) return;
+            if (!__runOriginal || _disabled) return;
+            // Stand-down window (option off / server down): the off-window itself runs
+            // vanilla, so the baseline stops tracking what the guests hold. Forget it on
+            // the way out — a stale baseline must not drop the bit of a change raised
+            // inside the window once the option comes back on.
+            if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
+            {
+                _hasSent = false;
+                return;
+            }
             try
             {
                 if (_owner != __instance)
@@ -4864,8 +4881,15 @@ namespace SodRpg.Mod
 
         private static void Postfix(TimescaleManager __instance, bool __runOriginal, bool initialState)
         {
-            if (!__runOriginal || NativeTimescaleIdlePerf._disabled || !NativePerfOptions.TimescaleIdle) return;
-            if (!Mirror.NetworkServer.active) return;
+            if (!__runOriginal || NativeTimescaleIdlePerf._disabled) return;
+            // Same stand-down as the clear side: while the option is off or the server is
+            // down, forget the baseline so it cannot drop a change raised during the
+            // window once the option comes back on.
+            if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
+            {
+                NativeTimescaleIdlePerf._hasSent = false;
+                return;
+            }
             try
             {
                 // An initial-state serialize is the spawn payload for one fresh guest: it does

@@ -20,6 +20,8 @@ namespace Issue73.Native.Tests
     /// (c) 差分の serialize が値を実際に運んだときだけ基線が進み、ビットが落ちた差分や
     ///     初期状態（途中参加者のスポーン payload）では基線が進まないこと、
     /// (d) 管理対象（owner）の切替で基線が未知に戻り、同値でもビットを落とさないこと、
+    /// (e) 設定が OFF の間・サーバが active でない間も基線が未知に戻り、ON へ戻った
+    ///     直後の同値比較でビットを落とさないこと、
     /// を確かめる。特に (c) の初期状態の経路は、変更ビットが立ったまま途中参加が起きたとき
     /// 既存参加者への差分が消える事故（前ラウンドの指摘）の回帰検査になる。
     /// </summary>
@@ -203,6 +205,68 @@ namespace Issue73.Native.Tests
             Assert.Equal(0.1f, Sent);
             Assert.True(HasSent);
             Assert.Equal(second, Owner);
+        }
+
+        // (e-1) 設定が OFF の間は基線が未知に戻る（レビュー指摘 F1 の回帰検査）。OFF の間は
+        // 両 Postfix が素通りするため値の配信が起きても基線は追従せず、ON へ戻った直後の
+        // フレーム末で古い基線との同値比較が新しい変更のビットを落とせないようにする。
+        // 筋書き: 基線 0.1 → OFF の間に値が 1 へ変わって届き、また 0.1 へ戻る → ON に戻す。
+        [Fact]
+        public void ADisabledWindowResetsTheBaseline()
+        {
+            Arm();
+            var manager = new TimescaleManager();
+            Deliver(manager, 0.1f);
+            Assert.True(HasSent);
+            // 設定を OFF にする。フレーム末の Postfix も差分の serialize の Postfix も
+            // 基線を未知に戻して抜ける。
+            NativePerfOptions.TimescaleIdle = false;
+            RunFrameEnd(manager);
+            Assert.False(HasSent);
+            // OFF の間: スローが終わって値が 1 へ変わり、素通しの差分で参加者へ届く。
+            manager.Network_effectTimescale(1f);
+            RunSerialized(manager, initialState: false);
+            Assert.False(HasSent);
+            BroadcastCleared(manager);
+            // 新しいスローが始まって値が 0.1 へ戻り、ON に戻した直後のフレーム末を迎える。
+            // 値 0.1 は古い基線 0.1 と同じだが、基線が未知のためビットは落ちない。
+            manager.Network_effectTimescale(0.1f);
+            NativePerfOptions.TimescaleIdle = true;
+            RunFrameEnd(manager);
+            Assert.NotEqual(0UL, manager.syncVarDirtyBits & TimescaleManager.EffectBit);
+            // 次の差分で 0.1 が配信されて初めて基線が結ばれ、以降の定常フレームは落とされる。
+            RunSerialized(manager, initialState: false);
+            Assert.True(HasSent);
+            Assert.Equal(0.1f, Sent);
+            BroadcastCleared(manager);
+            manager.Network_effectTimescale(1f);
+            manager.Network_effectTimescale(0.1f);
+            RunFrameEnd(manager);
+            Assert.Equal(0UL, manager.syncVarDirtyBits & TimescaleManager.EffectBit);
+        }
+
+        // (e-2) サーバが active でない間も基線は未知に戻る。同じ TimescaleManager のインスタンス
+        // を使ったままサーバを再開したとき、停止中に動いた値が古い基線と同じ値に戻っていても
+        // ビットは落ちず、再開後の最初の差分で配信される。
+        [Fact]
+        public void AnInactiveServerWindowResetsTheBaseline()
+        {
+            Arm();
+            var manager = new TimescaleManager();
+            Deliver(manager, 0.1f);
+            Assert.True(HasSent);
+            Mirror.NetworkServer.active = false;
+            RunFrameEnd(manager);
+            Assert.False(HasSent);
+            // 停止の間に値が 1 へ動いて 0.1 へ戻る（配信は起きない）。
+            manager.Network_effectTimescale(1f);
+            manager.Network_effectTimescale(0.1f);
+            Mirror.NetworkServer.active = true;
+            RunFrameEnd(manager);
+            Assert.NotEqual(0UL, manager.syncVarDirtyBits & TimescaleManager.EffectBit);
+            RunSerialized(manager, initialState: false);
+            Assert.True(HasSent);
+            Assert.Equal(0.1f, Sent);
         }
     }
 }
