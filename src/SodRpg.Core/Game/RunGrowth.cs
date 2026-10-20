@@ -447,8 +447,10 @@ namespace SodRpg.Core.Game
             string rise = RiseJa(entry.Effects.Select(x => StatAmountJa(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)).ToList());
             string capJa = entry.Cap == 0 ? "蓄積の上限はない。" : $"鍛錬は最大{entry.Cap}つまで溜まり、";
             string capEn = entry.Cap == 0 ? "no stack cap" : $"up to {entry.Cap} stacks";
+            // 中国語の文は中国語表示のときだけ組み立てる（Loc.T の引数は言語に関係なく評価されるため）。
             return Loc.T($"{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる。鍛錬1つにつき、{rise}。{capJa}遠征の間は死亡やゾーン移動でも失われず、遠征の開始で0に戻る。",
-                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} ({capEn}; kept through death and zone changes for the whole expedition, reset when a new expedition begins)", $"每层锻炼提供{PerStack(entry)}；获得{gain}{(gain == 1 ? "层" : "层")}锻炼的条件为{TriggerText(entry.Trigger, entry.Threshold)}（{(entry.Cap == 0 ? "层数无上限" : $"最多{entry.Cap}层")}；整次远征中死亡或切换区域均保留，开始新远征时清零）");
+                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} ({capEn}; kept through death and zone changes for the whole expedition, reset when a new expedition begins)",
+                Loc.Language == LocLanguage.Chinese ? $"每层锻炼提供{PerStack(entry)}；获得{gain}{(gain == 1 ? "层" : "层")}锻炼的条件为{TriggerText(entry.Trigger, entry.Threshold)}（{(entry.Cap == 0 ? "层数无上限" : $"最多{entry.Cap}层")}；整次远征中死亡或切换区域均保留，开始新远征时清零）" : null);
         }
 
         public static string Describe(RunGrowthDef def)
@@ -532,9 +534,11 @@ namespace SodRpg.Core.Game
         public static string HudLine(RunGrowthEntry entry, int stacks)
         {
             int shown = EffectiveStacks(entry, stacks);
+            // 中国語の文は中国語表示のときだけ組み立てる（HUD から頻繁に呼ばれるため、確保を避ける）。
+            bool zh = Loc.Language == LocLanguage.Chinese;
             string count = entry.Cap == 0
-                ? Loc.T($"鍛錬 {shown}（蓄積の上限はない）", $"Training {shown} (no stack cap)", $"锻炼 {shown}（层数无上限）")
-                : Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}", $"锻炼 {shown}/{entry.Cap}");
+                ? Loc.T($"鍛錬 {shown}（蓄積の上限はない）", $"Training {shown} (no stack cap)", zh ? $"锻炼 {shown}（层数无上限）" : null)
+                : Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}", zh ? $"锻炼 {shown}/{entry.Cap}" : null);
             return count + (shown > 0
                 ? " <color=#c4c4dc>(" + string.Join(" ", entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + ")</color>" : "");
         }
@@ -543,9 +547,11 @@ namespace SodRpg.Core.Game
         public static string SummaryLine(RunGrowthEntry entry, int stacks)
         {
             int shown = EffectiveStacks(entry, stacks);
+            // 中国語の文は中国語表示のときだけ組み立てる（Loc.T の引数は言語に関係なく評価されるため）。
+            bool zh = Loc.Language == LocLanguage.Chinese;
             string count = entry.Cap == 0
-                ? Loc.T($"現在 {shown}つ（蓄積の上限はない）", $"Now {shown} stacks (no stack cap)", $"当前{shown}层（层数无上限）")
-                : Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks", $"当前{shown}/{entry.Cap}层");
+                ? Loc.T($"現在 {shown}つ（蓄積の上限はない）", $"Now {shown} stacks (no stack cap)", zh ? $"当前{shown}层（层数无上限）" : null)
+                : Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks", zh ? $"当前{shown}/{entry.Cap}层" : null);
             return Describe(entry) + "\n" + count
                 + (shown > 0 ? "（" + string.Join(Loc.T("、", ", ", "、"), entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + "）" : "");
         }
