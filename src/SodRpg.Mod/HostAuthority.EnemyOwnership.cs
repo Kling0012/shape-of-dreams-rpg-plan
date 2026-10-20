@@ -726,8 +726,6 @@ namespace SodRpg.Mod
         private float ExpectedOwnershipHealth(EnemyOwnership state, bool running)
         {
             if (!(state.Enemy is Monster) && !state.OwnPressureHook) return 1f;
-            float expected = state.Enemy is Monster || OwnershipSupplementPressure(state)
-                ? (float)_pressure.HealthMultiplier : 1f;
             // This scan pass settled running (scan start), the shared-objective flag
             // (RefreshSharedObjectiveOwnership earlier in this same iteration) and, just above,
             // exclusion/boss state. When those facts already match TryOwnership's success
@@ -737,12 +735,16 @@ namespace SodRpg.Mod
             // steps earlier in this same iteration (boss shares, reassignment, entity-removed
             // hooks) may drop or swap the dictionary entry after the loop's liveness check,
             // and a destroyed enemy must fall back to the full check like TryOwnership does.
+            // ScanEnemyOwnership catches fast-path exceptions and calls FailOwnership(Strength),
+            // matching OverrideOwnershipHealth's feature-local failure handling.
             if (running && (_ownershipFailed & OwnershipPart.Strength) == 0
                 && state.Enemy != null
                 && _enemyOwnership.TryGetValue(state.Enemy, out var liveState) && ReferenceEquals(liveState, state)
                 && !state.Excluded && !state.SharedObjective && state.Owner != null
                 && !state.Enemy.IsAnyBoss() && OwnershipConnected(state.Owner))
                 return (float)OwnershipEnemyPressure(state).HealthMultiplier;
+            float expected = state.Enemy is Monster || OwnershipSupplementPressure(state)
+                ? (float)_pressure.HealthMultiplier : 1f;
             OverrideOwnershipHealth(state.Enemy, ref expected);
             return expected;
         }
