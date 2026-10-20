@@ -67,6 +67,12 @@ namespace SodRpg.Core.Game
         //部位の訳し分け: 手袋→手套、拳→拳甲、籠手・手甲→手甲、腕当て→护腕、手巻き→缠手、指→指套、
         // 指輪・指環→戒指・指环、長靴→长靴、鉄靴→铁靴、脛当て・鉄脛→胫甲、草履→草履、下駄→木屐、
         // 上履き→便鞋、鋲靴→钉鞋、歩み靴・追い足→疾行靴、ロケット→坠盒、首飾り→项链、飾り→坠饰
+        // 出来事・連携・変種の説明で繰り返し使う訳語（#959）。
+        // Power: 固有効果 → 固有效果、Unique relic: 固有品 → 固有遗物（レア度とは区別）
+        // Milestone: 節目 → 里程碑、Keystone: 到達刻印 → 到达刻印
+        // Barrier: 障壁 → 障壁、Guard reduction: 軽減 → 减伤
+        // Weak to fire / cold / light / dark: 火・冷気・光・闇に弱い → 畏火・畏寒・畏光・畏暗
+        // Unsecured: 未確保 → 未存入、まだ持ち帰っていない → 尚未带回
         // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
         // セット名の接頭辞: 砕盾騎士 Shardshield → 碎盾骑士、盾誓い Bashbound → 盾誓、陣頭 Frontline → 阵头、
         //   後陣 Rearline → 后阵、輪守り Ringwarden → 环守、継ぎ歌 Relaysong → 接力歌、宴 Feastpack → 狼宴、
@@ -95,6 +101,19 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // #951 の基本装備名・セット説明で繰り返し使う訳語（完全一致辞書への登録は不要）:
+        // Resonance / Resonant: 共鳴 → 共鸣 / Dreamer: 夢見 → 织梦者
+        // Oath: 誓い → 誓言 / Vow: 誓約 → 誓约 / Warden: 番人 → 守卫
+        // Deeproot: 深根 → 深根 / Boulder: 岩塊 → 岩块 / Tortoiseshell: 亀甲 → 龟甲
+        // Sunlit: 陽光 → 阳光 / Dawnlight・Dawnmist: 暁光・暁霧 → 晓光・晓雾
+        // Dusk: 黄昏 → 黄昏（織り・縫い・踏み・珠との複合名では「暮」）
+        // Seafoam: 海沫 → 海沫 / Whisper: 囁き → 低语 / Comet: 彗星 → 彗星
+        // Healer / Healing / Mender: 癒し手・癒し → 治愈者・治愈
+        // Fingerless Gloves / Mitts: 指抜き・指なし手袋 → 半指手套 / Wraps: 手巻き → 缠手
+        // Grips: 握り → 护手 / Knuckles: 拳当て → 拳套 / Greaves: 脛当て → 护胫
+        // Sabatons: 鉄靴・鉄鞋 → 铁靴 / Slippers: 上履き・室内履き → 便鞋
+        // Locket: ロケット → 吊坠盒 / Pendant: 垂飾り → 吊坠 / Brooch: ブローチ → 胸针
+        // Link: 連携 → 联动 / piece stage: 装着段階 → 件套阶段
         // #952 の基本装備・固有品で繰り返し使う訳語（名前の一部なので参照用）:
         // Hoarfrost / Rime: 霧氷 → 雾凇 / Remembrance・Nostalgia: 追憶 → 追忆
         // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
