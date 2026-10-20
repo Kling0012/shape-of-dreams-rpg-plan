@@ -103,6 +103,13 @@ def cs(text):
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def txt(entry, field):
+    values = [cs(entry[field + lang]) for lang in ("Ja", "En")]
+    if entry.get(field + "Zh") is not None:
+        values.append(cs(entry[field + "Zh"]))
+    return "new Txt(%s)" % ", ".join(values)
+
+
 def render_outputs(power_pools=None):
     bases, pools, ranges, power_set, stat_set, rarity_rank, conditional, currency = load_reference(power_pools)
     named_json = load_json(ROOT / IN_NAMED)
@@ -157,8 +164,8 @@ def render_outputs(power_pools=None):
             values.append(band_value(mn, mx, band))
         if len(values) not in (1, 2) or any(v is None for v in values):
             continue  # already reported; do not emit a broken def
-        name = "new Txt(%s, %s)" % (cs(e["nameJa"]), cs(e["nameEn"]))
-        lore = "new Txt(%s, %s)" % (cs(e["loreJa"]), cs(e["loreEn"]))
+        name = txt(e, "name")
+        lore = txt(e, "lore")
         mini = "null" if e.get("miniSetId") is None else cs(e["miniSetId"])
         args = [cs(nid), cs(base_id), "Rarity." + rarity, name, lore, mini]
         for power, value in zip([q["power"] for q in e["powers"]], values):
@@ -211,7 +218,7 @@ def render_outputs(power_pools=None):
         if not ok:
             continue
         piece_args = ", ".join(cs(p) for p in pieces)
-        args = [cs(sid), "new Txt(%s, %s)" % (cs(s["nameJa"]), cs(s["nameEn"])),
+        args = [cs(sid), txt(s, "name"),
                 "new[] { %s }" % piece_args, "new StatLine(Stat.%s, %s)" % (stat, value)]
         if three_line is not None:
             args.append("new PowerLine(%s, %s)" % three_line)

@@ -3,6 +3,7 @@
     "id": "miniset.rime_lantern",
     "nameJa": "霜灯の二つ星",
     "nameEn": "Twin Rime Lanterns",
+    "nameZh": "霜灯双星",
     "pieces": [
       "named.weapon.004",
       "named.charm.004"
@@ -19,6 +20,7 @@
     "id": "miniset.hearth_ember",
     "nameJa": "炉端の残り火",
     "nameEn": "Hearthside Embers",
+    "nameZh": "炉畔余烬",
     "pieces": [
       "named.armor.007",
       "named.feet.007"
@@ -35,6 +37,7 @@
     "id": "miniset.noon_blessing",
     "nameJa": "真昼の祝傘",
     "nameEn": "Noonday Blessed Shade",
+    "nameZh": "正午祝伞",
     "pieces": [
       "named.head.032",
       "named.hands.033"
@@ -51,6 +54,7 @@
     "id": "miniset.dusk_pact",
     "nameJa": "宵闇の密約",
     "nameEn": "Twilight Pact",
+    "nameZh": "暮色密约",
     "pieces": [
       "named.weapon.035",
       "named.armor.012"
@@ -67,6 +71,7 @@
     "id": "miniset.iron_vow",
     "nameJa": "鉄の誓約",
     "nameEn": "Iron Vow",
+    "nameZh": "铁之誓约",
     "pieces": [
       "named.head.037",
       "named.feet.038"
@@ -83,6 +88,7 @@
     "id": "miniset.tailwind_pair",
     "nameJa": "追い風二つ",
     "nameEn": "Two Tailwinds",
+    "nameZh": "双重追风",
     "pieces": [
       "named.charm.041",
       "named.feet.016"
@@ -99,6 +105,7 @@
     "id": "miniset.sprout_care",
     "nameJa": "若芽の看病",
     "nameEn": "Nursing the Sprout",
+    "nameZh": "看护嫩芽",
     "pieces": [
       "named.weapon.042",
       "named.charm.019"
@@ -115,6 +122,7 @@
     "id": "miniset.pack_call",
     "nameJa": "群れの呼び声",
     "nameEn": "Call of the Pack",
+    "nameZh": "群之呼唤",
     "pieces": [
       "named.weapon.045",
       "named.head.021"
@@ -131,6 +139,7 @@
     "id": "miniset.star_ledger",
     "nameJa": "星の帳面",
     "nameEn": "The Star Ledger",
+    "nameZh": "星辰账簿",
     "pieces": [
       "named.weapon.047",
       "named.charm.023"
@@ -147,6 +156,7 @@
     "id": "miniset.plain_craft",
     "nameJa": "道具の二人",
     "nameEn": "Two of Tools",
+    "nameZh": "道具二人组",
     "pieces": [
       "named.weapon.001",
       "named.hands.002"
@@ -163,6 +173,7 @@
     "id": "miniset.winter_watch",
     "nameJa": "冬の見張り",
     "nameEn": "Winter Watch",
+    "nameZh": "冬日瞭望",
     "pieces": [
       "named.armor.029",
       "named.head.029"
@@ -179,6 +190,7 @@
     "id": "miniset.kindled_step",
     "nameJa": "火種の足取り",
     "nameEn": "Kindlefoot",
+    "nameZh": "火种足迹",
     "pieces": [
       "named.hands.030",
       "named.charm.008"
@@ -195,6 +207,7 @@
     "id": "miniset.dawn_pair",
     "nameJa": "暁の二灯",
     "nameEn": "Twin Dawn Lamps",
+    "nameZh": "破晓双灯",
     "pieces": [
       "named.armor.009",
       "named.feet.009"
@@ -211,6 +224,7 @@
     "id": "miniset.shadow_reverie",
     "nameJa": "影の空想",
     "nameEn": "Shadow Reverie",
+    "nameZh": "影之空想",
     "pieces": [
       "named.charm.036",
       "named.feet.012"
@@ -227,6 +241,7 @@
     "id": "miniset.shieldmates",
     "nameJa": "盾の戦友",
     "nameEn": "Shieldmates",
+    "nameZh": "盾之战友",
     "pieces": [
       "named.weapon.039",
       "named.charm.014"
@@ -243,6 +258,7 @@
     "id": "miniset.swift_vow",
     "nameJa": "疾風の二閃",
     "nameEn": "Twin Gale Flashes",
+    "nameZh": "疾风双闪",
     "pieces": [
       "named.weapon.041",
       "named.armor.016"
@@ -259,6 +275,7 @@
     "id": "miniset.warm_hands",
     "nameJa": "温もりの二つ手",
     "nameEn": "Two Warm Hands",
+    "nameZh": "温暖双手",
     "pieces": [
       "named.armor.042",
       "named.feet.043"
@@ -275,6 +292,7 @@
     "id": "miniset.old_friends",
     "nameJa": "古びた二つ星",
     "nameEn": "Two Old Friends",
+    "nameZh": "老友双星",
     "pieces": [
       "named.head.048",
       "named.feet.024"
@@ -291,6 +309,7 @@
     "id": "miniset.winter_caravan",
     "nameJa": "冬の隊商",
     "nameEn": "Winter Caravan",
+    "nameZh": "冬日商队",
     "pieces": [
       "named.weapon.028",
       "named.hands.005",
@@ -312,6 +331,7 @@
     "id": "miniset.triple_forge",
     "nameJa": "三つ火の鍛冶",
     "nameEn": "Three-Fire Forge",
+    "nameZh": "三火锻造",
     "pieces": [
       "named.weapon.006",
       "named.head.006",
@@ -333,6 +353,7 @@
     "id": "miniset.triple_light",
     "nameJa": "光の三唱",
     "nameEn": "Triple Light Chant",
+    "nameZh": "光之三唱",
     "pieces": [
       "named.weapon.009",
       "named.charm.034",
@@ -354,6 +375,7 @@
     "id": "miniset.umbral_trio",
     "nameJa": "闇の三重唱",
     "nameEn": "Umbral Trio",
+    "nameZh": "暗影三重唱",
     "pieces": [
       "named.head.011",
       "named.hands.035",
@@ -375,6 +397,7 @@
     "id": "miniset.shield_wall",
     "nameJa": "三枚の盾壁",
     "nameEn": "Wall of Three Shields",
+    "nameZh": "三重盾壁",
     "pieces": [
       "named.armor.014",
       "named.hands.037",
@@ -396,6 +419,7 @@
     "id": "miniset.gale_trio",
     "nameJa": "疾風の三脚",
     "nameEn": "Gale Tripod",
+    "nameZh": "疾风三足",
     "pieces": [
       "named.head.016",
       "named.hands.018",
@@ -417,6 +441,7 @@
     "id": "miniset.healing_trio",
     "nameJa": "癒しの三手",
     "nameEn": "Three Healing Hands",
+    "nameZh": "疗愈三手",
     "pieces": [
       "named.head.020",
       "named.hands.019",
@@ -438,6 +463,7 @@
     "id": "miniset.pack_trio",
     "nameJa": "三匹の群れ",
     "nameEn": "A Pack of Three",
+    "nameZh": "三兽成群",
     "pieces": [
       "named.armor.022",
       "named.charm.045",
@@ -459,6 +485,7 @@
     "id": "miniset.memory_trio",
     "nameJa": "記憶の三鍵",
     "nameEn": "Three Keys of Memory",
+    "nameZh": "记忆三钥",
     "pieces": [
       "named.armor.024",
       "named.hands.024",
@@ -480,6 +507,7 @@
     "id": "miniset.plain_trio",
     "nameJa": "素朴な三つ道具",
     "nameEn": "Three Plain Tools",
+    "nameZh": "朴实三工具",
     "pieces": [
       "named.armor.025",
       "named.head.025",
@@ -501,6 +529,7 @@
     "id": "miniset.tide_and_flame",
     "nameJa": "潮と焔",
     "nameEn": "Tide and Flame",
+    "nameZh": "潮与焰",
     "pieces": [
       "named.charm.027",
       "named.head.028",
@@ -522,6 +551,7 @@
     "id": "miniset.dusk_and_dawn",
     "nameJa": "暁と宵",
     "nameEn": "Dusk and Dawn",
+    "nameZh": "晓与宵",
     "pieces": [
       "named.head.012",
       "named.feet.013",
