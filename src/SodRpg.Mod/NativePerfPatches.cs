@@ -4963,16 +4963,20 @@ namespace SodRpg.Mod
         // differently. The replacement helper keeps the same stack [text, literal, total,
         // dps, max], compares the three raw floats against the ones it last formatted for
         // this TextMeshPro and returns without touching TMP when all three match; otherwise
-        // it runs the identical string.Format on the identical literal. A changed value
+        // it runs the identical string.Format on the identical literal. The skip assumes
+        // this helper is the meter's only text writer (Mon_RedGiant's dpsText is assigned
+        // only by ActiveLogicUpdate), so an outside write between unchanged frames is not
+        // something the value-only check would revert. A changed value
         // therefore formats and assigns on the very frame it appears, so the displayed text
         // at every frame is exactly what vanilla shows, including the damage window and the
         // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
         // alike). While the option is off the helper formats unconditionally, which is
         // vanilla; a null dpsText still throws exactly where vanilla throws.
-        // its last formatted triple. Starts as NaN (never equal to the spawn-frame
-        // 0/0/0), so the very first call always formats and assigns — vanilla writes
-        // on every frame including the first, and the prefab's placeholder TMP string
-        // must not survive until the first non-zero value.
+        // LastText is the per-TMP_Text record of the last formatted triple. It starts
+        // as NaN (never equal to the spawn-frame 0/0/0), so the very first call always
+        // formats and assigns — vanilla writes on every frame including the first, and
+        // the prefab's placeholder TMP string must not survive until the first non-zero
+        // value.
         private sealed class LastText
         {
             internal float Total = float.NaN;
@@ -5079,6 +5083,14 @@ namespace SodRpg.Mod
         private static bool LoadsThis(CodeInstruction instruction)
             => instruction.opcode == OpCodes.Ldarg_0;
 
+        // float == reads 0f and -0f as equal while the format renders them apart
+        // ("0" / "-0"), so a 0 → -0 frame re-formats like vanilla; the bit
+        // comparison tells the two zeros apart. The == first also keeps NaN
+        // never-equal: a NaN input formats every frame (vanilla shows "NaN"),
+        // and the NaN sentinel above never matches a real value.
+        private static bool SameFloat(float last, float now)
+            => last == now && BitConverter.SingleToInt32Bits(last) == BitConverter.SingleToInt32Bits(now);
+
         // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
         private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
         {
@@ -5087,7 +5099,7 @@ namespace SodRpg.Mod
                 try
                 {
                     var last = LastTexts.GetValue(text, CreateLastText);
-                    if (last.Total == total && last.Dps == dps && last.Max == max) return;
+                    if (SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max)) return;
                     last.Total = total;
                     last.Dps = dps;
                     last.Max = max;
