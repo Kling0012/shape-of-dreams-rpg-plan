@@ -94,50 +94,50 @@ namespace SodRpg.Core.Game
             int t = Target;
             switch (Kind)
             {
-                case BountyKind.Slayer: return Loc.T($"敵を{t}体倒す", $"Defeat {t} enemies");
-                case BountyKind.EliteHunter: return Loc.T($"エリートを{t}体倒す", $"Defeat {t} elites");
-                case BountyKind.Bossbane: return Loc.T($"ボスを{t}体倒す", $"Defeat {t} boss(es)");
-                case BountyKind.Collector: return Loc.T($"遺物を{t}個確保する", $"Secure {t} relics");
-                case BountyKind.DeepDiver: return Loc.T($"潜行{t}以上で確保する", $"Secure at delve level {t}+");
-                case BountyKind.Treasure: return Loc.T($"レア以上の遺物を{t}個見つける", $"Find {t} Rare+ relic(s)");
-                case BountyKind.NightmareHunter: return Loc.T($"悪夢化した敵を{t}体倒す", $"Slay {t} nightmare(s)");
-                case BountyKind.ChaosSeeker: return Loc.T($"混沌を{t}回使う", $"Use Chaos {t} time(s)");
-                case BountyKind.Patron: return Loc.T($"商人から{t}回買う", $"Buy from merchants {t} time(s)");
-                case BountyKind.Refiner: return Loc.T($"記憶かエッセンスを{t}回強化する", $"Upgrade Memories/Essences {t} time(s)");
-                case BountyKind.Alchemist: return Loc.T($"エッセンスを{t}回合成する", $"Merge Essences {t} time(s)");
-                case BountyKind.Recycler: return Loc.T($"記憶かエッセンスを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)");
-                case BountyKind.HunterBait: return Loc.T($"ハンターの領域へ{t}回踏み込む", $"Enter hunter territory {t} time(s)");
-                case BountyKind.PactBearer: return Loc.T($"悪夢の契約を{t}回結ぶ", $"Swear {t} nightmare pact(s)");
-                case BountyKind.LegendFinder: return Loc.T($"固有品を{t}個見つける", $"Find {t} legendary relic(s)");
-                case BountyKind.EpicFinder: return Loc.T($"エピック以上の遺物を{t}個見つける", $"Find {t} Epic+ relic(s)");
-                case BountyKind.EventTaker: return Loc.T($"夢の出来事を{t}回選ぶ", $"Take {t} dream event(s)");
-                case BountyKind.Securer: return Loc.T($"確保を{t}回行う", $"Secure {t} time(s)");
-                case BountyKind.Delver: return Loc.T($"「深く潜る」を{t}回選ぶ", $"Delve {t} time(s)");
-                case BountyKind.SetHunter: return Loc.T($"セット品を{t}個見つける", $"Find {t} set piece(s)");
-                case BountyKind.PactKeeper: return Loc.T($"悪夢の契約を{t}つ結んだまま確保する", $"Secure while bound by {t}+ nightmare pact(s)");
-                case BountyKind.FireHunter: return Loc.T($"火が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Fire");
-                case BountyKind.ColdHunter: return Loc.T($"冷気を受けた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Cold");
-                case BountyKind.LightHunter: return Loc.T($"光が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Light");
-                case BountyKind.DarkHunter: return Loc.T($"闇が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Dark");
-                case BountyKind.ShieldGiver: return Loc.T($"自分か味方に障壁を{t}回付ける", $"Grant shields to yourself or allies {t} times");
-                case BountyKind.AllyHealer: return Loc.T($"別の旅人のHPを{t}回回復する", $"Restore another traveler's health {t} times");
-                case BountyKind.MemoryQ: return Loc.T($"Q枠の記憶を{t}回使う", $"Use a Memory in the Q slot {t} times");
-                case BountyKind.MemoryW: return Loc.T($"W枠の記憶を{t}回使う", $"Use a Memory in the W slot {t} times");
-                case BountyKind.MemoryE: return Loc.T($"E枠の記憶を{t}回使う", $"Use a Memory in the E slot {t} times");
-                case BountyKind.MemoryR: return Loc.T($"R枠の記憶を{t}回使う", $"Use a Memory in the R slot {t} times");
-                case BountyKind.ZoneTraveler: return Loc.T($"次のゾーンへ{t}回進む", $"Travel to the next zone {t} times");
-                case BountyKind.RelicEnhancer: return Loc.T($"遺物の強化を{t}回行う", $"Enhance relics {t} times");
-                case BountyKind.LimitBreaker: return Loc.T($"遺物を{t}回限界突破する", $"Limit break relics {t} times");
-                case BountyKind.Awakener: return Loc.T($"装備した固有品の覚醒を{t}段まで進める", $"Reach Awakening {t} on an equipped legendary relic");
-                case BountyKind.LinkWeaver: return Loc.T($"連携を同時に{t}つ成立させる", $"Satisfy {t} links at once");
-                case BountyKind.GimmickUser: return Loc.T($"記憶の仕掛けを{t}回発動する", $"Trigger Memory gimmicks {t} times");
-                case BountyKind.PressureDiver: return Loc.T($"夢の圧による敵のHP倍率を{t}%以上にする", $"Reach {t}% enemy health from Dream Pressure");
-                case BountyKind.VariantHunter: return Loc.T($"夢の変種を{t}体倒す", $"Defeat {t} dream variants");
-                case BountyKind.VeilHunter: return Loc.T($"霞衣の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Veiled trait");
-                case BountyKind.PackHunter: return Loc.T($"群れの守りの性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Packbound trait");
-                case BountyKind.PulseHunter: return Loc.T($"明滅の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Pulsing trait");
-                case BountyKind.LastStandHunter: return Loc.T($"最後の殻の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Last Stand trait");
-                default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms");
+                case BountyKind.Slayer: return Loc.T($"敵を{t}体倒す", $"Defeat {t} enemies", $"击败{t}个敌人");
+                case BountyKind.EliteHunter: return Loc.T($"エリートを{t}体倒す", $"Defeat {t} elites", $"击败{t}个精英");
+                case BountyKind.Bossbane: return Loc.T($"ボスを{t}体倒す", $"Defeat {t} boss(es)", $"击败{t}个Boss");
+                case BountyKind.Collector: return Loc.T($"遺物を{t}個確保する", $"Secure {t} relics", $"存入仓库{t}件遗物");
+                case BountyKind.DeepDiver: return Loc.T($"潜行{t}以上で確保する", $"Secure at delve level {t}+", $"在深度{t}以上存入仓库");
+                case BountyKind.Treasure: return Loc.T($"レア以上の遺物を{t}個見つける", $"Find {t} Rare+ relic(s)", $"找到{t}件稀有以上遗物");
+                case BountyKind.NightmareHunter: return Loc.T($"悪夢化した敵を{t}体倒す", $"Slay {t} nightmare(s)", $"击败{t}个梦魇化敌人");
+                case BountyKind.ChaosSeeker: return Loc.T($"混沌を{t}回使う", $"Use Chaos {t} time(s)", $"使用{t}次混沌");
+                case BountyKind.Patron: return Loc.T($"商人から{t}回買う", $"Buy from merchants {t} time(s)", $"从商人处购买{t}次");
+                case BountyKind.Refiner: return Loc.T($"記憶かエッセンスを{t}回強化する", $"Upgrade Memories/Essences {t} time(s)", $"强化记忆或精华{t}次");
+                case BountyKind.Alchemist: return Loc.T($"エッセンスを{t}回合成する", $"Merge Essences {t} time(s)", $"合成精华{t}次");
+                case BountyKind.Recycler: return Loc.T($"記憶かエッセンスを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)", $"分解记忆或精华{t}次");
+                case BountyKind.HunterBait: return Loc.T($"ハンターの領域へ{t}回踏み込む", $"Enter hunter territory {t} time(s)", $"踏入猎人的领地{t}次");
+                case BountyKind.PactBearer: return Loc.T($"悪夢の契約を{t}回結ぶ", $"Swear {t} nightmare pact(s)", $"结下{t}次梦魇契约");
+                case BountyKind.LegendFinder: return Loc.T($"固有品を{t}個見つける", $"Find {t} legendary relic(s)", $"找到{t}件传说");
+                case BountyKind.EpicFinder: return Loc.T($"エピック以上の遺物を{t}個見つける", $"Find {t} Epic+ relic(s)", $"找到{t}件史诗以上遗物");
+                case BountyKind.EventTaker: return Loc.T($"夢の出来事を{t}回選ぶ", $"Take {t} dream event(s)", $"选择{t}次梦境事件");
+                case BountyKind.Securer: return Loc.T($"確保を{t}回行う", $"Secure {t} time(s)", $"存入仓库{t}次");
+                case BountyKind.Delver: return Loc.T($"「深く潜る」を{t}回選ぶ", $"Delve {t} time(s)", $"选择{t}次“深入下潜”");
+                case BountyKind.SetHunter: return Loc.T($"セット品を{t}個見つける", $"Find {t} set piece(s)", $"找到{t}件套装部件");
+                case BountyKind.PactKeeper: return Loc.T($"悪夢の契約を{t}つ結んだまま確保する", $"Secure while bound by {t}+ nightmare pact(s)", $"身负{t}个以上梦魇契约存入仓库");
+                case BountyKind.FireHunter: return Loc.T($"火が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Fire", $"击败{t}个附带火属性的敌人");
+                case BountyKind.ColdHunter: return Loc.T($"冷気を受けた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Cold", $"击败{t}个受冰属性影响的敌人");
+                case BountyKind.LightHunter: return Loc.T($"光が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Light", $"击败{t}个附带光属性的敌人");
+                case BountyKind.DarkHunter: return Loc.T($"闇が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Dark", $"击败{t}个附带暗属性的敌人");
+                case BountyKind.ShieldGiver: return Loc.T($"自分か味方に障壁を{t}回付ける", $"Grant shields to yourself or allies {t} times", $"为自己或队友提供{t}次护盾");
+                case BountyKind.AllyHealer: return Loc.T($"別の旅人のHPを{t}回回復する", $"Restore another traveler's health {t} times", $"治疗其他旅人{t}次");
+                case BountyKind.MemoryQ: return Loc.T($"Q枠の記憶を{t}回使う", $"Use a Memory in the Q slot {t} times", $"使用{t}次Q栏记忆");
+                case BountyKind.MemoryW: return Loc.T($"W枠の記憶を{t}回使う", $"Use a Memory in the W slot {t} times", $"使用{t}次W栏记忆");
+                case BountyKind.MemoryE: return Loc.T($"E枠の記憶を{t}回使う", $"Use a Memory in the E slot {t} times", $"使用{t}次E栏记忆");
+                case BountyKind.MemoryR: return Loc.T($"R枠の記憶を{t}回使う", $"Use a Memory in the R slot {t} times", $"使用{t}次R栏记忆");
+                case BountyKind.ZoneTraveler: return Loc.T($"次のゾーンへ{t}回進む", $"Travel to the next zone {t} times", $"前往下一区域{t}次");
+                case BountyKind.RelicEnhancer: return Loc.T($"遺物の強化を{t}回行う", $"Enhance relics {t} times", $"强化遗物{t}次");
+                case BountyKind.LimitBreaker: return Loc.T($"遺物を{t}回限界突破する", $"Limit break relics {t} times", $"遗物极限突破{t}次");
+                case BountyKind.Awakener: return Loc.T($"装備した固有品の覚醒を{t}段まで進める", $"Reach Awakening {t} on an equipped legendary relic", $"将装备中的传说觉醒推进到{t}级");
+                case BountyKind.LinkWeaver: return Loc.T($"連携を同時に{t}つ成立させる", $"Satisfy {t} links at once", $"同时达成{t}个连携");
+                case BountyKind.GimmickUser: return Loc.T($"記憶の仕掛けを{t}回発動する", $"Trigger Memory gimmicks {t} times", $"触发{t}次记忆的机关");
+                case BountyKind.PressureDiver: return Loc.T($"夢の圧による敵のHP倍率を{t}%以上にする", $"Reach {t}% enemy health from Dream Pressure", $"使梦境之压带来的敌人生命倍率达到{t}%以上");
+                case BountyKind.VariantHunter: return Loc.T($"夢の変種を{t}体倒す", $"Defeat {t} dream variants", $"击败{t}个梦境变种");
+                case BountyKind.VeilHunter: return Loc.T($"霞衣の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Veiled trait", $"击败{t}个具有霞衣性质的敌人");
+                case BountyKind.PackHunter: return Loc.T($"群れの守りの性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Packbound trait", $"击败{t}个具有群守性质的敌人");
+                case BountyKind.PulseHunter: return Loc.T($"明滅の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Pulsing trait", $"击败{t}个具有明灭性质的敌人");
+                case BountyKind.LastStandHunter: return Loc.T($"最後の殻の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Last Stand trait", $"击败{t}个具有最后之壳性质的敌人");
+                default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms", $"突破{t}个战斗房间");
             }
         }
 
@@ -146,8 +146,8 @@ namespace SodRpg.Core.Game
             int shards = (int)Math.Round(RewardShards * mult);
             int tuningN = (int)Math.Round(RewardTuning * mult);
             int xp = (int)Math.Round(RewardXp * mult);
-            string tuning = tuningN > 0 ? Loc.T($"、調律石{tuningN}", $", {tuningN} tuning") : "";
-            return Loc.T($"報酬：欠片{shards}{tuning}、経験値{xp}", $"Reward: {shards} shards{tuning}, {xp} xp");
+            string tuning = tuningN > 0 ? Loc.T($"、調律石{tuningN}", $", {tuningN} tuning", $"、调律石{tuningN}") : "";
+            return Loc.T($"報酬：欠片{shards}{tuning}、経験値{xp}", $"Reward: {shards} shards{tuning}, {xp} xp", $"奖励：碎片{shards}{tuning}、经验值{xp}");
         }
     }
 

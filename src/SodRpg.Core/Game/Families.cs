@@ -108,15 +108,15 @@ namespace SodRpg.Core.Game
         {
             switch (family)
             {
-                case Family.Frost: return new Txt("氷霜", "Frost");
-                case Family.Flame: return new Txt("炎", "Flame");
-                case Family.Light: return new Txt("光", "Light");
-                case Family.Dark: return new Txt("闇", "Dark");
-                case Family.Guard: return new Txt("守り", "Guard");
-                case Family.Gale: return new Txt("疾風", "Gale");
-                case Family.Mend: return new Txt("癒し", "Mend");
-                case Family.Summon: return new Txt("召喚", "Summon");
-                case Family.Memory: return new Txt("記憶", "Memory");
+                case Family.Frost: return new Txt("氷霜", "Frost", "冰霜");
+                case Family.Flame: return new Txt("炎", "Flame", "炎");
+                case Family.Light: return new Txt("光", "Light", "光");
+                case Family.Dark: return new Txt("闇", "Dark", "暗");
+                case Family.Guard: return new Txt("守り", "Guard", "守护");
+                case Family.Gale: return new Txt("疾風", "Gale", "疾风");
+                case Family.Mend: return new Txt("癒し", "Mend", "治愈");
+                case Family.Summon: return new Txt("召喚", "Summon", "召唤");
+                case Family.Memory: return new Txt("記憶", "Memory", "记忆");
                 default: return null;
             }
         }

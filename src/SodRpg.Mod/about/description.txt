@@ -1,7 +1,7 @@
 [h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]Open on GitHub[/url][/h1]
 [h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]在 GitHub 上打开[/url][/h1]
 
-[b]MOD の画面、銘品、固有品200品の名前と説明が中国語（簡体字）で表示されるようになりました。[/b]
+[b]装備、セット、ルール、夢の出来事などを中国語（簡体字）で表示できるようにしました。中国語の誤訳と星図の費用表示を直し、レッドジャイアントとボスソウルの神殿での余分な処理を減らしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。

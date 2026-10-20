@@ -126,7 +126,7 @@ namespace SodRpg.Core.Game
 
         // ───── 因縁（宿敵「深淵の追跡者」との） ─────
         /// <summary>宿敵の名。ボス・エリートを問わず、禁忌の職人を持つ者を追う同じ存在として現れる。</summary>
-        public static string NemesisName => Loc.T("深淵の追跡者", "Abyssal Stalker");
+        public static string NemesisName => Loc.T("深淵の追跡者", "Abyssal Stalker", "深渊追猎者");
         /// <summary>因縁の上限。宿敵を倒すたびに1つ深まる。</summary>
         public const int MaxGrudge = ForbiddenBalance.MaxGrudge;
         /// <summary>因縁1段ごとの宿敵化の確率の上乗せ（元の確率に対する%）。</summary>
@@ -141,7 +141,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>因縁の表示（「深淵の追跡者との因縁 Lv2/5」）。</summary>
         public static string GrudgeLabel(int grudge) => Loc.T($"{NemesisName}との因縁 Lv{ClampGrudge(grudge)}/{MaxGrudge}",
-            $"Grudge with the {NemesisName}: Lv{ClampGrudge(grudge)}/{MaxGrudge}");
+            $"Grudge with the {NemesisName}: Lv{ClampGrudge(grudge)}/{MaxGrudge}",
+            $"与{NemesisName}的宿怨 Lv{ClampGrudge(grudge)}/{MaxGrudge}");
 
         public static bool HasSmith(Profile p) => p != null && Workshop.Level(p, Upgrade.ForbiddenSmith) > 0;
 
@@ -159,10 +160,10 @@ namespace SodRpg.Core.Game
         {
             switch (pattern)
             {
-                case ForbiddenPattern.Pact: return Loc.T("禁忌の契約", "Forbidden Pact");
-                case ForbiddenPattern.Severance: return Loc.T("断絶", "Severance");
-                case ForbiddenPattern.Overcharge: return Loc.T("過剰", "Overcharge");
-                case ForbiddenPattern.Ruin: return Loc.T("破滅の誓い", "Oath of Ruin");
+                case ForbiddenPattern.Pact: return Loc.T("禁忌の契約", "Forbidden Pact", "禁忌契约");
+                case ForbiddenPattern.Severance: return Loc.T("断絶", "Severance", "断绝");
+                case ForbiddenPattern.Overcharge: return Loc.T("過剰", "Overcharge", "过载");
+                case ForbiddenPattern.Ruin: return Loc.T("破滅の誓い", "Oath of Ruin", "破灭之誓");
                 default: return "";
             }
         }
@@ -171,10 +172,10 @@ namespace SodRpg.Core.Game
         {
             switch (pattern)
             {
-                case ForbiddenPattern.Pact: return Loc.T("極端な利点と、はっきりした欠点の能力が1組付く（シールド不可と回復の攻撃力への転化を含む）。", "Adds one extreme boon paired with a clear drawback (including no shields with healing turned into attack).");
-                case ForbiddenPattern.Severance: return Loc.T("特性を1つ失い、固有効果を1つ得る。", "Loses one affix and gains one power.");
-                case ForbiddenPattern.Overcharge: return Loc.T($"特性を1つ失い、固有効果が{OverchargePowerPct / 100m:0.##}倍になる。", $"Loses one affix; powers become x{OverchargePowerPct / 100m:0.##}.");
-                case ForbiddenPattern.Ruin: return Loc.T($"特性が{RuinAffixPct / 100m:0.##}倍になる代わりに、最大HP{RuinMaxHealthPct}%。", $"Affixes become x{RuinAffixPct / 100m:0.##}, but max HP {RuinMaxHealthPct}%.");
+                case ForbiddenPattern.Pact: return Loc.T("極端な利点と、はっきりした欠点の能力が1組付く（シールド不可と回復の攻撃力への転化を含む）。", "Adds one extreme boon paired with a clear drawback (including no shields with healing turned into attack).", "附带一组极端的优点与明确的缺点（包括无法获得护盾，以及治疗转化为攻击力）。");
+                case ForbiddenPattern.Severance: return Loc.T("特性を1つ失い、固有効果を1つ得る。", "Loses one affix and gains one power.", "失去1个词条，获得1个固有效果。");
+                case ForbiddenPattern.Overcharge: return Loc.T($"特性を1つ失い、固有効果が{OverchargePowerPct / 100m:0.##}倍になる。", $"Loses one affix; powers become x{OverchargePowerPct / 100m:0.##}.", $"失去1个词条，固有效果变为{OverchargePowerPct / 100m:0.##}倍。");
+                case ForbiddenPattern.Ruin: return Loc.T($"特性が{RuinAffixPct / 100m:0.##}倍になる代わりに、最大HP{RuinMaxHealthPct}%。", $"Affixes become x{RuinAffixPct / 100m:0.##}, but max HP {RuinMaxHealthPct}%.", $"词条变为{RuinAffixPct / 100m:0.##}倍，但最大生命{RuinMaxHealthPct}%。");
                 default: return "";
             }
         }
@@ -184,15 +185,16 @@ namespace SodRpg.Core.Game
         {
             var m = r?.Forbidden;
             if (m == null) return "";
-            string text = Loc.T("禁忌化：", "Forbidden: ") + PatternName(m.Pattern);
+            string text = Loc.T("禁忌化：", "Forbidden: ", "禁忌化：") + PatternName(m.Pattern);
             if (IsTransmute(r))
                 text += Loc.T($"（血の転化：シールドを得られず、受けた回復の{TransmuteHealPct}%を攻撃力に変換）",
-                    $" (Blood Transmutation: cannot gain shields; {TransmuteHealPct}% of healing received becomes attack)");
+                    $" (Blood Transmutation: cannot gain shields; {TransmuteHealPct}% of healing received becomes attack)",
+                    $"（血液转化：无法获得护盾，受到的治疗{TransmuteHealPct}%转化为攻击力）");
             int removed = RemovedAffixIndex(r);
             if (removed >= 0)
             {
                 string lost = Content.FormatStat(r.Affixes[removed].Stat, r.Affixes[removed].Value);
-                text += Loc.T($"（失った特性：{lost}）", $" (lost affix: {lost})");
+                text += Loc.T($"（失った特性：{lost}）", $" (lost affix: {lost})", $"（失去的词条：{lost}）");
             }
             return text;
         }
@@ -255,13 +257,14 @@ namespace SodRpg.Core.Game
         /// <summary>禁忌化できない理由。できるなら null。</summary>
         public static string CannotForbid(Profile p, Relic r)
         {
-            if (!HasSmith(p)) return Loc.T("工房で「禁忌の職人」を解放すると使えます。", "Unlock the Forbidden Smith in the workshop first.");
-            if (r == null) return Loc.T("保管庫にない遺物です。", "That relic is not in your stash.");
-            if (!IsOrange(r)) return Loc.T("禁忌化できるのは、セットに属さない固有品（オレンジ枠）だけです。", "Only non-set uniques (orange frame) can be made forbidden.");
-            if (r.Forbidden != null) return Loc.T("この遺物はすでに禁忌化しています（1つの遺物に1回だけ）。", "This relic is already forbidden (once per relic).");
+            if (!HasSmith(p)) return Loc.T("工房で「禁忌の職人」を解放すると使えます。", "Unlock the Forbidden Smith in the workshop first.", "需先在工坊解锁“禁忌工匠”。");
+            if (r == null) return Loc.T("保管庫にない遺物です。", "That relic is not in your stash.", "该遗物不在仓库中。");
+            if (!IsOrange(r)) return Loc.T("禁忌化できるのは、セットに属さない固有品（オレンジ枠）だけです。", "Only non-set uniques (orange frame) can be made forbidden.", "只有不属于套装的传说（橙色边框）可以禁忌化。");
+            if (r.Forbidden != null) return Loc.T("この遺物はすでに禁忌化しています（1つの遺物に1回だけ）。", "This relic is already forbidden (once per relic).", "该遗物已经禁忌化（每件遗物仅限1次）。");
             if (p.Material(Materials.NemesisCore) < CoreCost || p.Material(Materials.Shard) < ShardCost || p.Material(Materials.Tuning) < TuningCost)
                 return Loc.T($"素材が足りません（禁忌の核{CoreCost}・欠片{ShardCost}・調律石{TuningCost}）。禁忌の核は宿敵化したボスを倒すと手に入ります。",
-                    $"Not enough materials ({CoreCost} forbidden cores, {ShardCost} shards, {TuningCost} tuning). Forbidden cores drop from nemesis bosses.");
+                    $"Not enough materials ({CoreCost} forbidden cores, {ShardCost} shards, {TuningCost} tuning). Forbidden cores drop from nemesis bosses.",
+                    $"材料不足（禁忌之核{CoreCost}·碎片{ShardCost}·调律石{TuningCost}）。禁忌之核可通过击败宿敌化的Boss获得。");
             return null;
         }
 

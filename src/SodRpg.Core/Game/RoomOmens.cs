@@ -112,34 +112,34 @@ namespace SodRpg.Core.Game
         {
             if (omen == RoomOmen.ResonantWard)
                 return Loc.T("部屋の兆し：共鳴の盾（2 人以上で同時に攻撃すると盾が割れる）・遺物+",
-                    "Room Omen: Resonant Ward (Two or more players attacking together break the ward) · relics +")
+                    "Room Omen: Resonant Ward (Two or more players attacking together break the ward) · relics +", "房间预兆：共鸣之盾（2人以上同时攻击会打破护盾）·遗物+")
                     + (RoomOmenBalance.TrialDropBonus * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
             string name, effect;
             switch (omen)
             {
-                case RoomOmen.Vigor: name = Loc.T("鋭気", "Vigor"); effect = Loc.T("攻撃力・魔力", "attack & power"); break;
-                case RoomOmen.Swiftness: name = Loc.T("疾駆", "Swiftness"); effect = Loc.T("移動速度", "movement speed"); break;
-                case RoomOmen.Focus: name = Loc.T("集中", "Focus"); effect = Loc.T("スキル加速", "skill haste"); break;
-                case RoomOmen.Fortitude: name = Loc.T("堅牢", "Fortitude"); effect = Loc.T("防御", "armor"); break;
-                case RoomOmen.Healing: name = Loc.T("癒し", "Healing"); effect = Loc.T("受ける回復", "healing received"); break;
-                case RoomOmen.Fortune: name = Loc.T("幸運", "Fortune"); effect = Loc.T("遺物ドロップ率", "relic drop chance"); break;
-                case RoomOmen.Sluggishness: name = Loc.T("鈍重", "Sluggishness"); effect = Loc.T("移動速度", "movement speed"); break;
-                case RoomOmen.Fragility: name = Loc.T("脆弱", "Fragility"); effect = Loc.T("防御", "armor"); break;
-                case RoomOmen.Weariness: name = Loc.T("倦怠", "Weariness"); effect = Loc.T("攻撃速度", "attack speed"); break;
-                case RoomOmen.Drought: name = Loc.T("枯渇", "Drought"); effect = Loc.T("受ける回復", "healing received"); break;
-                case RoomOmen.RestlessEnemies: name = Loc.T("昂る敵", "Restless enemies"); effect = Loc.T("敵の移動速度", "enemy movement speed"); break;
-                case RoomOmen.SturdyEnemies: name = Loc.T("頑強な敵", "Sturdy enemies"); effect = Loc.T("敵の最大HP", "enemy max HP"); break;
-                case RoomOmen.Vitality: name = Loc.T("活力", "Vitality"); effect = Loc.T("最大HP", "max HP"); break;
-                case RoomOmen.Alacrity: name = Loc.T("俊敏", "Alacrity"); effect = Loc.T("攻撃速度", "attack speed"); break;
-                case RoomOmen.Feebleness: name = Loc.T("虚弱", "Feebleness"); effect = Loc.T("最大HP", "max HP"); break;
-                case RoomOmen.Dulling: name = Loc.T("鈍化", "Dulling"); effect = Loc.T("スキル加速", "skill haste"); break;
+                case RoomOmen.Vigor: name = Loc.T("鋭気", "Vigor", "锐气"); effect = Loc.T("攻撃力・魔力", "attack & power", "攻击力与法术强度"); break;
+                case RoomOmen.Swiftness: name = Loc.T("疾駆", "Swiftness", "疾行"); effect = Loc.T("移動速度", "movement speed", "移动速度"); break;
+                case RoomOmen.Focus: name = Loc.T("集中", "Focus", "专注"); effect = Loc.T("スキル加速", "skill haste", "技能加速"); break;
+                case RoomOmen.Fortitude: name = Loc.T("堅牢", "Fortitude", "坚牢"); effect = Loc.T("防御", "armor", "护甲"); break;
+                case RoomOmen.Healing: name = Loc.T("癒し", "Healing", "治愈"); effect = Loc.T("受ける回復", "healing received", "受到的治疗"); break;
+                case RoomOmen.Fortune: name = Loc.T("幸運", "Fortune", "幸运"); effect = Loc.T("遺物ドロップ率", "relic drop chance", "遗物掉落率"); break;
+                case RoomOmen.Sluggishness: name = Loc.T("鈍重", "Sluggishness", "迟重"); effect = Loc.T("移動速度", "movement speed", "移动速度"); break;
+                case RoomOmen.Fragility: name = Loc.T("脆弱", "Fragility", "脆弱"); effect = Loc.T("防御", "armor", "护甲"); break;
+                case RoomOmen.Weariness: name = Loc.T("倦怠", "Weariness", "倦怠"); effect = Loc.T("攻撃速度", "attack speed", "攻击速度"); break;
+                case RoomOmen.Drought: name = Loc.T("枯渇", "Drought", "枯竭"); effect = Loc.T("受ける回復", "healing received", "受到的治疗"); break;
+                case RoomOmen.RestlessEnemies: name = Loc.T("昂る敵", "Restless enemies", "躁动之敌"); effect = Loc.T("敵の移動速度", "enemy movement speed", "敌人的移动速度"); break;
+                case RoomOmen.SturdyEnemies: name = Loc.T("頑強な敵", "Sturdy enemies", "顽抗之敌"); effect = Loc.T("敵の最大HP", "enemy max HP", "敌人的最大生命"); break;
+                case RoomOmen.Vitality: name = Loc.T("活力", "Vitality", "活力"); effect = Loc.T("最大HP", "max HP", "最大生命"); break;
+                case RoomOmen.Alacrity: name = Loc.T("俊敏", "Alacrity", "敏捷"); effect = Loc.T("攻撃速度", "attack speed", "攻击速度"); break;
+                case RoomOmen.Feebleness: name = Loc.T("虚弱", "Feebleness", "虚弱"); effect = Loc.T("最大HP", "max HP", "最大生命"); break;
+                case RoomOmen.Dulling: name = Loc.T("鈍化", "Dulling", "钝化"); effect = Loc.T("スキル加速", "skill haste", "技能加速"); break;
                 default: return null;
             }
             double value = Value(omen);
             string units = omen == RoomOmen.Focus || omen == RoomOmen.Fortitude || omen == RoomOmen.Fragility || omen == RoomOmen.Dulling ? "" : "%";
-            string text = Loc.T("部屋の兆し：", "Room Omen: ") + name + Loc.T("（", " (") + effect
-                + (value >= 0 ? "+" : "−") + Math.Abs(value).ToString("0.##", CultureInfo.InvariantCulture) + units + Loc.T("）", ")");
-            if (IsTrial(omen)) text += Loc.T("・遺物+", " · relics +")
+            string text = Loc.T("部屋の兆し：", "Room Omen: ", "房间预兆：") + name + Loc.T("（", " (", "（") + effect
+                + (value >= 0 ? "+" : "−") + Math.Abs(value).ToString("0.##", CultureInfo.InvariantCulture) + units + Loc.T("）", ")", "）");
+            if (IsTrial(omen)) text += Loc.T("・遺物+", " · relics +", "·遗物+")
                 + (RoomOmenBalance.TrialDropBonus * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
             return text;
         }
