@@ -23,22 +23,35 @@ namespace SodRpg.Mod
     }
 
     // Keep the handled marker through both sender and receiver callbacks, including nested heals.
+    // The saved state lives in depth-indexed slots instead of a Harmony __state, which would box
+    // the struct (~EventInfoHeal-sized) on every Actor.DoHeal call — that is every heal on the host.
     [HarmonyPatch(typeof(Actor), nameof(Actor.DoHeal))]
     internal static class NativeSupportHealScope
     {
         internal static int Depth;
-        internal struct State { internal EventInfoHeal Heal; internal bool Active; internal int Depth; }
-        private static void Prefix(out State __state)
+        private static EventInfoHeal[] _healSlots = new EventInfoHeal[8];
+        private static bool[] _activeSlots = new bool[8];
+        private static void Prefix()
         {
-            __state = new State { Heal = NativeSupportHeal.Current, Active = NativeSupportHeal.Active, Depth = Depth };
+            if (Depth >= _healSlots.Length)
+            {
+                int next = _healSlots.Length * 2;
+                while (next <= Depth) next *= 2;
+                Array.Resize(ref _healSlots, next);
+                Array.Resize(ref _activeSlots, next);
+            }
+            _healSlots[Depth] = NativeSupportHeal.Current;
+            _activeSlots[Depth] = NativeSupportHeal.Active;
             Depth++;
             NativeSupportHeal.Active = false;
         }
-        private static Exception Finalizer(Exception __exception, State __state)
+        private static Exception Finalizer(Exception __exception)
         {
-            NativeSupportHeal.Current = __state.Heal;
-            NativeSupportHeal.Active = __state.Active;
-            Depth = __state.Depth;
+            // Prefix only throws on OOM before pushing; keep the depth from going negative if so.
+            if (Depth <= 0) return __exception;
+            Depth--;
+            NativeSupportHeal.Current = _healSlots[Depth];
+            NativeSupportHeal.Active = _activeSlots[Depth];
             return __exception;
         }
     }
