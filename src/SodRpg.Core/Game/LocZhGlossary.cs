@@ -42,6 +42,17 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
+        // セット名の接頭辞: 砕盾騎士 Shardshield → 碎盾骑士、盾誓い Bashbound → 盾誓、陣頭 Frontline → 阵头、
+        //   後陣 Rearline → 后阵、輪守り Ringwarden → 环守、継ぎ歌 Relaysong → 接力歌、宴 Feastpack → 狼宴、
+        //   弔い花 Funeral-Bloom → 葬花、一点狙い Single-Mark → 单点锁定、渡り鳥 Migrant → 候鸟、
+        //   運刃 Fortune-Edge → 运刃、突撃隊 Charge-Corps → 突击队、楽団 Ensemble → 乐团、勝負師 Gambler → 赌师、
+        //   無手の誇り Bare-Hand → 空手之傲、寝ずの番 Vigil → 守夜、供犠 Tithe → 献祭、舞い星 Dancing-Star → 舞星、
+        //   突破隊 Breakout → 突破队、荒ぶる樹界 Rampaging Grove → 狂暴树界。
+        // 固有効果の説明の語: 攻撃力・魔力の高い方 → 攻击力与法术强度中较高者、障壁 → 护盾、通常攻撃 → 通常攻击、
+        //   会心 → 暴击、効果時間が延びる → 刷新持续时间、重ならず → 不叠加、装備・星の同じ効果 → 装备与星的同名效果、
+        //   距離係数 → 距离系数、ハンター追跡度 → 猎人追踪等级、ゴールド → 金币、スタン → 眩晕、スロウ → 减速、
+        //   冷気（CC）→ 冰缓、聖堂 → 神殿、通常記憶 → 通常记忆、移動の記憶 → 移动记忆、奥義の記憶 → 奥义记忆。
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
