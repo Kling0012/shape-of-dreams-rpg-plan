@@ -44,6 +44,7 @@ namespace SodRpg.Mod
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
             NativePerfOptions.ChaosShrineChoice = config.nativeChaosShrineChoiceCache;
+            NativePerfOptions.BossSoulShrineScan = config.nativeBossSoulShrineScan;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
             NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
@@ -57,6 +58,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PickupIdle = config.nativePickupIdle;
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
             NativePerfOptions.TimescaleIdle = config.nativeTimescaleIdle;
+            NativePerfOptions.RedGiantDamageText = config.nativeRedGiantDamageText;
         }
     }
 
@@ -90,6 +92,7 @@ namespace SodRpg.Mod
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ChaosShrineHitScan = true;
         internal static bool ChaosShrineChoice = true;
+        internal static bool BossSoulShrineScan = true;
         internal static bool ProjectileIdleRpc = true;
         internal static bool CustomRpcDispatch = true;
         internal static bool SampleUpdateIdle = true;
@@ -103,6 +106,7 @@ namespace SodRpg.Mod
         internal static bool PickupIdle = true;
         internal static bool EnemyHitFxBudget = true;
         internal static bool TimescaleIdle = true;
+        internal static bool RedGiantDamageText = true;
     }
 
     internal static class NativePerfPatch
@@ -3102,6 +3106,226 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeBossSoulShrineScanPerf
+    {
+        // Shrine_BossSoul.CanInteract ends with
+        // !ActorManager.instance.allEntities.Any(e => e is BossMonster): the shrine is only
+        // usable while no boss exists. CanInteract runs per frame on every client (guests
+        // included) — ControlManager.GetNearbyInteractable probes every interactable within
+        // 6 units each frame, EditSkillManager.LogicUpdate re-checks it every tick while the
+        // shrine's upgrade UI is open, and FloatingWindowManager re-checks the focused
+        // target. Enumerable.Any over HashSet<Entity> boxes a fresh enumerator on every call
+        // and routes every element through a delegate invocation, so with the shrine nearby
+        // this is a full-entity scan plus an allocation on every client every frame.
+        //
+        // The transpiler swaps only that one Any call for a hand loop with identical
+        // semantics: the same HashSet<Entity> iterated in the same order (the native body
+        // mutates nothing inside the call), the same `is BossMonster` test
+        // (Type.IsInstanceOfType is exactly the `is` operator, null included), the same
+        // short-circuit and the same result — with the struct enumerator and no delegate
+        // call. Everything else in the native body (base.CanInteract, the used-players
+        // list, the negation) is left untouched, so no game logic is replicated. The
+        // call shape alone would not be enough — the fast path below ignores the
+        // predicate, so a game update that keeps the one Any call but changes the lambda
+        // (say `e is BossMonster && e.isActive`) would leave the patch applied while
+        // silently answering a different question. The transpiler therefore also pins
+        // the predicate itself (see IsBareIsTest) and skips the swap when the lambda is
+        // not exactly the bare boss test. With the option off, or on any exception
+        // inside the loop, the helper falls back to the native Enumerable.Any call,
+        // which is the original behaviour unchanged.
+        private static MethodBase _target;
+        private static Type _bossType;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare() => TryPrepare("Shrine_BossSoul", "BossMonster");
+
+        // Split out with the type names as arguments so the tests
+        // (BossSoulShrineScanPerfTests) can point the same wiring at stand-in classes
+        // and at missing names (the fail-soft path), exactly like
+        // NativeChaosShrineHitScanPerf. The name-only lookups stay: the mod never
+        // references these native classes, and TypeByName resolves the harness stand-ins
+        // in tests exactly like the real classes in the game.
+        internal static bool TryPrepare(string shrineTypeName, string bossTypeName)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(shrineTypeName);
+                if (type == null)
+                    throw new MissingMemberException(shrineTypeName + " unavailable");
+                MethodBase target = null;
+                foreach (var candidate in AccessTools.GetDeclaredMethods(type))
+                {
+                    if (candidate.Name == "CanInteract" && candidate.ReturnType == typeof(bool)
+                        && candidate.GetParameters().Length == 1 && candidate.GetMethodBody() != null)
+                    {
+                        target = candidate;
+                        break;
+                    }
+                }
+                if (target == null)
+                    throw new MissingMemberException(shrineTypeName + ".CanInteract unavailable");
+                _bossType = AccessTools.TypeByName(bossTypeName);
+                if (_bossType == null)
+                    throw new MissingMemberException(bossTypeName + " unavailable");
+                _target = target;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int sites = 0;
+            int site = -1;
+            Type elementType = null;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo m) || m.Name != "Any" || !m.IsGenericMethod
+                    || m.GetGenericArguments().Length != 1
+                    || m.DeclaringType != typeof(System.Linq.Enumerable)) continue;
+                var parameters = m.GetParameters();
+                if (parameters.Length != 2 || !parameters[1].ParameterType.IsGenericType
+                    || parameters[1].ParameterType.GetGenericTypeDefinition() != typeof(Func<,>)) continue;
+                var element = parameters[1].ParameterType.GetGenericArguments()[0];
+                if (element.IsGenericParameter || !parameters[0].ParameterType.IsGenericType
+                    || parameters[0].ParameterType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
+                    || parameters[0].ParameterType.GetGenericArguments()[0] != element) continue;
+                elementType = element;
+                site = i;
+                sites++;
+            }
+            // The native body holds exactly one Any(source, predicate) call; any other count
+            // means the body changed shape or this transpiler already ran.
+            if (sites != 1 || site < 0 || elementType == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", "native boss scan callsite changed or already patched");
+                return code;
+            }
+            // The call shape alone cannot tell what the predicate asks, and the hand loop
+            // below answers with the boss-type test only. Pin the lambda the same way the
+            // call itself constructs it — the compiler emits the delegate as
+            // `ldftn <lambda>` + `newobj Func<T,bool>(object, native int)` (the cached
+            // delegate block in front of the Any call) — and require exactly that one
+            // construction, then verify the lambda body is the bare `is <boss type>` test.
+            // A body that asks anything else (or a predicate whose construction cannot be
+            // located here) skips the swap with one warning, so the native Any keeps
+            // deciding with its own predicate instead of this loop silently changing the
+            // shrine's availability.
+            var funcCtor = typeof(Func<,>).MakeGenericType(elementType, typeof(bool))
+                .GetConstructor(new[] { typeof(object), typeof(IntPtr) });
+            MethodInfo lambda = null;
+            int lambdas = 0;
+            for (int i = 1; i < code.Count; i++)
+            {
+                if (code[i].opcode != OpCodes.Newobj || !(code[i].operand is ConstructorInfo ctor) || ctor != funcCtor) continue;
+                if (code[i - 1].opcode != OpCodes.Ldftn || !(code[i - 1].operand is MethodInfo candidate)) continue;
+                lambda = candidate;
+                lambdas++;
+            }
+            if (lambdas != 1 || !IsBareIsTest(lambda))
+            {
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan",
+                    "native boss scan predicate is not the bare boss test");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeBossSoulShrineScanPerf), nameof(BossScan))
+                .MakeGenericMethod(elementType);
+            return code;
+        }
+
+        // `e => e is <boss type>` compiles to exactly five instructions:
+        // ldarg.<the predicate argument>, isinst <boss type>, ldnull, cgt.un, ret
+        // (the shipped Dew.Core body is exactly this; nops from debug builds are
+        // tolerated). The walk is over the raw body bytes with the isinst token resolved
+        // and compared against the boss type the loop tests with, so any other predicate —
+        // or an unreadable body — fails and the transpiler leaves the native call alone.
+        private static bool IsBareIsTest(MethodBase lambda)
+        {
+            try
+            {
+                var il = lambda.GetMethodBody()?.GetILAsByteArray();
+                if (il == null) return false;
+                int i = SkipNops(il, 0);
+                i = ReadArgument(il, i, lambda.IsStatic ? 0 : 1);
+                if (i < 0) return false;
+                i = SkipNops(il, i);
+                if (i + 5 > il.Length || il[i] != 0x75) return false; // isinst
+                uint token = BitConverter.ToUInt32(il, i + 1);
+                var declaring = lambda.DeclaringType;
+                var typeArguments = declaring != null && declaring.IsGenericType ? declaring.GetGenericArguments() : null;
+                var methodArguments = lambda.IsGenericMethod ? lambda.GetGenericArguments() : null;
+                if (lambda.Module.ResolveType(unchecked((int)token), typeArguments, methodArguments) != _bossType) return false;
+                i = SkipNops(il, i + 5);
+                if (i >= il.Length || il[i] != 0x14) return false; // ldnull
+                i = SkipNops(il, i + 1);
+                if (i + 1 >= il.Length || il[i] != 0xFE || il[i + 1] != 0x03) return false; // cgt.un
+                i = SkipNops(il, i + 2);
+                if (i >= il.Length || il[i] != 0x2A) return false; // ret
+                return SkipNops(il, i + 1) == il.Length;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static int SkipNops(byte[] il, int index)
+        {
+            while (index < il.Length && il[index] == 0x00) index++;
+            return index;
+        }
+
+        // New index after a load of the given argument slot (ldarg.s/ldarg forms
+        // included), or -1 when the bytes at index are anything else.
+        private static int ReadArgument(byte[] il, int index, int slot)
+        {
+            if (index >= il.Length) return -1;
+            if (slot == 0 && il[index] == 0x02) return index + 1; // ldarg.0
+            if (slot == 1 && il[index] == 0x03) return index + 1; // ldarg.1
+            if (index + 1 < il.Length && il[index] == 0x0E && il[index + 1] == slot) return index + 2; // ldarg.s
+            if (index + 3 < il.Length && il[index] == 0xFE && il[index + 1] == 0x09
+                && il[index + 2] == slot && il[index + 3] == 0) return index + 4; // ldarg
+            return -1;
+        }
+
+        // Same call shape as Enumerable.Any<TSource>(IEnumerable<TSource>, Func<TSource, bool>):
+        // the predicate argument stays on the evaluation stack and is only ever forwarded to
+        // the native fallback. The loop mirrors Any's short-circuit exactly, and
+        // Type.IsInstanceOfType is the `is` operator: null is no match, subclasses match.
+        internal static bool BossScan<T>(IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            if (_disabled || !NativePerfOptions.BossSoulShrineScan) return System.Linq.Enumerable.Any(source, predicate);
+            try
+            {
+                if (source is HashSet<T> set)
+                {
+                    foreach (T entry in set)
+                        if (_bossType.IsInstanceOfType(entry)) return true;
+                    return false;
+                }
+                foreach (T entry in source)
+                    if (_bossType.IsInstanceOfType(entry)) return true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "boss soul shrine scan", ex.Message);
+                return System.Linq.Enumerable.Any(source, predicate);
+            }
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeProjectileIdleRpcPerf
     {
         // Every projectile entity hit ends with the weaver's RpcPlayOnEntityEffect ClientRpc,
@@ -4938,6 +5162,177 @@ namespace SodRpg.Mod
                 NativeTimescaleIdlePerf._disabled = true;
                 NativePerfPatch.Warn(ref _warned, "timescale idle publish", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRedGiantDamageTextPerf
+    {
+        // Mon_RedGiant.ActiveLogicUpdate (2026-10-20 IL check against the game's
+        // Dew.Core.dll r1.4.0.13 and r1.4.1.2) ends with an unconditional damage-meter
+        // rebuild that runs on every active instance on every client, host and guests
+        // alike:
+        //   dpsText.text = string.Format("Total: {0:#,##0}\r\nDPS: {1:#,##0}\r\nMax Single Dmg: {2:#,##0}",
+        //                                box(_totalDamage), box(_dps), box(_maxSingleDmg));
+        // In the native IL each ldfld is preceded by its own ldarg.0 (this-field reads;
+        // the weaver replaces only the SyncVar writes with set_Network_* calls), which
+        // the Transpiler's tail check matches instruction for instruction.
+        // The three inputs are exactly the SyncVar floats the meter displays. Between host
+        // hits (and between guest sync deliveries) all three are unchanged, so the built
+        // string is byte-identical to the previous frame's, and TMP_Text.set_text early-outs
+        // on an equal string — the entire per-frame cost is the interpolated string plus
+        // three float boxes, for as long as the monster exists, even when nothing is shown
+        // differently. The replacement helper keeps the same stack [text, literal, total,
+        // dps, max], compares the three raw floats against the ones it last formatted for
+        // this TextMeshPro and returns without touching TMP when all three match; otherwise
+        // it runs the identical string.Format on the identical literal. The skip assumes
+        // this helper is the meter's only text writer (Mon_RedGiant's dpsText is assigned
+        // only by ActiveLogicUpdate), so an outside write between unchanged frames is not
+        // something the value-only check would revert. A changed value
+        // therefore formats and assigns on the very frame it appears, so the displayed text
+        // at every frame is exactly what vanilla shows, including the damage window and the
+        // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
+        // alike). While the option is off the helper formats unconditionally, which is
+        // vanilla; a null dpsText still throws exactly where vanilla throws.
+        // LastText is the per-TMP_Text record of the last formatted triple. It starts
+        // as NaN (never equal to the spawn-frame 0/0/0), so the very first call always
+        // formats and assigns — vanilla writes on every frame including the first, and
+        // the prefab's placeholder TMP string must not survive until the first non-zero
+        // value.
+        private sealed class LastText
+        {
+            internal float Total = float.NaN;
+            internal float Dps = float.NaN;
+            internal float Max = float.NaN;
+        }
+
+        private static readonly ConditionalWeakTable<TMPro.TMP_Text, LastText> LastTexts =
+            new ConditionalWeakTable<TMPro.TMP_Text, LastText>();
+        private static readonly ConditionalWeakTable<TMPro.TMP_Text, LastText>.CreateValueCallback
+            CreateLastText = _ => new LastText();
+        private static FieldInfo _total, _dps, _max;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Mon_RedGiant), "ActiveLogicUpdate",
+                new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _total = AccessTools.Field(typeof(Mon_RedGiant), "_totalDamage");
+                _dps = AccessTools.Field(typeof(Mon_RedGiant), "_dps");
+                _max = AccessTools.Field(typeof(Mon_RedGiant), "_maxSingleDmg");
+                if (_total == null || _dps == null || _max == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "red giant damage text", "native SyncVar fields unavailable");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var format = AccessTools.Method(typeof(string), nameof(string.Format),
+                new[] { typeof(string), typeof(object), typeof(object), typeof(object) });
+            var setText = AccessTools.PropertySetter(typeof(TMPro.TMP_Text), "text");
+            int boxes = 0, formats = 0, writes = 0, tail = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (IsBox(code[i])) boxes++;
+                if (code[i].Calls(format)) { formats++; tail = i; }
+                if (code[i].Calls(setText)) writes++;
+            }
+            // The tail must be exactly the native sequence (ilspycmd against the game's
+            // Dew.Core.dll r1.4.0.13 and r1.4.1.2, checked 2026-10-20 — each ldfld is
+            // preceded by its own ldarg.0):
+            //   [tail-9]  ldarg.0
+            //   [tail-8]  ldfld _totalDamage
+            //   [tail-7]  box
+            //   [tail-6]  ldarg.0
+            //   [tail-5]  ldfld _dps
+            //   [tail-4]  box
+            //   [tail-3]  ldarg.0
+            //   [tail-2]  ldfld _maxSingleDmg
+            //   [tail-1]  box
+            //   [tail]    call string.Format(string, object, object, object)
+            //   [tail+1]  callvirt TMP_Text::set_text(string)
+            // Anything else means the native shape changed; hand the method back
+            // untouched (one warning, vanilla behavior).
+            if (boxes != 3 || formats != 1 || writes != 1 || tail < 9
+                || tail + 1 >= code.Count || !code[tail + 1].Calls(setText)
+                || !LoadsField(code[tail - 8], _total) || !IsBox(code[tail - 7])
+                || !LoadsField(code[tail - 5], _dps) || !IsBox(code[tail - 4])
+                || !LoadsField(code[tail - 2], _max) || !IsBox(code[tail - 1])
+                || !LoadsThis(code[tail - 9]) || !LoadsThis(code[tail - 6]) || !LoadsThis(code[tail - 3]))
+            {
+                NativePerfPatch.Warn(ref _warned, "red giant damage text",
+                    "native text callsite changed or already patched");
+                return code;
+            }
+            // Drop only the boxes (the ldarg.0 + ldfld pairs stay and keep pushing the
+            // raw floats), swap Format for the skip-capable helper with the same stack
+            // shape, and retire set_text.
+            foreach (int i in new[] { tail - 7, tail - 4, tail - 1 })
+            {
+                code[i].opcode = OpCodes.Nop;
+                code[i].operand = null;
+            }
+            code[tail].opcode = OpCodes.Call;
+            code[tail].operand = AccessTools.Method(typeof(NativeRedGiantDamageTextPerf), nameof(SetDamageText));
+            code[tail + 1].opcode = OpCodes.Nop;
+            code[tail + 1].operand = null;
+            return code;
+        }
+
+        private static bool IsBox(CodeInstruction instruction)
+            => instruction.opcode == OpCodes.Box && instruction.operand is Type type && type == typeof(float);
+
+        private static bool LoadsField(CodeInstruction instruction, FieldInfo field)
+            => instruction.opcode == OpCodes.Ldfld && Equals(instruction.operand, field);
+
+        private static bool LoadsThis(CodeInstruction instruction)
+            => instruction.opcode == OpCodes.Ldarg_0;
+
+        // float == reads 0f and -0f as equal while the format renders them apart
+        // ("0" / "-0"), so a 0 → -0 frame re-formats like vanilla; the bit
+        // comparison tells the two zeros apart. The == first also keeps NaN
+        // never-equal: a NaN input formats every frame (vanilla shows "NaN"),
+        // and the NaN sentinel above never matches a real value.
+        private static bool SameFloat(float last, float now)
+            => last == now && BitConverter.SingleToInt32Bits(last) == BitConverter.SingleToInt32Bits(now);
+
+        // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
+        private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
+        {
+            if (!_disabled && NativePerfOptions.RedGiantDamageText && text != null)
+            {
+                try
+                {
+                    var last = LastTexts.GetValue(text, CreateLastText);
+                    if (SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max)) return;
+                    last.Total = total;
+                    last.Dps = dps;
+                    last.Max = max;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
+                }
+            }
+            text.text = string.Format(format, total, dps, max);
         }
     }
 }

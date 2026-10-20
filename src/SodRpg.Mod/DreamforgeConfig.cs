@@ -194,6 +194,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse the selected chaos-shrine reward across edit-mode UI frames / 混沌の神殿で選んだ報酬の解決を編集モードUIの毎フレームで使い回す")]
         public bool nativeChaosShrineChoiceCache = true;
 
+        [LabelText("Allocate no LINQ enumerator for the boss-soul shrine's boss-presence scan (local) / ボスソウルの神殿のボス存在走査で呼び出しごとのLINQ列挙子を確保しない（各端末）")]
+        public bool nativeBossSoulShrineScan = true;
+
         [LabelText("Skip projectile RPCs whose effect prefab is null (host) / 演出プレハブが無い弾の命中・完了・消散 RPC を省く（ホスト）")]
         public bool nativeProjectileIdleRpc = true;
 
@@ -232,6 +235,9 @@ namespace SodRpg.Mod
 
         [LabelText("Skip unchanged timescale re-sends while slowed (host) / 時間が遅くなっている間の同じタイムスケールの再送を省く（ホスト）")]
         public bool nativeTimescaleIdle = true;
+
+        [LabelText("Skip unchanged Red Giant damage-meter text rebuilds (every client) / レッドジャイアントの値が変わらない被ダメ計測テキストの組み立て直しを省く（各端末）")]
+        public bool nativeRedGiantDamageText = true;
 
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;

@@ -2772,7 +2772,7 @@
     "nameZh": "必中摄魂",
     "loreJa": "外さない脚が、息を拾う。",
     "loreEn": "Feet that never miss gather breath.",
-    "loreZh": "从不失脚的脚，收集着气息。",
+    "loreZh": "百发百中的脚，拾起气息。",
     "powers": [
       {
         "power": "SoulSiphon",
@@ -3698,7 +3698,7 @@
     "family": "Gale",
     "nameJa": "風履きの二重渦",
     "nameEn": "Wind-Sandal Twin Whirl",
-    "nameZh": "风履双重涡",
+    "nameZh": "风履双重旋风",
     "loreJa": "追風を纏い、渦を残す。",
     "loreEn": "Wrapped in tailwind, it leaves a whirl.",
     "loreZh": "裹着顺风，留下旋涡。",

@@ -2460,8 +2460,8 @@ namespace SodRpg.Mod
                 string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "";
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/{need}\n"
                     + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}",
-                    $"→{Content.SlotName(target.Value)}·碎片{tcost}{(ttune > 0 ? $"・调律石{ttune}" : "")}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}",
-                    $"碎片{tcost}{(ttune > 0 ? $"・调律石{ttune}" : "")}"));
+                    $"→{Content.SlotName(target.Value)}·碎片{tcost}{(ttune > 0 ? $"·调律石{ttune}" : "")}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}",
+                    $"碎片{tcost}{(ttune > 0 ? $"·调律石{ttune}" : "")}"));
                 if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin44)) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }
@@ -2905,7 +2905,7 @@ namespace SodRpg.Mod
                 {
                     string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>", "<color=#ffc952>选择中</color>")
                         : !unlocked ? Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>", "<color=#ffb090>条件未达成</color>")
-                        : slotsFull ? Loc.T("<color=#ffb090>枠がいっぱい</color>", "<color=#ffb090>no free slot</color>", "<color=#ffb090>部位已满</color>")
+                        : slotsFull ? Loc.T("<color=#ffb090>枠がいっぱい</color>", "<color=#ffb090>no free slot</color>", "<color=#ffb090>槽位已满</color>")
                         : Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>", "<color=#9fe0ff>可选择</color>");
                     n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
                 }
@@ -2949,7 +2949,7 @@ namespace SodRpg.Mod
             int keyCost = t.KeystoneCost;
             int cost = t.IsKeystone ? keyCost : t.RankCost;
             bool slotsFull = t.IsKeystone && !n.Allocated && _starTextState.KeystoneCount >= _starTextState.KeystoneSlotCount;
-            bool costInBody = description.Contains(Loc.T("ポイント", "point", "点"));
+            bool costInBody = description.Contains(Loc.T("ポイント", "point", "点数"));
             string readyColor = !n.Unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
             n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
                 + "\n" + description
@@ -3800,7 +3800,7 @@ namespace SodRpg.Mod
                     if (!b.Done && rerolls > 0)
                     {
                         int idx = i;
-                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)", $"重洗（剩余{rerolls}）"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
+                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)", $"重抽（剩余{rerolls}）"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
                     }
                     GUILayout.EndHorizontal();
                 }
