@@ -2184,7 +2184,7 @@ namespace SodRpg.Core.Game
                 new Txt("囲まれるほど拳は速まり、縛った敵には重く落ちる。", "Heavier fists fall on bound foes as you wade in.", "越深入敌群，拳头越快，落在被束缚的敌人身上也越重。"),
                 Power.Frenzy, EquipmentItemsBalanceValues.Unique_unique_hands_bound_fury_Power0, Power.Fetters, EquipmentItemsBalanceValues.Unique_unique_hands_bound_fury_Power1),
             new UniqueDef("unique.hands_chain_breaker", "hands.chain_wraps", new Txt("鎖砕きの拳", "Chainbreaker Fist", "碎链之拳"),
-                new Txt("一人倒すたび、拳は鎖ごと周囲を砕く。", "Each kill bursts through the chains around you.", "每击倒一个敌人，拳头便连同周围的锁链一并击碎。"),
+                new Txt("一人倒すたび、拳は鎖ごと周囲を砕く。", "Each kill bursts through the chains around you.", "每击倒一个敌人，拳头便将周围连同锁链一并击碎。"),
                 Power.Shatter, EquipmentItemsBalanceValues.Unique_unique_hands_chain_breaker_Power0, Power.Momentum, EquipmentItemsBalanceValues.Unique_unique_hands_chain_breaker_Power1),
             new UniqueDef("unique.hands_sun_vow", "hands.sun_gauntlets", new Txt("陽の奉納", "Offering to the Sun", "献予太阳"),
                 new Txt("聖堂に祈るほど、壁となる光は厚くなる。", "The more you pray, the thicker the wall of light.", "祈祷越多，光墙便越厚。"),
