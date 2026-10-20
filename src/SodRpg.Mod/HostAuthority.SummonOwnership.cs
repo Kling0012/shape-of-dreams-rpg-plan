@@ -46,8 +46,10 @@ namespace SodRpg.Mod
             if (_summonOwnershipFailed) return;
             try
             {
-                if (!OwnershipRunning() || !(ai?.entity is Summon summon) || summon.hero == null
-                    || summon.hero.owner == null || !summon.hero.owner.isHumanPlayer) return;
+                // Type check first: this runs for every Aggro of every entity, and
+                // OwnershipRunning() iterates the player list for each of those calls.
+                if (!(ai?.entity is Summon summon) || summon.hero == null || summon.hero.owner == null
+                    || !summon.hero.owner.isHumanPlayer || !OwnershipRunning()) return;
                 if (_summonGuardTargets.TryGetValue(summon, out var guard))
                 {
                     if (Time.time < guard.Until && guard.Hero == summon.hero && summon.isActive
