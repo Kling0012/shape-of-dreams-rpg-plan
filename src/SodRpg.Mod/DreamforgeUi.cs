@@ -3873,17 +3873,17 @@ namespace SodRpg.Mod
             bool editable = !Mirror.NetworkClient.active || Mirror.NetworkServer.active;
             bool wasEnabled = GUI.enabled;
             GUILayout.Space(4);
-            GUILayout.Label(Loc.T("記憶のエッセンス枠", "Memory essence slots"), _st.Header);
+            GUILayout.Label(Loc.T("記憶のエッセンス枠", "Memory essence slots", "记忆精华槽"), _st.Header);
             GUI.enabled = wasEnabled && editable;
-            bool enabled = GUILayout.Toggle(settings.Enabled, Loc.T("レベルによる追加を有効にする", "Enable slots from hero levels"));
+            bool enabled = GUILayout.Toggle(settings.Enabled, Loc.T("レベルによる追加を有効にする", "Enable slots from hero levels", "启用按英雄等级追加的槽位"));
             int every = settings.EveryLevels, cap = settings.Ceiling;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T($"{every} レベルごとに +1", $"+1 every {every} levels"), _st.Small, GUILayout.Width(280));
+            GUILayout.Label(Loc.T($"{every} レベルごとに +1", $"+1 every {every} levels", $"每{every}级 +1"), _st.Small, GUILayout.Width(280));
             if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) every--;
             if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) every++;
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T($"1つの記憶の上限：{cap} 枠", $"Cap per memory: {cap} slots"), _st.Small, GUILayout.Width(280));
+            GUILayout.Label(Loc.T($"1つの記憶の上限：{cap} 枠", $"Cap per memory: {cap} slots", $"单个记忆的上限：{cap} 个槽位"), _st.Small, GUILayout.Width(280));
             if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) cap--;
             if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) cap++;
             GUILayout.EndHorizontal();
@@ -3898,29 +3898,31 @@ namespace SodRpg.Mod
                 _saveLevelEssenceConfig?.Invoke();
             }
             GUILayout.Label(Loc.T($"対象：{settings.TargetsText()}。基本枠・破損した混沌・レベル分の合計に上限を適用。",
-                $"Targets: {settings.TargetsText()}. The cap includes base, Corrupted Chaos and level slots."), _st.Small);
+                $"Targets: {settings.TargetsText()}. The cap includes base, Corrupted Chaos and level slots.", $"对象：{settings.TargetsText()}。上限包含基础、损坏的混沌与等级槽位的合计。"), _st.Small);
             if (!LevelEssenceSettings.RuntimeBonusAvailable)
                 GUILayout.Label(Loc.T("本体の枠更新を追跡できないため、レベルによる追加だけ無効です。",
-                    "Level additions are unavailable because native slot updates cannot be tracked."), _st.Warn);
+                    "Level additions are unavailable because native slot updates cannot be tracked.", "由于无法追踪本体的槽位更新，仅等级追加不可用。"), _st.Warn);
             if (LevelEssenceRuntime.EffectiveCap < settings.Ceiling)
                 GUILayout.Label(Loc.T($"HUD拡張の準備待ち／失敗：実効上限は{LevelEssenceRuntime.EffectiveCap}枠です。",
-                    $"HUD extension pending/unavailable: effective cap is {LevelEssenceRuntime.EffectiveCap}."), _st.Warn);
+                    $"HUD extension pending/unavailable: effective cap is {LevelEssenceRuntime.EffectiveCap}.",
+                    $"HUD扩展待准备/不可用：实际有效上限为{LevelEssenceRuntime.EffectiveCap}个槽位。"), _st.Warn);
             GUILayout.Label(editable ? Loc.T("変更は即反映して保存します。対象の選択はMOD設定で変更できます。",
-                "Changes apply and save immediately. Select targets in mod settings.") : Loc.T("ホストの設定を表示しています（変更はホストのみ）。",
-                "Showing the host's settings (only the host can change them)."), _st.Small);
+                "Changes apply and save immediately. Select targets in mod settings.", "更改会立即生效并保存。对象可在MOD设置中更改。") : Loc.T("ホストの設定を表示しています（変更はホストのみ）。",
+                "Showing the host's settings (only the host can change them).", "正在显示主机的设置（仅主机可更改）。"), _st.Small);
         }
 
         private void DrawInfinityRecords(Profile profile)
         {
             GUILayout.Space(6);
-            GUILayout.Label(Loc.T("インフィニティ ─ 設定別の確保帰還", "Infinity ─ secured returns by settings"), _st.Header);
+            GUILayout.Label(Loc.T("インフィニティ ─ 設定別の確保帰還", "Infinity ─ secured returns by settings", "无限 ─ 按设置区分的存仓返回"), _st.Header);
             GUILayout.Label(Loc.T("最深確保は帰還時の累計Combatクリア部屋数で比較し、その帰還の圧段階を併記します。敗北・切断・未帰還の到達は更新しません。",
-                "Best secured return is ranked by cumulative cleared Combat rooms, with pressure at that return. Defeats, disconnects and unreturned progress do not update it."), _st.Small);
+                "Best secured return is ranked by cumulative cleared Combat rooms, with pressure at that return. Defeats, disconnects and unreturned progress do not update it.",
+                "最深存仓返回按返回时累计通关的Combat房间数排名，并附记该次返回的压力阶段。失败、断线与未返回的进度不会更新。"), _st.Small);
             CacheInfinityRecords(profile);
             GUILayout.Label(_infinityRecordsText, _st.Small);
             if (profile.InfinityRecords.Count >= InfinityRecords.MaximumConfigurations)
                 GUILayout.Label(Loc.T("設定グループの保存上限です。既存グループだけ更新できます。",
-                    "Configuration storage is full. Only existing groups can be updated."), _st.Warn);
+                    "Configuration storage is full. Only existing groups can be updated.", "设置组的保存数量已满。只能更新现有组。"), _st.Warn);
         }
 
         private void CacheInfinityRecords(Profile profile)
@@ -3932,7 +3934,7 @@ namespace SodRpg.Mod
             _infinityRecordsRevision = profile.InfinityRecordsRevision;
             if (profile.InfinityRecords.Count == 0)
             {
-                _infinityRecordsText = Loc.T("確保して帰還した記録はまだありません。", "No secured-return records yet.");
+                _infinityRecordsText = Loc.T("確保して帰還した記録はまだありません。", "No secured-return records yet.", "还没有存仓返回的记录。");
                 return;
             }
             var text = new System.Text.StringBuilder();
@@ -3944,18 +3946,20 @@ namespace SodRpg.Mod
                 string difficulty = InfinitySettingName(record.DifficultyId, true);
                 text.Append(Loc.T(
                     $"<b>{zone} · {difficulty}</b>　周期{record.Interval}部屋 · 夢の深さ{record.DreamDepth}\n最高帰還：累計{record.BestReturnedRooms}部屋 · 圧段階{record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}　帰還{record.ReturnCount}回",
-                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}  Returns {record.ReturnCount}"));
+                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}  Returns {record.ReturnCount}",
+                    $"<b>{zone} · {difficulty}</b>　周期{record.Interval}房间 · 梦境深度{record.DreamDepth}\n最佳返回：累计{record.BestReturnedRooms}房间 · 压力阶段{record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}　返回{record.ReturnCount}次"));
                 if (record.LastReturnedRooms.HasValue)
                     text.Append(Loc.T(
                         $"\n直近の帰還：累計{record.LastReturnedRooms.Value}部屋 · 圧段階{record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}",
-                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}"));
+                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}",
+                        $"\n最近返回：累计{record.LastReturnedRooms.Value}房间 · 压力阶段{record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}"));
             }
             _infinityRecordsText = text.ToString();
         }
 
         private static string InfinitySettingName(string id, bool difficulty)
         {
-            if (string.IsNullOrEmpty(id)) return Loc.T("難易度未記録", "Unrecorded difficulty");
+            if (string.IsNullOrEmpty(id)) return Loc.T("難易度未記録", "Unrecorded difficulty", "难度未记录");
             string key = difficulty ? "Difficulty_" + id + "_Name" : id + "_Name";
             var languages = DewLocalization.buildData.dataByLanguage;
             // #877: 中国語は本体に zh-CN の言語データがあればそれを使い、なければ下の en-US へ戻る。
