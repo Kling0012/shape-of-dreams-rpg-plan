@@ -41,9 +41,13 @@ internal sealed class ShrineChaosVictimStatuses
 
 // ShrineChaosChoiceCache（NativePerfPatches.cs）が参照する本体 API の境界。実機では
 // Shrine_Chaos : EditSkillShrine で、選択中の報酬を rewards[guid][int.Parse(GetCustomData(guid))]
-// で解決する。ここにはその形だけを置く: rewards の辞書と customData の文字列、解決結果の
-// ChaosReward（type と quantity だけ Prefix が読む）、編集モードUIに返す型。DewLocalization の
-// 返り値は未使用（呼ばれることだけが等価性の対象）なので null を返す。
+// で解決する。ここにはその解決の連鎖と5つの本体メソッド（GetEditSkillIndicatorRawText /
+// GetEditSkillIndicatorColor / GetTargetTypes / GetTargetInfo の2つ）を転写する
+// （逆コンパイル Dew.Core/Shrine_Chaos.cs、Dew.Core/EditSkillShrine.cs と同じ制御流れ）。
+// 例外の形も本体と同じにする: rewards への鍵が無ければ KeyNotFoundException、customData が
+// 解析できなければ FormatException（null は ArgumentNullException）、添字が範囲外なら
+// IndexOutOfRangeException。等価性テスト（ChaosShrineChoiceCachePerfTests.cs）は
+// Prefix を経由した結果とこの転写本体の結果を比べる。
 internal enum ChaosRewardType
 {
     MaxHealth,
@@ -82,7 +86,9 @@ internal struct GemLocation { }
 
 internal static class DewLocalization
 {
-    public static string GetUIValue(string key) => null;
+    // 本体はローカライズ辞書を引く。返り値同士の比較に使えるように、キーをそのまま返す
+    // （キーごとに異なる文字列になれば、どのキーで呼ばれたかが結果から分かる）。
+    public static string GetUIValue(string key) => key;
 }
 
 internal abstract class EditSkillShrine
@@ -90,16 +96,67 @@ internal abstract class EditSkillShrine
     public static readonly UnityEngine.Color GenericGemIndicatorColor = new UnityEngine.Color(0.6156863f, 14f / 15f, 1f);
     public static readonly UnityEngine.Color GenericSkillIndicatorColor = new UnityEngine.Color(1f, 0.79607844f, 1f / 3f);
 
-    public string GetCustomData(DewPlayer player) => null;
+    // 本体は SyncDictionary<string, string>。GetValueOrDefault は鍵が無いとき null を返す
+    // （鍵が無くても例外にはならない）。
+    private readonly Dictionary<string, string> _playerIdToCustomData = new Dictionary<string, string>();
+
+    public string GetCustomData(DewPlayer player)
+        => _playerIdToCustomData.GetValueOrDefault(player.guid);
+
+    // 本体の EnterEditSkill は _playerIdToCustomData[guid] = customData と、鍵ごとに文字列を
+    // 差し替える（文字列は不変なので、差し替われば参照も変わる）。
+    public void EnterEditSkill(DewPlayer player, string customData)
+        => _playerIdToCustomData[player.guid] = customData;
 }
 
 internal sealed class Shrine_Chaos : EditSkillShrine
 {
     public Dictionary<string, ChaosReward[]> rewards = new Dictionary<string, ChaosReward[]>();
 
-    public string GetEditSkillIndicatorRawText() => null;
-    public UnityEngine.Color GetEditSkillIndicatorColor() => default;
-    public EditSkillTargetType GetTargetTypes(DewPlayer player) => EditSkillTargetType.None;
-    public EditSkillTargetInfo GetTargetInfo(DewPlayer player, HeroSkillLocation loc, SkillTrigger target) => default;
-    public EditSkillTargetInfo GetTargetInfo(DewPlayer player, GemLocation loc, Gem target) => default;
+    // 以下の5つは本体（Dew.Core/Shrine_Chaos.cs）の転写。報酬の解決連鎖
+    // rewards[guid][int.Parse(GetCustomData(guid))] を毎回やり直す。
+    public string GetEditSkillIndicatorRawText()
+    {
+        ChaosReward chaosReward = rewards[DewPlayer.local.guid][int.Parse(GetCustomData(DewPlayer.local))];
+        if (chaosReward.type == ChaosRewardType.UpgradeSkill)
+            return DewLocalization.GetUIValue("InGame_SelectSkillToUpgrade");
+        if (chaosReward.type == ChaosRewardType.UpgradeGem)
+            return DewLocalization.GetUIValue("InGame_SelectGemToUpgrade");
+        return null;
+    }
+
+    public UnityEngine.Color GetEditSkillIndicatorColor()
+    {
+        ChaosReward chaosReward = rewards[DewPlayer.local.guid][int.Parse(GetCustomData(DewPlayer.local))];
+        if (chaosReward.type == ChaosRewardType.UpgradeSkill)
+            return EditSkillShrine.GenericSkillIndicatorColor;
+        if (chaosReward.type == ChaosRewardType.UpgradeGem)
+            return EditSkillShrine.GenericGemIndicatorColor;
+        return default;
+    }
+
+    public EditSkillTargetType GetTargetTypes(DewPlayer player)
+        => rewards[player.guid][int.Parse(GetCustomData(player))].type switch
+        {
+            ChaosRewardType.UpgradeSkill => EditSkillTargetType.Skill,
+            ChaosRewardType.UpgradeGem => EditSkillTargetType.Gem,
+            _ => EditSkillTargetType.None,
+        };
+
+    // 本体と同じく player 引数は使わず、target の所有者（target.owner.owner）で解決する。
+    public EditSkillTargetInfo GetTargetInfo(DewPlayer player, HeroSkillLocation loc, SkillTrigger target)
+    {
+        EditSkillTargetInfo result = default;
+        result.nextLevel = target.level + (int)rewards[target.owner.owner.guid][int.Parse(GetCustomData(target.owner.owner))].quantity;
+        result.rejectReasonRawText = (!target.isLevelUpEnabled) ? DewLocalization.GetUIValue("InGame_Message_CantUpgradeThisSkill") : null;
+        return result;
+    }
+
+    // 本体と同じく player 引数は使わず、target の所有者（target.owner.owner）で解決する。
+    public EditSkillTargetInfo GetTargetInfo(DewPlayer player, GemLocation loc, Gem target)
+    {
+        EditSkillTargetInfo result = default;
+        result.nextLevel = target.quality + (int)rewards[target.owner.owner.guid][int.Parse(GetCustomData(target.owner.owner))].quantity;
+        return result;
+    }
 }
