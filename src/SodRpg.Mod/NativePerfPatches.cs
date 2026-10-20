@@ -5445,10 +5445,12 @@ namespace SodRpg.Mod
     // fraction of a degree.
     // Because the comparison is against the live transform, anything that moves the object
     // between two frames makes the next comparison fail and the native body runs, exactly
-    // as without the patch. On the server the native body is a no-op anyway (both writes
-    // are gated on !isServer and the base FrameUpdate is empty), so skipping it there
-    // changes nothing; on a stopped instance both syncvars are NaN and the body is equally
-    // empty. The skipped write changes no bit anywhere: the transform keeps its old
+    // as without the patch. On the server the prefix stops at the isServer read: the native
+    // body is a no-op there anyway (both writes are gated on !isServer and the base
+    // FrameUpdate is empty), so the host keeps executing it untouched instead of paying the
+    // per-instance transform reads the guests' comparison would cost; on a stopped guest
+    // instance both syncvars are NaN and the body is equally empty. The skipped write
+    // changes no bit anywhere: the transform keeps its old
     // (identical) value, Transform.hasChanged semantics aside (a same-value write sets it,
     // and nothing in the shipped game reads it — verified by grep over the decompiled
     // assemblies, as in the hero-weapon idle patch). The class is resolved by name (the mod
@@ -5459,6 +5461,7 @@ namespace SodRpg.Mod
     {
         private static Func<object, Vector3> _posReader;
         private static Func<object, Quaternion> _rotReader;
+        private static Func<object, bool> _isServerReader;
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -5480,6 +5483,7 @@ namespace SodRpg.Mod
                 if (_target == null) return false;
                 _posReader = CreateReader<Vector3>(type, "_pos");
                 _rotReader = CreateReader<Quaternion>(type, "_rot");
+                _isServerReader = CreateIsServerReader(type);
                 return true;
             }
             catch (Exception ex)
@@ -5501,6 +5505,25 @@ namespace SodRpg.Mod
                 Expression.Field(Expression.Convert(instance, type), field), instance).Compile();
         }
 
+        // Mirror's NetworkBehaviour.isServer sits several base types up from the resolved
+        // class (GenericTransformSync -> DewNetworkBehaviour -> NetworkBehaviour), so the
+        // property is located by walking the hierarchy — the mod cannot name any of them.
+        private static Func<object, bool> CreateIsServerReader(Type type)
+        {
+            for (var current = type; current != null; current = current.BaseType)
+            {
+                var property = current.GetProperty("isServer", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (property != null && property.CanRead)
+                {
+                    var instance = Expression.Parameter(typeof(object));
+                    return Expression.Lambda<Func<object, bool>>(
+                        Expression.Call(Expression.Convert(instance, type), property.GetGetMethod(true)),
+                        instance).Compile();
+                }
+            }
+            throw new MissingMemberException(type.Name + ".isServer unavailable");
+        }
+
         private static bool Prefix(object __instance)
         {
             if (_disabled || !NativePerfOptions.GenericTransformIdle) return true;
@@ -5509,6 +5532,10 @@ namespace SodRpg.Mod
             if (!(__instance is Component component) || component == null) return true;
             try
             {
+                // The host runs the native body (a no-op there: both writes are gated on
+                // !isServer and the base FrameUpdate is empty) before any transform read —
+                // the per-instance comparison is guest-only work.
+                if (_isServerReader(__instance)) return true;
                 Vector3 pos = _posReader(__instance);
                 if (!float.IsNaN(pos.x) && !float.IsNaN(pos.y) && !float.IsNaN(pos.z))
                 {
