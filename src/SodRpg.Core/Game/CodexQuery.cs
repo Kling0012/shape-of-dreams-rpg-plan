@@ -220,7 +220,7 @@ namespace SodRpg.Core.Game
                 powers.Add(new CodexEntry
                 {
                     Category = CodexCategory.Powers, Id = p.ToString(), Power = p, SlotMask = mask, LineMask = AllLines,
-                    Name = new Txt(PowerNameIn(p, true), PowerNameIn(p, false)),
+                    Name = new Txt(PowerNameIn(p, true), PowerNameIn(p, false), LocZhGlossary.Lookup(PowerNameIn(p, false))),
                     Carriers = (IReadOnlyList<UniqueDef>)cu ?? Array.Empty<UniqueDef>(),
                     CarrierSets = (IReadOnlyList<SetDef>)cs ?? Array.Empty<SetDef>(),
                 });

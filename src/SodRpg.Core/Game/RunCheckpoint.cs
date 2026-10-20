@@ -67,7 +67,7 @@ namespace SodRpg.Core.Game
                 if (economy.CoopTradeEconomy != null || economyNotes.Count != 0
                     || (economy.LoadedVersion == Profile.CurrentVersion
                         && ProfileCodec.WriteCheckpointProfile(economy.Clone()) != current.CoopTradeEconomy))
-                    throw new LedgerFormatException(Loc.T("協力取引の経済保存情報が不正です。", "Cooperative trade economic checkpoint is invalid."));
+                    throw new LedgerFormatException(Loc.T("協力取引の経済保存情報が不正です。", "Cooperative trade economic checkpoint is invalid.", "合作交易的经济检查点无效。"));
                 if (restored.CoopTradeEconomy != current.CoopTradeEconomy)
                     CoopTradeRules.CopyEconomics(restored, economy);
                 if (lobbyBaseline != null && lobbyBaseline.CoopTradeEconomy != current.CoopTradeEconomy)
@@ -83,7 +83,7 @@ namespace SodRpg.Core.Game
             {
                 if (!interruptedEconomy && !ReplayLobbyEconomy(restored, lobbyBaseline, current))
                     notes?.Add(Loc.T("続きの保存にない遺物や素材を使ったため、ロビーでの鍛冶・取引の変更を戻しました。",
-                        "Lobby crafting and trade changes were reverted because their relics or materials are not available at the continue point."));
+                        "Lobby crafting and trade changes were reverted because their relics or materials are not available at the continue point.", "继续远征的节点没有所需的遗物或材料，已撤销大厅中的制作和交易变更。"));
                 ReplayLobbyHeroes(restored, lobbyBaseline, current);
             }
             // Never erase durable reservation or receipt deduplication through native Continue.
