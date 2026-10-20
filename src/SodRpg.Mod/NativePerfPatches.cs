@@ -4690,16 +4690,23 @@ namespace SodRpg.Mod
         // sends carry no information.
         //
         // Two cooperating postfixes, one state: the publish side (NativeTimescaleIdlePublishPerf
-        // on SerializeSyncVars) records the value the last real serialization handed out as the
-        // delivery baseline — a serialize is the only event that makes a value visible to
-        // guests, and it samples the field after FrameUpdate has settled it, so the baseline is
-        // exact. The clear side (below, on FrameUpdate) drops bit 2 when the end-of-frame value
-        // equals that baseline: only the in-frame 1f-reset flip re-raised it, so the next delta
+        // on SerializeSyncVars) records the value the last delta that actually carried
+        // effectTimescale handed out as the delivery baseline — a delta serialize is the only
+        // event that makes a value visible to the already-connected guests, and it samples the
+        // field after FrameUpdate has settled it, so the baseline is exact. The baseline only
+        // advances when the delta's serialize ran with bit 2 still set: a cleared bit means
+        // the stream carried no effectTimescale entry, so the value was not delivered and the
+        // baseline stays where it was. An initial-state serialize (a late joiner's spawn
+        // payload) goes to the new connection only — it does not change what the existing
+        // guests hold, and Mirror does not clear the dirty bits for it — so it must leave the
+        // baseline alone; advancing it there would let a change raised before the join compare
+        // equal afterwards and lose its bit before any existing guest saw the new value. The
+        // clear side (below, on FrameUpdate) drops bit 2 when the end-of-frame value equals
+        // that baseline: only the in-frame 1f-reset flip re-raised it, so the next delta
         // carries no effectTimescale entry, exactly as if no flip happened. A genuine change
-        // differs from the baseline, keeps its bit through every frame up to the next
-        // serialize (the baseline only advances when one runs), and is therefore always sent.
-        // Mirror's initial-state serialize also advances the baseline, correctly, because a
-        // fresh guest receives both floats regardless of the bits.
+        // differs from the baseline, keeps its bit through every frame up to the next delta
+        // that carries it (the baseline only advances when one does), and is therefore always
+        // sent.
         //
         // Bit 1 (_finalTimescale) and every other bit are left untouched, and no field value,
         // hook call or Time.timeScale assignment differs from vanilla: guests sample the
@@ -4797,6 +4804,13 @@ namespace SodRpg.Mod
             return true;
         }
 
+        // The publish side asks whether the delta it just serialized actually carried
+        // effectTimescale: only a set bit wrote the value into the stream. Read after the
+        // serialize but before NetworkIdentity clears the bits for this broadcast, this is
+        // the same mask the serializer itself sampled.
+        internal static bool EffectBitSet(Mirror.NetworkBehaviour instance)
+            => (_dirtyBits(instance) & _effectBit) != 0UL;
+
         private static void Postfix(TimescaleManager __instance, bool __runOriginal)
         {
             if (!__runOriginal || _disabled || !NativePerfOptions.TimescaleIdle) return;
@@ -4811,12 +4825,13 @@ namespace SodRpg.Mod
                 float current = __instance.effectTimescale;
                 if (_hasSent && current.Equals(_sent))
                 {
-                    // The end-of-frame value matches the last value a serialization handed
-                    // out: only this frame's 1f-reset flip re-raised the bit. Drop just that
-                    // bit; the next delta carries no effectTimescale entry, exactly as if no
-                    // flip happened. float.Equals mirrors Mirror's own SyncVarEqual semantics,
-                    // including NaN==NaN and 0==-0, so a value the native setter
-                    // early-returned on is never treated as changed here either.
+                    // The end-of-frame value matches the last value a delta serialization
+                    // handed out: only this frame's 1f-reset flip re-raised the bit. Drop
+                    // just that bit; the next delta carries no effectTimescale entry, exactly
+                    // as if no flip happened. float.Equals mirrors Mirror's own
+                    // SyncVarEqual semantics, including NaN==NaN and 0==-0, so a value the
+                    // native setter early-returned on is never treated as changed here
+                    // either.
                     ulong bits = _dirtyBits(__instance);
                     if ((bits & _effectBit) != 0UL)
                         _setDirtyBits(__instance, bits & ~_effectBit);
@@ -4847,22 +4862,30 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _publish;
 
-        private static void Postfix(TimescaleManager __instance, bool __runOriginal)
+        private static void Postfix(TimescaleManager __instance, bool __runOriginal, bool initialState)
         {
             if (!__runOriginal || NativeTimescaleIdlePerf._disabled || !NativePerfOptions.TimescaleIdle) return;
             if (!Mirror.NetworkServer.active) return;
             try
             {
-                // A serialize is the only thing that makes a field value visible to guests,
-                // so whatever value it sampled becomes the delivery baseline. A suppressed
-                // (cleared) bit also lands here and is correct: the guests already hold that
-                // value. The weaver setter cannot run between the FrameUpdate clear and this
-                // serialize, so the sampled value is exactly what the clear side compared.
+                // An initial-state serialize is the spawn payload for one fresh guest: it does
+                // not change what the already-connected guests hold, and Mirror does not clear
+                // the dirty bits for it, so it must not touch the delivery baseline either —
+                // a change raised before the join would otherwise compare equal afterwards
+                // and lose its bit before any existing guest saw the new value.
+                if (initialState) return;
                 if (NativeTimescaleIdlePerf._owner != __instance)
                 {
                     NativeTimescaleIdlePerf._owner = __instance;
                     NativeTimescaleIdlePerf._hasSent = false;
                 }
+                // A delta only carries effectTimescale when its bit survived to the
+                // serialize. A cleared bit means the stream carried no entry, so the value
+                // was not delivered and the baseline — what the guests already hold — stays
+                // where it was. When the bit did survive, the sampled value becomes the new
+                // baseline: the weaver setter cannot run between the FrameUpdate clear and
+                // this serialize, so it is exactly what the clear side compared.
+                if (!NativeTimescaleIdlePerf.EffectBitSet(__instance)) return;
                 NativeTimescaleIdlePerf._sent = __instance.effectTimescale;
                 NativeTimescaleIdlePerf._hasSent = true;
             }
