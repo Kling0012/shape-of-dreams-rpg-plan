@@ -61,6 +61,7 @@ namespace SodRpg.Mod
             NativePerfOptions.RedGiantDamageText = config.nativeRedGiantDamageText;
             NativePerfOptions.StealthRevealOverlapScan = config.nativeStealthRevealOverlapScan;
             NativePerfOptions.MerchantPropIdle = config.nativeMerchantPropIdle;
+            NativePerfOptions.GenericTransformIdle = config.nativeGenericTransformIdle;
         }
     }
 
@@ -111,6 +112,7 @@ namespace SodRpg.Mod
         internal static bool RedGiantDamageText = true;
         internal static bool StealthRevealOverlapScan = true;
         internal static bool MerchantPropIdle = true;
+        internal static bool GenericTransformIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -5420,6 +5422,113 @@ namespace SodRpg.Mod
                 }
             }
             transform.SetPositionAndRotation(position, rotation);
+        }
+    }
+
+    // GenericTransformSync.FrameUpdate runs on every machine (the guest included) every
+    // rendered frame for every instance of the game's generic transform-sync component
+    // (prefab-attached; no code in the decompiled assemblies spawns it). While not the
+    // server it writes the two synced syncvars (_pos, _rot) into transform.position /
+    // transform.rotation unconditionally — Unity's setters decompose, store and dirty the
+    // transform even when the value is unchanged, so a synced object standing still
+    // rewrites the same seven floats every frame, plus the hierarchy dirty cascade for
+    // anything with children or attached colliders.
+    //
+    // The prefix reads the live transform and skips the body only when every write vanilla
+    // would make stores exactly the bits already there: position compared per component
+    // with float == (only when _pos is not NaN), rotation likewise (only when _rot is not
+    // NaN). A NaN syncvar means vanilla skips that write, so the patch skips its comparison
+    // too. +0/-0 compare equal and a sign flip cannot matter numerically; NaN in a
+    // transform getter fails every comparison and reaches the native body, which recovers
+    // it the same way vanilla does. Unity's Quaternion == (dot product, ~0.1 degrees
+    // tolerance) is deliberately not used — it could skip writes that change the pose by a
+    // fraction of a degree.
+    // Because the comparison is against the live transform, anything that moves the object
+    // between two frames makes the next comparison fail and the native body runs, exactly
+    // as without the patch. On the server the native body is a no-op anyway (both writes
+    // are gated on !isServer and the base FrameUpdate is empty), so skipping it there
+    // changes nothing; on a stopped instance both syncvars are NaN and the body is equally
+    // empty. The skipped write changes no bit anywhere: the transform keeps its old
+    // (identical) value, Transform.hasChanged semantics aside (a same-value write sets it,
+    // and nothing in the shipped game reads it — verified by grep over the decompiled
+    // assemblies, as in the hero-weapon idle patch). The class is resolved by name (the mod
+    // never references it) and a missing type or member disables just this optimization
+    // with one warning.
+    [HarmonyPatch]
+    internal static class NativeGenericTransformIdlePerf
+    {
+        private static Func<object, Vector3> _posReader;
+        private static Func<object, Quaternion> _rotReader;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare() => TryPrepare("GenericTransformSync");
+
+        // Split out with the type name as an argument so the tests can point the same wiring
+        // at a missing name (the fail-soft path). The name-only lookup stays: the mod never
+        // references this native class, and TypeByName resolves it without a compile-time
+        // dependency (see NativeChaosShrineHitScanPerf).
+        internal static bool TryPrepare(string typeName)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(typeName);
+                if (type == null)
+                    throw new MissingMemberException(typeName + " unavailable");
+                _target = NativePerfPatch.Find(type, "FrameUpdate", ref _warned);
+                if (_target == null) return false;
+                _posReader = CreateReader<Vector3>(type, "_pos");
+                _rotReader = CreateReader<Quaternion>(type, "_rot");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "generic transform idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, T> CreateReader<T>(Type type, string fieldName)
+        {
+            var field = AccessTools.Field(type, fieldName);
+            if (field == null)
+                throw new MissingMemberException(type.Name + "." + fieldName + " unavailable");
+            var instance = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Convert(instance, type), field), instance).Compile();
+        }
+
+        private static bool Prefix(object __instance)
+        {
+            if (_disabled || !NativePerfOptions.GenericTransformIdle) return true;
+            // Destroyed-but-not-yet-unregistered instances go to the native body, which
+            // handles or throws on them exactly as without the patch.
+            if (!(__instance is Component component) || component == null) return true;
+            try
+            {
+                Vector3 pos = _posReader(__instance);
+                if (!float.IsNaN(pos.x) && !float.IsNaN(pos.y) && !float.IsNaN(pos.z))
+                {
+                    Vector3 current = component.transform.position;
+                    if (current.x != pos.x || current.y != pos.y || current.z != pos.z) return true;
+                }
+                Quaternion rot = _rotReader(__instance);
+                if (!float.IsNaN(rot.x) && !float.IsNaN(rot.y) && !float.IsNaN(rot.z) && !float.IsNaN(rot.w))
+                {
+                    Quaternion current = component.transform.rotation;
+                    if (current.x != rot.x || current.y != rot.y || current.z != rot.z || current.w != rot.w) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "generic transform idle", ex.Message);
+            }
+            return true;
         }
     }
 }

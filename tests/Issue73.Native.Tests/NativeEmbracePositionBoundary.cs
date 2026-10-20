@@ -98,6 +98,7 @@ namespace SodRpg.Mod
             nativeRedGiantDamageText = true,
             nativeStealthRevealOverlapScan = true,
             nativeMerchantPropIdle = true,
+            nativeGenericTransformIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,
