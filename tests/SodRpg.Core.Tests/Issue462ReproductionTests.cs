@@ -92,6 +92,11 @@ namespace SodRpg.Core.Tests
                 SodRpg.Core.Game.Loc.Japanese = false;
                 Assert.Contains("version differs", Assert.Single(HostAuthority.VersionWarnings));
 
+                // 中国語表示でも警告は中国語に出る（#992。修正前は英語に落ちた）。次の確認は英語に戻す。
+                SodRpg.Core.Game.Loc.Language = SodRpg.Core.Game.LocLanguage.Chinese;
+                Assert.Contains("版本不同", Assert.Single(HostAuthority.VersionWarnings));
+                SodRpg.Core.Game.Loc.Japanese = false;
+
                 // 版は同じになったが内容がまだ違う：古い項目を残さず、いまの差を出す。
                 hello = MatchingHello();
                 hello.content = "issue462-other-registry";
