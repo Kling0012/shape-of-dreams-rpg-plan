@@ -529,6 +529,73 @@ namespace Issue73.Native.Tests
             Assert.Empty(Log.Warnings);
         }
 
+        // （#924）掃除の健康ブロックの速い経路は、反復の中で事実が変わったら全確認と同じ値へ落ちる。
+        // 境界（辞書から外れた・辞書の値が差し替えられた・共有目標に変わった）を直接固定する。
+        [Fact]
+        public void Expected_health_falls_back_to_the_full_check_when_scan_facts_diverge_mid_iteration()
+        {
+            var host = Host(out _);
+            var room = DreamPressure.ForPlayer(12, 30); // 部屋の平均圧（最も高い）
+            Set(host, "_pressure", room);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0); // 個人圧は低め
+            var b = Player(9);
+            BuildFor(host, b, 4, 10); // a とは違う個人圧
+            var owner = Spawn(host, 100, new Monster { netId = 100 });    // 速い経路の正例
+            var swapped = Spawn(host, 101, new Monster { netId = 101 });  // 辞書の値を差し替える例
+            var shared = Spawn(host, 102, new Monster { netId = 102 });   // 反復の先頭で共有目標に変わる例
+            var released = Spawn(host, 103, new Monster { netId = 103 }); // 反復の中で辞書から外れる例
+            var ownership = (IDictionary)Get(host, "_enemyOwnership");
+            // 辞書をいじる前に state を掴んでおく（State() は辞書から引くため）。
+            var ownerState = State(host, owner);
+            var swappedState = State(host, swapped);
+            var sharedState = State(host, shared);
+            var releasedState = State(host, released);
+            float pOwner = (float)PressureOf(host, OwnerOf(host, owner)).HealthMultiplier;
+            float pSwapped = (float)PressureOf(host, OwnerOf(host, swapped)).HealthMultiplier;
+            Assert.NotEqual((float)room.HealthMultiplier, pOwner, 5); // 前提: 落ちる先と速い経路の値は区別できる
+            Assert.NotEqual(pOwner, pSwapped, 5);
+
+            // すべての条件が揃っているときは速い経路が担当者の個人圧を返す。
+            Assert.Equal(pOwner, (float)Call(host, "ExpectedOwnershipHealth", ownerState, true), 5);
+
+            // 辞書から外れていたら（entity-removed フック等）: TryOwnership と同じ失敗 → 部屋の平均へ。
+            ownership.Remove(released);
+            Assert.Equal((float)room.HealthMultiplier,
+                (float)Call(host, "ExpectedOwnershipHealth", releasedState, true), 5);
+
+            // 辞書の値が別の state に差し替えられていたら: 全確認は現在の state の担当圧を返す。
+            ownership[swapped] = ownerState;
+            Assert.Equal(pOwner, (float)Call(host, "ExpectedOwnershipHealth", swappedState, true), 5);
+
+            // 反復の先頭の RefreshSharedObjectiveOwnership で共有目標に書き換わっていたら: 部屋の平均へ。
+            Set(sharedState, "SharedObjective", true);
+            Assert.Equal((float)room.HealthMultiplier,
+                (float)Call(host, "ExpectedOwnershipHealth", sharedState, true), 5);
+            Assert.Empty(Log.Warnings);
+        }
+
+        // （#924）破棄済み（Enemy が null 参照）でも OwnPressureHook が残る状態は健康ブロックに届く
+        // （C# の is 演算子は Unity の破棄済み判定を見ない）。速い経路の IsAnyBoss で例外にならず、
+        // 全確認と同じ部屋の平均へ落ちることを固定する。テスト境界は fake-null を再現できないため
+        // null 参照 + OwnPressureHook で同じ確認経路を立てる。
+        [Fact]
+        public void Expected_health_with_a_null_enemy_reference_falls_back_without_throwing()
+        {
+            var host = Host(out _);
+            var room = DreamPressure.ForPlayer(12, 30);
+            Set(host, "_pressure", room);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            Player(9);
+            var monster = Spawn(host, 100, new Monster { netId = 100 });
+            var state = State(host, monster);
+            Set(state, "Enemy", null);
+            Set(state, "OwnPressureHook", true);
+            // 全確認の落ちる先は従来どおり（TryOwnership の enemy != null で失敗 → 初期値の部屋の平均）。
+            Assert.Equal((float)room.HealthMultiplier, (float)Call(host, "ExpectedOwnershipHealth", state, true), 5);
+        }
+
         // ---- 保護と手伝い ----
 
         [Theory]
