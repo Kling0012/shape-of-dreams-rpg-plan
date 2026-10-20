@@ -57,14 +57,14 @@ namespace SodRpg.Core.Game
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
         // 装備データ 7/8（Content.cs の固有品、#957）で繰り返し使う訳語。同じく参照用で辞書には登録しない。
         // Pack: 群れ → 兽群
-        // Ward / 護り: 守护（障壁はそのまま障壁）
+        // Ward / 護り: 守护（障壁は #961 に合わせて护盾）
         // Vanguard / 前衛: 前卫
         // Thorns: 棘 → 荆棘（Power と同じ）
         // Pilgrim / 巡礼: 朝圣
         // Strafing / 歩き撃ち: 移动射击
         // Ultimate / 奥義: 奥义
         // Sunpin / 陽飾り: 阳针
-        //部位の訳し分け: 手袋→手套、拳→拳甲、籠手・手甲→手甲、腕当て→护腕、手巻き→缠手、指→指套、
+        // 部位の訳し分け: 手袋→手套、拳→拳甲、籠手・手甲→手甲、腕当て→护腕、手巻き→缠手、指→指套、
         // 指輪・指環→戒指・指环、長靴→长靴、鉄靴→铁靴、脛当て・鉄脛→胫甲、草履→草履、下駄→木屐、
         // 上履き→便鞋、鋲靴→钉鞋、歩み靴・追い足→疾行靴、ロケット→坠盒、首飾り→项链、飾り→坠饰
         // 固有品・セット部位で繰り返し使う訳語（#955）。名前の一部なので辞書には登録しない。
@@ -99,7 +99,7 @@ namespace SodRpg.Core.Game
         // Canticle: 聖歌 → 圣歌
         // Holy-Ice: 聖氷 → 圣冰
         // Crystal: 結晶 → 结晶
-        // Ward: 障壁 → 屏障、護り → 守护
+        // Ward: 障壁 → 护盾、護り → 守护（説明文の障壁も #961 の効果用語にそろえる）
         // Bracers: 腕輪 → 护腕
         // Locket: ロケット → 坠饰（複合名では「坠」）
         // Greaves / Treads: 足甲・脚絆 → 胫甲
@@ -681,7 +681,7 @@ namespace SodRpg.Core.Game
                 ["standard"] = "标准",
                 [" (capped)"] = "（上限）",
                 ["  <- this one"] = "  ←此装备",
-                ["That pact is not on offer."] = "该契约不在提示之列。",
+                ["That pact is not on offer."] = "该契约不在可选之列。",
                 ["Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world)."] = "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。",
                 ["The trade was not made because its record could not be saved. Check the save location and try again."] = "因无法保存交易记录，未执行交易。请确认保存位置后重试。",
             };
