@@ -724,6 +724,40 @@ namespace SodRpg.Mod
         internal float _currentYVelocity;
         internal void ActiveFrameUpdate() { }
     }
+    // NativeMerchantPropIdlePerf の受け口。本体 Dew.Core PropEnt_Merchant_Base（2026-10-21
+    // 逆コンパイル確認）のうち、Prepare が探す宣言と引数の形に加えて、ActiveLogicUpdate の
+    // 中身（base 呼び出しより後の props への位置合わせループ）を転写する。本体では
+    // protected override で、各 props の transform に商人本体の位置と向きを
+    // SetPositionAndRotation で書き込む（DashSweepStepPerfBoundary.cs の Transform の
+    // 受け口に落ちる）。ActiveLogicUpdateTwoSites は SetPositionAndRotation の呼び出し箇所が
+    // 2つ並んだ形の拒否の見本（実行はせず、Transpiler に渡す IL の取り出しだけに使う）。
+    internal abstract class PropEnt_Merchant_Base
+    {
+        public GameObject[] props;
+        public Transform transform;
+
+        protected void ActiveLogicUpdate(float dt)
+        {
+            if (props == null)
+            {
+                return;
+            }
+            GameObject[] array = props;
+            foreach (GameObject gameObject in array)
+            {
+                if (gameObject != null)
+                {
+                    gameObject.transform.SetPositionAndRotation(transform.position, transform.rotation);
+                }
+            }
+        }
+
+        internal void ActiveLogicUpdateTwoSites(float dt)
+        {
+            props[0].transform.SetPositionAndRotation(transform.position, transform.rotation);
+            props[1].transform.SetPositionAndRotation(transform.position, transform.rotation);
+        }
+    }
     // NativeTimescaleIdlePerf の受け口。本体 Dew.Core TimescaleManager（2026-10-20 逆コンパイル確認）
     // のうちパッチが触る範囲の模倣: FrameUpdate の宣言と、Postfix が読む effectTimescale。
     // 実機の weaver 生成セッター Network<effectTimescale>k__BackingField は <> 入りのため

@@ -35,7 +35,8 @@ namespace SodRpg.Core.Game
         /// <summary>星図の本文の末尾に付ける段数と費用の注記（通常星と二択で同じ言葉を使う）。</summary>
         internal static string RanksNote(TalentDef star) => Loc.T(
             $"（数値は1段ごと。最大{star.MaxRank}段、1段につき{star.RankCost}ポイント）",
-            $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)", $"（数值按每阶计算；最高{star.MaxRank}{(star.MaxRank == 1 ? "阶" : "阶")}；每阶消耗{star.RankCost}{(star.RankCost == 1 ? "点" : "点")}）");
+            $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)",
+            $"（数值按每段计算。最高{star.MaxRank}段，每段消耗{star.RankCost}点数）");
 
         private static string ChoiceOptionHeading(int option)
         {
@@ -132,7 +133,7 @@ namespace SodRpg.Core.Game
         public static string KeystoneSections(string benefit, int cost)
         {
             return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>", "<color=#9fe0b0><b>效果</b></color>") + NL + benefit
-                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}", $"消耗：{cost}{(cost == 1 ? "点" : "点")}");
+                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}", $"必要点数：{cost}");
         }
 
         /// <summary>次の枠が開く星のレベルの1文。開く枠がなければ空文字。</summary>

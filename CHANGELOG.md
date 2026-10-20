@@ -10,6 +10,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.35 — More Chinese (Simplified): bosses, bounties, feats and 400 equipment entries（2026-10-21）
+
+中国語（簡体字）で表示される部分をさらに増やしました。ボス、賞金首、部屋の予兆、実績、禁忌、エッセンス、系統に加え、装備の名前と説明400件が中国語で読めるようになりました。 / Further expanded Chinese (Simplified) coverage: bosses, bounties, room omens, feats, forbidden rules, essences, families and 400 more equipment names and descriptions now appear in Chinese.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 13体のボスについて、ボスの装備の名前や説明などのゲームデータを中国語（簡体字）に訳しました。 / Translated game data for 13 bosses, including boss equipment names and descriptions, into Chinese (Simplified).
+- 賞金首、部屋の予兆、実績、禁忌、夢のエッセンス、系統の名前と説明も、中国語（簡体字）で表示されるようにしました。 / Bounties, room omens, feats, forbidden rules, dream essences and families now show their names and descriptions in Chinese (Simplified).
+- 装備400件の名前と説明を中国語（簡体字）に訳しました。セットの装備と固有品の一部が対象です。 / Translated the names and descriptions of 400 equipment entries, covering some set pieces and unique items, into Chinese (Simplified).
+- 日本語と英語の表示は、これまでと変わりません。まだ中国語に訳していない部分は、これまでどおり英語で表示されます。 / Japanese and English text is unchanged. Anything not yet translated into Chinese still falls back to English.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.34 — Chinese translations for equipment, sets and game data, plus fixes（2026-10-21）
 
 ### 不具合の修正 / Bug fixes
