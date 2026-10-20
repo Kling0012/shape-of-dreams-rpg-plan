@@ -37,15 +37,16 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<SetDef> CarrierSets { get; internal set; }
 
         private string _search;
-        private bool _searchJa;
+        private LocLanguage _searchLanguage;
 
-        /// <summary>検索用の小文字化した文字列（名前の日英と、いまの言語の効果文）。言語が変わったら作り直す。</summary>
+        /// <summary>検索用の小文字化した文字列（名前の日英と、いまの言語の効果文）。言語が変わったら作り直す。
+        /// 中国語では効果文が中国語で入るため、英語⇔中国語の切替でも作り直す（#992。真偽値の鍵だと古い方が残る）。</summary>
         public string SearchText
         {
             get
             {
-                if (_search != null && _searchJa == Loc.Japanese) return _search;
-                _searchJa = Loc.Japanese;
+                if (_search != null && _searchLanguage == Loc.Language) return _search;
+                _searchLanguage = Loc.Language;
                 _search = CodexQuery.BuildSearch(this).ToLowerInvariant();
                 return _search;
             }

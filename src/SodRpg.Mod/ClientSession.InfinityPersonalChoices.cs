@@ -74,14 +74,22 @@ namespace SodRpg.Mod
                     }
                     int seconds = Math.Max(0, (int)Math.Ceiling(barrier.Deadline - Time.unscaledTime));
                     string waiting = _infinityNoticeNames.ToString();
-                    return _infinityNotice = Loc.Japanese ? $"{waiting}の選択を待っています（残り{seconds}秒）"
-                        : $"Waiting for {waiting}'s choices ({seconds}s remaining)";
+                    return _infinityNotice = Loc.Language switch
+                    {
+                        LocLanguage.Japanese => $"{waiting}の選択を待っています（残り{seconds}秒）",
+                        LocLanguage.Chinese => $"正在等待{waiting}的选择（剩余{seconds}秒）", // #992
+                        _ => $"Waiting for {waiting}'s choices ({seconds}s remaining)",
+                    };
                 }
                 bool currentWait = wait != null && wait.RunId == Profile.Run.RunId
                     && wait.GraphEpoch == Profile.Run.Infinity.GraphEpoch && wait.SegmentEpoch == Profile.Run.Infinity.SegmentEpoch
                     && wait.Revision == Profile.Run.Infinity.ChoiceRevision + 1;
-                string deadline = currentWait && wait.Started ? (Loc.Japanese
-                    ? $"（残り{wait.RemainingSeconds}秒）" : $" ({wait.RemainingSeconds}s remaining)") : "";
+                string deadline = currentWait && wait.Started ? (Loc.Language switch
+                {
+                    LocLanguage.Japanese => $"（残り{wait.RemainingSeconds}秒）",
+                    LocLanguage.Chinese => $"（剩余{wait.RemainingSeconds}秒）", // #992
+                    _ => $" ({wait.RemainingSeconds}s remaining)",
+                }) : "";
                 return _infinityNotice = (submitted
                     ? Loc.T("個人の選択を送信しました。ホストと他の参加者を待っています。", "Personal choices submitted. Waiting for the host and other players.", "已发送个人选择。正在等待主机和其他参与者。")
                     : Loc.T("自分の契約・道標・出来事を選び、選択完了またはスキップを押してください。", "Choose your own pact, waypoint and event, then Finish choices or Skip.", "请选择自己的契约・路标・事件，然后按下选择完成或跳过。")) + deadline;

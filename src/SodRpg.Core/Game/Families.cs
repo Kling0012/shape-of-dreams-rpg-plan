@@ -121,12 +121,17 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>ツールチップ用の小さな表示（例「氷霜の家系」／「Frost lineage」）。無垢は null。</summary>
+        /// <summary>ツールチップ用の小さな表示（例「氷霜の家系」／「Frost lineage」／「冰霜元素族」）。無垢は null。</summary>
         public static string Label(Family family)
         {
             var n = LabelName(family);
             if (n == null) return null;
-            return Loc.Japanese ? n.Ja + "の家系" : n.En + " lineage";
+            return Loc.Language switch
+            {
+                LocLanguage.Japanese => n.Ja + "の家系",
+                LocLanguage.Chinese => (n.Zh ?? n.En) + "元素族", // 家系→元素族は #961 の用語集による
+                _ => n.En + " lineage",
+            };
         }
     }
 }

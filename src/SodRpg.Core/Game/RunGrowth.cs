@@ -470,7 +470,12 @@ namespace SodRpg.Core.Game
                 targets.AddRange(HeroSigils.TreeFor(heroKey).Where(t => t.RunGrowth != null && (mod.TargetStarId == null || t.Id == mod.TargetStarId)));
             else if (mod.TargetStarId != null && Content.TryGetTalent(mod.TargetStarId, out var target))
                 targets.Add(target);
-            return Loc.Japanese ? DescribeModifierJa(mod, targets) : DescribeModifierEn(mod, targets);
+            return Loc.Language switch
+            {
+                LocLanguage.Japanese => DescribeModifierJa(mod, targets),
+                LocLanguage.Chinese => DescribeModifierZh(mod, targets),
+                _ => DescribeModifierEn(mod, targets),
+            };
         }
 
         private static string DescribeModifierJa(RunGrowthModifierDef mod, List<TalentDef> targets)
@@ -533,6 +538,39 @@ namespace SodRpg.Core.Game
                 : "all expedition training for this traveler";
             return string.Join(", ", parts) + ". Applies to " + scope;
         }
+
+        /// <summary>修飾の星の中国語の説明（#992）。日本語版（DescribeModifierJa）の組み立てにならう。用語は #960（鍛錬→锻炼）に合わせる。</summary>
+        private static string DescribeModifierZh(RunGrowthModifierDef mod, List<TalentDef> targets)
+        {
+            var sb = new StringBuilder();
+            bool hasCappedTarget = targets.Count == 0 || targets.Any(t => t.RunGrowth.Cap > 0);
+            if (mod.CapBonus > 0 && hasCappedTarget) sb.Append($"锻炼层数上限增加{mod.CapBonus}。");
+            if (mod.EffectPercent > 0) sb.Append(hasCappedTarget
+                ? $"每层锻炼提供的属性值提升{mod.EffectPercent}%。"
+                : $"锻炼的效果提升{mod.EffectPercent}%。");
+            if (mod.DoubleGain) sb.Append("锻炼的获取数量增加100%，每次满足条件积累2层。");
+            if (targets.Count == 0) return sb.Append("对象为该旅人所有远征的锻炼。").ToString();
+            foreach (var talent in targets)
+            {
+                var growth = talent.RunGrowth;
+                sb.Append($"对象为星“{talent.Name}”中随{TriggerText(growth.Trigger, growth.Threshold)}积累的锻炼。");
+                if (mod.EffectPercent == 0)
+                    sb.Append("每层锻炼：" + RiseZh(growth.Effects.Select(effect => StatText(effect.Stat, effect.AmountMilli / 1000d)).ToList()) + "。");
+                else
+                    sb.Append("每层锻炼的提升量变为：" + string.Join("、", growth.Effects.Select(effect =>
+                    {
+                        double amount = effect.AmountMilli / 1000d;
+                        return StatText(effect.Stat, amount) + " → " + StatText(effect.Stat, amount * (100 + mod.EffectPercent) / 100d);
+                    })) + "。");
+                if (growth.Cap == 0) sb.Append("层数无上限。");
+                else if (mod.CapBonus > 0) sb.Append($"锻炼层数上限从{growth.Cap}变为{Math.Min(RunGrowthDef.MaxCap, growth.Cap + mod.CapBonus)}。");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("这是仅将该星应用于基础数值时的值。");
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>「攻击力 +5、暴击伤害 +12%提升」のような、上昇量の並び（中国語）。</summary>
+        private static string RiseZh(IList<string> amounts) => string.Join("、", amounts) + "提升";
 
         /// <summary>HUDの小さな1行。</summary>
         public static string HudLine(RunGrowthEntry entry, int stacks)

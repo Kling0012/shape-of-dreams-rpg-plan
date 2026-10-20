@@ -106,18 +106,23 @@ namespace SodRpg.Core.Game
                     ChannelId = def.Id, Bridge = def.AuthoredDefinition });
             var entry = Clamp(new PairComboEntry { Def = def, Ranks = ranks });
             if (entry == null) return "";
-            return Loc.Japanese ? DescribeJa(entry) : DescribeEn(entry);
+            return Loc.Language switch
+            {
+                LocLanguage.Japanese => DescribeJa(entry),
+                LocLanguage.Chinese => DescribeZh(entry),
+                _ => DescribeEn(entry),
+            };
         }
 
         private static string DescribeEn(PairComboEntry entry)
         {
             var def = entry.Def;
-            string a = MemoryName(def.RouteA, false), b = MemoryName(def.RouteB, false);
-            string origin = "W" + Action(def.Trigger, def.TriggerMemory, false).Substring(1);
-            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory, false);
+            string a = MemoryName(def.RouteA), b = MemoryName(def.RouteB);
+            string origin = "W" + Action(def.Trigger, def.TriggerMemory).Substring(1);
+            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory);
             string duration = def.WindowDuration.ToString("R", CultureInfo.InvariantCulture);
             string markedPayoff = def.PayoffTrigger == PairComboTrigger.OnKill
-                ? "When " + MemoryName(def.PayoffMemory, false) + " kills that combo-marked enemy"
+                ? "When " + MemoryName(def.PayoffMemory) + " kills that combo-marked enemy"
                 : "Against that combo-marked enemy, " + payoff;
             string steps = def.Step == PairComboStep.None ? origin
                 : def.Step == PairComboStep.Mark
@@ -128,7 +133,7 @@ namespace SodRpg.Core.Game
             switch (def.Effect)
             {
                 case GimmickEffect.Recharge:
-                    string target = MemoryName(def.RechargeMemory, false);
+                    string target = MemoryName(def.RechargeMemory);
                     effect = "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
@@ -177,7 +182,7 @@ namespace SodRpg.Core.Game
             var notes = new List<string>();
             if (disabled.Length > 0) notes.Add(disabled.TrimEnd());
             if (summon.Length > 0) notes.Add(summon.TrimEnd());
-            string restrictions = Restrictions(def, false);
+            string restrictions = Restrictions(def);
             if (restrictions.Length > 0) notes.Add(restrictions);
             string tail = notes.Count == 0 ? "" : "\n・" + string.Join("\n・", notes);
             return headline + ": " + steps + ", " + effect
@@ -194,12 +199,12 @@ namespace SodRpg.Core.Game
         private static string DescribeJa(PairComboEntry entry)
         {
             var def = entry.Def;
-            string a = MemoryName(def.RouteA, true), b = MemoryName(def.RouteB, true);
-            string origin = Action(def.Trigger, def.TriggerMemory, true);
-            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory, true);
+            string a = MemoryName(def.RouteA), b = MemoryName(def.RouteB);
+            string origin = Action(def.Trigger, def.TriggerMemory);
+            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory);
             string duration = def.WindowDuration.ToString("R", CultureInfo.InvariantCulture);
             string markedPayoff = def.PayoffTrigger == PairComboTrigger.OnKill
-                ? MemoryName(def.PayoffMemory, true) + "で連携印のある敵を倒したとき"
+                ? MemoryName(def.PayoffMemory) + "で連携印のある敵を倒したとき"
                 : "連携印のある敵に" + payoff;
             string n = entry.Value.ToString(CultureInfo.InvariantCulture);
             string effect;
@@ -207,7 +212,7 @@ namespace SodRpg.Core.Game
             switch (def.Effect)
             {
                 case GimmickEffect.Recharge:
-                    effect = MemoryName(def.RechargeMemory, true) + "の残りクールダウンを" + n + "%短縮する";
+                    effect = MemoryName(def.RechargeMemory) + "の残りクールダウンを" + n + "%短縮する";
                     break;
                 case GimmickEffect.RechargeOther:
                     effect = "装備中のほかの通常記憶の残りクールダウンを" + n + "%短縮する";
@@ -249,7 +254,7 @@ namespace SodRpg.Core.Game
             if (def.MovementOrigin) sb.Append("移動の記憶は起点にならないため、この組は発動しない。");
             if (def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack)
                 sb.Append("召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する。命中は不要である。");
-            sb.Append(Restrictions(def, true));
+            sb.Append(Restrictions(def));
             sb.Append(a + "と" + b + "を両方装備し、星『" + StarName(def.BridgeId) + "』『" + StarName(def.StarA) + "』『" + StarName(def.StarB) + "』を各1段以上取得しているときに有効になる。");
             sb.Append("橋の1/2/3段での値は、"
                 + (def.Effect == GimmickEffect.Element
@@ -258,38 +263,114 @@ namespace SodRpg.Core.Game
                 + "。");
             return sb.ToString();
         }
-        private static string Restrictions(PairComboDef def, bool ja)
+
+        /// <summary>中国語の説明（#992）。日本語版と同じく箇条書きにせず、効果・条件・制限・必要な装備を1つの段落の文章にする。
+        /// 用語は #961 の効果用語（連携→组合、印→标记、障壁→护盾など）に合わせる。</summary>
+        private static string DescribeZh(PairComboEntry entry)
         {
+            var def = entry.Def;
+            string a = MemoryName(def.RouteA), b = MemoryName(def.RouteB);
+            string origin = Action(def.Trigger, def.TriggerMemory);
+            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory);
+            string duration = def.WindowDuration.ToString("R", CultureInfo.InvariantCulture);
+            string markedPayoff = def.PayoffTrigger == PairComboTrigger.OnKill
+                ? "以" + MemoryName(def.PayoffMemory) + "击杀带有组合标记的敌人时"
+                : "对带有组合标记的敌人" + payoff;
+            string n = entry.Value.ToString(CultureInfo.InvariantCulture);
+            string effect;
+            string effectNote = "";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Recharge:
+                    effect = "将" + MemoryName(def.RechargeMemory) + "的剩余冷却缩短" + n + "%";
+                    break;
+                case GimmickEffect.RechargeOther:
+                    effect = "将装备中的其他普通记忆的剩余冷却缩短" + n + "%";
+                    effectNote = "不含移动、奥义、身份记忆，以及发动的记忆自身。";
+                    break;
+                case GimmickEffect.Shield:
+                    effect = "为自己提供持续4秒、相当于最大生命值" + n + "%的护盾";
+                    break;
+                case GimmickEffect.Heal:
+                    effect = "为自己" + (def.Arg == 1 ? "和有效范围内的队友" : "") + "回复最大生命值" + n + "%的生命值";
+                    if (def.Arg == 1) effectNote = CoopDistance.Description.TrimStart();
+                    break;
+                case GimmickEffect.Burst:
+                    effect = "对命中敌人周围4m内，造成相当于攻击力与法术强度中较高一方" + n + "%的追加伤害";
+                    effectNote = "法术强度较高时为魔法伤害。";
+                    break;
+                case GimmickEffect.Element:
+                    string element = def.Arg == 0 ? "火" : def.Arg == 1 ? "冰" : def.Arg == 2 ? "光" : "暗";
+                    int whole = entry.Value / 100, chance = entry.Value % 100;
+                    effect = whole == 0 ? "以" + chance + "%的概率为命中的敌人施加1层" + element
+                        : "为命中的敌人施加" + whole + "层" + element + (chance == 0 ? "" : "，并以" + chance + "%的概率再施加1层");
+                    break;
+                default:
+                    effect = "将命中伤害的" + n + "%在0.3秒后再次造成";
+                    break;
+            }
+            string steps = def.Step == PairComboStep.None ? origin + "，" + effect + "。"
+                : def.Step == PairComboStep.Mark
+                    ? origin + "，为该敌人施加持续4秒的组合标记。带有标记的敌人受到来自你的伤害增加" + (entry.Ranks + 1) + "%。" + markedPayoff + "，" + effect + "。"
+                    : origin + "，随后在" + duration + "秒内" + payoff + "，" + effect + "。";
+            string cd = def.Cooldown.ToString("R", CultureInfo.InvariantCulture);
+            var sb = new System.Text.StringBuilder(steps).Append(effectNote);
+            sb.Append(def.Cooldown == 0 ? "无再发动间隔限制。" : "每对组合每" + cd + "秒最多发动一次。");
+            if (def.OncePerActivation) sb.Append("每次使用、普通攻击或召唤物攻击最多1次。");
+            if (def.OncePerVictim)
+                sb.Append(def.PayoffTrigger == PairComboTrigger.OnKill ? "每击杀一名敌人最多1次。" : "每名带有组合标记的敌人最多1次，最初3次追加伤害不会重复触发。");
+            if (def.KillByPayoffMemory) sb.Append("只统计以接受方记忆击杀的敌人，召唤物和其他记忆的击杀不计入。协作游玩时，队友击杀自己5秒内攻击过的敌人也会触发。");
+            sb.Append("追加伤害无属性，不会连锁。星产生的额外伤害既不能开始组合，也不能完成组合。");
+            if (def.MovementOrigin) sb.Append("移动记忆不能作为起点，因此该组合不会发动。");
+            if (def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack)
+                sb.Append("召唤物在场时，自己每次发射普通攻击都会判定，无需命中。");
+            sb.Append(Restrictions(def));
+            sb.Append("同时装备" + a + "和" + b + "，并取得星“" + StarName(def.BridgeId) + "”“" + StarName(def.StarA) + "”“" + StarName(def.StarB) + "”各1阶以上时生效。");
+            sb.Append("桥梁1/2/3阶的数值为："
+                + (def.Effect == GimmickEffect.Element
+                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + "层（小数部分为追加1层的概率）"
+                    : string.Join("/", def.TableRankValues) + "%")
+                + "。");
+            return sb.ToString();
+        }
+        private static string Restrictions(PairComboDef def)
+        {
+            bool zh = Loc.Language == LocLanguage.Chinese;
             if (def.HeroKey == "Hero_Vesper" && (def.BridgeIndex == 6 || def.BridgeIndex == 7))
-                return ja ? "洗礼の最初の爆発だけが受け手になる。6秒間の追加火炎では発動しない。" : "Only Baptism's initial explosion completes the combo, never its 6 seconds of additional fire damage.";
+                return Loc.T("洗礼の最初の爆発だけが受け手になる。6秒間の追加火炎では発動しない。", "Only Baptism's initial explosion completes the combo, never its 6 seconds of additional fire damage.", zh ? "只有洗礼的初次爆炸能完成组合，6秒的追加火焰伤害不会触发。" : null);
             if (def.HeroKey == "Hero_Cetus" && def.BridgeIndex == 2)
-                return ja ? "領域の持続終了時の爆発だけが受け手になる。継続ダメージでは発動せず、爆発しない選択では働かない。" : "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.";
+                return Loc.T("領域の持続終了時の爆発だけが受け手になる。継続ダメージでは発動せず、爆発しない選択では働かない。", "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.", zh ? "只有领域持续结束时的爆炸能完成组合，持续伤害不会触发；选择不爆炸的变体时不会生效。" : null);
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 3)
-                return ja ? "印を付けるのは風の傷の固有斬りだけで、一歩一殺では付かない。成立するのは滅殺態勢の剣気が命中したときだけで、基本攻撃や星の追加ダメージでは働かない。"
-                    : "Only the Scar of the Wind's own slash places the mark (Killing Flow places none), and only Annihilation Stance's aura hits complete it, not basic attacks or star-generated damage.";
+                return Loc.T("印を付けるのは風の傷の固有斬りだけで、一歩一殺では付かない。成立するのは滅殺態勢の剣気が命中したときだけで、基本攻撃や星の追加ダメージでは働かない。",
+                    "Only the Scar of the Wind's own slash places the mark (Killing Flow places none), and only Annihilation Stance's aura hits complete it, not basic attacks or star-generated damage.",
+                    zh ? "只有风之伤痕本身的斩击会施加标记（一步一杀不施加），且只有歼灭态势的剑气命中能完成组合，普通攻击和星产生的额外伤害无效。" : null);
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 5)
-                return ja ? "死の刻印の楔が当たった敵を、死の刻印の楔で倒したときだけ働く。再入力の瞬間移動では印も成立も起きない。"
-                    : "Only a Death Mark wedge's hit places the mark and only a wedge kill completes it; the re-cast teleport does neither.";
+                return Loc.T("死の刻印の楔が当たった敵を、死の刻印の楔で倒したときだけ働く。再入力の瞬間移動では印も成立も起きない。",
+                    "Only a Death Mark wedge's hit places the mark and only a wedge kill completes it; the re-cast teleport does neither.",
+                    zh ? "只有死亡印记的楔命中过的敌人、且以死亡印记的楔击杀时才生效。再次输入的瞬移既不施加标记，也不完成组合。" : null);
             if (def.HeroKey == "Hero_Mist" && def.BridgeIndex == 3)
-                return ja ? "覚醒中の電撃爆発で倒したときだけ数える。基本攻撃やほかの記憶の撃破は数えない。" : "Only kills by the awakened lightning explosion count, not basic attacks or other memories.";
+                return Loc.T("覚醒中の電撃爆発で倒したときだけ数える。基本攻撃やほかの記憶の撃破は数えない。", "Only kills by the awakened lightning explosion count, not basic attacks or other memories.", zh ? "只统计觉醒中闪电爆炸完成的击杀，普通攻击和其他记忆的击杀不计入。" : null);
             if (def.HeroKey == "Hero_Mist" && (def.BridgeIndex == 4 || def.BridgeIndex == 5))
-                return ja ? "連携印はプリオリテ本体の印とは別物で、選択・成長・爆発を変えない。" : "The combo mark is separate from Priorité's own mark and does not change its selection, growth or explosion.";
+                return Loc.T("連携印はプリオリテ本体の印とは別物で、選択・成長・爆発を変えない。", "The combo mark is separate from Priorité's own mark and does not change its selection, growth or explosion.", zh ? "组合标记与优先（Priorité）本身的印记是两回事，不会改变其选择、成长或爆炸。" : null);
             return "";
         }
-        private static string MemoryName(string memory, bool ja)
+        private static string MemoryName(string memory)
         {
-            return ja ? "記憶『" + Links.Name(memory).Ja + "』" : "Memory “" + Links.Name(memory).En + "”";
+            var name = Links.Name(memory);
+            // 訳が無い名前は星団名と同じ扱い（用語集を引き、それでも無ければ英語に戻す）。
+            return Loc.T("記憶『" + name.Ja + "』", "Memory “" + name.En + "”", StarMapClusters.ChineseName(name, prefix: "记忆“", suffix: "”"));
         }
-        private static string Action(PairComboTrigger trigger, string memory, bool ja)
+        private static string Action(PairComboTrigger trigger, string memory)
         {
-            string name = MemoryName(memory, ja);
+            string name = MemoryName(memory);
+            bool zh = Loc.Language == LocLanguage.Chinese;
             switch (trigger)
             {
-                case PairComboTrigger.OnUse: return ja ? name + "を使ったとき" : "when you use " + name;
-                case PairComboTrigger.OnCrit: return ja ? name + "が会心したとき" : "when " + name + " critically hits";
-                case PairComboTrigger.OnKill: return ja ? name + "で敵を倒したとき" : "when " + name + " kills an enemy";
-                case PairComboTrigger.OnBasicAttack: return ja ? name + "で自分の基本攻撃を撃ったとき" : "when you fire your own basic attack with " + name;
-                default: return ja ? name + "が当たったとき" : "when " + name + " hits";
+                case PairComboTrigger.OnUse: return Loc.T(name + "を使ったとき", "when you use " + name, zh ? "使用" + name + "时" : null);
+                case PairComboTrigger.OnCrit: return Loc.T(name + "が会心したとき", "when " + name + " critically hits", zh ? name + "暴击时" : null);
+                case PairComboTrigger.OnKill: return Loc.T(name + "で敵を倒したとき", "when " + name + " kills an enemy", zh ? "以" + name + "击杀敌人时" : null);
+                case PairComboTrigger.OnBasicAttack: return Loc.T(name + "で自分の基本攻撃を撃ったとき", "when you fire your own basic attack with " + name, zh ? "装备" + name + "发射自己的普通攻击时" : null);
+                default: return Loc.T(name + "が当たったとき", "when " + name + " hits", zh ? name + "命中时" : null);
             }
         }
 

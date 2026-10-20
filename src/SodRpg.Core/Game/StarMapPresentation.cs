@@ -264,7 +264,12 @@ namespace SodRpg.Core.Game
             {
                 if (transform.Scope.PayloadKind == KeystonePayloadKind.Coop) continue;
                 string effect = KeystoneEffectText(transform);
-                lines.Add(Loc.Japanese ? KeystoneChangeJa(transform, effect) : effect + ": " + KeystoneChangeText(transform));
+                lines.Add(Loc.Language switch
+                {
+                    LocLanguage.Japanese => KeystoneChangeJa(transform, effect),
+                    LocLanguage.Chinese => KeystoneChangeZh(transform, effect), // #992: 英語の「+100% (×2)」の枠組みを出さない
+                    _ => effect + ": " + KeystoneChangeText(transform),
+                });
                 var scope = transform.Scope;
                 var targets = new List<string>();
                 targets.AddRange(scope.TargetMemorySet.Select(Links.ItemName));
@@ -293,13 +298,19 @@ namespace SodRpg.Core.Game
                         "Effect recipient: " + string.Join(", ", receivers) + ".", "效果接受者：" + string.Join("、", receivers) + "。"));
                 }
                 if (scope.Recipient != KeystoneRecipientKind.Any)
-                    lines.Add(Loc.Japanese
-                        ? EnumText(scope.Recipient, "", "変更されるのは自分への効果だけ。", "変更されるのは味方の旅人への効果だけで、自分への効果は変わらない。", "変更されるのは自分の召喚獣への効果だけ。")
-                        : "Changes the effect on: " + EnumText(scope.Recipient, "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons") + ".");
+                    lines.Add(Loc.Language switch
+                    {
+                        LocLanguage.Japanese => EnumText(scope.Recipient, "", "変更されるのは自分への効果だけ。", "変更されるのは味方の旅人への効果だけで、自分への効果は変わらない。", "変更されるのは自分の召喚獣への効果だけ。"),
+                        LocLanguage.Chinese => "改变的仅是对" + EnumText(scope.Recipient, "所有人", "自己", "队友旅人（对自己的效果不变）", "自己的召唤物") + "的效果。",
+                        _ => "Changes the effect on: " + EnumText(scope.Recipient, "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons") + ".",
+                    });
                 if (scope.SourceKind.HasValue)
-                    lines.Add(Loc.Japanese
-                        ? EnumText(scope.SourceKind.Value, "発動元は、記憶が元々持つ効果に限る。", "発動元は自分の通常攻撃に限る。", "発動元は自分の召喚獣に限る。", "発動元は星による追加効果に限る。", "発動元は自分の移動に限る。")
-                        : "Source: " + EnumText(scope.SourceKind.Value, "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement") + ".");
+                    lines.Add(Loc.Language switch
+                    {
+                        LocLanguage.Japanese => EnumText(scope.SourceKind.Value, "発動元は、記憶が元々持つ効果に限る。", "発動元は自分の通常攻撃に限る。", "発動元は自分の召喚獣に限る。", "発動元は星による追加効果に限る。", "発動元は自分の移動に限る。"),
+                        LocLanguage.Chinese => "发动来源仅为" + EnumText(scope.SourceKind.Value, "记忆原本持有的效果", "自己的普通攻击", "自己的召唤物", "星产生的追加效果", "自己的移动") + "。",
+                        _ => "Source: " + EnumText(scope.SourceKind.Value, "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement") + ".",
+                    });
                 if (scope.Argument.HasValue)
                     lines.Add(scope.TargetEffectSet.Contains(GimmickEffect.Heal)
                         ? (scope.Argument.Value == 1
@@ -322,7 +333,8 @@ namespace SodRpg.Core.Game
             if (key.Prerequisites.Count > 0)
                 lines.Add(Loc.T("取得するには" + string.Join("と", key.Prerequisites.Select(StarName)) + "を" + (key.Prerequisites.Count > 1 ? "すべて" : "") + "取得している必要がある。",
                     "Acquisition prerequisites (all required): " + string.Join(", ", key.Prerequisites.Select(StarName)), "取得前置条件（须全部满足）：" + string.Join("、", key.Prerequisites.Select(StarName))));
-            return Loc.Japanese ? string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence)) : string.Join("\n", lines);
+            // 英語は従来どおり1項目1行。日本語と中国語は1つの段落の文章につなげる（#992）。
+            return Loc.Language == LocLanguage.English ? string.Join("\n", lines) : string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence));
         }
 
         private static string KeystoneEffectText(KeystoneTransform transform)
@@ -417,6 +429,47 @@ namespace SodRpg.Core.Game
             return result;
         }
 
+        /// <summary>刻印が効果をどう変えるかの1文（中国語、#992）。KeystoneChangeJa の組み立てにならう。
+        /// 英語の「+100% (×2)」のような記号の枠組みは使わず、文章で表す。</summary>
+        private static string KeystoneChangeZh(KeystoneTransform transform, string effect)
+        {
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Heal))
+                return KeystoneArgumentText(transform.Scope.TargetEffectSet, checked((int)transform.Seconds));
+            string field = EnumText(transform.Field, "数值", "持续时间", "半径", "追加效果发生前的延迟", "目标数", "发动所需的次数", "发动概率", "对象");
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Ricochet))
+                field = "承受追加伤害的其他敌人数";
+            // 効果名がすでに「量」を指すとき（値そのものの変更）は項目名を省く。
+            string subject = transform.Field == KeystoneField.Value ? effect : effect + "的" + field;
+            string result;
+            switch (transform.Operation)
+            {
+                case KeystoneOperation.Scale:
+                    bool raise = transform.MagnitudeUnits.Units > 0;
+                    string verb = transform.Field == KeystoneField.Probability ? (raise ? "提升" : "降低") : (raise ? "增加" : "减少");
+                    result = subject + verb + Number(Math.Abs(transform.MagnitudeUnits.Percent)) + "%，变为原来的" + Number(transform.MagnitudeUnits.Multiplier) + "倍。";
+                    break;
+                case KeystoneOperation.SetSeconds:
+                    result = "将" + subject + "改为" + Number(transform.Seconds) + "秒。"; break;
+                case KeystoneOperation.AddTargets:
+                    result = subject + (transform.Count > 0 ? "增加" : "减少") + Math.Abs(transform.Count) + "名。"; break;
+                case KeystoneOperation.SetEveryN:
+                    result = effect + "每满足条件" + transform.Count + "次发动一次。"; break;
+                case KeystoneOperation.Set:
+                    result = "将" + subject + "改为" + (transform.ExpectedFrom.HasValue ? "从" + KeystoneNumericText(transform, transform.ExpectedFrom.Value) + "起" : "")
+                        + KeystoneNumericText(transform, transform.Seconds) + "。"; break;
+                case KeystoneOperation.Add:
+                    bool grow = transform.Seconds > 0;
+                    string change = transform.Field == KeystoneField.Duration || transform.Field == KeystoneField.Delay ? (grow ? "变长" : "变短")
+                        : transform.Field == KeystoneField.Probability ? (grow ? "提升" : "降低") : (grow ? "增加" : "减少");
+                    string amount = KeystoneNumericText(transform, Math.Abs(transform.Seconds));
+                    result = subject + change + amount + "。"; break;
+                default: throw new InvalidOperationException("Unmapped keystone change.");
+            }
+            if (transform.Maximum.HasValue)
+                result += "上限为" + KeystoneNumericText(transform, transform.Maximum.Value) + "。";
+            return result;
+        }
+
         /// <summary>変更する項目名。効果名がすでに「量」を指すとき（値そのものの変更）は項目名を省く。</summary>
         private static string FieldLead(KeystoneTransform transform, string field) =>
             transform.Field == KeystoneField.Value ? "" : field + " ";
@@ -446,9 +499,12 @@ namespace SodRpg.Core.Game
             if (effects.Contains(GimmickEffect.Ricochet))
                 return Loc.T("追加ダメージの対象は近くの別の敵最大" + argument + "体になる。", "Extra damage targets: up to " + argument + " other nearby enemies.", "额外伤害目标：最多" + argument + "名附近的其他敌人。");
             if (effects.Contains(GimmickEffect.Element))
-                return Loc.Japanese
-                    ? "付与する属性は" + EnumText((IdentityStrikeElement)(argument + 1), "", "火", "冷気", "光", "闇") + "になる。"
-                    : "Element applied: " + EnumText((IdentityStrikeElement)(argument + 1), "", "Fire", "Cold", "Light", "Dark") + ".";
+                return Loc.Language switch
+                {
+                    LocLanguage.Japanese => "付与する属性は" + EnumText((IdentityStrikeElement)(argument + 1), "", "火", "冷気", "光", "闇") + "になる。",
+                    LocLanguage.Chinese => "施加的属性变为" + EnumText((IdentityStrikeElement)(argument + 1), "", "火", "冰", "光", "暗") + "。",
+                    _ => "Element applied: " + EnumText((IdentityStrikeElement)(argument + 1), "", "Fire", "Cold", "Light", "Dark") + ".",
+                };
             throw new InvalidOperationException("Unmapped keystone target.");
         }
 

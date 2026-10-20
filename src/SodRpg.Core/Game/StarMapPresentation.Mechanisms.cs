@@ -348,7 +348,8 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismCondition.BridgeWindow: lines.Add(Loc.T(PairName(spec.PairId) + "の受付時間内だけ有効になる。", "Only within the bridge window: " + PairName(spec.PairId), "仅在桥梁组合时限内生效：" + PairName(spec.PairId))); break;
                 default: throw new InvalidOperationException("Unknown mechanism condition: " + spec.Condition);
             }
-            return Loc.Japanese ? string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence)) : string.Join("\n", lines);
+            // 英語は従来どおり1項目1行。日本語と中国語は1つの段落の文章につなげる（#992）。
+            return Loc.Language == LocLanguage.English ? string.Join("\n", lines) : string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence));
         }
 
         private static string DescribeBridgePayload(BridgePayload payload, string source)
