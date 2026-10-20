@@ -12,12 +12,14 @@ using Xunit;
 namespace Issue73.Native.Tests
 {
     /// <summary>Skoll バースト表示（HostAuthority.BossGlacialCore.cs / HostAuthority.BossVisuals.cs の抽出実行）。
-    /// バーストの due が開始時刻に固定された結果、(1) 残数も位置も変わらないティックが差分を出さないこと、
+    /// バーストの due が開始時刻に固定された結果、(1) 残数も位置も変わらないティックが差分を出さないこと
+    /// （対照として、持ち主が動いただけのティックは間引き窓の中では保留に入る）、
     /// (2) 発射で残数が減ると即座に差分が出て due がバースト開始時刻のまま届くこと、
     /// (3) 残数が0になると（発射で尽きる・解放）削除差分が出ることと、BurstUntil の到達では
     /// 残数0・効果は開始時に届いた expires の期限で取り除かれること、
     /// (4) 同じ BurstVisual の id で次のバーストが始まると due が更新されて新たに送られること。
-    /// 境界は SkollBurstBoundary.cs、抽出は NativePersistence.targets の CompileSkollBurst。</summary>
+    /// 境界は SkollBurstBoundary.cs、抽出は NativePersistence.targets の CompileSkollBurst。
+    /// 本体の時計は戻らないため、各テストの時刻は単調に進める（発射の時刻は期限から逆算する）。</summary>
     public sealed class SkollBurstTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -124,11 +126,19 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, Sent.Count);
             Assert.Equal(revision, Revision());
             Assert.False(HasPending()); // 保留（10Hz間引き）に入った形跡もない: 同一値の早期return
+        }
 
-            // 対照: 持ち主が動いただけなら、直前の送信から0.1秒の間引き窓の中では即送ではなく保留に入る
-            // （見た目の追従は残る。窓の外での移動は従来どおり即座に1通出る）。
+        // ---- (1) の対照: 持ち主が動いただけなら、直前の送信から0.1秒の間引き窓の中では即送ではなく保留に入る ----
+        // （見た目の追従は残る。窓の外での移動は従来どおり即座に1通出る。時刻は単調に進める。）
+
+        [Fact]
+        public void Owner_movement_within_throttle_window_defers_to_pending()
+        {
+            CreateCore();
+            StartBurst(10f);
+            Assert.Equal(1, Sent.Count);
             _hero.position = new Vector3(5f, 0f, 0f);
-            Tick(10.02f);
+            Tick(10.02f); // 直前の送信（10.0）から0.1秒以内
             Assert.Equal(1, Sent.Count);
             Assert.True(HasPending());
         }
@@ -159,12 +169,17 @@ namespace Issue73.Native.Tests
         {
             CreateCore();
             StartBurst(10f);
-            int remaining = CoreState().Remaining;
+            var state = CoreState();
+            int remaining = state.Remaining;
             Assert.True(remaining > 1);
-            for (int shot = 1; shot < remaining; shot++) Fire(10.05f + 0.1f * shot); // 残数を1まで減らす
-            long visual = CoreState().BurstVisual;
+            // 発射の時刻は単調に増やし、すべてバースト期限（BurstUntil）より前に収める。
+            // 残数や期限が実プロファイルで変わっても時計が戻らないよう、期限から逆算する。
+            Assert.True(state.BurstUntil > 10.05f, "最初の発射から期限までの間に全発を収める");
+            float step = (state.BurstUntil - 10.05f) / remaining;
+            for (int shot = 1; shot < remaining; shot++) Fire(10.05f + step * shot); // 残数を1まで減らす
+            long visual = state.BurstVisual;
             Assert.Equal(1 + (remaining - 1), Sent.Count); // 開始 + 減算のたびに1通
-            Fire(10.4f); // 最後の1発で残数0
+            Fire(10.05f + step * (remaining - 0.5f)); // 最後の1発で残数0（直前の発射より後・期限より前）
             Assert.Equal(0, CoreState().Remaining);
             var removal = Sent[Sent.Count - 1].Single();
             Assert.True(removal.removed);
