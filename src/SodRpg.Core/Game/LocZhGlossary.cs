@@ -66,6 +66,10 @@ namespace SodRpg.Core.Game
         // Doubt・Suspicion: 疑心・疑い → 疑心 / Cage: 檻 → 牢笼 / Furnace: 炉・溶鉱炉 → 熔炉
         // Tidecaller's（セット名）: 潮鳴り → 潮鸣 / Prism（光学の語）: プリズム → 棱镜
         // Dodge: 回避 → 闪避 / Crimson（紅蓮の名）: 紅蓮 → 红莲 / Banquet: 祝宴・饗宴 → 盛宴
+        // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
+        // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
+        // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
+        // Beads: 数珠 → 念珠 / Curtain Call: 終幕 → 终幕 / Prey: 獲物 → 猎物
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
