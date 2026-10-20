@@ -97,15 +97,21 @@ namespace SodRpg.Mod
         // IBinaryEntityValidator, Entity, CollisionCheckSettings): same query, same predicate
         // order, but the entity list stops at the first qualifying entity. The caller reads
         // Count > 0 only, so the shortened list is indistinguishable from the full one.
+        // The borrowed pool lists are returned on the early-exit path and in the exception
+        // handler before the fallback, so no scan leaks a pooled list.
         internal static List<Entity> OverlapFirstEntities(
             out ListReturnHandle<Entity> handle, Vector3 center, float radius,
             IBinaryEntityValidator validator, Entity self, CollisionCheckSettings settings)
         {
             if (_disabled || _entityFilter == null || !NativePerfOptions.StealthRevealOverlapScan)
                 return DewPhysics.OverlapCircleAllEntities(out handle, center, radius, validator, self, settings);
+            // The pool lists must go back even when the scan throws: needToReturn (native API)
+            // is false for a handle that was never obtained or was already returned, so the
+            // catch can return both unconditionally without double-returning.
+            handle = default;
+            ListReturnHandle<Collider2D> colliderHandle = default;
             try
             {
-                ListReturnHandle<Collider2D> colliderHandle;
                 List<Collider2D> colliders = DewPool.GetList(out colliderHandle);
                 Physics2D.OverlapCircle(center.ToXY(), radius, _entityFilter(), colliders);
                 List<Entity> entities = DewPool.GetList(out handle);
@@ -125,6 +131,8 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (colliderHandle.needToReturn) colliderHandle.Return();
+                if (handle.needToReturn) handle.Return();
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "stealth reveal overlap", ex.Message);
                 return DewPhysics.OverlapCircleAllEntities(out handle, center, radius, validator, self, settings);
