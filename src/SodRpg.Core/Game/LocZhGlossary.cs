@@ -83,6 +83,18 @@ namespace SodRpg.Core.Game
         // Bracers: 腕輪 → 护腕
         // Locket: ロケット → 坠饰（複合名では「坠」）
         // Greaves / Treads: 足甲・脚絆 → 胫甲
+        // #956 で追加した主な用語（Content.cs 3190〜3788 の固有品で繰り返し使う訳語）:
+        // Rearguard: 後衛 → 后卫 / Vanguard・先陣: 前衛・先陣 → 前卫・先锋
+        // Pack: 群れ → 兽群 / Omen: 予兆・前兆 → 预兆 / Stardust: 星屑 → 星屑
+        // Prism: 七彩 → 七色 / Grudge: 怨嗟 → 怨叹 / Triumph: 凱歌・凱旋 → 凯歌・凯旋
+        // Opening fire: 口火 → 开战火（紅蓮の点火は点火）/ Pile-On: 畳み掛け → 乘胜
+        // Duelist: 決闘者 → 决斗者 / Glacier core: 氷河核 → 冰河核心 / Return: 戻り・帰還 → 回返・归还
+        // Ward: 障壁・護り → 护盾・护佑 / Lampkeeper: 灯守 → 守灯人 / Candlerobe: 灯衣 → 灯衣
+        // Skirmisher: 遊撃 → 游击 / Rampart: 土塁 → 土垒 / Ascetic: 修行者 → 行者
+        // Moonsilk: 月絹 → 月绢 / Zephyr: 西風 → 西风 / Citadel: 砦・城塞 → 城塞
+        // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
+        // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
+        // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
