@@ -63,6 +63,7 @@
     <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeMistLifetime.cs" Link="ModUnderTest/NativeMistLifetime.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativePerfPatches.cs" Link="ModUnderTest/NativePerfPatches.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NativeStealthReveal.cs" Link="ModUnderTest/NativeStealthReveal.cs" />
     <Compile Include="../../src/SodRpg.Mod/AccessoryOffsetCacheKey.cs" Link="ModUnderTest/AccessoryOffsetCacheKey.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeTransformSyncIdle.cs" Link="ModUnderTest/NativeTransformSyncIdle.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeCharacterModelDisplayBounds.cs" Link="ModUnderTest/NativeCharacterModelDisplayBounds.cs" />

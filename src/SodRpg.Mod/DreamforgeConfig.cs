@@ -239,6 +239,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged Red Giant damage-meter text rebuilds (every client) / レッドジャイアントの値が変わらない被ダメ計測テキストの組み立て直しを省く（各端末）")]
         public bool nativeRedGiantDamageText = true;
 
+        [LabelText("Early-exit the stealth proximity-reveal scan at the first target (host) / ステルスの接近リビール走査を最初の1体で打ち切る（ホスト）")]
+        public bool nativeStealthRevealOverlapScan = true;
+
         [LabelText("Skip merchants' same-pose prop rewrites while the merchant is still (host + guests) / 止まっている商人の装飾モデルへの同じ位置・向きの毎フレーム再書き込みを省く（ホスト・参加者）")]
         public bool nativeMerchantPropIdle = true;
 

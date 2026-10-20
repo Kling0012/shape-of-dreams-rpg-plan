@@ -704,7 +704,9 @@ namespace SodRpg.Mod
     {
         public UnityEngine.Transform transform;
     }
-    internal static class DewPhysics
+    // （#988）partial: StealthRevealOverlapPerfBoundary.cs が円クエリ系の本体 API
+    // （EntityFilter・TryGetEntity・OverlapCircleAllEntities）を足す。
+    internal static partial class DewPhysics
     {
         // 本体と同じ代入（引数の y は捨てて 0 を書く）。
         internal static void UpdateProxyPosition(ProxyCollider proxy, UnityEngine.Vector3 position)
