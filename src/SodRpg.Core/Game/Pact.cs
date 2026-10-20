@@ -101,9 +101,9 @@ namespace SodRpg.Core.Game
         {
             switch (s)
             {
-                case 3: return Loc.T("強", "Powerful");
-                case 2: return Loc.T("中", "Potent");
-                default: return Loc.T("弱", "Mild");
+                case 3: return Loc.T("強", "Powerful", "强");
+                case 2: return Loc.T("中", "Potent", "中");
+                default: return Loc.T("弱", "Mild", "弱");
             }
         }
     }
@@ -116,216 +116,216 @@ namespace SodRpg.Core.Game
         {
             new PactDef
             {
-                Id = Pact.GlassHeart, Name = new Txt("硝子の心臓", "Glass Heart"),
+                Id = Pact.GlassHeart, Name = new Txt("硝子の心臓", "Glass Heart", "玻璃心脏"),
                 CurseStrength = PactBalance.GlassHeartCurseStrength, DropBonus = PactBalance.GlassHeartDropBonus,
             },
             new PactDef
             {
-                Id = Pact.DullBlade, Name = new Txt("鈍き刃", "Dull Blade"),
+                Id = Pact.DullBlade, Name = new Txt("鈍き刃", "Dull Blade", "钝刃"),
                 CurseStrength = PactBalance.DullBladeCurseStrength, Luck = PactBalance.DullBladeLuck,
             },
             new PactDef
             {
-                Id = Pact.Unguarded, Name = new Txt("無防備", "Unguarded"),
+                Id = Pact.Unguarded, Name = new Txt("無防備", "Unguarded", "毫无防备"),
                 CurseStrength = PactBalance.UnguardedCurseStrength, ShardMult = PactBalance.UnguardedShardMult,
             },
             new PactDef
             {
-                Id = Pact.LeadenFeet, Name = new Txt("重い足", "Leaden Feet"),
+                Id = Pact.LeadenFeet, Name = new Txt("重い足", "Leaden Feet", "沉重步伐"),
                 CurseStrength = PactBalance.LeadenFeetCurseStrength, XpMult = PactBalance.LeadenFeetXpMult,
             },
             new PactDef
             {
-                Id = Pact.Frenzy, Name = new Txt("狂乱", "Frenzy"),
+                Id = Pact.Frenzy, Name = new Txt("狂乱", "Frenzy", "狂乱"),
                 CurseStrength = PactBalance.FrenzyCurseStrength,
                 Boons = new[] { new StatLine(Stat.AttackPct, PactBalance.FrenzyBoonAttackPct), new StatLine(Stat.PowerPct, PactBalance.FrenzyBoonPowerPct) },
             },
             new PactDef
             {
-                Id = Pact.CursedHoard, Name = new Txt("呪われた財宝", "Cursed Hoard"),
+                Id = Pact.CursedHoard, Name = new Txt("呪われた財宝", "Cursed Hoard", "诅咒财宝"),
                 CurseStrength = PactBalance.CursedHoardCurseStrength,
                 DoubleDepthBonus = true, NoEcho = true,
             },
             new PactDef
             {
-                Id = Pact.DryDream, Name = new Txt("乾いた夢", "Dry Dream"),
+                Id = Pact.DryDream, Name = new Txt("乾いた夢", "Dry Dream", "干涸之梦"),
                 CurseStrength = PactBalance.DryDreamCurseStrength, TuningOnElite = PactBalance.DryDreamTuningOnElite,
             },
             new PactDef
             {
-                Id = Pact.Burden, Name = new Txt("見えざる重荷", "Unseen Burden"),
+                Id = Pact.Burden, Name = new Txt("見えざる重荷", "Unseen Burden", "无形重担"),
                 CurseStrength = PactBalance.BurdenCurseStrength, Luck = PactBalance.BurdenLuck,
             },
             new PactDef
             {
-                Id = Pact.Glutton, Name = new Txt("暴食", "Gluttony"),
+                Id = Pact.Glutton, Name = new Txt("暴食", "Gluttony", "暴食"),
                 CurseStrength = PactBalance.GluttonCurseStrength, DropBonus = PactBalance.GluttonDropBonus,
             },
             new PactDef
             {
-                Id = Pact.Scholar, Name = new Txt("夜の学徒", "Night Scholar"),
+                Id = Pact.Scholar, Name = new Txt("夜の学徒", "Night Scholar", "夜之学徒"),
                 CurseStrength = PactBalance.ScholarCurseStrength, XpMult = PactBalance.ScholarXpMult, Luck = PactBalance.ScholarLuck,
             },
             new PactDef
             {
-                Id = Pact.Gambler, Name = new Txt("賭け師の誓い", "Gambler's Oath"),
+                Id = Pact.Gambler, Name = new Txt("賭け師の誓い", "Gambler's Oath", "赌徒之誓"),
                 CurseStrength = PactBalance.GamblerCurseStrength, ShardMult = PactBalance.GamblerShardMult, NoEcho = true,
             },
             new PactDef
             {
-                Id = Pact.AbyssEye, Name = new Txt("深淵の眼", "Eye of the Abyss"),
+                Id = Pact.AbyssEye, Name = new Txt("深淵の眼", "Eye of the Abyss", "深渊之眼"),
                 CurseStrength = PactBalance.AbyssEyeCurseStrength, DropBonus = PactBalance.AbyssEyeDropBonus, Luck = PactBalance.AbyssEyeLuck, TuningOnElite = PactBalance.AbyssEyeTuningOnElite,
             },
             new PactDef
             {
-                Id = Pact.BloodPrice, Name = new Txt("血の代価", "Blood Price"),
+                Id = Pact.BloodPrice, Name = new Txt("血の代価", "Blood Price", "鲜血代价"),
                 CurseStrength = PactBalance.BloodPriceCurseStrength,
                 Boons = new[] { new StatLine(Stat.AttackSpeedPct, PactBalance.BloodPriceBoonAttackSpeedPct) },
             },
             new PactDef
             {
-                Id = Pact.IronOath, Name = new Txt("鉄の誓約", "Iron Oath"),
+                Id = Pact.IronOath, Name = new Txt("鉄の誓約", "Iron Oath", "钢铁誓约"),
                 CurseStrength = PactBalance.IronOathCurseStrength,
                 Boons = new[] { new StatLine(Stat.Armor, PactBalance.IronOathBoonArmor) },
             },
             new PactDef
             {
-                Id = Pact.HollowCrown, Name = new Txt("虚ろな王冠", "Hollow Crown"),
+                Id = Pact.HollowCrown, Name = new Txt("虚ろな王冠", "Hollow Crown", "空洞王冠"),
                 CurseStrength = PactBalance.HollowCrownCurseStrength, DropBonus = PactBalance.HollowCrownDropBonus, ShardMult = PactBalance.HollowCrownShardMult,
             },
             new PactDef
             {
-                Id = Pact.ThiefsBargain, Name = new Txt("盗人の取引", "Thief's Bargain"),
+                Id = Pact.ThiefsBargain, Name = new Txt("盗人の取引", "Thief's Bargain", "窃贼的交易"),
                 CurseStrength = PactBalance.ThiefsBargainCurseStrength, ShardMult = PactBalance.ThiefsBargainShardMult, DropBonus = PactBalance.ThiefsBargainDropBonus,
             },
             new PactDef
             {
-                Id = Pact.Stargazer, Name = new Txt("星読みの契約", "Stargazer's Pact"),
+                Id = Pact.Stargazer, Name = new Txt("星読みの契約", "Stargazer's Pact", "观星者契约"),
                 CurseStrength = PactBalance.StargazerCurseStrength, Luck = PactBalance.StargazerLuck, DropBonus = PactBalance.StargazerDropBonus,
             },
             new PactDef
             {
-                Id = Pact.Wanderer, Name = new Txt("放浪者の契約", "Wanderer's Pact"),
+                Id = Pact.Wanderer, Name = new Txt("放浪者の契約", "Wanderer's Pact", "流浪者契约"),
                 CurseStrength = PactBalance.WandererCurseStrength, XpMult = PactBalance.WandererXpMult, DropBonus = PactBalance.WandererDropBonus,
             },
             new PactDef
             {
-                Id = Pact.Miser, Name = new Txt("守銭奴", "Miser"),
+                Id = Pact.Miser, Name = new Txt("守銭奴", "Miser", "守财奴"),
                 CurseStrength = PactBalance.MiserCurseStrength, DoubleDepthBonus = true, ShardMult = PactBalance.MiserShardMult,
             },
             new PactDef
             {
-                Id = Pact.BloodMoon, Name = new Txt("血月の契約", "Blood Moon Pact"),
+                Id = Pact.BloodMoon, Name = new Txt("血月の契約", "Blood Moon Pact", "血月契约"),
                 CurseStrength = PactBalance.BloodMoonCurseStrength,
                 Boons = new[] { new StatLine(Stat.AttackPct, PactBalance.BloodMoonBoonAttackPct), new StatLine(Stat.PowerPct, PactBalance.BloodMoonBoonPowerPct) },
             },
             new PactDef
             {
-                Id = Pact.SaltOath, Name = new Txt("塩の契約", "Salt Oath"),
+                Id = Pact.SaltOath, Name = new Txt("塩の契約", "Salt Oath", "盐之誓约"),
                 CurseStrength = PactBalance.SaltOathCurseStrength, ShardMult = PactBalance.SaltOathShardMult, Luck = PactBalance.SaltOathLuck,
             },
             new PactDef
             {
-                Id = Pact.BlankMap, Name = new Txt("白紙の地図", "Blank Map"),
+                Id = Pact.BlankMap, Name = new Txt("白紙の地図", "Blank Map", "空白地图"),
                 CurseStrength = PactBalance.BlankMapCurseStrength, TuningOnElite = PactBalance.BlankMapTuningOnElite,
             },
             new PactDef
             {
-                Id = Pact.HoneyedChains, Name = new Txt("蜜の鎖", "Honeyed Chains"),
+                Id = Pact.HoneyedChains, Name = new Txt("蜜の鎖", "Honeyed Chains", "甜蜜锁链"),
                 CurseStrength = PactBalance.HoneyedChainsCurseStrength, XpMult = PactBalance.HoneyedChainsXpMult,
             },
             new PactDef
             {
-                Id = Pact.StardustDebt, Name = new Txt("星屑の負債", "Stardust Debt"),
+                Id = Pact.StardustDebt, Name = new Txt("星屑の負債", "Stardust Debt", "星尘之债"),
                 CurseStrength = PactBalance.StardustDebtCurseStrength, DropBonus = PactBalance.StardustDebtDropBonus,
             },
             new PactDef
             {
-                Id = Pact.BoneDice, Name = new Txt("骨の賽子", "Bone Dice"),
+                Id = Pact.BoneDice, Name = new Txt("骨の賽子", "Bone Dice", "白骨骰子"),
                 CurseStrength = PactBalance.BoneDiceCurseStrength, Luck = PactBalance.BoneDiceLuck,
             },
             new PactDef
             {
-                Id = Pact.NightOfVeils, Name = new Txt("帳の夜", "Night of Veils"),
+                Id = Pact.NightOfVeils, Name = new Txt("帳の夜", "Night of Veils", "薄纱之夜"),
                 CurseStrength = PactBalance.NightOfVeilsCurseStrength,
                 Boons = new[] { new StatLine(Stat.DarkAmp, PactBalance.NightOfVeilsBoonDarkAmp) },
             },
             new PactDef
             {
-                Id = Pact.OathOfDawn, Name = new Txt("夜明けの誓い", "Oath of Dawn"),
+                Id = Pact.OathOfDawn, Name = new Txt("夜明けの誓い", "Oath of Dawn", "黎明之誓"),
                 CurseStrength = PactBalance.OathOfDawnCurseStrength,
                 Boons = new[] { new StatLine(Stat.LightAmp, PactBalance.OathOfDawnBoonLightAmp) },
             },
             new PactDef
             {
-                Id = Pact.AshenChalice, Name = new Txt("灰の杯", "Ashen Chalice"),
+                Id = Pact.AshenChalice, Name = new Txt("灰の杯", "Ashen Chalice", "灰烬圣杯"),
                 CurseStrength = PactBalance.AshenChaliceCurseStrength,
                 Boons = new[] { new StatLine(Stat.MaxHealthFlat, PactBalance.AshenChaliceBoonMaxHealthFlat) },
             },
             new PactDef
             {
-                Id = Pact.CrackedMirror, Name = new Txt("鏡の割れ", "Cracked Mirror"),
+                Id = Pact.CrackedMirror, Name = new Txt("鏡の割れ", "Cracked Mirror", "裂镜"),
                 CurseStrength = PactBalance.CrackedMirrorCurseStrength,
                 Boons = new[] { new StatLine(Stat.CritChancePct, PactBalance.CrackedMirrorBoonCritChancePct) },
             },
             new PactDef
             {
-                Id = Pact.ClangoringHeart, Name = new Txt("早鐘の心", "Clangoring Heart"),
+                Id = Pact.ClangoringHeart, Name = new Txt("早鐘の心", "Clangoring Heart", "铿锵之心"),
                 CurseStrength = PactBalance.ClangoringHeartCurseStrength,
                 Boons = new[] { new StatLine(Stat.AttackSpeedPct, PactBalance.ClangoringHeartBoonAttackSpeedPct) },
             },
             new PactDef
             {
-                Id = Pact.LayeredLamps, Name = new Txt("灯火の重ね", "Layered Lamps"),
+                Id = Pact.LayeredLamps, Name = new Txt("灯火の重ね", "Layered Lamps", "层叠灯火"),
                 CurseStrength = PactBalance.LayeredLampsCurseStrength,
                 Boons = new[] { new StatLine(Stat.ShieldPower, PactBalance.LayeredLampsBoonShieldPower) },
             },
             new PactDef
             {
-                Id = Pact.MossboundPact, Name = new Txt("苔むす契約", "Mossbound Pact"),
+                Id = Pact.MossboundPact, Name = new Txt("苔むす契約", "Mossbound Pact", "苔缚契约"),
                 CurseStrength = PactBalance.MossboundPactCurseStrength,
                 Boons = new[] { new StatLine(Stat.HealthRegen, PactBalance.MossboundPactBoonHealthRegen) },
             },
             new PactDef
             {
-                Id = Pact.PuppetStrings, Name = new Txt("糸繰りの契約", "Puppet Strings"),
+                Id = Pact.PuppetStrings, Name = new Txt("糸繰りの契約", "Puppet Strings", "傀儡丝线"),
                 CurseStrength = PactBalance.PuppetStringsCurseStrength,
                 Boons = new[] { new StatLine(Stat.SummonPower, PactBalance.PuppetStringsBoonSummonPower) },
             },
             new PactDef
             {
-                Id = Pact.GraciousRain, Name = new Txt("慈雨の契約", "Gracious Rain"),
+                Id = Pact.GraciousRain, Name = new Txt("慈雨の契約", "Gracious Rain", "恩雨"),
                 CurseStrength = PactBalance.GraciousRainCurseStrength,
                 Boons = new[] { new StatLine(Stat.HealPower, PactBalance.GraciousRainBoonHealPower) },
             },
             new PactDef
             {
-                Id = Pact.StagnantSpring, Name = new Txt("淀んだ泉", "Stagnant Spring"),
+                Id = Pact.StagnantSpring, Name = new Txt("淀んだ泉", "Stagnant Spring", "淤滞之泉"),
                 CurseStrength = PactBalance.StagnantSpringCurseStrength, ShardMult = PactBalance.StagnantSpringShardMult, NoEcho = true,
             },
             new PactDef
             {
-                Id = Pact.HourglassLie, Name = new Txt("砂時計の嘘", "Hourglass Lie"),
+                Id = Pact.HourglassLie, Name = new Txt("砂時計の嘘", "Hourglass Lie", "沙漏谎言"),
                 CurseStrength = PactBalance.HourglassLieCurseStrength, XpMult = PactBalance.HourglassLieXpMult, NoEcho = true,
             },
             new PactDef
             {
-                Id = Pact.LongWayRound, Name = new Txt("遠回りの契約", "Long Way Round"),
+                Id = Pact.LongWayRound, Name = new Txt("遠回りの契約", "Long Way Round", "迂回远路"),
                 CurseStrength = PactBalance.LongWayRoundCurseStrength, XpMult = PactBalance.LongWayRoundXpMult, DropBonus = PactBalance.LongWayRoundDropBonus,
             },
             new PactDef
             {
-                Id = Pact.ShellBargain, Name = new Txt("貝殻の約定", "Shell Bargain"),
+                Id = Pact.ShellBargain, Name = new Txt("貝殻の約定", "Shell Bargain", "甲壳交易"),
                 CurseStrength = PactBalance.ShellBargainCurseStrength, DropBonus = PactBalance.ShellBargainDropBonus, ShardMult = PactBalance.ShellBargainShardMult,
             },
             new PactDef
             {
-                Id = Pact.DeepmirePromise, Name = new Txt("深泥の約束", "Deepmire Promise"),
+                Id = Pact.DeepmirePromise, Name = new Txt("深泥の約束", "Deepmire Promise", "深沼之约"),
                 CurseStrength = PactBalance.DeepmirePromiseCurseStrength, DoubleDepthBonus = true, TuningOnElite = PactBalance.DeepmirePromiseTuningOnElite,
             },
             new PactDef
             {
-                Id = Pact.GildedWound, Name = new Txt("金箔の傷", "Gilded Wound"),
+                Id = Pact.GildedWound, Name = new Txt("金箔の傷", "Gilded Wound", "镀金伤痕"),
                 CurseStrength = PactBalance.GildedWoundCurseStrength,
                 Boons = new[] { new StatLine(Stat.AttackFlat, PactBalance.GildedWoundBoonAttackFlat), new StatLine(Stat.PowerFlat, PactBalance.GildedWoundBoonPowerFlat) },
             },
