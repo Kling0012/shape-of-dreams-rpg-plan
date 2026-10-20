@@ -59,6 +59,7 @@ namespace SodRpg.Mod
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
             NativePerfOptions.TimescaleIdle = config.nativeTimescaleIdle;
             NativePerfOptions.RedGiantDamageText = config.nativeRedGiantDamageText;
+            NativePerfOptions.StealthRevealOverlapScan = config.nativeStealthRevealOverlapScan;
         }
     }
 
@@ -107,6 +108,7 @@ namespace SodRpg.Mod
         internal static bool EnemyHitFxBudget = true;
         internal static bool TimescaleIdle = true;
         internal static bool RedGiantDamageText = true;
+        internal static bool StealthRevealOverlapScan = true;
     }
 
     internal static class NativePerfPatch

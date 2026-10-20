@@ -239,6 +239,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged Red Giant damage-meter text rebuilds (every client) / レッドジャイアントの値が変わらない被ダメ計測テキストの組み立て直しを省く（各端末）")]
         public bool nativeRedGiantDamageText = true;
 
+        [LabelText("Early-exit the stealth proximity-reveal scan at the first target (host) / ステルスの接近リビール走査を最初の1体で打ち切る（ホスト）")]
+        public bool nativeStealthRevealOverlapScan = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
