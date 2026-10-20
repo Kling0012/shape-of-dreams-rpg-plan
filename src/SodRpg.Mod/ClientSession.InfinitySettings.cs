@@ -29,7 +29,7 @@ namespace SodRpg.Mod
             : NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue(LimboInfinityUnlockedKey, out var value) == true && value == "1";
         internal static string LimboInfinityLockedNotice => Loc.T(
             "リンボのインフィニティは未解禁です。ホストが選んでいる旅人でリンボ6をクリアすると解禁されます。",
-            "Limbo Infinity is locked. Clear Limbo 6 with the host's selected traveler to unlock it.");
+            "Limbo Infinity is locked. Clear Limbo 6 with the host's selected traveler to unlock it.", "Limbo的Infinity尚未解锁。用主机选择的旅人通关Limbo 6即可解锁。");
         public string LimboInfinityNotice => NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo"
             && !LimboInfinityUnlocked ? LimboInfinityLockedNotice : null;
         internal static int HostChosenInfinityInterval => _hostSession?.Profile.LastInfinityInterval ?? InfinityRunState.DefaultInterval;
@@ -47,7 +47,7 @@ namespace SodRpg.Mod
             if (!InfinityMode.Available) return InfinityMode.UnavailableNotice;
             if (canChooseRunRules) return null;
             if (!RemoteHostHelloAnswered)
-                return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…");
+                return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…", "正在等待主机的设置…");
             return RemoteHostInfinityAvailable ? null : Loc.T(
                 "ホスト側でインフィニティは無効です。通常モードは利用できます。",
                 "Infinity is disabled on the host's side. Normal mode remains available.");
