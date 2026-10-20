@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.31 — Less redundant co-op traffic during the Glacial Core's burst（2026-10-20）
+
+協力プレイで氷結の核がバーストを放っている間に、同じ知らせを繰り返し送っていた無駄をなくし、通信を少し減らしました。 / Co-op no longer resends the same unchanged notice during the Glacial Core's burst, slightly reducing network traffic. / 修复了多人合作中冰结核心释放爆发期间重复发送相同通知的问题，网络通信略有减少。
+
+### 更新前に確認 / Before updating / 更新前须知
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version. / 多人合作时，所有玩家都需要更新到此版本。
+- セーブデータはそのまま引き継げます。 / Saves carry over. / 存档可以直接继承。
+- 更新後はゲームを再起動してください。 / Restart the game after updating. / 更新后请重新启动游戏。
+
+### 不具合の修正 / Bug fixes / 错误修复
+
+- 協力プレイで氷結の核がバーストを放っている間、残り回数の表示も位置も変わっていないのに、同じ知らせを1秒に最大10回、各プレイヤーへ送り続けていました。この問題を直し、通信を少し減らしました。ホストと参加者のどちらのゲームも少し軽くなりますが、効果は小さめです。バーストの見た目、残り回数の表示、攻撃のタイミングは、これまでと変わりません。 / Fixed the game resending the same notice to each player up to 10 times per second during the Glacial Core's burst in co-op, even when neither the remaining count nor its position had changed. This slightly reduces network traffic, making the game a little lighter for both host and guests, though the gain is small. How the burst looks, the remaining-count display, and attack timing are unchanged. / 修复了多人合作中冰结核心释放爆发期间，即使剩余次数和位置都没有变化，游戏仍每秒最多10次向每位玩家重复发送相同通知的问题。网络通信略有减少，主机和其他玩家的游戏都会稍微流畅一些，但效果较小。爆发的外观、剩余次数的显示和攻击时机与以前相同。
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd. / 本版本的改动已通过代码和测试确认，尚未在实际游戏和多人合作中确认。如发现异常，请告诉我们。
+
+---
+
 ## v3.8.30 — Lighter enemy HP checks for the co-op host（2026-10-20）
 
 協力プレイでホストが敵の体力を確かめるときの余分な計算を省き、ホストのゲームを少し軽くしました。 / The host now does less extra work when checking enemy HP in co-op, making the host's game a little lighter. / 去掉了多人合作时主机检查敌人生命值时多余的计算，主机的游戏会稍微流畅一些。
