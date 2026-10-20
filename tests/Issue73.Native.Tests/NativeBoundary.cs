@@ -515,6 +515,9 @@ namespace SodRpg.Mod
         // Ai_EmbraceNewIdentity.UpdatePositions の転写がこの形を通る。
         public UnityEngine.Transform transform = new UnityEngine.Transform();
         public UnityEngine.Vector3 position => transform.position;
+        // Shrine_Chaos.GetTargetInfo の Prefix が参照する本体 API。
+        public int level;
+        public bool isLevelUpEnabled = true;
     }
     internal sealed class St_D_CircleOfLife : SkillTrigger { }
     internal sealed class St_D_TheKillingFlow : SkillTrigger { }
@@ -534,6 +537,9 @@ namespace SodRpg.Mod
         public void LogicUpdate(float dt) { }
         public float Network_currentCooldown { get; set; }
         public void SetSyncVarDirtyBit(ulong dirtyBit) { }
+        // Shrine_Chaos.GetTargetInfo(GemLocation, Gem) の Prefix が参照する本体 API。
+        public Hero owner;
+        public int quality;
     }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
