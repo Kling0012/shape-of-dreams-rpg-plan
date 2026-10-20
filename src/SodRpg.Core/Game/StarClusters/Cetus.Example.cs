@@ -25,7 +25,7 @@ namespace SodRpg.Core.Game
                         {
                             new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("薄氷の障壁", "Rime Barrier", "霜华屏障"), Memory = "St_D_IcyVeins",
                                 Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Shield, Value = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_icy_veins_5_options_1_gimmick_value } },
-                            new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("深海の護り", "Abyssal Ward", "深渊守护"), Power = Power.Barrier, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_icy_veins_5_options_2_amount }
+                            new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("深海の護り", "Abyssal Ward", "深海守护"), Power = Power.Barrier, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_icy_veins_5_options_2_amount }
                         })
                     },
                     new ClusterStarDef { Kind = ClusterStarKind.GimmickBoost, Name = new Txt("重なる冷気", "Layered Cold", "叠加寒气"), Memory = "St_D_IcyVeins", Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_icy_veins_6_amount }
@@ -55,10 +55,10 @@ namespace SodRpg.Core.Game
                     new ClusterStarDef { Kind = ClusterStarKind.GimmickParam, Name = new Txt("重なる飛沫", "Layered Spray", "层叠飞沫"), Memory = "St_Q_EmbracingTheChill", Param = GimmickParam.ExtraTargets, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_abyssal_shell_3_amount },
                     new ClusterStarDef
                     {
-                        Kind = ClusterStarKind.Choice, Name = new Txt("深海の分岐", "Abyssal Fork", "深渊分岔"),
+                        Kind = ClusterStarKind.Choice, Name = new Txt("深海の分岐", "Abyssal Fork", "深海分岔"),
                         Options = Array.AsReadOnly(new[]
                         {
-                            new ClusterStarDef { Kind = ClusterStarKind.Stat, Name = new Txt("深海の器", "Abyssal Vessel", "深渊之器"), Stat = Stat.MaxHealthPct, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_abyssal_shell_4_options_1_amount },
+                            new ClusterStarDef { Kind = ClusterStarKind.Stat, Name = new Txt("深海の器", "Abyssal Vessel", "深海之器"), Stat = Stat.MaxHealthPct, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_abyssal_shell_4_options_1_amount },
                             new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("氷壁の護り", "Ice-Wall Ward", "冰墙守护"), Power = Power.Aegis, Amount = MemoryDamageBalance.Effect_legacy_example_cetus_h_cetus_cluster_abyssal_shell_4_options_2_amount }
                         })
                     }
