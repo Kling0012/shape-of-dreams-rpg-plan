@@ -68,6 +68,11 @@ namespace SodRpg.Core.Game
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
         // 外套: Cloak / Drake Hide → 斗篷、Mantle → 披风、纏い: Shroud → 披风（#953 の固有品の既訳）。
         // armor.flowing_cloak / armor.star_cloak は未訳のため、固有品の使い分けを参照する。
+        // #952 の基本装備・固有品で繰り返し使う訳語（名前の一部なので参照用）:
+        // Hoarfrost / Rime: 霧氷 → 雾凇 / Remembrance・Nostalgia: 追憶 → 追忆
+        // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
+        // Fingerless / Mitts: 指抜き・指なし → 露指手套 / Wraps: 手巻き → 缠手
+        // Band: 鉢巻 → 头带、腕輪 → 腕环 / Greaves: 脛当て → 护胫
         // #954 の固有品で繰り返し使う訳語（Txt の第3値を書くときの参照用）:
         // Shrine: 聖堂 → 圣堂 / Crystal: 結晶 → 结晶 / Fireball: 火球 → 火球
         // Ultimate: 奥義・大技・切り札（技） → 奥义（#953・#954 共通）
