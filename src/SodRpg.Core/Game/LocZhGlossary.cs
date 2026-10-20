@@ -47,6 +47,42 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 固有品・セット部位で繰り返し使う訳語（#955）。名前の一部なので辞書には登録しない。
+        // Tidecaller: 潮鳴り → 潮鸣
+        // Lampkeeper: 灯守 → 守灯
+        // Cinder / Embercoal: 残火・熾火・燃え殻 → 余烬
+        // Dusk: 黄昏 → 黄昏
+        // Winterbound: 冬枯れ → 凋冬
+        // Starsinger: 星詠み → 咏星
+        // Hunting Party: 狩猟団 → 狩猎团
+        // Bastion: 不落城 → 不落城
+        // Wildfire: 燎原 → 燎原
+        // Grove: 古森 → 古森
+        // Reverie: 夢想 → 梦想
+        // Phantom: 幻影 → 幻影
+        // Permafrost: 凍土 → 冻土
+        // Carnage: 修羅道 → 修罗
+        // Galedancer: 風舞 → 风舞
+        // Firmament: 天穹 → 天穹
+        // Nightstrike: 闇討ち → 暗袭
+        // Ashrunner / Ashrun: 灰走り → 灰行者（セット部位）・灰行（駆け靴）
+        // Healer: 施療 → 施疗
+        // Ironknight: 鉄騎 → 铁骑
+        // Eclipse: 蝕 → 蚀、日蝕 → 日蚀、月蝕 → 月蚀
+        // Thunderclap: 迅雷 → 迅雷
+        // Myriad: 万象 → 万象
+        // Dawnbreak: 払暁 → 破晓
+        // Icicrystal: 氷晶 → 冰晶
+        // Mistsimmer / Mistwater / Steammist: 霧湯・湯霧 → 雾汤
+        // Ashfall / Cinderfall: 灰降り・降り灰 → 落灰
+        // Eclipse-Rite: 蝕の儀 → 蚀仪
+        // Canticle: 聖歌 → 圣歌
+        // Holy-Ice: 聖氷 → 圣冰
+        // Crystal: 結晶 → 结晶
+        // Ward: 障壁 → 屏障、護り → 守护
+        // Bracers: 腕輪 → 护腕
+        // Locket: ロケット → 坠饰（複合名では「坠」）
+        // Greaves / Treads: 足甲・脚絆 → 胫甲
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
