@@ -5439,12 +5439,13 @@ namespace SodRpg.Mod
     // equality: position (only when _pos is not NaN), rotation likewise (only when _rot
     // is not NaN). A NaN syncvar means vanilla skips that write, so the patch skips its
     // comparison too. +0/-0 compare equal (same value, different bits), and on a parented
-    // transform the position setter recomputes localPosition through the inverse
-    // transform, so a same-value write could still round its stored low bits — neither
-    // can matter numerically; NaN in a transform getter fails every comparison and
-    // reaches the native body, which recovers it the same way vanilla does. Unity's
-    // Quaternion == (dot product, ~0.1 degrees tolerance) is deliberately not used — it
-    // could skip writes that change the pose by a fraction of a degree.
+    // transform the position and rotation setters recompute localPosition and
+    // localRotation through the inverse transform, so a same-value write could still
+    // round their stored low bits — neither effect can matter numerically; NaN in a
+    // transform getter fails every comparison and reaches the native body, which
+    // recovers it the same way vanilla does. Unity's Quaternion == (dot product, ~0.1
+    // degrees tolerance) is deliberately not used — it could skip writes that change the
+    // pose by a fraction of a degree.
     // Because the comparison is against the live transform, anything that moves the object
     // between two frames makes the next comparison fail and the native body runs, exactly
     // as without the patch. On the server the prefix stops at the isServer read: the native
