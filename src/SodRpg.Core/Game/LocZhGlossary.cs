@@ -49,6 +49,11 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 通常セットの説明（#963）: Cold → 冰冷、Shield → 护盾、Critical → 暴击、
+        // Basic attack → 通常攻击、ordinary memory → 通常记忆、Movement memory → 移动记忆、
+        // Ultimate memory → 奥义记忆、Identity memory → 本体记忆、Overcharge → 过载、
+        // cooldown → 冷却时间、overhealing → 过量治疗、distance falloff → 距离衰减。
+        // 訳文は sets.json の description.zh に置き、用語の部分一致による置換には使わない。
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
