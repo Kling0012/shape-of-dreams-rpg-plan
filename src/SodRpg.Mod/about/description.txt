@@ -1,5 +1,5 @@
-[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]docs/README.en.md[/url][/h1]
-[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]docs/README.zh.md[/url][/h1]
+[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]Open on GitHub[/url][/h1]
+[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]在 GitHub 上打开[/url][/h1]
 
 [b]チャットや実績解除の知らせの受け取りと、敵が狙う相手を決める処理の無駄を省き、ゲームを少し軽くしました。[/b]
 
