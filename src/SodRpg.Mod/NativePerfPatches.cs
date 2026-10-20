@@ -59,6 +59,7 @@ namespace SodRpg.Mod
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
             NativePerfOptions.TimescaleIdle = config.nativeTimescaleIdle;
             NativePerfOptions.RedGiantDamageText = config.nativeRedGiantDamageText;
+            NativePerfOptions.MerchantPropIdle = config.nativeMerchantPropIdle;
         }
     }
 
@@ -107,6 +108,7 @@ namespace SodRpg.Mod
         internal static bool EnemyHitFxBudget = true;
         internal static bool TimescaleIdle = true;
         internal static bool RedGiantDamageText = true;
+        internal static bool MerchantPropIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -5333,6 +5335,89 @@ namespace SodRpg.Mod
                 }
             }
             text.text = string.Format(format, total, dps, max);
+        }
+    }
+
+    // PropEnt_Merchant_Base.ActiveLogicUpdate runs on every machine (the guest included)
+    // for every awake merchant — Jonas, Smoothie, Backpack, Unmanned (none override it) —
+    // for as long as a hero is inside the sleep radius (ActorManager keeps entities within
+    // 40 units of any hero awake). The loop's whole job is holding the detached visual
+    // props (Awake reparents them to the scene root so they do not inherit the entity
+    // scale) at the merchant's pose. A merchant never moves under its own power and
+    // nothing else in the shipped game writes those transforms, so after the first tick
+    // the write stores exactly the pose already there — Transform.SetPositionAndRotation
+    // still decomposes, stores and dirties the transform every logic tick regardless.
+    //
+    // The transpiler swaps the single SetPositionAndRotation call site for a guard with
+    // the same argument stack: the native write runs only when the prop's live transform
+    // differs from the pose about to be written. Both position (x/y/z) and rotation
+    // (x/y/z/w) compare per component with float ==, so the write is skipped only when
+    // the pose is bit-identical to what the prop already holds — any change, however
+    // small, still writes exactly as vanilla (Quaternion's == (dot product) is not used
+    // because its real-Unity tolerance (~0.1°) would let small rotations through).
+    // Prop and entity are root transforms — Awake reparents the props to the scene
+    // root — whose position/rotation getters read the stored bits back exactly; +0/-0
+    // compare equal and a sign flip cannot matter numerically; NaN fails every compare
+    // and reaches the native write, which recovers it the way vanilla does.
+    // Because the comparison is against the live transform, anything that moves a prop
+    // between two calls makes the next comparison fail and the native write runs,
+    // exactly as without the patch; a merchant that actually moves or turns
+    // (displacement, teleport, respawn) fails the compare every tick and behaves vanilla.
+    [HarmonyPatch]
+    internal static class NativeMerchantPropIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(PropEnt_Merchant_Base), "ActiveLogicUpdate",
+                new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setPosRot = AccessTools.Method(typeof(Transform), nameof(Transform.SetPositionAndRotation),
+                new[] { typeof(Vector3), typeof(Quaternion) });
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(setPosRot)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "merchant prop idle", "native SetPositionAndRotation callsite changed or already patched");
+                return code;
+            }
+            // Same argument stack as the native call: [transform, position, rotation].
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeMerchantPropIdlePerf), nameof(SetIfChanged));
+            return code;
+        }
+
+        private static void SetIfChanged(Transform transform, Vector3 position, Quaternion rotation)
+        {
+            if (!_disabled && NativePerfOptions.MerchantPropIdle && transform != null)
+            {
+                try
+                {
+                    Vector3 current = transform.position;
+                    Quaternion currentRotation = transform.rotation;
+                    if (current.x == position.x && current.y == position.y && current.z == position.z
+                        && currentRotation.x == rotation.x && currentRotation.y == rotation.y
+                        && currentRotation.z == rotation.z && currentRotation.w == rotation.w)
+                        return;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "merchant prop idle", ex.Message);
+                }
+            }
+            transform.SetPositionAndRotation(position, rotation);
         }
     }
 }

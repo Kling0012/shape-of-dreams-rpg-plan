@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using SodRpg.Mod;
 using UnityEngine;
 using Xunit;
@@ -345,6 +348,273 @@ namespace Issue73.Native.Tests
                 Assert.True(RunPrefix(orb)); // OFF の間は表があっても常に本体経路
                 Assert.True(RunPrefix(orb));
             });
+        }
+    }
+
+    /// <summary>
+    /// （#983）止まっている商人の装飾モデルへの同じ位置・向きの毎フレーム再書き込みの省略
+    /// （NativeMerchantPropIdlePerf）の検証。SetIfChanged の判定を模倣の Transform
+    /// （DashSweepStepPerfBoundary.cs の rotation・SetPositionAndRotation、
+    /// CharacterModelDisplayBoundsBoundary.cs の position と書き込み記録）で直接動かし、
+    /// あわせて本体 PropEnt_Merchant_Base.ActiveLogicUpdate の転写（NativeBoundary.cs）に
+    /// Harmony で当てて動かす。位置も回転も成分ごとの float == で完全一致するときだけ
+    /// 書き込みを省き、1成分でも違えば・NaN を含めば・設定 OFF なら本体どおりに毎回
+    /// 書くこと、呼び出し箇所が1つの転写では Transpiler が置き換えて本体と同じ結果に
+    /// なること、呼び出し箇所が2つ並んだ形では命令を1つも変えず警告1回で下りることを
+    /// 確かめる。
+    /// </summary>
+    public sealed class MerchantPropIdlePerfTests
+    {
+        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+        // 境界の PropEnt_Merchant_Base は本体と同じ abstract なので、回すための小さな実装。
+        private sealed class Merchant : PropEnt_Merchant_Base
+        {
+            internal void RunTick(float dt) => ActiveLogicUpdate(dt);
+        }
+
+        private static void RunSetIfChanged(Transform transform, Vector3 position, Quaternion rotation)
+            => typeof(NativeMerchantPropIdlePerf).GetMethod("SetIfChanged", Hidden)
+                .Invoke(null, new object[] { transform, position, rotation });
+
+        private static bool PreparePatch()
+            => (bool)typeof(NativeMerchantPropIdlePerf).GetMethod("Prepare", Hidden).Invoke(null, null);
+
+        // 商人本体（transform が商人の位置・向き）と、装飾モデル1つの props。
+        private static Merchant NewMerchant(Vector3 position, Quaternion rotation, Vector3 propPosition)
+            => new Merchant
+            {
+                props = new[] { new GameObject { transform = new Transform { position = propPosition } } },
+                transform = new Transform { position = position, rotation = rotation },
+            };
+
+        private static Transform NewProp(Vector3 position, Quaternion rotation)
+            => new Transform { position = position, rotation = rotation };
+
+        // 設定と静的状態を保存・復元して、ほかのテストへの影響を残さない。
+        private static void WithPatch(bool optionEnabled, Action run)
+        {
+            var type = typeof(NativeMerchantPropIdlePerf);
+            var disabled = type.GetField("_disabled", Hidden);
+            var warned = type.GetField("_warned", Hidden);
+            Assert.NotNull(disabled);
+            Assert.NotNull(warned);
+            object savedDisabled = disabled.GetValue(null);
+            object savedWarned = warned.GetValue(null);
+            bool savedOption = NativePerfOptions.MerchantPropIdle;
+            disabled.SetValue(null, false);
+            warned.SetValue(null, false);
+            NativePerfOptions.MerchantPropIdle = optionEnabled;
+            try { run(); }
+            finally
+            {
+                disabled.SetValue(null, savedDisabled);
+                warned.SetValue(null, savedWarned);
+                NativePerfOptions.MerchantPropIdle = savedOption;
+            }
+        }
+
+        [Fact]
+        public void SamePoseIsNotRewritten()
+        {
+            WithPatch(true, () =>
+            {
+                var pose = new Vector3(3f, 0.5f, -7f);
+                var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                var prop = NewProp(pose, facing);
+                int writes = prop.positionWriteLog.Count; // 初期化の書き込み
+                RunSetIfChanged(prop, pose, facing);
+                Assert.Equal(writes, prop.positionWriteLog.Count); // 書き込まれない
+                Assert.Equal(pose.x, prop.position.x); // 値もそのまま
+                Assert.Equal(pose.y, prop.position.y);
+                Assert.Equal(pose.z, prop.position.z);
+                Assert.Equal(facing, prop.rotation);
+                // +0 と -0 は == で等しい: ゼロの符号が違うだけなら書き込まない。
+                var zeroProp = NewProp(new Vector3(0f, 0.5f, 0f), facing);
+                int zeroWrites = zeroProp.positionWriteLog.Count;
+                RunSetIfChanged(zeroProp, new Vector3(-0f, 0.5f, 0f), facing);
+                Assert.Equal(zeroWrites, zeroProp.positionWriteLog.Count);
+            });
+        }
+
+        [Fact]
+        public void OneDifferentPositionComponentWrites()
+        {
+            WithPatch(true, () =>
+            {
+                var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                var prop = NewProp(new Vector3(3f, 0.5f, -7f), facing);
+                int writes = prop.positionWriteLog.Count;
+                var moved = new Vector3(3f, 0.75f, -7f); // y だけ違う
+                RunSetIfChanged(prop, moved, facing);
+                Assert.Equal(writes + 1, prop.positionWriteLog.Count); // 本体経路で書く
+                Assert.Equal(moved.y, prop.position.y);
+                Assert.Equal(facing, prop.rotation); // 回転も同じ1回の呼び出しで入る
+            });
+        }
+
+        [Fact]
+        public void AnyDifferentRotationComponentWrites()
+        {
+            WithPatch(true, () =>
+            {
+                var pose = new Vector3(3f, 0.5f, -7f);
+                var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                // ごく小さい回転差（実機の Quaternion == の許容（約0.1度）より小さい）でも、
+                // 成分が違えば本体経路で書く。
+                var nudged = new Quaternion(0.0001f, 0.38268343f, 0f, 0.92387953f);
+                var prop = NewProp(pose, facing);
+                int writes = prop.positionWriteLog.Count;
+                RunSetIfChanged(prop, pose, nudged);
+                Assert.Equal(writes + 1, prop.positionWriteLog.Count); // SetPositionAndRotation が呼ばれた
+                Assert.Equal(nudged, prop.rotation);
+                // w だけ違う形でも書く（4成分の完全一致でのみ省く）。
+                var identityProp = NewProp(pose, new Quaternion(0f, 0f, 0f, 1f));
+                int identityWrites = identityProp.positionWriteLog.Count;
+                RunSetIfChanged(identityProp, pose, new Quaternion(0f, 0f, 0f, -1f));
+                Assert.Equal(identityWrites + 1, identityProp.positionWriteLog.Count);
+                Assert.Equal(new Quaternion(0f, 0f, 0f, -1f), identityProp.rotation);
+            });
+        }
+
+        [Fact]
+        public void NaNGoesNativeAndMatchesUnpatched()
+        {
+            WithPatch(true, () =>
+            {
+                var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                // 書き込む位置に NaN: 比較が成立せず本体経路で書く。
+                var nanPose = new Vector3(float.NaN, 0.5f, -7f);
+                var prop = NewProp(new Vector3(3f, 0.5f, -7f), facing);
+                int writes = prop.positionWriteLog.Count;
+                RunSetIfChanged(prop, nanPose, facing);
+                Assert.Equal(writes + 1, prop.positionWriteLog.Count);
+                Assert.True(float.IsNaN(prop.position.x)); // 書かれた値も本体と同じ
+                // 保持している側が NaN でも比較は成立せず本体経路（NaN からの回復）。
+                var nanProp = NewProp(new Vector3(float.NaN, 0.5f, -7f), facing);
+                RunSetIfChanged(nanProp, new Vector3(3f, 0.5f, -7f), facing);
+                Assert.Equal(3f, nanProp.position.x);
+                // 回転の NaN 成分も同じ。
+                var nanRotationProp = NewProp(new Vector3(3f, 0.5f, -7f), new Quaternion(float.NaN, 0f, 0f, 1f));
+                RunSetIfChanged(nanRotationProp, new Vector3(3f, 0.5f, -7f), facing);
+                Assert.Equal(facing, nanRotationProp.rotation);
+            });
+        }
+
+        [Fact]
+        public void OptionOffAlwaysWrites()
+        {
+            WithPatch(false, () =>
+            {
+                var pose = new Vector3(3f, 0.5f, -7f);
+                var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                var prop = NewProp(pose, facing);
+                int writes = prop.positionWriteLog.Count;
+                RunSetIfChanged(prop, pose, facing); // 同じ値でも
+                RunSetIfChanged(prop, pose, facing);
+                Assert.Equal(writes + 2, prop.positionWriteLog.Count); // 毎回書く
+            });
+        }
+
+        // 転写（呼び出し箇所1つ）に Harmony で当てる。Prepare が通り、警告が出ないこと
+        // （呼び出し箇所の数え直しが実際の IL と合っていなければここで失敗する）。
+        private static Harmony Patch()
+        {
+            Assert.True(PreparePatch());
+            Log.Warnings.Clear();
+            var harmony = new Harmony("issue73.merchantprop." + Guid.NewGuid().ToString("N"));
+            harmony.CreateClassProcessor(typeof(NativeMerchantPropIdlePerf)).Patch();
+            Assert.Empty(Log.Warnings);
+            return harmony;
+        }
+
+        [Fact]
+        public void TranspiledTickSkipsOnlyUnchangedPoses()
+        {
+            var pose = new Vector3(3f, 0.5f, -7f);
+            var facing = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+            var movedPose = new Vector3(4f, 0.5f, -7f);
+            var turnedFacing = new Quaternion(0f, 0.70710677f, 0f, 0.70710677f);
+
+            // 先にパッチなしの本体側を同じ刻で走らせて、期待値を作る。
+            // 本体は同じ値でも毎ティック書き込む。
+            var vanilla = NewMerchant(pose, facing, new Vector3(0f, 0f, 0f));
+            var vanillaProp = vanilla.props[0].transform;
+            int vanillaWrites = vanillaProp.positionWriteLog.Count;
+            vanilla.RunTick(0f);
+            vanilla.RunTick(0f);
+            Assert.Equal(vanillaWrites + 2, vanillaProp.positionWriteLog.Count); // 毎回書く
+            vanilla.transform.position = movedPose;
+            vanilla.RunTick(0f);
+            vanilla.transform.rotation = turnedFacing;
+            vanilla.RunTick(0f);
+
+            var harmony = Patch();
+            try
+            {
+                WithPatch(true, () =>
+                {
+                    var merchant = NewMerchant(pose, facing, new Vector3(0f, 0f, 0f));
+                    var prop = merchant.props[0].transform;
+                    int writes = prop.positionWriteLog.Count;
+                    merchant.RunTick(0f); // 初回: 位置が違うので書く
+                    Assert.Equal(writes + 1, prop.positionWriteLog.Count);
+                    merchant.RunTick(0f); // 同じ位置・向き: 省く
+                    merchant.RunTick(0f);
+                    Assert.Equal(writes + 1, prop.positionWriteLog.Count);
+                    merchant.transform.position = movedPose; // 本体が動くと毎ティック書く
+                    merchant.RunTick(0f);
+                    Assert.Equal(writes + 2, prop.positionWriteLog.Count);
+                    merchant.transform.rotation = turnedFacing; // 向きが変わっても書く
+                    merchant.RunTick(0f);
+                    Assert.Equal(writes + 3, prop.positionWriteLog.Count);
+                    merchant.RunTick(0f); // 止まったらまた省く
+                    Assert.Equal(writes + 3, prop.positionWriteLog.Count);
+                    // 最終的な位置・向きは本体（パッチなし）と同じ。
+                    Assert.Equal(vanillaProp.position.x, prop.position.x);
+                    Assert.Equal(vanillaProp.position.y, prop.position.y);
+                    Assert.Equal(vanillaProp.position.z, prop.position.z);
+                    Assert.Equal(vanillaProp.rotation, prop.rotation);
+                });
+            }
+            finally
+            {
+                harmony.UnpatchAll(harmony.Id);
+            }
+        }
+
+        // 呼び出し箇所が2つ並んだ形の本体では、Transpiler は命令を1つも変えず
+        // （＝パッチが外れ）、警告は最初の1回だけ出る。2回目の照合でも警告は増えない。
+        [Fact]
+        public void TwoCallsitesAreLeftAloneWithASingleWarning()
+        {
+            Assert.True(PreparePatch()); // 対象の解決
+            var type = typeof(NativeMerchantPropIdlePerf);
+            var warned = type.GetField("_warned", Hidden);
+            object savedWarned = warned.GetValue(null);
+            warned.SetValue(null, false);
+            Log.Warnings.Clear();
+            try
+            {
+                var bad = typeof(PropEnt_Merchant_Base).GetMethod("ActiveLogicUpdateTwoSites", Hidden);
+                Assert.NotNull(bad);
+                var transpiler = type.GetMethod("Transpiler", Hidden);
+                var before = PatchProcessor.GetOriginalInstructions(bad);
+                string original = string.Join(",", before.Select(i => i.opcode.Name));
+                var first = (IEnumerable<CodeInstruction>)transpiler.Invoke(null, new object[] { before });
+                Assert.Equal(original, string.Join(",", first.Select(i => i.opcode.Name))); // 変えていない
+                Assert.Single(Log.Warnings); // 警告は 1 回
+                Assert.Contains("merchant prop idle", Log.Warnings[0]);
+                var second = (IEnumerable<CodeInstruction>)transpiler.Invoke(
+                    null, new object[] { PatchProcessor.GetOriginalInstructions(bad) });
+                Assert.Equal(original, string.Join(",", second.Select(i => i.opcode.Name)));
+                Assert.Single(Log.Warnings); // 2 回目の照合でも警告は増えない
+            }
+            finally
+            {
+                warned.SetValue(null, savedWarned);
+                Log.Warnings.Clear();
+            }
         }
     }
 }
