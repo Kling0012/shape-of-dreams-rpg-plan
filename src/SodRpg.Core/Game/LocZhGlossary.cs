@@ -10,6 +10,8 @@ namespace SodRpg.Core.Game
     /// エッセンス→精华、遠征→远征、道標→路标、契約→契约、依頼→委托、図鑑→图鉴、遺失物→遗失物。
     /// #939 で追加した主な用語: 偉業→成就、覚醒→觉醒、限界突破→极限突破、ドリームダスト→梦境之尘、
     /// 再調律→再调律、洗い直し→重洗、特性→词条、禁忌→禁忌、製作→制作、変種→变种、兆し→预兆。
+    /// #963 のセット名で繰り返す語: Oath / Vow→之誓、Covenant→契约、Regalia→礼装、Garb→装束、
+    /// Raiment / Vestments→法衣、Ensemble→乐团、Eclipse→月蚀。セット名の訳文は sets.json の name.zh に置く。
     /// 銘品・小セット名の訳で繰り返し出る語（#942）: 火の粉→火花、星屑→星屑、蝕→蚀、
     /// 追い風→追风、終曲→终曲、会心→会心、白い霧・湯気→白雾、切札→王牌、分け合い→共享、止水→止水。
     /// 影は通常の影を指すときは「影」、闇や影の力を指すときは「暗影」と訳す。
@@ -47,6 +49,11 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 通常セットの説明（#963）: Cold → 冰冷、Shield → 护盾、Critical → 暴击、
+        // Basic attack → 通常攻击、ordinary memory → 通常记忆、Movement memory → 移动记忆、
+        // Ultimate memory → 奥义记忆、Identity memory → 本体记忆、Overcharge → 过载、
+        // cooldown → 冷却时间、overhealing → 过量治疗、distance falloff → 距离衰减。
+        // 訳文は sets.json の description.zh に置き、用語の部分一致による置換には使わない。
         // #956 で追加した主な用語（Content.cs 3190〜3788 の固有品で繰り返し使う訳語）:
         // Rearguard: 後衛 → 后卫 / Vanguard・先陣: 前衛・先陣 → 前卫・先锋
         // Pack: 群れ → 兽群 / Omen: 予兆・前兆 → 预兆 / Stardust: 星屑 → 星屑

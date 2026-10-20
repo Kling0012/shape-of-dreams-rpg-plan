@@ -201,6 +201,7 @@ namespace SodRpg.Core.Game
     {
         public string Id;
         public Txt Name;
+        public Txt Description;
         public StatLine[] TwoPiece;
         public PowerLine[] ThreePiece;
         /// <summary>6つ装着の効果（v1.31）。6部位化が済むまでは null / 空。4つ・5つ装着には効果を付けない。</summary>
@@ -291,7 +292,7 @@ namespace SodRpg.Core.Game
             foreach (var stage in LinkStages)
                 text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n")
                     + EffectLayout.Bullets(stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link), "　");
-            return text;
+            return Loc.T(text, text, Description?.Zh ?? text);
         }
 
         public string DescribeLinkProgress(int count, bool satisfied)
