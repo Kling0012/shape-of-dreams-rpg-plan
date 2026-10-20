@@ -88,87 +88,87 @@ namespace SodRpg.Core.Game
             new VariantDef
             {
                 Id = "var.corroding_hound", MonsterType = "Mon_Forest_Hound",
-                Name = new Txt("蝕む猟犬", "Corroding Hound"),
-                Description = new Txt("素早く走り回り、噛みつかれると防御が削られる。距離を取っても追いつかれる。", "Fast and relentless; its bites strip your armor."),
+                Name = new Txt("蝕む猟犬", "Corroding Hound", "腐蚀猎犬"),
+                Description = new Txt("素早く走り回り、噛みつかれると防御が削られる。距離を取っても追いつかれる。", "Fast and relentless; its bites strip your armor.", "行动迅捷且穷追不舍，被咬中会削减防御。即使拉开距离也会被追上。"),
                 Stats = MonstersBalance.CreateCorrodingHoundStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.45f, G = 0.75f, B = 0.3f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.mirror_scarab", MonsterType = "Mon_Forest_Scarab",
-                Name = new Txt("鏡殻のスカラベ", "Mirror Scarab"),
-                Description = new Txt("鏡のような殻が強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win."),
+                Name = new Txt("鏡殻のスカラベ", "Mirror Scarab", "镜壳圣甲虫"),
+                Description = new Txt("鏡のような殻が強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win.", "镜面般的甲壳会化解过重的一击。以多次小伤害消耗是捷径。"),
                 Stats = MonstersBalance.CreateMirrorScarabStats(),
                 Traits = VariantTrait.HitCap, R = 0.85f, G = 0.9f, B = 1f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.elder_treant", MonsterType = "Mon_Forest_Treant",
-                Name = new Txt("古老の樹人", "Elder Treant"),
-                Description = new Txt($"分厚い樹皮の障壁をまとい、旅人の攻撃に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded by thick bark that thorns the travelers who attack it. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning."),
+                Name = new Txt("古老の樹人", "Elder Treant", "古老树人"),
+                Description = new Txt($"分厚い樹皮の障壁をまとい、旅人の攻撃に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded by thick bark that thorns the travelers who attack it. Weak to fire: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from fire damage or while burning.", $"身披厚实树皮织成的障壁，会向攻击它的旅人回以棘刺。畏火：受到火元素伤害，或处于燃烧状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
                 Stats = MonstersBalance.CreateElderTreantStats(),
                 Affixes = NightmareAffix.Warded | NightmareAffix.Thorned, Tags = VariantTag.WeakFire, R = 0.25f, G = 0.55f, B = 0.25f, Scale = 1.3f,
             },
             new VariantDef
             {
                 Id = "var.blood_bat", MonsterType = "Mon_DarkCave_CaveBat",
-                Name = new Txt("血吸い蝙蝠", "Bloodsucker Bat"),
-                Description = new Txt("噛みつくたびに傷が癒える。放っておくと倒しにくくなる。", "Heals with every bite; deal with it quickly."),
+                Name = new Txt("血吸い蝙蝠", "Bloodsucker Bat", "吸血蝙蝠"),
+                Description = new Txt("噛みつくたびに傷が癒える。放っておくと倒しにくくなる。", "Heals with every bite; deal with it quickly.", "每次撕咬都会治愈自身伤口。放任不管会越来越难对付。"),
                 Stats = MonstersBalance.CreateBloodBatStats(),
                 Affixes = NightmareAffix.Ravenous, R = 0.9f, G = 0.2f, B = 0.25f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.abyss_oppressor", MonsterType = "Mon_DarkCave_Oppressor",
-                Name = new Txt("深淵の圧制者", "Abyssal Oppressor"),
-                Description = new Txt($"障壁に守られ、重い一撃で防御を砕く。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded, and its heavy blows shatter your armor. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield."),
+                Name = new Txt("深淵の圧制者", "Abyssal Oppressor", "深渊压迫者"),
+                Description = new Txt($"障壁に守られ、重い一撃で防御を砕く。障壁を割る：障壁を持つ相手へのダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%。攻撃者が障壁を持っている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Shielded, and its heavy blows shatter your armor. Breaks shields: deals {MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}% more to shielded targets, but takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more while its attacker holds a shield.", $"以障壁护身，用沉重一击粉碎防御。破盾：对持有障壁目标的伤害+{MonsterBehavior.Number((decimal)MonsterBehavior.TagHunterDealtBonus * 100m)}%，攻击者持有障壁期间承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
                 Stats = MonstersBalance.CreateAbyssOppressorStats(),
                 Affixes = NightmareAffix.Sundering | NightmareAffix.Warded, Tags = VariantTag.ShieldBreaker, R = 0.45f, G = 0.2f, B = 0.6f, Scale = 1.2f,
             },
             new VariantDef
             {
                 Id = "var.hollow_gunner", MonsterType = "Mon_Despair_WretchedArtillery",
-                Name = new Txt("虚ろな砲手", "Hollow Gunner"),
-                Description = new Txt($"遠くから重い砲撃を撃ち込み、障壁で身を守る。記憶を弾く：記憶のダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。通常攻撃は軽減しない。", $"Shelling from afar behind a barrier. Warded against memories: reduces memory damage by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; basic attacks are unaffected."),
+                Name = new Txt("虚ろな砲手", "Hollow Gunner", "空洞炮手"),
+                Description = new Txt($"遠くから重い砲撃を撃ち込み、障壁で身を守る。記憶を弾く：記憶のダメージを{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%軽減。通常攻撃は軽減しない。", $"Shelling from afar behind a barrier. Warded against memories: reduces memory damage by {MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%; basic attacks are unaffected.", $"从远处倾泻沉重炮火，并以障壁自守。抵御记忆：记忆伤害降低{MonsterBehavior.Number((decimal)MonsterBehavior.MaxTagResistance * 100m)}%。通常攻击不受影响。"),
                 Stats = MonstersBalance.CreateHollowGunnerStats(),
                 Affixes = NightmareAffix.Warded, Tags = VariantTag.Spellward, R = 0.6f, G = 0.35f, B = 0.9f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.blazing_martyr", MonsterType = "Mon_Despair_UnstableRat",
-                Name = new Txt("焔の殉教者", "Blazing Martyr"),
-                Description = new Txt($"倒れると大きく爆ぜ、近くにいた者を最大HPの{DeathBurstPct}%ほど焼く（夢の圧力・潜行で増減）。とどめは離れて。", $"Explodes on death for about {DeathBurstPct}% of nearby travelers' max HP (scaled by dream pressure and delve); finish it from a distance."),
+                Name = new Txt("焔の殉教者", "Blazing Martyr", "烈焰殉道者"),
+                Description = new Txt($"倒れると大きく爆ぜ、近くにいた者を最大HPの{DeathBurstPct}%ほど焼く（夢の圧力・潜行で増減）。とどめは離れて。", $"Explodes on death for about {DeathBurstPct}% of nearby travelers' max HP (scaled by dream pressure and delve); finish it from a distance.", $"倒下时猛烈炸裂，对附近旅人造成约其最大生命{DeathBurstPct}%的灼烧伤害（受梦境之压与下潜影响增减）。补刀请保持距离。"),
                 Stats = MonstersBalance.CreateBlazingMartyrStats(),
                 Traits = VariantTrait.DeathBurst, R = 1f, G = 0.55f, B = 0.15f, Scale = 1.3f,
             },
             new VariantDef
             {
                 Id = "var.ink_scholar", MonsterType = "Mon_Ink_GhostBlade",
-                Name = new Txt("吸命の学徒", "Lifedrain Scholar"),
-                Description = new Txt("斬りつけた分だけ命を吸う。長引くほど不利になる。", "Drains life with each cut; the longer the fight, the worse."),
+                Name = new Txt("吸命の学徒", "Lifedrain Scholar", "吸命学者"),
+                Description = new Txt("斬りつけた分だけ命を吸う。長引くほど不利になる。", "Drains life with each cut; the longer the fight, the worse.", "每次斩击都会汲取生命。战斗拖得越久越不利。"),
                 Stats = MonstersBalance.CreateInkScholarStats(),
                 Affixes = NightmareAffix.Ravenous, R = 0.35f, G = 0.2f, B = 0.45f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.thousand_arrows", MonsterType = "Mon_Ink_Archer",
-                Name = new Txt("千本射ち", "Thousand Arrows"),
-                Description = new Txt("矢継ぎ早に射かけ、当たるたびに防御を削る。", "Rapid volleys that strip your armor."),
+                Name = new Txt("千本射ち", "Thousand Arrows", "千箭齐发"),
+                Description = new Txt("矢継ぎ早に射かけ、当たるたびに防御を削る。", "Rapid volleys that strip your armor.", "连珠箭雨，每次命中削减防御。"),
                 Stats = MonstersBalance.CreateThousandArrowsStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.3f, G = 0.45f, B = 0.8f, Scale = 1.15f,
             },
             new VariantDef
             {
                 Id = "var.molten_core", MonsterType = "Mon_LavaLand_FireElemental",
-                Name = new Txt("熔けた核", "Molten Core"),
-                Description = new Txt($"触れれば焼け、倒れれば最大HPの{DeathBurstPct}%ほどの爆発（夢の圧力・潜行で増減）を起こす。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Burns those who strike it, and bursts for about {DeathBurstPct}% of nearby travelers' max HP when it falls (scaled by dream pressure and delve). Weak to cold: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from cold damage or while chilled."),
+                Name = new Txt("熔けた核", "Molten Core", "熔核"),
+                Description = new Txt($"触れれば焼け、倒れれば最大HPの{DeathBurstPct}%ほどの爆発（夢の圧力・潜行で増減）を起こす。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。", $"Burns those who strike it, and bursts for about {DeathBurstPct}% of nearby travelers' max HP when it falls (scaled by dream pressure and delve). Weak to cold: takes {MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}% more from cold damage or while chilled.", $"触碰即遭灼烧，倒下时引发约附近旅人最大生命{DeathBurstPct}%的爆炸（受梦境之压与下潜影响增减）。畏寒：受到冰元素伤害，或处于冰冻状态时，承伤+{MonsterBehavior.Number((decimal)MonsterBehavior.WeaknessTakenBonus * 100m)}%。"),
                 Stats = MonstersBalance.CreateMoltenCoreStats(),
                 Affixes = NightmareAffix.Thorned, Traits = VariantTrait.DeathBurst, Tags = VariantTag.WeakCold, R = 1f, G = 0.4f, B = 0.1f, Scale = 1.25f,
             },
             new VariantDef
             {
                 Id = "var.star_stalker", MonsterType = "Mon_Sky_Baam",
-                Name = new Txt("星追いの影", "Star Stalker"),
+                Name = new Txt("星追いの影", "Star Stalker", "逐星之影"),
                 Description = new Txt("影のように素早く迫り、防御を削り取る。", "Closes in like a shadow and strips your armor."),
                 Stats = MonstersBalance.CreateStarStalkerStats(),
                 Affixes = NightmareAffix.Sundering, R = 0.25f, G = 0.25f, B = 0.4f, Scale = 1.2f,

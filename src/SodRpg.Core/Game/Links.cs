@@ -167,35 +167,35 @@ namespace SodRpg.Core.Game
             ["Gem_L_CamillasGift"] = new Txt("カミラのプレゼント", "Camilla's Gift", "卡米拉的礼物"),
             ["Gem_L_ChaosApple"] = new Txt("混沌のリンゴ", "Apple of Discord", "不和的金苹果"),
             ["Gem_L_DivineFaith"] = new Txt("神聖なる信仰", "Divine Faith", "神圣信仰"),
-            ["Gem_L_Embertail"] = new Txt("エンバーテイル", "Embertail"),
-            ["Gem_L_HeartOfGold"] = new Txt("黄金の心臓", "Heart of Gold"),
-            ["Gem_L_MetalCrystal"] = new Txt("金属結晶", "Metallic Crystal"),
-            ["Gem_L_Paranoia"] = new Txt("偏執症のエッセンス", "Essence of Paranoia"),
-            ["Gem_L_Perfect"] = new Txt("完璧", "Perfection"),
-            ["Gem_L_PureWhite"] = new Txt("純白", "Pure White"),
-            ["Gem_L_SolarEye"] = new Txt("太陽の眼", "Eye of the Sun"),
-            ["Gem_L_SuppressedArcanum"] = new Txt("抑圧されたアルカナム", "Suppressed Arcanum"),
-            ["Gem_L_Culinary"] = new Txt("料理のエッセンス", "Essence of Culinary"),
-            ["Gem_L_Liberty"] = new Txt("解放のエッセンス", "Essence of Liberty"),
-            ["Gem_L_Supersymmetry"] = new Txt("超対称性", "Supersymmetry"),
-            ["Gem_U_EternalFlame"] = new Txt("永遠の炎", "Eternal Flame"),
-            ["Gem_U_GlacialCore"] = new Txt("氷河のコア", "Glacial Core"),
-            ["Gem_U_LastStarlight"] = new Txt("最後の星明かり", "Last Starlight"),
-            ["Gem_U_SoulPrison"] = new Txt("魂の牢獄", "Soul Prison"),
-            [Compass] = new Txt("導きの羅針盤", "Guiding Compass"),
+            ["Gem_L_Embertail"] = new Txt("エンバーテイル", "Embertail", "烬尾"),
+            ["Gem_L_HeartOfGold"] = new Txt("黄金の心臓", "Heart of Gold", "黄金之心"),
+            ["Gem_L_MetalCrystal"] = new Txt("金属結晶", "Metallic Crystal", "金属结晶"),
+            ["Gem_L_Paranoia"] = new Txt("偏執症のエッセンス", "Essence of Paranoia", "偏执精华"),
+            ["Gem_L_Perfect"] = new Txt("完璧", "Perfection", "完美"),
+            ["Gem_L_PureWhite"] = new Txt("純白", "Pure White", "纯白"),
+            ["Gem_L_SolarEye"] = new Txt("太陽の眼", "Eye of the Sun", "太阳之眼"),
+            ["Gem_L_SuppressedArcanum"] = new Txt("抑圧されたアルカナム", "Suppressed Arcanum", "被压抑的奥秘"),
+            ["Gem_L_Culinary"] = new Txt("料理のエッセンス", "Essence of Culinary", "烹饪精华"),
+            ["Gem_L_Liberty"] = new Txt("解放のエッセンス", "Essence of Liberty", "解放精华"),
+            ["Gem_L_Supersymmetry"] = new Txt("超対称性", "Supersymmetry", "超对称性"),
+            ["Gem_U_EternalFlame"] = new Txt("永遠の炎", "Eternal Flame", "永恒之炎"),
+            ["Gem_U_GlacialCore"] = new Txt("氷河のコア", "Glacial Core", "冰川之核"),
+            ["Gem_U_LastStarlight"] = new Txt("最後の星明かり", "Last Starlight", "最后的星光"),
+            ["Gem_U_SoulPrison"] = new Txt("魂の牢獄", "Soul Prison", "灵魂牢狱"),
+            [Compass] = new Txt("導きの羅針盤", "Guiding Compass", "指引罗盘"),
         };
 
         private static readonly Dictionary<string, Txt> TravelerNames = new Dictionary<string, Txt>(StringComparer.Ordinal)
         {
-            ["Hero_Vesper"] = new Txt("Vesper", "Vesper"),
-            ["Hero_Lacerta"] = new Txt("Lacerta", "Lacerta"),
-            ["Hero_Cetus"] = new Txt("Cetus", "Cetus"),
-            ["Hero_Yubar"] = new Txt("Yubar", "Yubar"),
-            ["Hero_Husk"] = new Txt("Husk", "Husk"),
-            ["Hero_Mist"] = new Txt("Mist", "Mist"),
-            ["Hero_Nachia"] = new Txt("Nachia", "Nachia"),
-            ["Hero_Aurena"] = new Txt("Aurena", "Aurena"),
-            ["Hero_Bismuth"] = new Txt("Bismuth", "Bismuth"),
+            ["Hero_Vesper"] = new Txt("Vesper", "Vesper", "Vesper"),
+            ["Hero_Lacerta"] = new Txt("Lacerta", "Lacerta", "Lacerta"),
+            ["Hero_Cetus"] = new Txt("Cetus", "Cetus", "Cetus"),
+            ["Hero_Yubar"] = new Txt("Yubar", "Yubar", "Yubar"),
+            ["Hero_Husk"] = new Txt("Husk", "Husk", "Husk"),
+            ["Hero_Mist"] = new Txt("Mist", "Mist", "Mist"),
+            ["Hero_Nachia"] = new Txt("Nachia", "Nachia", "Nachia"),
+            ["Hero_Aurena"] = new Txt("Aurena", "Aurena", "Aurena"),
+            ["Hero_Bismuth"] = new Txt("Bismuth", "Bismuth", "Bismuth"),
         };
 
         /// <summary>導きの羅針盤の充電前後を1つのエッセンスへ整える。それ以外はそのまま。</summary>
@@ -330,8 +330,8 @@ namespace SodRpg.Core.Game
         public static string ItemName(string target)
         {
             var name = Name(target);
-            return IsMemory(Canon(target)) ? Loc.T("記憶『" + name.Ja + "』", "Memory “" + name.En + "”")
-                : IsEssence(Canon(target)) ? Loc.T("エッセンス『" + name.Ja + "』", "Essence “" + name.En + "”")
+            return IsMemory(Canon(target)) ? Loc.T("記憶『" + name.Ja + "』", "Memory “" + name.En + "”", "记忆“" + (name.Zh ?? name.En) + "”")
+                : IsEssence(Canon(target)) ? Loc.T("エッセンス『" + name.Ja + "』", "Essence “" + name.En + "”", "精华“" + (name.Zh ?? name.En) + "”")
                 : name.ToString();
         }
         /// <summary>Describe effects and their equipped-item or nearby-traveler requirements.</summary>
@@ -341,7 +341,8 @@ namespace SodRpg.Core.Game
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             if (link.Kind == LinkKind.BossReward)
                 return Loc.T($"本人が{ItemName(link.Requires[0])}を装着しているとき、固有報酬の段階{link.Value}が有効になる。対応する各セットでは、最も高い段階だけが有効になる。",
-                    $"Boss reward stage {link.Value} enabled: while you equip {ItemName(link.Requires[0])}. Highest stage per matching set only.");
+                    $"Boss reward stage {link.Value} enabled: while you equip {ItemName(link.Requires[0])}. Highest stage per matching set only.",
+                    $"固有奖励阶段{link.Value}已启用：装备{ItemName(link.Requires[0])}时。对应的各个套装中，只有最高的阶段生效。");
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
             string limitJa, limitEn;
             switch (link.Kind)
@@ -379,7 +380,7 @@ namespace SodRpg.Core.Game
             if (hasTraveler)
                 text += CoopDistance.Description;
             if (travelerCoefficient != null && coefficient > 0f && coefficient < 1f)
-                text = "<color=#8b9aaa>" + text + Loc.T($"（現在の効果量 {coefficient * 100f:0}%）", $" (current effectiveness {coefficient * 100f:0}%)") + "</color>";
+                text = "<color=#8b9aaa>" + text + Loc.T($"（現在の効果量 {coefficient * 100f:0}%）", $" (current effectiveness {coefficient * 100f:0}%)", $"（当前效果量 {coefficient * 100f:0}%）") + "</color>";
             return text;
         }
 
