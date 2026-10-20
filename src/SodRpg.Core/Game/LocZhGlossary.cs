@@ -42,6 +42,12 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 出来事・連携・変種の説明で繰り返し使う訳語（#959）。
+        // Power: 固有効果 → 固有效果、Unique relic: 固有品 → 固有遗物（レア度とは区別）
+        // Milestone: 節目 → 里程碑、Keystone: 到達刻印 → 到达刻印
+        // Barrier: 障壁 → 障壁、Guard reduction: 軽減 → 减伤
+        // Weak to fire / cold / light / dark: 火・冷気・光・闇に弱い → 畏火・畏寒・畏光・畏暗
+        // Unsecured: 未確保 → 未存入、まだ持ち帰っていない → 尚未带回
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>

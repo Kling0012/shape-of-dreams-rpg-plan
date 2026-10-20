@@ -78,16 +78,16 @@ namespace SodRpg.Core.Game
                 feat = Feats.All[i];
                 break;
             }
-            if (feat == null) throw new InvalidOperationException(Loc.T("その偉業は見つかりません。", "That feat does not exist.", "该伟业不存在。"));
-            if (!p.Feats.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業はまだ達成していません。", "You have not completed this feat yet.", "你尚未达成此伟业。"));
-            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬はもう受け取っています。", "You already claimed this reward.", "此伟业的奖励已领取。"));
+            if (feat == null) throw new InvalidOperationException(Loc.T("その偉業は見つかりません。", "That feat does not exist.", "该成就不存在。"));
+            if (!p.Feats.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業はまだ達成していません。", "You have not completed this feat yet.", "你尚未达成此成就。"));
+            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬はもう受け取っています。", "You already claimed this reward.", "此成就的奖励已领取。"));
 
             p.AddMaterial(Materials.Shard, feat.RewardShards);
             p.AddMaterial(Materials.Tuning, feat.RewardTuning);
             p.FeatsClaimed.Add(featId);
             string ja = feat.RewardTuning > 0 ? $"欠片{feat.RewardShards}と調律石{feat.RewardTuning}" : $"欠片{feat.RewardShards}";
             string en = feat.RewardTuning > 0 ? $"{feat.RewardShards} shards and {feat.RewardTuning} tuning" : $"{feat.RewardShards} shards";
-            return new GameEvent(EventKind.Info, Loc.T($"偉業「{feat.Name}」の報酬として{ja}を受け取りました。", $"Claimed \"{feat.Name}\": {en}.", $"已领取伟业“{feat.Name}”的奖励：碎片{feat.RewardShards}" + (feat.RewardTuning > 0 ? $"、调律石{feat.RewardTuning}" : "") + "。"));
+            return new GameEvent(EventKind.Info, Loc.T($"偉業「{feat.Name}」の報酬として{ja}を受け取りました。", $"Claimed \"{feat.Name}\": {en}.", $"已领取成就“{feat.Name}”的奖励：{(feat.RewardTuning > 0 ? $"{feat.RewardShards}枚碎片和{feat.RewardTuning}颗调律石" : $"{feat.RewardShards}枚碎片")}。"));
         }
 
         // ───────────── 遠征 ─────────────
@@ -2000,7 +2000,7 @@ namespace SodRpg.Core.Game
 
         public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null, Slot? target = null)
         {
-            if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted.", "固有品无法合成。"));
+            if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted.", "传说遗物无法合成。"));
             int need = Content.TransmuteInputs(r);
             var parts = TransmuteCandidates(p, r, trades).Take(need).ToList();
             if (parts.Count < need) throw new InvalidOperationException(Loc.T($"材料が足りません（鍵なし・未装着の同じレア度が{need}つ必要）。", $"Need {need} unlocked, unequipped relics of the same rarity.", $"材料不足（需要{need}件未上锁、未装备的同稀有度遗物）。"));
