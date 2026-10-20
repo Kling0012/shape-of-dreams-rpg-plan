@@ -5434,24 +5434,26 @@ namespace SodRpg.Mod
     // rewrites the same seven floats every frame, plus the hierarchy dirty cascade for
     // anything with children or attached colliders.
     //
-    // The prefix reads the live transform and skips the body only when every write vanilla
-    // would make stores exactly the bits already there: position compared per component
-    // with float == (only when _pos is not NaN), rotation likewise (only when _rot is not
-    // NaN). A NaN syncvar means vanilla skips that write, so the patch skips its comparison
-    // too. +0/-0 compare equal and a sign flip cannot matter numerically; NaN in a
-    // transform getter fails every comparison and reaches the native body, which recovers
-    // it the same way vanilla does. Unity's Quaternion == (dot product, ~0.1 degrees
-    // tolerance) is deliberately not used — it could skip writes that change the pose by a
-    // fraction of a degree.
+    // The prefix reads the live transform and skips the body only when the world-space
+    // values already agree under per-component float == — value equality, not bit
+    // equality: position (only when _pos is not NaN), rotation likewise (only when _rot
+    // is not NaN). A NaN syncvar means vanilla skips that write, so the patch skips its
+    // comparison too. +0/-0 compare equal (same value, different bits), and on a parented
+    // transform the position setter recomputes localPosition through the inverse
+    // transform, so a same-value write could still round its stored low bits — neither
+    // can matter numerically; NaN in a transform getter fails every comparison and
+    // reaches the native body, which recovers it the same way vanilla does. Unity's
+    // Quaternion == (dot product, ~0.1 degrees tolerance) is deliberately not used — it
+    // could skip writes that change the pose by a fraction of a degree.
     // Because the comparison is against the live transform, anything that moves the object
     // between two frames makes the next comparison fail and the native body runs, exactly
     // as without the patch. On the server the prefix stops at the isServer read: the native
     // body is a no-op there anyway (both writes are gated on !isServer and the base
     // FrameUpdate is empty), so the host keeps executing it untouched instead of paying the
     // per-instance transform reads the guests' comparison would cost; on a stopped guest
-    // instance both syncvars are NaN and the body is equally empty. The skipped write
-    // changes no bit anywhere: the transform keeps its old
-    // (identical) value, Transform.hasChanged semantics aside (a same-value write sets it,
+    // instance both syncvars are NaN and the body is equally empty. The skipped write is
+    // one whose values already agree under float ==, so the transform keeps its old
+    // value, Transform.hasChanged semantics aside (a same-value write sets it,
     // and nothing in the shipped game reads it — verified by grep over the decompiled
     // assemblies, as in the hero-weapon idle patch). The class is resolved by name (the mod
     // never references it) and a missing type or member disables just this optimization
