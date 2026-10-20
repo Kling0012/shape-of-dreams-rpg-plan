@@ -322,61 +322,65 @@ namespace SodRpg.Core.Game
 
         public static string TriggerText(RunGrowthTrigger trigger, int threshold)
         {
+            // 中国語の第3引数は補間を伴うため、中国語表示のときだけ組み立てる（HUD 経由で頻繁に呼ばれる）。
+            bool zh = Loc.Language == LocLanguage.Chinese;
             switch (trigger)
             {
                 case RunGrowthTrigger.DamageTakenMaxHpPct:
-                    return Loc.T($"実際に失ったHP（障壁が吸収した分を除く）が最大HPの{threshold}%に達するたび", $"each time actual health lost (excluding shield absorption) totals {threshold}% of max health", $"每当实际损失的生命值（不含护盾吸收量）累计达到最大生命值的{threshold}%时");
+                    return Loc.T($"実際に失ったHP（障壁が吸収した分を除く）が最大HPの{threshold}%に達するたび", $"each time actual health lost (excluding shield absorption) totals {threshold}% of max health", zh ? $"每当实际损失的生命值（不含护盾吸收量）累计达到最大生命值的{threshold}%时" : null);
                 case RunGrowthTrigger.ShieldAbsorbedMaxHpPct:
-                    return Loc.T($"障壁が吸収した量が最大HPの{threshold}%に達するたび", $"each time damage absorbed by shields totals {threshold}% of max health", $"每当护盾吸收的伤害累计达到最大生命值的{threshold}%时");
+                    return Loc.T($"障壁が吸収した量が最大HPの{threshold}%に達するたび", $"each time damage absorbed by shields totals {threshold}% of max health", zh ? $"每当护盾吸收的伤害累计达到最大生命值的{threshold}%时" : null);
                 case RunGrowthTrigger.ParrySuccess:
                     return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully", "每次成功招架时")
-                        : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries", $"每成功招架{threshold}次时");
+                        : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries", zh ? $"每成功招架{threshold}次时" : null);
                 case RunGrowthTrigger.HealSucceeded:
                     return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally", "每次你的治疗实际恢复自身或队友的生命值时")
-                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies", $"每对自身或队友完成{threshold}次有效治疗时"))
+                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies", zh ? $"每对自身或队友完成{threshold}次有效治疗时" : null))
                         + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
-                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)", $"（对队友的有效治疗和护盾计为{StarRankBalance.SupportAllyGrowthMultiplier}次，自我治疗计为1次；不含过量治疗生成的护盾）");
+                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)", zh ? $"（对队友的有效治疗和护盾计为{StarRankBalance.SupportAllyGrowthMultiplier}次，自我治疗计为1次；不含过量治疗生成的护盾）" : null);
                 case RunGrowthTrigger.EnemyKill:
                     return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy", "每次击杀敌人时")
-                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill", $"每击杀{threshold}名敌人时");
+                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill", zh ? $"每击杀{threshold}名敌人时" : null);
                 case RunGrowthTrigger.SummonHit:
                     return threshold == 1 ? Loc.T("自分の召喚獣の攻撃が敵に命中するたび", "each time your summon hits an enemy", "每次你的召唤物命中敌人时")
-                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies", $"每当你的召唤物累计命中敌人{threshold}次时");
+                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies", zh ? $"每当你的召唤物累计命中敌人{threshold}次时" : null);
                 case RunGrowthTrigger.BasicAttackHit:
                     return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy", "每次你的普通攻击命中敌人时")
-                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies", $"每当你的普通攻击累计命中敌人{threshold}次时");
+                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies", zh ? $"每当你的普通攻击累计命中敌人{threshold}次时" : null);
                 case RunGrowthTrigger.MemoryHit:
                     return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy", "每次你的记忆命中敌人时")
-                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies", $"每当你的记忆累计命中敌人{threshold}次时");
+                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies", zh ? $"每当你的记忆累计命中敌人{threshold}次时" : null);
                 default:
                     return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow", "每次以暴击普通攻击完成击杀时")
-                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks", $"每以暴击普通攻击完成{threshold}次击杀时");
+                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks", zh ? $"每以暴击普通攻击完成{threshold}次击杀时" : null);
             }
         }
 
         public static string StatText(Stat stat, double value)
         {
             string number = value.ToString("0.##", CultureInfo.InvariantCulture);
+            // 中国語の第3引数は補間を伴うため、中国語表示のときだけ組み立てる（HUD 経由で頻繁に呼ばれる）。
+            bool zh = Loc.Language == LocLanguage.Chinese;
             switch (stat)
             {
-                case Stat.AttackFlat: return Loc.T($"攻撃力 +{number}", $"Attack Damage +{number}", $"攻击力 +{number}");
-                case Stat.PowerFlat: return Loc.T($"魔力 +{number}", $"Ability Power +{number}", $"法术强度 +{number}");
-                case Stat.Armor: return Loc.T($"防御 +{number}", $"Armor +{number}", $"护甲 +{number}");
-                case Stat.MaxHealthFlat: return Loc.T($"最大HP +{number}", $"Max Health +{number}", $"最大生命值 +{number}");
-                case Stat.MaxHealthPct: return Loc.T($"最大HP +{number}%", $"Max Health +{number}%", $"最大生命值 +{number}%");
-                case Stat.AttackPct: return Loc.T($"攻撃力 +{number}%", $"Attack Damage +{number}%", $"攻击力 +{number}%");
-                case Stat.PowerPct: return Loc.T($"魔力 +{number}%", $"Ability Power +{number}%", $"法术强度 +{number}%");
-                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 +{number}%", $"Attack Speed +{number}%", $"攻击速度 +{number}%");
-                case Stat.CritChancePct: return Loc.T($"会心率 +{number}%", $"Crit Chance +{number}%", $"暴击率 +{number}%");
-                case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%", $"暴击伤害 +{number}%");
-                case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%", $"护盾强度 +{number}%");
-                case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%", $"治疗强度 +{number}%");
-                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%", $"受到的治疗 +{number}%");
-                case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%", $"召唤物伤害 +{number}%");
-                case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}", $"生命恢复 +{number}");
-                case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}", $"技能急速 +{number}");
-                case Stat.MoveSpeedPct: return Loc.T($"移動速度 +{number}%", $"Move Speed +{number}%", $"移动速度 +{number}%");
-                case Stat.Tenacity: return Loc.T($"不屈 +{number}", $"Tenacity +{number}", $"韧性 +{number}");
+                case Stat.AttackFlat: return Loc.T($"攻撃力 +{number}", $"Attack Damage +{number}", zh ? $"攻击力 +{number}" : null);
+                case Stat.PowerFlat: return Loc.T($"魔力 +{number}", $"Ability Power +{number}", zh ? $"法术强度 +{number}" : null);
+                case Stat.Armor: return Loc.T($"防御 +{number}", $"Armor +{number}", zh ? $"护甲 +{number}" : null);
+                case Stat.MaxHealthFlat: return Loc.T($"最大HP +{number}", $"Max Health +{number}", zh ? $"最大生命值 +{number}" : null);
+                case Stat.MaxHealthPct: return Loc.T($"最大HP +{number}%", $"Max Health +{number}%", zh ? $"最大生命值 +{number}%" : null);
+                case Stat.AttackPct: return Loc.T($"攻撃力 +{number}%", $"Attack Damage +{number}%", zh ? $"攻击力 +{number}%" : null);
+                case Stat.PowerPct: return Loc.T($"魔力 +{number}%", $"Ability Power +{number}%", zh ? $"法术强度 +{number}%" : null);
+                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 +{number}%", $"Attack Speed +{number}%", zh ? $"攻击速度 +{number}%" : null);
+                case Stat.CritChancePct: return Loc.T($"会心率 +{number}%", $"Crit Chance +{number}%", zh ? $"暴击率 +{number}%" : null);
+                case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%", zh ? $"暴击伤害 +{number}%" : null);
+                case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%", zh ? $"护盾强度 +{number}%" : null);
+                case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%", zh ? $"治疗强度 +{number}%" : null);
+                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%", zh ? $"受到的治疗 +{number}%" : null);
+                case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%", zh ? $"召唤物伤害 +{number}%" : null);
+                case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}", zh ? $"生命恢复 +{number}" : null);
+                case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}", zh ? $"技能急速 +{number}" : null);
+                case Stat.MoveSpeedPct: return Loc.T($"移動速度 +{number}%", $"Move Speed +{number}%", zh ? $"移动速度 +{number}%" : null);
+                case Stat.Tenacity: return Loc.T($"不屈 +{number}", $"Tenacity +{number}", zh ? $"韧性 +{number}" : null);
                 default: return Content.FormatStat(stat, (int)Math.Round(value));
             }
         }
