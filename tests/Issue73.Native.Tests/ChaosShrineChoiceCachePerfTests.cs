@@ -16,7 +16,8 @@ namespace Issue73.Native.Tests
     /// (b) customData の差し替え・報酬配列の差し替え・プレイヤーの切り替えで解決し直すこと、
     /// (c) 解析できない・範囲外の値と鍵の消失は本体に任せること（例外の型も本体と同じ）、
     /// (d) GetTargetInfo の2つの多重定義（isLevelUpEnabled が false のときと端数の切り捨て、
-    ///     player 引数を使わないこと）、(e) 設定 OFF と失敗後の _disabled では本体に戻ること。
+    ///     player 引数を使わないこと）、(e) 設定 OFF と owner が null のときは本体に戻り、
+    ///     owner が null でもキャッシュを無効にしないこと。
     /// </summary>
     public sealed class ChaosShrineChoiceCachePerfTests : IDisposable
     {
@@ -367,30 +368,35 @@ namespace Issue73.Native.Tests
             AssertSameInfo(shrine.GetTargetInfo(player, default(GemLocation), gem), PatchedGemInfo(shrine, player, gem));
         }
 
-        // (e) 失敗後の _disabled: 対象の読み取りで例外が出たら（ここでは SkillTrigger の
-        // owner が null のときの NullReferenceException）その場は本体に任せ、以後の呼び出しは
-        // 常に本体に任せる（fail-soft）。失敗した修正だけが外れて、ほかの4つは動き続ける。
-        // 本体も同じ入力で NullReferenceException を出す。
+        // (e) owner が null のときは本体に任せ、軽量化を無効にせず警告も出さない。
+        // 本体は同じ入力で NullReferenceException を出すが、以後の有効な呼び出しでは
+        // スキル側・ジェム側ともキャッシュを使える。
         [Fact]
-        public void AReadFailureRunsTheBodyAfterwards()
+        public void ANullOwnerRunsTheBodyWithoutDisablingTheCache()
         {
             var player = Player("p1");
             var shrine = Shrine(player, Reward(ChaosRewardType.UpgradeSkill, 1f));
             shrine.EnterEditSkill(player, "0");
             DewPlayer.local = player;
             var broken = new SkillTrigger { owner = null };
+            var brokenGem = new Gem { owner = null };
             Assert.True(PrefixSkillInfo(shrine, player, broken, out _));
-            var type = typeof(NativeShrineChaosSkillTargetInfoPerf);
-            Assert.True((bool)type.GetField("_disabled", Hidden).GetValue(null));
-            Assert.True((bool)type.GetField("_warned", Hidden).GetValue(null));
+            Assert.True(PrefixGemInfo(shrine, player, brokenGem, out _));
+            foreach (var type in new[] { typeof(NativeShrineChaosSkillTargetInfoPerf), typeof(NativeShrineChaosGemTargetInfoPerf) })
+            {
+                Assert.False((bool)type.GetField("_disabled", Hidden).GetValue(null));
+                Assert.False((bool)type.GetField("_warned", Hidden).GetValue(null));
+            }
             Assert.Throws<NullReferenceException>(() => shrine.GetTargetInfo(player, HeroSkillLocation.Q, broken));
-            // 以後は有効な呼び出しでも常に本体に任せる。結果は変わらない。
+            Assert.Throws<NullReferenceException>(() => shrine.GetTargetInfo(player, default(GemLocation), brokenGem));
+            // 以後の有効な呼び出しではキャッシュを使い、結果は本体と一致する。
             var target = SkillOf(player, 2, true);
-            Assert.True(PrefixSkillInfo(shrine, player, target, out _));
+            var gem = GemOf(player, 1);
+            Assert.False(PrefixSkillInfo(shrine, player, target, out _));
+            Assert.False(PrefixGemInfo(shrine, player, gem, out _));
             AssertSameInfo(shrine.GetTargetInfo(player, HeroSkillLocation.Q, target), PatchedSkillInfo(shrine, player, target));
-            // 失敗していない修正は影響を受けない。
+            AssertSameInfo(shrine.GetTargetInfo(player, default(GemLocation), gem), PatchedGemInfo(shrine, player, gem));
             Assert.False(PrefixText(shrine, out _));
-            Assert.False(PrefixGemInfo(shrine, player, GemOf(player, 1), out _));
         }
     }
 }

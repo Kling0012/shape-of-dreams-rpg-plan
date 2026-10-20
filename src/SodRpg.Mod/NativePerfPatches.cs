@@ -4498,8 +4498,10 @@ namespace SodRpg.Mod
             if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
             try
             {
-                // 本体は player 引数を使わず target の所有者で解決するので、同じ式で解決する。
-                if (!ShrineChaosChoiceCache.TryGet(__instance, target.owner.owner, out var reward)) return true;
+                // 本体は player 引数を使わず target の所有者で解決する。
+                var owner = target?.owner?.owner;
+                if (owner == null) return true;
+                if (!ShrineChaosChoiceCache.TryGet(__instance, owner, out var reward)) return true;
                 EditSkillTargetInfo result = default;
                 result.nextLevel = target.level + (int)reward.quantity;
                 result.rejectReasonRawText = (!target.isLevelUpEnabled) ? DewLocalization.GetUIValue("InGame_Message_CantUpgradeThisSkill") : null;
@@ -4536,8 +4538,10 @@ namespace SodRpg.Mod
             if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
             try
             {
-                // 本体は player 引数を使わず target の所有者で解決するので、同じ式で解決する。
-                if (!ShrineChaosChoiceCache.TryGet(__instance, target.owner.owner, out var reward)) return true;
+                // 本体は player 引数を使わず target の所有者で解決する。
+                var owner = target?.owner?.owner;
+                if (owner == null) return true;
+                if (!ShrineChaosChoiceCache.TryGet(__instance, owner, out var reward)) return true;
                 EditSkillTargetInfo result = default;
                 result.nextLevel = target.quality + (int)reward.quantity;
                 __result = result;
