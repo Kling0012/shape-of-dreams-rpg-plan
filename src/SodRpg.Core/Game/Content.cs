@@ -158,7 +158,7 @@ namespace SodRpg.Core.Game
             Id = id;
             BaseId = baseId;
             Name = name;
-            Lore = new Txt("", "");
+            Lore = new Txt("", "", "");
             SetId = setId;
             Powers = Array.Empty<PowerLine>();
         }
@@ -278,18 +278,18 @@ namespace SodRpg.Core.Game
         {
             string two = JoinStatLines(TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
             string three = string.Join("\n", ThreePiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
-            string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
+            string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}", $"2件套：{two}\n3件套：\n{three}");
             if (BossStages.Count > 0)
-                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：\n", $"{s.RequiredPieces} pieces:\n") + EffectLayout.Bullets(BossProfiles.DescribeMove(s.ProfileId), "　")));
+                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：\n", $"{s.RequiredPieces} pieces:\n", $"{s.RequiredPieces}件套：\n") + EffectLayout.Bullets(BossProfiles.DescribeMove(s.ProfileId), "　")));
             if (SixPiece != null && SixPiece.Length > 0)
             {
                 string six = string.Join("\n", SixPiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
-                text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
+                text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}", $"\n6件套：\n{six}");
             }
             if (BossTypeName != null)
-                text += Loc.T("\n対応するボスからのみ入手できる。", "\nSource: only from the matching boss");
+                text += Loc.T("\n対応するボスからのみ入手できる。", "\nSource: only from the matching boss", "\n仅可从对应首领处获得。");
             foreach (var stage in LinkStages)
-                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n")
+                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n", $"\n{stage.RequiredPieces}件套可选联动：\n")
                     + EffectLayout.Bullets(stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link), "　");
             return text;
         }
@@ -301,20 +301,21 @@ namespace SodRpg.Core.Game
             string target = Links.Name(LinkStages[0].Link.Requires[0]).ToString();
             string status = Loc.T(
                 $"現在{count}つ装着している。対象の『{target}』は{(satisfied ? "装着済み" : "未装着")}である。",
-                $"{count} pieces equipped. Target {target}: {(satisfied ? "equipped" : "not equipped")}.");
+                $"{count} pieces equipped. Target {target}: {(satisfied ? "equipped" : "not equipped")}.",
+                $"已装备{count}件。目标{target}：{(satisfied ? "已装备" : "未装备")}。");
             status += stage != null && satisfied
-                ? Loc.T($"有効な連携は{stage.RequiredPieces}つ装着の段階である。", $"Active link: {stage.RequiredPieces}-piece stage.")
-                : Loc.T("有効な連携はない。", "Active link: none.");
+                ? Loc.T($"有効な連携は{stage.RequiredPieces}つ装着の段階である。", $"Active link: {stage.RequiredPieces}-piece stage.", $"当前生效的联动：{stage.RequiredPieces}件套阶段。")
+                : Loc.T("有効な連携はない。", "Active link: none.", "当前无生效的联动。");
             if (stage != null)
-                status += Loc.T($"\n選択段階（{stage.RequiredPieces}つ装着）：", $"\nSelected {stage.RequiredPieces}-piece stage: ")
+                status += Loc.T($"\n選択段階（{stage.RequiredPieces}つ装着）：", $"\nSelected {stage.RequiredPieces}-piece stage: ", $"\n选中阶段（{stage.RequiredPieces}件套）：")
                     + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
             foreach (var next in LinkStages)
             {
                 if (next.RequiredPieces <= count) continue;
                 int missing = next.RequiredPieces - count;
-                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着の段階になる。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.");
+                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着の段階になる。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.", $"\n还差{missing}件可达到{next.RequiredPieces}件套阶段。");
             }
-            return status + Loc.T("\n最終段階である。", "\nFinal stage reached.");
+            return status + Loc.T("\n最終段階である。", "\nFinal stage reached.", "\n已达到最终阶段。");
         }
 
         /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>
@@ -322,17 +323,17 @@ namespace SodRpg.Core.Game
         {
             if (HasSixPiece)
             {
-                if (count >= 6) return Loc.T("6つそろっています。すべての効果が有効です。", "All 6 pieces equipped: every bonus is active.");
+                if (count >= 6) return Loc.T("6つそろっています。すべての効果が有効です。", "All 6 pieces equipped: every bonus is active.", "已集齐6件，所有加成均已生效。");
                 if (count >= 3)
                 {
                     int left = 6 - count;
-                    return Loc.T($"あと{left}つで、6つ装着の効果が加わります。", left == 1 ? "One more piece adds the 6-piece bonus." : $"{left} more pieces add the 6-piece bonus.");
+                    return Loc.T($"あと{left}つで、6つ装着の効果が加わります。", left == 1 ? "One more piece adds the 6-piece bonus." : $"{left} more pieces add the 6-piece bonus.", left == 1 ? "再装备1件可获得6件套加成。" : $"再装备{left}件可获得6件套加成。");
                 }
             }
-            else if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.");
-            if (count == 2) return Loc.T("あと1つで、3つ装着の効果が加わります。", "One more piece adds the 3-piece bonus.");
-            if (count == 1) return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.");
-            return Loc.T("あと2つで、2つ装着の効果が有効になります。", "Two more pieces activate the 2-piece bonus.");
+            else if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.", "已集齐3件，所有加成均已生效。");
+            if (count == 2) return Loc.T("あと1つで、3つ装着の効果が加わります。", "One more piece adds the 3-piece bonus.", "再装备1件可获得3件套加成。");
+            if (count == 1) return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.", "再装备1件可激活2件套加成。");
+            return Loc.T("あと2つで、2つ装着の効果が有効になります。", "Two more pieces activate the 2-piece bonus.", "再装备2件可激活2件套加成。");
         }
     }
 
@@ -471,16 +472,16 @@ namespace SodRpg.Core.Game
             string field;
             switch (parameter)
             {
-                case GimmickParam.Duration: field = Loc.T("持続時間", "duration"); break;
+                case GimmickParam.Duration: field = Loc.T("持続時間", "duration", "持续时间"); break;
                 case GimmickParam.WindowDuration: case GimmickParam.MarkDuration: throw new InvalidOperationException("A bridge gate duration is a typed scoped modifier, not a legacy gimmick parameter: " + id);
-                case GimmickParam.Radius: field = Loc.T("範囲の半径", "radius"); break;
-                case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count"); break;
-                case GimmickParam.Chance: field = Loc.T("追加の属性付与確率", "extra elemental application chance"); break;
+                case GimmickParam.Radius: field = Loc.T("範囲の半径", "radius", "范围半径"); break;
+                case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count", "目标数量"); break;
+                case GimmickParam.Chance: field = Loc.T("追加の属性付与確率", "extra elemental application chance", "额外元素施加概率"); break;
                 default: throw new InvalidOperationException("Invalid gimmick parameter for " + id);
             }
-            string unit = parameter == GimmickParam.ExtraTargets ? Loc.T("体", " targets")
-                : parameter == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%";
-            string cap = parameter == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets + Loc.T("体", " targets")
+            string unit = parameter == GimmickParam.ExtraTargets ? Loc.T("体", " targets", "个目标")
+                : parameter == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points", "个百分点") : "%";
+            string cap = parameter == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets + Loc.T("体", " targets", "个目标")
                 : parameter == GimmickParam.Chance ? "100%" : Gimmicks.MaxParameterPercent + "%";
             if (Loc.Japanese)
             {
@@ -504,7 +505,7 @@ namespace SodRpg.Core.Game
                 .Where(t => t.RouteMemory == routeMemory && t.Gimmick != null
                     && (!parameter.HasValue || Gimmicks.SupportsParameter(t.Gimmick, parameter.Value)))
                 .Select(t => FractionalScopedModifiers.EffectLabel(t.Gimmick)).Distinct();
-            string effects = string.Join(Loc.T("・", ", "), labels);
+            string effects = string.Join(Loc.T("・", ", ", "、"), labels);
             if (effects.Length == 0) throw new InvalidOperationException("Cannot resolve route effect description: " + routeMemory);
             return effects;
         }
@@ -580,32 +581,32 @@ namespace SodRpg.Core.Game
 
         public static readonly IReadOnlyList<BaseDef> Bases = new[]
         {
-            new BaseDef("weapon.chain_sword", Slot.Weapon, Line.Offense, new Txt("連なりの剣", "Chain Sword"), Stat.AttackSpeedPct, EquipmentItemsBalanceValues.Base_weapon_chain_sword),
-            new BaseDef("weapon.twin_fang", Slot.Weapon, Line.Offense, new Txt("双牙の短刀", "Twin Fang Daggers"), Stat.CritChancePct, EquipmentItemsBalanceValues.Base_weapon_twin_fang, Family.Gale),
-            new BaseDef("weapon.calming_staff", Slot.Weapon, Line.Resonance, new Txt("鎮めの杖", "Calming Staff"), Stat.PowerFlat, EquipmentItemsBalanceValues.Base_weapon_calming_staff, Family.Mend),
-            new BaseDef("weapon.longspike_bow", Slot.Weapon, Line.Offense, new Txt("長穂の弓", "Longspike Bow"), Stat.CritDamagePct, EquipmentItemsBalanceValues.Base_weapon_longspike_bow, Family.Flame),
-            new BaseDef("weapon.shield_maul", Slot.Weapon, Line.Guard, new Txt("盾打ちの槌", "Shieldbash Maul"), Stat.MaxHealthPct, EquipmentItemsBalanceValues.Base_weapon_shield_maul, Family.Guard),
-            new BaseDef("weapon.blaze_greatsword", Slot.Weapon, Line.Offense, new Txt("烈火の大剣", "Blazing Greatsword"), Stat.AttackFlat, EquipmentItemsBalanceValues.Base_weapon_blaze_greatsword, Family.Flame),
+            new BaseDef("weapon.chain_sword", Slot.Weapon, Line.Offense, new Txt("連なりの剣", "Chain Sword", "连环剑"), Stat.AttackSpeedPct, EquipmentItemsBalanceValues.Base_weapon_chain_sword),
+            new BaseDef("weapon.twin_fang", Slot.Weapon, Line.Offense, new Txt("双牙の短刀", "Twin Fang Daggers", "双牙短刀"), Stat.CritChancePct, EquipmentItemsBalanceValues.Base_weapon_twin_fang, Family.Gale),
+            new BaseDef("weapon.calming_staff", Slot.Weapon, Line.Resonance, new Txt("鎮めの杖", "Calming Staff", "镇抚法杖"), Stat.PowerFlat, EquipmentItemsBalanceValues.Base_weapon_calming_staff, Family.Mend),
+            new BaseDef("weapon.longspike_bow", Slot.Weapon, Line.Offense, new Txt("長穂の弓", "Longspike Bow", "长穗弓"), Stat.CritDamagePct, EquipmentItemsBalanceValues.Base_weapon_longspike_bow, Family.Flame),
+            new BaseDef("weapon.shield_maul", Slot.Weapon, Line.Guard, new Txt("盾打ちの槌", "Shieldbash Maul", "盾击重锤"), Stat.MaxHealthPct, EquipmentItemsBalanceValues.Base_weapon_shield_maul, Family.Guard),
+            new BaseDef("weapon.blaze_greatsword", Slot.Weapon, Line.Offense, new Txt("烈火の大剣", "Blazing Greatsword", "烈火大剑"), Stat.AttackFlat, EquipmentItemsBalanceValues.Base_weapon_blaze_greatsword, Family.Flame),
 
-            new BaseDef("armor.counter_gauntlets", Slot.Armor, Line.Guard, new Txt("反撃の籠手", "Counter Gauntlets"), Stat.Armor, EquipmentItemsBalanceValues.Base_armor_counter_gauntlets, Family.Guard),
-            new BaseDef("armor.flowing_cloak", Slot.Armor, Line.Resonance, new Txt("流れの外套", "Flowing Cloak"), Stat.MoveSpeedPct, EquipmentItemsBalanceValues.Base_armor_flowing_cloak, Family.Gale),
-            new BaseDef("armor.guardian_plate", Slot.Armor, Line.Guard, new Txt("護りの胸当て", "Guardian Plate"), Stat.Armor, EquipmentItemsBalanceValues.Base_armor_guardian_plate, Family.Guard),
-            new BaseDef("armor.resonant_robe", Slot.Armor, Line.Resonance, new Txt("共鳴の衣", "Resonant Robe"), Stat.Haste, EquipmentItemsBalanceValues.Base_armor_resonant_robe, Family.Memory),
-            new BaseDef("armor.thorn_mail", Slot.Armor, Line.Guard, new Txt("棘の鎧", "Thorn Mail"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_armor_thorn_mail, Family.Guard),
-            new BaseDef("armor.lampkeeper_mantle", Slot.Armor, Line.Resonance, new Txt("灯守の外衣", "Lampkeeper's Mantle"), Stat.HealthRegen, EquipmentItemsBalanceValues.Base_armor_lampkeeper_mantle, Family.Mend),
+            new BaseDef("armor.counter_gauntlets", Slot.Armor, Line.Guard, new Txt("反撃の籠手", "Counter Gauntlets", "反击笼手"), Stat.Armor, EquipmentItemsBalanceValues.Base_armor_counter_gauntlets, Family.Guard),
+            new BaseDef("armor.flowing_cloak", Slot.Armor, Line.Resonance, new Txt("流れの外套", "Flowing Cloak", "流动斗篷"), Stat.MoveSpeedPct, EquipmentItemsBalanceValues.Base_armor_flowing_cloak, Family.Gale),
+            new BaseDef("armor.guardian_plate", Slot.Armor, Line.Guard, new Txt("護りの胸当て", "Guardian Plate", "护佑胸甲"), Stat.Armor, EquipmentItemsBalanceValues.Base_armor_guardian_plate, Family.Guard),
+            new BaseDef("armor.resonant_robe", Slot.Armor, Line.Resonance, new Txt("共鳴の衣", "Resonant Robe", "共鸣长袍"), Stat.Haste, EquipmentItemsBalanceValues.Base_armor_resonant_robe, Family.Memory),
+            new BaseDef("armor.thorn_mail", Slot.Armor, Line.Guard, new Txt("棘の鎧", "Thorn Mail", "荆棘铠甲"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_armor_thorn_mail, Family.Guard),
+            new BaseDef("armor.lampkeeper_mantle", Slot.Armor, Line.Resonance, new Txt("灯守の外衣", "Lampkeeper's Mantle", "守灯人外衣"), Stat.HealthRegen, EquipmentItemsBalanceValues.Base_armor_lampkeeper_mantle, Family.Mend),
 
-            new BaseDef("charm.resonance_amulet", Slot.Charm, Line.Resonance, new Txt("共鳴の護符", "Resonance Amulet"), Stat.Haste, EquipmentItemsBalanceValues.Base_charm_resonance_amulet, Family.Light),
-            new BaseDef("charm.tailwind_ring", Slot.Charm, Line.Resonance, new Txt("追い風の指輪", "Tailwind Ring"), Stat.MoveSpeedPct, EquipmentItemsBalanceValues.Base_charm_tailwind_ring, Family.Gale),
-            new BaseDef("charm.hunters_seal", Slot.Charm, Line.Offense, new Txt("狩人の印章", "Hunter's Seal"), Stat.CritChancePct, EquipmentItemsBalanceValues.Base_charm_hunters_seal),
-            new BaseDef("charm.pulsing_core", Slot.Charm, Line.Guard, new Txt("脈打つ核", "Pulsing Core"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_charm_pulsing_core, Family.Guard),
-            new BaseDef("charm.chain_necklace", Slot.Charm, Line.Guard, new Txt("鎖の首飾り", "Chain Necklace"), Stat.Tenacity, EquipmentItemsBalanceValues.Base_charm_chain_necklace, Family.Guard),
-            new BaseDef("charm.old_clock", Slot.Charm, Line.Offense, new Txt("古き時計", "Old Clock"), Stat.Haste, EquipmentItemsBalanceValues.Base_charm_old_clock, Family.Memory),
-            new BaseDef("weapon.frost_spear", Slot.Weapon, Line.Guard, new Txt("霜穂の槍", "Frostspike Spear"), Stat.AttackRangePct, EquipmentItemsBalanceValues.Base_weapon_frost_spear, Family.Frost),
-            new BaseDef("weapon.dusk_scythe", Slot.Weapon, Line.Offense, new Txt("黄昏の大鎌", "Dusk Scythe"), Stat.CritDamagePct, EquipmentItemsBalanceValues.Base_weapon_dusk_scythe, Family.Dark),
-            new BaseDef("weapon.lantern_rod", Slot.Weapon, Line.Resonance, new Txt("灯火の杖", "Lantern Rod"), Stat.LightAmp, EquipmentItemsBalanceValues.Base_weapon_lantern_rod, Family.Light),
-            new BaseDef("armor.frost_coat", Slot.Armor, Line.Guard, new Txt("霜の上衣", "Frostweave Coat"), Stat.Tenacity, EquipmentItemsBalanceValues.Base_armor_frost_coat, Family.Frost),
-            new BaseDef("armor.dancer_garb", Slot.Armor, Line.Offense, new Txt("舞手の衣", "Dancer's Garb"), Stat.AttackSpeedPct, EquipmentItemsBalanceValues.Base_armor_dancer_garb, Family.Flame),
-            new BaseDef("armor.star_cloak", Slot.Armor, Line.Resonance, new Txt("星読みの外套", "Stargazer's Cloak"), Stat.PowerFlat, EquipmentItemsBalanceValues.Base_armor_star_cloak, Family.Memory),
+            new BaseDef("charm.resonance_amulet", Slot.Charm, Line.Resonance, new Txt("共鳴の護符", "Resonance Amulet", "共鸣护符"), Stat.Haste, EquipmentItemsBalanceValues.Base_charm_resonance_amulet, Family.Light),
+            new BaseDef("charm.tailwind_ring", Slot.Charm, Line.Resonance, new Txt("追い風の指輪", "Tailwind Ring", "顺风戒指"), Stat.MoveSpeedPct, EquipmentItemsBalanceValues.Base_charm_tailwind_ring, Family.Gale),
+            new BaseDef("charm.hunters_seal", Slot.Charm, Line.Offense, new Txt("狩人の印章", "Hunter's Seal", "猎人印章"), Stat.CritChancePct, EquipmentItemsBalanceValues.Base_charm_hunters_seal),
+            new BaseDef("charm.pulsing_core", Slot.Charm, Line.Guard, new Txt("脈打つ核", "Pulsing Core", "脉动核心"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_charm_pulsing_core, Family.Guard),
+            new BaseDef("charm.chain_necklace", Slot.Charm, Line.Guard, new Txt("鎖の首飾り", "Chain Necklace", "锁链项链"), Stat.Tenacity, EquipmentItemsBalanceValues.Base_charm_chain_necklace, Family.Guard),
+            new BaseDef("charm.old_clock", Slot.Charm, Line.Offense, new Txt("古き時計", "Old Clock", "古旧时钟"), Stat.Haste, EquipmentItemsBalanceValues.Base_charm_old_clock, Family.Memory),
+            new BaseDef("weapon.frost_spear", Slot.Weapon, Line.Guard, new Txt("霜穂の槍", "Frostspike Spear", "霜穗长枪"), Stat.AttackRangePct, EquipmentItemsBalanceValues.Base_weapon_frost_spear, Family.Frost),
+            new BaseDef("weapon.dusk_scythe", Slot.Weapon, Line.Offense, new Txt("黄昏の大鎌", "Dusk Scythe", "黄昏大镰"), Stat.CritDamagePct, EquipmentItemsBalanceValues.Base_weapon_dusk_scythe, Family.Dark),
+            new BaseDef("weapon.lantern_rod", Slot.Weapon, Line.Resonance, new Txt("灯火の杖", "Lantern Rod", "灯火法杖"), Stat.LightAmp, EquipmentItemsBalanceValues.Base_weapon_lantern_rod, Family.Light),
+            new BaseDef("armor.frost_coat", Slot.Armor, Line.Guard, new Txt("霜の上衣", "Frostweave Coat", "霜织上衣"), Stat.Tenacity, EquipmentItemsBalanceValues.Base_armor_frost_coat, Family.Frost),
+            new BaseDef("armor.dancer_garb", Slot.Armor, Line.Offense, new Txt("舞手の衣", "Dancer's Garb", "舞者之衣"), Stat.AttackSpeedPct, EquipmentItemsBalanceValues.Base_armor_dancer_garb, Family.Flame),
+            new BaseDef("armor.star_cloak", Slot.Armor, Line.Resonance, new Txt("星読みの外套", "Stargazer's Cloak", "观星者斗篷"), Stat.PowerFlat, EquipmentItemsBalanceValues.Base_armor_star_cloak, Family.Memory),
             new BaseDef("charm.ember_locket", Slot.Charm, Line.Offense, new Txt("残り火のロケット", "Ember Locket"), Stat.FireAmp, EquipmentItemsBalanceValues.Base_charm_ember_locket, Family.Flame),
             new BaseDef("charm.moon_bell", Slot.Charm, Line.Resonance, new Txt("月の鈴", "Moon Bell"), Stat.ColdAmp, EquipmentItemsBalanceValues.Base_charm_moon_bell, Family.Frost),
             new BaseDef("charm.iron_feather", Slot.Charm, Line.Guard, new Txt("鉄の羽根", "Iron Feather"), Stat.Armor, EquipmentItemsBalanceValues.Base_charm_iron_feather, Family.Guard),
