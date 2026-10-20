@@ -163,6 +163,19 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 6. CHANGELOG の該当節を本文にして `gh release create vX.Y.0 --prerelease`（MODフォルダの zip を添付。`--latest` は prerelease と併用不可）。
 7. 必要なら Codex に差分レビューを依頼し、指摘は本体の逆コンパイルで裏取りしてから直す（Codex は「列挙型＋整数は不可」のような誤りも出す）。
 
+### 英語・中国語ガイドの公開
+
+英語と簡体字中国語のガイドの原本は、このリポジトリの `docs/README.en.md` と `docs/README.zh.md` です。リリース担当は、公開する版と同じコミットから両ファイルを取り、公開リポジトリ `Kling0012/dreamforge-rpg` の `docs/` へコピーします。原本へのリンクを説明文に載せても、非公開リポジトリは利用者から読めません。
+
+1. リリース対象のコミットで、両ガイドの機能・操作・導入手順を確認します。導入手順は Steam ワークショップの購読に揃えます。
+2. 公開リポジトリの作業コピーで、`docs/README.en.md` と `docs/README.zh.md` を原本の同名ファイルで更新します。他のファイルはコピーしません。
+3. 公開リポジトリの差分を確認し、通常の公開手順で両ファイルを反映します。このコピーは MOD のビルドだけでは行われません。
+4. 公開後、以下の案内先で両ガイドが読めることを確認します。
+   - https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md
+   - https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md
+
+Steam ワークショップの説明文は `src/SodRpg.Mod/about/description.txt` を使います。先頭の英語・中国語の案内を残し、本文は日本語だけにします。
+
 ## 7. 注意点・既知の制限
 
 - **性能**：OnGUI は1フレームに何度も呼ばれる。毎回の文字列生成・GUILayout・計測（CalcSize）を避け、キャッシュして描画イベントでだけ描く（v1.4 で対処）。パネルを足すときは `DreamforgeUi.NeedsLayout` に含めないと GUILayout が呼ばれない。保存は `AsyncProfileWriter`（別スレッド）を使い、メインで `ProfileStore.Save` を直接呼ばない。

@@ -37,15 +37,15 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<SetDef> CarrierSets { get; internal set; }
 
         private string _search;
-        private bool _searchJa;
+        private LocLanguage _searchLanguage;
 
-        /// <summary>検索用の小文字化した文字列（名前の日英と、いまの言語の効果文）。言語が変わったら作り直す。</summary>
+        /// <summary>検索用の小文字化した文字列（名前の日英と表示名、いまの言語の効果文）。言語が変わったら作り直す。</summary>
         public string SearchText
         {
             get
             {
-                if (_search != null && _searchJa == Loc.Japanese) return _search;
-                _searchJa = Loc.Japanese;
+                if (_search != null && _searchLanguage == Loc.Language) return _search;
+                _searchLanguage = Loc.Language;
                 _search = CodexQuery.BuildSearch(this).ToLowerInvariant();
                 return _search;
             }
@@ -220,7 +220,8 @@ namespace SodRpg.Core.Game
                 powers.Add(new CodexEntry
                 {
                     Category = CodexCategory.Powers, Id = p.ToString(), Power = p, SlotMask = mask, LineMask = AllLines,
-                    Name = new Txt(PowerNameIn(p, true), PowerNameIn(p, false)),
+                    Name = new Txt(PowerNameIn(p, LocLanguage.Japanese), PowerNameIn(p, LocLanguage.English),
+                        PowerNameIn(p, LocLanguage.Chinese)),
                     Carriers = (IReadOnlyList<UniqueDef>)cu ?? Array.Empty<UniqueDef>(),
                     CarrierSets = (IReadOnlyList<SetDef>)cs ?? Array.Empty<SetDef>(),
                 });
@@ -269,12 +270,12 @@ namespace SodRpg.Core.Game
             return new IReadOnlyList<CodexEntry>[] { bases, uniques, sets, powers, namedEntries, miniSetEntries };
         }
 
-        private static string PowerNameIn(Power p, bool ja)
+        private static string PowerNameIn(Power p, LocLanguage language)
         {
-            bool old = Loc.Japanese;
-            Loc.Japanese = ja;
+            var old = Loc.Language;
+            Loc.Language = language;
             try { return Content.PowerName(p); }
-            finally { Loc.Japanese = old; }
+            finally { Loc.Language = old; }
         }
 
         /// <summary>固有効果の、見本として見せる値の範囲。落ちる効果は装備の値域、固有品だけの効果はその固定値。</summary>
@@ -362,29 +363,29 @@ namespace SodRpg.Core.Game
         internal static string BuildSearch(CodexEntry e)
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append(e.Name.Ja).Append(' ').Append(e.Name.En).Append(' ');
+            sb.Append(e.Name.Ja).Append(' ').Append(e.Name.En).Append(' ').Append(e.Name).Append(' ');
             switch (e.Category)
             {
                 case CodexCategory.Bases:
                     sb.Append(Content.FormatStat(e.Base.ImplicitStat, e.Base.ImplicitValue));
                     break;
                 case CodexCategory.Uniques:
-                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
+                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ').Append(e.Base.Name).Append(' ');
                     foreach (var pw in e.Unique.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
                     if (BossProfiles.TryGetMove(e.Unique.BossMove, out var bossMove))
-                        sb.Append(bossMove.Description.Ja).Append(' ').Append(bossMove.Description.En).Append(' ');
+                        sb.Append(bossMove.Description.Ja).Append(' ').Append(bossMove.Description.En).Append(' ').Append(bossMove.Description).Append(' ');
                     if (e.Unique.Link != null) sb.Append(Links.Describe(e.Unique.Link)).Append(' ');
-                    sb.Append(e.Unique.Lore.Ja).Append(' ').Append(e.Unique.Lore.En);
+                    sb.Append(e.Unique.Lore.Ja).Append(' ').Append(e.Unique.Lore.En).Append(' ').Append(e.Unique.Lore);
                     break;
                 case CodexCategory.Sets:
                     sb.Append(e.Set.Describe());
                     break;
                 case CodexCategory.Named:
-                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
+                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ').Append(e.Base.Name).Append(' ');
                     foreach (var pw in e.Named.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
                     if (e.Named.MiniSetId != null && NamedItems.TryGetMiniSet(e.Named.MiniSetId, out var ms))
-                        sb.Append(ms.Name.Ja).Append(' ').Append(ms.Name.En).Append(' ');
-                    sb.Append(e.Named.Lore.Ja).Append(' ').Append(e.Named.Lore.En);
+                        sb.Append(ms.Name.Ja).Append(' ').Append(ms.Name.En).Append(' ').Append(ms.Name).Append(' ');
+                    sb.Append(e.Named.Lore.Ja).Append(' ').Append(e.Named.Lore.En).Append(' ').Append(e.Named.Lore);
                     break;
                 case CodexCategory.MiniSets:
                     sb.Append(e.MiniSet.Describe());

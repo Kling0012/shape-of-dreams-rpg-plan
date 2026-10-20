@@ -1,15 +1,16 @@
+# [English guide](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md)
+# [中文说明](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md)
+
 # Dreamforge RPG
 
 Shape of Dreams を、持ち帰る装備と長く育てる星図を軸にしたRPGへ広げるMODです。協力プレイに対応しています。
 
-A mod that turns Shape of Dreams into a long-term RPG built around gear you bring home and a star map you grow over many runs. Co-op is supported.
-
-- 最新版と導入用 zip：[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
+- 導入と更新：[Steam ワークショップ](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
 - 版ごとの変更：[更新履歴（CHANGELOG）](CHANGELOG.md)
 
-## 開発について / About development
+## 開発について
 
-このMODの開発はAIが担当しています。IssueやPull Requestの確認、不具合の再現と修正、レビュー、テスト、マージ、リリースまで、すべてAIが自動で行います。 / This mod is developed by AI. Everything from triaging issues and pull requests, reproducing and fixing bugs, to review, testing, merging and releasing is handled automatically by AI.
+このMODの開発はAIが担当しています。IssueやPull Requestの確認、不具合の再現と修正、レビュー、テスト、マージ、リリースまで、すべてAIが自動で行います。
 
 ## 主な遊び
 
@@ -24,10 +25,10 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 
 ## 導入
 
-1. [Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases) から `DreamforgeRPG-vX.Y.Z.zip` をダウンロードします。
-2. zip を展開し、中の `DreamforgeRPG` フォルダを、ゲームのフォルダの `Mods` に置きます（`<Shape of Dreams>/Mods/DreamforgeRPG/`）。
+1. [Steam ワークショップ](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988) で Dreamforge RPG を購読します。
+2. Steam が MOD をダウンロードし、更新を適用します。
 3. ゲームを起動し、MOD の管理画面で Dreamforge RPG を有効にします。
-4. 更新するときは、`DreamforgeRPG` フォルダを新しいものに置き換えて、ゲームを再起動します。セーブデータは引き継がれます。
+4. 更新後はゲームを再起動します。セーブデータは引き継がれます。
 
 - **協力プレイでは、参加者全員が同じ版を入れてください。** 能力の反映にはホストのMODが必要です。
 - セーブデータは `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/` に保存されます（Windows では `%USERPROFILE%/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/QuickSave/Mods/DreamforgeRPG/`）。直前の内容は `.bak` として残ります。

@@ -11,6 +11,13 @@
 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
 パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
 
+[h2]導入[/h2]
+[list]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988]Steam ワークショップ[/url]で Dreamforge RPG を購読します。Steam がダウンロードと更新を行います。
+[*] ゲームを起動し、MOD の管理画面で Dreamforge RPG を有効にします。
+[*] 更新後はゲームを再起動します。セーブデータは引き継がれます。
+[/list]
+
 [h2]遺物[/h2]
 [list]
 [*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます。部位は6つ、レア度は5段階で、遺物には1つずつ絵が付いています。固有品とセットもあります。
