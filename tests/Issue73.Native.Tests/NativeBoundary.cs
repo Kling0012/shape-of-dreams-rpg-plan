@@ -465,6 +465,14 @@ namespace SodRpg.Mod
         public bool disableLoot;
     }
     internal sealed class BossMonster : Monster { }
+    // NativeRedGiantDamageTextPerf の受け口。本体 Mon_RedGiant（2026-10-20 IL 確認）のうち
+    // パッチが触る範囲の模倣: Prepare が探す ActiveLogicUpdate(float) の宣言だけ。ここでは
+    // 呼ばれないので中身は空。dpsText の実体は下の TMPro 境界。
+    internal class Mon_RedGiant : Monster
+    {
+        public TMPro.TMP_Text dpsText;
+        internal void ActiveLogicUpdate(float dt) { }
+    }
     // Hero_Mist の継承元。本体では非シールド。
     internal class Hero : Entity
     {
@@ -1458,4 +1466,10 @@ namespace SodRpg.Mod
         public float NightmareGearMultiplier { get; private set; }
         public float NightmarePressureHealthMultiplier { get; private set; }
     }
+}
+// 本体 Unity.TextMeshPro の TMP_Text のうちパッチが触る範囲（text の入れ替え）だけの模倣。
+// 実物と同じグローバル名前空間に置く（Unity.TextMeshPro への参照は無いので名前だけ衝突しない）。
+namespace TMPro
+{
+    internal class TMP_Text { public string text { get; set; } }
 }
