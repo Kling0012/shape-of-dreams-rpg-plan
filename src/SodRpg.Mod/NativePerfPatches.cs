@@ -4946,11 +4946,15 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeRedGiantDamageTextPerf
     {
-        // Mon_RedGiant.ActiveLogicUpdate (2026-10-20 IL check against the shipped
-        // Dew.Core.dll) ends with an unconditional damage-meter rebuild that runs on every
-        // active instance on every client, host and guests alike:
+        // Mon_RedGiant.ActiveLogicUpdate (2026-10-20 IL check against the game's
+        // Dew.Core.dll r1.4.0.13 and r1.4.1.2) ends with an unconditional damage-meter
+        // rebuild that runs on every active instance on every client, host and guests
+        // alike:
         //   dpsText.text = string.Format("Total: {0:#,##0}\r\nDPS: {1:#,##0}\r\nMax Single Dmg: {2:#,##0}",
         //                                box(_totalDamage), box(_dps), box(_maxSingleDmg));
+        // In the native IL each ldfld is preceded by its own ldarg.0 (this-field reads;
+        // the weaver replaces only the SyncVar writes with set_Network_* calls), which
+        // the Transpiler's tail check matches instruction for instruction.
         // The three inputs are exactly the SyncVar floats the meter displays. Between host
         // hits (and between guest sync deliveries) all three are unchanged, so the built
         // string is byte-identical to the previous frame's, and TMP_Text.set_text early-outs
@@ -4965,11 +4969,15 @@ namespace SodRpg.Mod
         // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
         // alike). While the option is off the helper formats unconditionally, which is
         // vanilla; a null dpsText still throws exactly where vanilla throws.
+        // its last formatted triple. Starts as NaN (never equal to the spawn-frame
+        // 0/0/0), so the very first call always formats and assigns — vanilla writes
+        // on every frame including the first, and the prefab's placeholder TMP string
+        // must not survive until the first non-zero value.
         private sealed class LastText
         {
-            internal float Total;
-            internal float Dps;
-            internal float Max;
+            internal float Total = float.NaN;
+            internal float Dps = float.NaN;
+            internal float Max = float.NaN;
         }
 
         private static readonly ConditionalWeakTable<TMPro.TMP_Text, LastText> LastTexts =
@@ -5020,22 +5028,37 @@ namespace SodRpg.Mod
                 if (code[i].Calls(format)) { formats++; tail = i; }
                 if (code[i].Calls(setText)) writes++;
             }
-            // The tail must be exactly [ldfld _totalDamage, box, ldfld _dps, box,
-            // ldfld _maxSingleDmg, box, Format, set_text]. Anything else means the native
-            // shape changed; hand the method back untouched (one warning, vanilla behavior).
-            if (boxes != 3 || formats != 1 || writes != 1 || tail < 6
-                || !IsBox(code[tail - 1]) || !IsBox(code[tail - 3]) || !IsBox(code[tail - 5])
-                || !LoadsField(code[tail - 6], _total) || !LoadsField(code[tail - 4], _dps)
-                || !LoadsField(code[tail - 2], _max)
-                || tail + 1 >= code.Count || !code[tail + 1].Calls(setText))
+            // The tail must be exactly the native sequence (ilspycmd against the game's
+            // Dew.Core.dll r1.4.0.13 and r1.4.1.2, checked 2026-10-20 — each ldfld is
+            // preceded by its own ldarg.0):
+            //   [tail-9]  ldarg.0
+            //   [tail-8]  ldfld _totalDamage
+            //   [tail-7]  box
+            //   [tail-6]  ldarg.0
+            //   [tail-5]  ldfld _dps
+            //   [tail-4]  box
+            //   [tail-3]  ldarg.0
+            //   [tail-2]  ldfld _maxSingleDmg
+            //   [tail-1]  box
+            //   [tail]    call string.Format(string, object, object, object)
+            //   [tail+1]  callvirt TMP_Text::set_text(string)
+            // Anything else means the native shape changed; hand the method back
+            // untouched (one warning, vanilla behavior).
+            if (boxes != 3 || formats != 1 || writes != 1 || tail < 9
+                || tail + 1 >= code.Count || !code[tail + 1].Calls(setText)
+                || !LoadsField(code[tail - 8], _total) || !IsBox(code[tail - 7])
+                || !LoadsField(code[tail - 5], _dps) || !IsBox(code[tail - 4])
+                || !LoadsField(code[tail - 2], _max) || !IsBox(code[tail - 1])
+                || !LoadsThis(code[tail - 9]) || !LoadsThis(code[tail - 6]) || !LoadsThis(code[tail - 3]))
             {
                 NativePerfPatch.Warn(ref _warned, "red giant damage text",
                     "native text callsite changed or already patched");
                 return code;
             }
-            // Drop the boxes (the raw floats stay on the stack for the helper), swap Format
-            // for the skip-capable helper with the same stack shape, and retire set_text.
-            foreach (int i in new[] { tail - 1, tail - 3, tail - 5 })
+            // Drop only the boxes (the ldarg.0 + ldfld pairs stay and keep pushing the
+            // raw floats), swap Format for the skip-capable helper with the same stack
+            // shape, and retire set_text.
+            foreach (int i in new[] { tail - 7, tail - 4, tail - 1 })
             {
                 code[i].opcode = OpCodes.Nop;
                 code[i].operand = null;
@@ -5052,6 +5075,9 @@ namespace SodRpg.Mod
 
         private static bool LoadsField(CodeInstruction instruction, FieldInfo field)
             => instruction.opcode == OpCodes.Ldfld && Equals(instruction.operand, field);
+
+        private static bool LoadsThis(CodeInstruction instruction)
+            => instruction.opcode == OpCodes.Ldarg_0;
 
         // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
         private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
