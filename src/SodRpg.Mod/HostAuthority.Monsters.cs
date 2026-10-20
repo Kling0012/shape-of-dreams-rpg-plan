@@ -53,18 +53,24 @@ namespace SodRpg.Mod
             {
                 if (!Alive(m) || m.isSleeping || damage.currentAmount <= 0f) return;
                 UpdateMonsterHealthPhase(rt);
-                // Ability instances retain their first entity ancestor. Do not use a
-                // projectile's current position: it would make every ranged hit melee.
-                var source = actor != null ? actor.firstEntity : null;
-                Vector3? origin = source != null ? source.position : damage.originPosition;
                 float distance = -1f, dot = -1f;
-                if (origin.HasValue)
+                // Veiled/Hollow/Facing だけが距離と向きを読む。どれも付いていなければ、
+                // 毎被弾の攻撃者位置の辿りと sqrt・四元数積を飛ばす（IncomingMultiplier は
+                // distance >= 0f の間だけその3項を見るので、-1f のままで結果は同じ）。
+                if ((affixes & (NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing)) != 0)
                 {
-                    var offset = origin.Value - m.position;
-                    offset.y = 0f;
-                    distance = offset.magnitude;
-                    if (distance > 0.001f)
-                        dot = Vector3.Dot(m.rotation * Vector3.forward, offset / distance);
+                    // Ability instances retain their first entity ancestor. Do not use a
+                    // projectile's current position: it would make every ranged hit melee.
+                    var source = actor != null ? actor.firstEntity : null;
+                    Vector3? origin = source != null ? source.position : damage.originPosition;
+                    if (origin.HasValue)
+                    {
+                        var offset = origin.Value - m.position;
+                        offset.y = 0f;
+                        distance = offset.magnitude;
+                        if (distance > 0.001f)
+                            dot = Vector3.Dot(m.rotation * Vector3.forward, offset / distance);
+                    }
                 }
                 // #55: the full monster scan ran per hit; the behavior tick refreshes the cached ally state instead.
                 bool hasAlly = (affixes & NightmareAffix.Packbound) != 0 && PackboundAllyNear(rt);
@@ -360,12 +366,17 @@ namespace SodRpg.Mod
             {
                 if (!Alive(m) || m.isSleeping || damage.currentAmount <= 0f || m.Status == null) return;
                 // 記憶かどうかの判定は仕掛けの系（MemorySource）と同じ、攻撃者の作成元鎖を使う。
-                bool fromMemory = MemorySource(actor) != null;
-                bool fromSummon = actor != null && actor.FindFirstOfType<Summon>() != null;
+                // 3つの判定は親鎖の走査を伴うので、その値を読むタグがあるときだけ行う
+                // （WeaknessIncomingMultiplier は対応するタグのビットがあるときしか読まない）。
+                bool fromMemory = (tags & (VariantTag.Armored | VariantTag.Spellward)) != 0
+                    && MemorySource(actor) != null;
+                bool fromSummon = (tags & VariantTag.SummonHunter) != 0
+                    && actor != null && actor.FindFirstOfType<Summon>() != null;
+                bool attackerShielded = (tags & VariantTag.ShieldBreaker) != 0 && AttackerShielded(actor);
                 float mult = MonsterBehavior.WeaknessIncomingMultiplier(tags,
                     ToVariantElement(damage.elemental),
                     m.Status.fireStack, m.Status.hasCold, m.Status.lightStack, m.Status.darkStack,
-                    AttackerShielded(actor), fromSummon, fromMemory);
+                    attackerShielded, fromSummon, fromMemory);
                 if (mult != 1f) damage = damage.ApplyRawMultiplier(mult);
             };
             m.takenDamageProcessor.Add(rt.TagDamage);
@@ -375,10 +386,10 @@ namespace SodRpg.Mod
                 {
                     if (!Alive(m) || damage.currentAmount <= 0f || target == null || !target.isActive
                         || target.Status == null || m.GetRelation(target) != EntityRelation.Enemy) return;
-                    bool shielded = target.Status.currentShield > 0f;
-                    var targetActor = target as Actor;
-                    bool summon = target is Summon
-                        || (targetActor != null && targetActor.FindFirstAncestorOfType<Summon>() != null);
+                    // こちらも値を読むタグがあるときだけ判定する（障壁の読み・祖先の走査）。
+                    bool shielded = (tags & VariantTag.ShieldBreaker) != 0 && target.Status.currentShield > 0f;
+                    bool summon = (tags & VariantTag.SummonHunter) != 0 && (target is Summon
+                        || (target is Actor targetActor && targetActor.FindFirstAncestorOfType<Summon>() != null));
                     float mult = MonsterBehavior.WeaknessDealtMultiplier(tags, shielded, summon);
                     if (mult != 1f) damage = damage.ApplyRawMultiplier(mult);
                 };
