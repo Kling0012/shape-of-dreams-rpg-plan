@@ -96,7 +96,7 @@ namespace SodRpg.Core.Game
         public static List<GameEvent> StashSatchelNow(Profile p, ISet<string> reservedUids = null)
         {
             if (!CanStashSatchelNow(p, reservedUids))
-                throw new InvalidOperationException(Loc.T("今は鞄の遺物を保管庫へ送れません。", "Satchel relics cannot be sent to the stash now."));
+                throw new InvalidOperationException(Loc.T("今は鞄の遺物を保管庫へ送れません。", "Satchel relics cannot be sent to the stash now.", "当前无法将背包中的遗物送入仓库。"));
             var run = p.Run;
             var sent = new List<Relic>();
             for (int i = 0; i < run.Satchel.Count; i++)
@@ -114,11 +114,11 @@ namespace SodRpg.Core.Game
             p.DirectStashUsedRunIds.Add(run.RunId);
             var ev = new List<GameEvent> { new GameEvent(EventKind.Recovered, Loc.T(
                 $"鞄の遺物{sent.Count}個を保管庫へ送りました（この遠征ではもう使えません）。",
-                $"Sent {sent.Count} satchel relic(s) to the stash (this cannot be used again this expedition).")) };
+                $"Sent {sent.Count} satchel relic(s) to the stash (this cannot be used again this expedition).", $"已将背包中的{sent.Count}件遗物送入仓库（本次远征无法再次使用）。")) };
             if (overflow.Count > 0)
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T(
                     $"保管庫が一杯のため{overflow.Count}個を欠片にしました。",
-                    $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
+                    $"Stash full: {overflow.Count} relic(s) were turned into shards.", $"仓库已满：{overflow.Count}件遗物已转为碎片。")));
             return ev;
         }
     }
