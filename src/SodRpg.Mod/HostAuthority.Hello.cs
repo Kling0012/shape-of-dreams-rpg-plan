@@ -206,7 +206,7 @@ namespace SodRpg.Mod
                     // fingerprint or the peer's Infinity availability is what the warning is about.
                     var warning = new Txt(
                         $"{caller.playerName} の Dreamforge に差があります（{DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
-                        $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
+                        $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.", $"{caller.playerName} 的 Dreamforge 存在差异（{DescribeDifferencesZh(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。功能将继续运行。");
                     // One warning per mismatch episode/transport, not every five-second retry. When the difference
                     // itself changes (e.g. the peer turned Infinity on), replace the text so it names the current items.
                     // Do not call a content/capability difference a protocol mismatch.
@@ -257,6 +257,18 @@ namespace SodRpg.Mod
             if (!continueCheckpoints) items.Add("no continue-checkpoint support");
             if (!infinityAvailable) items.Add("Infinity is disabled on their side");
             return string.Join(", ", items);
+        }
+
+        internal static string DescribeDifferencesZh(bool sameProtocol, bool sameContent, bool sameVersion,
+            bool continueCheckpoints, bool infinityAvailable)
+        {
+            var items = new List<string>();
+            if (!sameVersion) items.Add("版本不同");
+            if (!sameProtocol) items.Add("Protocol不同");
+            if (!sameContent) items.Add("内容（星・遗物等的注册）不一致");
+            if (!continueCheckpoints) items.Add("不支持中断保存");
+            if (!infinityAvailable) items.Add("对方侧已禁用Infinity");
+            return string.Join("、", items);
         }
 
         private void OnHelloPlayerChanged(DewPlayer player) => RebuildMismatchList();

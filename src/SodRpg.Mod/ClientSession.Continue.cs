@@ -188,7 +188,7 @@ namespace SodRpg.Mod
         {
             int limit = SodRpg.Core.Game.Profile.MaxPendingContinueCheckpoints;
             var warning = new Txt($"本体の再開保存を確認できません。確認済みの地点、その直前の未確定地点、最新{limit}件の未確定チェックポイントを保持しています。",
-                $"Native resume save is unconfirmed. Confirmed checkpoints, their preceding pending checkpoints, and the latest {limit} pending attempts are retained.");
+                $"Native resume save is unconfirmed. Confirmed checkpoints, their preceding pending checkpoints, and the latest {limit} pending attempts are retained.", $"本体恢复存档未确认。已保留已确认的检查点、其紧前的未确定检查点，以及最近 {limit} 次未确定的尝试。");
             if (ContinueWarning != warning.ToString()) Log.Warn(warning + " " + reason);
             _continueWarning = warning;
         }
@@ -231,7 +231,7 @@ namespace SodRpg.Mod
                 || Time.unscaledTime < _nativeContinueRestoreDeadline) return;
             _nativeContinueRestoreDeadline = float.PositiveInfinity;
             string warning = Loc.T("再開の完了通知が30秒間届いていません。本体の復元状態を確認して待機を解除します。",
-                "Resume completion has not arrived for 30 seconds. Checking native restore state to release the wait.");
+                "Resume completion has not arrived for 30 seconds. Checking native restore state to release the wait.", "超过30秒未收到恢复完成通知。正在检查本体恢复状态以解除等待。");
             Log.Warn(warning);
             _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
             var game = NetworkedManagerBase<GameManager>.softInstance;
@@ -241,7 +241,7 @@ namespace SodRpg.Mod
                 // The native load itself has not finished: pause only restored rewards/builds.
                 // A real completion can still install the retained checkpoint; do not fake it.
                 _continueWarning = new Txt("本体の復元完了を確認できないため、この遠征のMOD報酬・Build反映のみ保留しています。",
-                    "Native restore is not ready. Only this expedition's MOD rewards and Build application are paused.");
+                    "Native restore is not ready. Only this expedition's MOD rewards and Build application are paused.", "无法确认本体恢复是否完成，本次远征仅暂停MOD奖励与Build的反映。");
                 Log.Warn(ContinueWarning);
                 return;
             }
@@ -254,7 +254,7 @@ namespace SodRpg.Mod
                 _continueCheckpointId = _continueResumeSession = null;
                 HostAuthority.GemContinueSources.Reset();
                 _continueWarning = new Txt("再開地点と本体の遠征が一致しないため、復元をスキップして遠征を続けます。以前の保存は保持しています。",
-                    "Resume checkpoint does not match the native expedition. Skipping restore and continuing; earlier saves are retained.");
+                    "Resume checkpoint does not match the native expedition. Skipping restore and continuing; earlier saves are retained.", "恢复地点与本体远征不一致，跳过恢复并继续远征。之前的保存仍保留。");
                 Log.Warn(ContinueWarning);
             }
             InfinityMode.FinishRestore();
@@ -286,7 +286,7 @@ namespace SodRpg.Mod
                 session._nativeContinueCheckpoint = null;
                 session._continueWarning = new Txt(
                     "再開地点のMOD保存を読めません。この遠征のMOD報酬・Build反映のみ保留しています。",
-                    "The MOD resume checkpoint could not be read. Only this expedition's MOD rewards and Build application are paused.");
+                    "The MOD resume checkpoint could not be read. Only this expedition's MOD rewards and Build application are paused.", "无法读取恢复地点的MOD保存。本次远征仅暂停MOD奖励与Build的反映。");
                 Log.Warn(session.ContinueWarning + " " + ex.Message);
             }
             finally
@@ -417,7 +417,7 @@ namespace SodRpg.Mod
                     if (candidate.Id == msg.continueCheckpointId && candidate.RunId == runId) { checkpoint = candidate; break; }
                 if (checkpoint == null)
                 {
-                    _continueWarning = new Txt("再開地点のMOD保存がありません。遠征の報酬は停止中です。", "MOD resume save missing. Expedition rewards are paused.");
+                    _continueWarning = new Txt("再開地点のMOD保存がありません。遠征の報酬は停止中です。", "MOD resume save missing. Expedition rewards are paused.", "没有恢复地点的MOD保存。远征奖励已暂停。");
                     return;
                 }
                 RestoreContinueCheckpoint(checkpoint, msg.continueResumeSession);
@@ -452,7 +452,7 @@ namespace SodRpg.Mod
             _buildCacheFrame = -1;
             ProfileChanged?.Invoke();
             foreach (string note in notes) Emit(new GameEvent(EventKind.Info, note));
-            _continueWarning = notes.Count == 0 ? null : new Txt(string.Join("\n", notes), string.Join("\n", notes));
+            _continueWarning = notes.Count == 0 ? null : new Txt(string.Join("\n", notes), string.Join("\n", notes), string.Join("\n", notes));
             SaveNow();
         }
         private void BeginLobbyReturn(string runId)
@@ -539,7 +539,7 @@ namespace SodRpg.Mod
                 _blockedContinueRunId = runId;
                 _continueWarning = new Txt(
                     "この遠征は『ロビーに戻る』で終了済みのため、MOD の報酬は出ません。",
-                    "This expedition ended with Return to Lobby. No MOD rewards will be granted.");
+                    "This expedition ended with Return to Lobby. No MOD rewards will be granted.", "本次远征已通过“返回大厅”结束，不会发放MOD奖励。");
                 _notify?.Invoke(new GameEvent(EventKind.Info, ContinueWarning));
             }
             return true;

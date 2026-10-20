@@ -54,7 +54,7 @@ namespace SodRpg.Mod
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("編集する枠", "Edit slot"), _st.Small);
+            GUILayout.Label(Loc.T("編集する枠", "Edit slot", "编辑槽位"), _st.Small);
             for (int i = 0; i < StarLoadouts.Count; i++)
                 if (GUILayout.Button(LoadoutNumbers[i], i == _loadoutEditSlot ? _st.TabSel : _st.Tab))
                 {
@@ -63,7 +63,7 @@ namespace SodRpg.Mod
                     GUIUtility.ExitGUI();
                 }
             _loadoutNameEdit = GUILayout.TextField(_loadoutNameEdit, StarLoadouts.MaxNameLength, _loadoutNameWidth);
-            if (GUILayout.Button(Loc.T("名前を変更", "Rename"), _st.Button))
+            if (GUILayout.Button(Loc.T("名前を変更", "Rename", "重命名"), _st.Button))
             {
                 StarLoadouts.Rename(profile, heroKey, _loadoutEditSlot, _loadoutNameEdit);
                 RefreshLoadoutLabels(hero);
@@ -72,13 +72,13 @@ namespace SodRpg.Mod
                 _s.SaveNow();
                 GUIUtility.ExitGUI();
             }
-            if (GUILayout.Button(Loc.T("現在の構成をこの枠にコピー", "Copy current allocation to this slot"), _st.Button))
+            if (GUILayout.Button(Loc.T("現在の構成をこの枠にコピー", "Copy current allocation to this slot", "将当前配置复制到此槽位"), _st.Button))
             {
                 StarLoadouts.CopyCurrent(profile, heroKey, _loadoutEditSlot);
                 _s.MarkDirty(false);
                 _s.SaveNow();
                 SetStatus(Loc.T($"現在の構成を「{_loadoutNames[_loadoutEditSlot]}」にコピーしました。",
-                    $"Copied the current allocation to “{_loadoutNames[_loadoutEditSlot]}”."));
+                    $"Copied the current allocation to “{_loadoutNames[_loadoutEditSlot]}”.", $"已将当前配置复制到“{_loadoutNames[_loadoutEditSlot]}”。"));
                 GUIUtility.ExitGUI();
             }
             GUILayout.FlexibleSpace();
