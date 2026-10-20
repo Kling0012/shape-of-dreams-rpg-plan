@@ -10,6 +10,8 @@ namespace SodRpg.Core.Game
     /// エッセンス→精华、遠征→远征、道標→路标、契約→契约、依頼→委托、図鑑→图鉴、遺失物→遗失物。
     /// #939 で追加した主な用語: 偉業→成就、覚醒→觉醒、限界突破→极限突破、ドリームダスト→梦境之尘、
     /// 再調律→再调律、洗い直し→重洗、特性→词条、禁忌→禁忌、製作→制作、変種→变种、兆し→预兆。
+    /// #963 のセット名で繰り返す語: Oath / Vow→之誓、Covenant→契约、Regalia→礼装、Garb→装束、
+    /// Raiment / Vestments→法衣、Ensemble→乐团、Eclipse→月蚀。セット名の訳文は sets.json の name.zh に置く。
     /// 銘品・小セット名の訳で繰り返し出る語（#942）: 火の粉→火花、星屑→星屑、蝕→蚀、
     /// 追い風→追风、終曲→终曲、会心→会心、白い霧・湯気→白雾、切札→王牌、分け合い→共享、止水→止水。
     /// 影は通常の影を指すときは「影」、闇や影の力を指すときは「暗影」と訳す。
@@ -47,6 +49,11 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 通常セットの説明（#963）: Cold → 冰冷、Shield → 护盾、Critical → 暴击、
+        // Basic attack → 通常攻击、ordinary memory → 通常记忆、Movement memory → 移动记忆、
+        // Ultimate memory → 奥义记忆、Identity memory → 本体记忆、Overcharge → 过载、
+        // cooldown → 冷却时间、overhealing → 过量治疗、distance falloff → 距离衰减。
+        // 訳文は sets.json の description.zh に置き、用語の部分一致による置換には使わない。
         // #956 で追加した主な用語（Content.cs 3190〜3788 の固有品で繰り返し使う訳語）:
         // Rearguard: 後衛 → 后卫 / Vanguard・先陣: 前衛・先陣 → 前卫・先锋
         // Pack: 群れ → 兽群 / Omen: 予兆・前兆 → 预兆 / Stardust: 星屑 → 星屑
@@ -72,6 +79,13 @@ namespace SodRpg.Core.Game
         // Sabatons: 鉄靴・鉄鞋 → 铁靴 / Slippers: 上履き・室内履き → 便鞋
         // Locket: ロケット → 吊坠盒 / Pendant: 垂飾り → 吊坠 / Brooch: ブローチ → 胸针
         // Link: 連携 → 联动 / piece stage: 装着段階 → 件套阶段
+        // #954 の固有品で繰り返し使う訳語（Txt の第3値を書くときの参照用）:
+        // Shrine: 聖堂 → 圣堂 / Crystal: 結晶 → 结晶 / Fireball: 火球 → 火球
+        // Ultimate: 奥義・切り札（技） → 终极技能 / Overflowing healing: 溢れた癒し → 溢出的治疗
+        // Blizzard: 吹雪・雪嵐 → 暴风雪 / Pure White: 純白 → 纯白 / Gold Coin: 金貨 → 金币
+        // Doubt・Suspicion: 疑心・疑い → 疑心 / Cage: 檻 → 牢笼 / Furnace: 炉・溶鉱炉 → 熔炉
+        // Tidecaller's（セット名）: 潮鳴り → 潮鸣 / Prism（光学の語）: プリズム → 棱镜
+        // Dodge: 回避 → 闪避 / Crimson（紅蓮の名）: 紅蓮 → 红莲 / Banquet: 祝宴・饗宴 → 盛宴
         // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
         // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
         // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
