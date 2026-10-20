@@ -15,10 +15,10 @@ namespace SodRpg.Core.Game
 
         private static readonly Txt[] Names =
         {
-            new Txt("巡る富", "Circulating Wealth"),
-            new Txt("黄金の嗅覚", "Golden Nose"),
-            new Txt("夢屑の集め", "Dust Gathering"),
-            new Txt("夢屑の籠", "Dust Basket"),
+            new Txt("巡る富", "Circulating Wealth", "循环之富"),
+            new Txt("黄金の嗅覚", "Golden Nose", "黄金嗅觉"),
+            new Txt("夢屑の集め", "Dust Gathering", "梦尘收集"),
+            new Txt("夢屑の籠", "Dust Basket", "梦尘之篮"),
         };
 
         public static string Name(Power p) => IsPower(p) ? Names[(int)p - (int)Power.KillGoldPct].ToString() : "-";

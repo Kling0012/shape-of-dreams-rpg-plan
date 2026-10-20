@@ -4,19 +4,36 @@ using System.Linq;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>日本語・英語の二言語テキスト。表示言語は Loc.Japanese で切り替える。</summary>
+    /// <summary>表示言語。既定は日本語。中国語の訳がない文字列は英語へ戻す。</summary>
+    public enum LocLanguage : byte
+    {
+        Japanese = 0,
+        English = 1,
+        Chinese = 2,
+    }
+
+    /// <summary>日本語・英語・中国語（簡体字）の三言語テキスト。表示言語は Loc.Language で切り替える。
+    /// 中国語の列は省略でき、そのとき中国語表示では英語に戻る。</summary>
     public sealed class Txt
     {
-        public Txt(string ja, string en)
+        public Txt(string ja, string en, string zh = null)
         {
             Ja = ja;
             En = en;
+            Zh = zh;
         }
 
         public string Ja { get; }
         public string En { get; }
+        /// <summary>中国語（簡体字）。未訳のとき null で、表示は英語へ戻る。</summary>
+        public string Zh { get; }
 
-        public override string ToString() => Loc.Japanese ? Ja : En;
+        public override string ToString() => Loc.Language switch
+        {
+            LocLanguage.Japanese => Ja,
+            LocLanguage.Chinese => Zh ?? Loc.Zh(En),
+            _ => En,
+        };
     }
 
     public static class Loc
@@ -25,16 +42,39 @@ namespace SodRpg.Core.Game
         // 実運用では UI スレッドで一度設定するだけなので、set が共有値にも書けば
         // AsyncProfileWriter など設定しない他スレッドは共有値を読んで従来どおり。
         // テストは各スレッドの上書きを読むので、並行実行でも干渉しない（#151: 並列化の妨げだった全体共有状態を解消）。
-        private static bool _sharedJapanese = true;
-        [ThreadStatic] private static bool? _japanese;
+        private static LocLanguage _sharedLanguage = LocLanguage.Japanese;
+        [ThreadStatic] private static LocLanguage? _language;
 
-        public static bool Japanese
+        public static LocLanguage Language
         {
-            get => _japanese ?? _sharedJapanese;
-            set { _sharedJapanese = value; _japanese = value; }
+            get => _language ?? _sharedLanguage;
+            set { _sharedLanguage = value; _language = value; }
         }
 
-        public static string T(string ja, string en) => Japanese ? ja : en;
+        // 既存の真偽値での読み書き（#877 以前の互換）。false は英語。
+        // 中国語は Language でのみ表現し、この getter は false を返すため、
+        // ja/en 二択を前提にした既存のコードは中国語を英語側へ流す。
+        public static bool Japanese
+        {
+            get => Language == LocLanguage.Japanese;
+            set => Language = value ? LocLanguage.Japanese : LocLanguage.English;
+        }
+
+        public static string T(string ja, string en) => Language == LocLanguage.Japanese ? ja : Zh(en);
+
+        public static string T(string ja, string en, string zh) => Language switch
+        {
+            LocLanguage.Japanese => ja,
+            LocLanguage.Chinese => zh ?? Zh(en),
+            _ => en,
+        };
+
+        /// <summary>中国語表示のとき、未訳の文字列を用語集と照合し、なければ英語のまま返す。それ以外の言語はそのまま返す。</summary>
+        public static string Zh(string en)
+        {
+            if (Language != LocLanguage.Chinese || en == null) return en;
+            return LocZhGlossary.Lookup(en);
+        }
     }
 
     /// <summary>特性（ランダムに付く能力値）の定義。値域は アイテムレベル1・レア度補正前。</summary>
@@ -5491,12 +5531,12 @@ namespace SodRpg.Core.Game
         {
             switch (s)
             {
-                case Slot.Weapon: return new Txt("主装備", "Weapon");
-                case Slot.Armor: return new Txt("防具", "Armor");
-                case Slot.Head: return new Txt("頭", "Head");
-                case Slot.Hands: return new Txt("手", "Hands");
-                case Slot.Feet: return new Txt("足", "Feet");
-                default: return new Txt("装飾品", "Charm");
+                case Slot.Weapon: return new Txt("主装備", "Weapon", "武器");
+                case Slot.Armor: return new Txt("防具", "Armor", "护甲");
+                case Slot.Head: return new Txt("頭", "Head", "头部");
+                case Slot.Hands: return new Txt("手", "Hands", "手部");
+                case Slot.Feet: return new Txt("足", "Feet", "足部");
+                default: return new Txt("装飾品", "Charm", "饰品");
             }
         }
 
@@ -5504,11 +5544,11 @@ namespace SodRpg.Core.Game
         {
             switch (r)
             {
-                case Rarity.Common: return new Txt("コモン", "Common");
-                case Rarity.Uncommon: return new Txt("アンコモン", "Uncommon");
-                case Rarity.Rare: return new Txt("レア", "Rare");
-                case Rarity.Epic: return new Txt("エピック", "Epic");
-                default: return new Txt("固有品", "Legendary");
+                case Rarity.Common: return new Txt("コモン", "Common", "普通");
+                case Rarity.Uncommon: return new Txt("アンコモン", "Uncommon", "优秀");
+                case Rarity.Rare: return new Txt("レア", "Rare", "稀有");
+                case Rarity.Epic: return new Txt("エピック", "Epic", "史诗");
+                default: return new Txt("固有品", "Legendary", "传说");
             }
         }
 
@@ -5516,9 +5556,9 @@ namespace SodRpg.Core.Game
         {
             switch (l)
             {
-                case Line.Offense: return new Txt("破壊", "Destruction");
-                case Line.Guard: return new Txt("生命", "Life");
-                default: return new Txt("想像", "Imagination");
+                case Line.Offense: return new Txt("破壊", "Destruction", "破坏");
+                case Line.Guard: return new Txt("生命", "Life", "生命");
+                default: return new Txt("想像", "Imagination", "想象");
             }
         }
 
@@ -5533,42 +5573,43 @@ namespace SodRpg.Core.Game
             string sign = v >= 0 ? "+" : "";
             switch (s)
             {
-                case Stat.AttackPct: return Loc.T($"攻撃力 {sign}{v}%", $"Attack damage {sign}{v}%");
-                case Stat.PowerPct: return Loc.T($"魔力 {sign}{v}%", $"Ability power {sign}{v}%");
-                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 {sign}{v}%", $"Attack speed {sign}{v}%");
-                case Stat.CritChancePct: return Loc.T($"会心率 {sign}{v}%", $"Critical chance {sign}{v} percentage points");
-                case Stat.CritDamagePct: return Loc.T($"会心ダメージ倍率 {sign}{v}%", $"Critical damage multiplier {sign}{v} percentage points");
-                case Stat.MaxHealthPct: return Loc.T($"最大HP {sign}{v}%", $"Maximum health {sign}{v}%");
-                case Stat.MaxHealthFlat: return Loc.T($"最大HP {sign}{v}", $"Maximum health {sign}{v}");
-                case Stat.AttackFlat: return Loc.T($"攻撃力 {sign}{v}", $"Attack damage {sign}{v}");
-                case Stat.PowerFlat: return Loc.T($"魔力 {sign}{v}", $"Ability power {sign}{v}");
-                case Stat.Armor: return Loc.T($"防御 {sign}{v}", $"Armor {sign}{v}");
-                case Stat.HealthRegen: return Loc.T($"HP自動回復量 {sign}{v}/秒", $"Health regeneration {sign}{v}/s");
-                case Stat.Haste: return Loc.T($"スキル加速 {sign}{v}（記憶のクールダウン回復を速める）", $"Ability haste {sign}{v} (speeds up memory cooldown recovery)");
-                case Stat.MoveSpeedPct: return Loc.T($"移動速度 {sign}{v}%", $"Movement speed {sign}{v}%");
-                case Stat.Tenacity: return Loc.T($"行動妨害耐性 {sign}{v}（受ける行動妨害の持続時間を短くする）", $"Tenacity {sign}{v} (shortens crowd-control effects on you)");
-                case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%");
-                case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%");
-                case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%");
+                case Stat.AttackPct: return Loc.T($"攻撃力 {sign}{v}%", $"Attack damage {sign}{v}%", $"攻击力 {sign}{v}%");
+                case Stat.PowerPct: return Loc.T($"魔力 {sign}{v}%", $"Ability power {sign}{v}%", $"法术强度 {sign}{v}%");
+                case Stat.AttackSpeedPct: return Loc.T($"攻撃速度 {sign}{v}%", $"Attack speed {sign}{v}%", $"攻击速度 {sign}{v}%");
+                case Stat.CritChancePct: return Loc.T($"会心率 {sign}{v}%", $"Critical chance {sign}{v} percentage points", $"暴击率 {sign}{v}%");
+                case Stat.CritDamagePct: return Loc.T($"会心ダメージ倍率 {sign}{v}%", $"Critical damage multiplier {sign}{v} percentage points", $"暴击伤害倍率 {sign}{v}%");
+                case Stat.MaxHealthPct: return Loc.T($"最大HP {sign}{v}%", $"Maximum health {sign}{v}%", $"最大生命 {sign}{v}%");
+                case Stat.MaxHealthFlat: return Loc.T($"最大HP {sign}{v}", $"Maximum health {sign}{v}", $"最大生命 {sign}{v}");
+                case Stat.AttackFlat: return Loc.T($"攻撃力 {sign}{v}", $"Attack damage {sign}{v}", $"攻击力 {sign}{v}");
+                case Stat.PowerFlat: return Loc.T($"魔力 {sign}{v}", $"Ability power {sign}{v}", $"法术强度 {sign}{v}");
+                case Stat.Armor: return Loc.T($"防御 {sign}{v}", $"Armor {sign}{v}", $"护甲 {sign}{v}");
+                case Stat.HealthRegen: return Loc.T($"HP自動回復量 {sign}{v}/秒", $"Health regeneration {sign}{v}/s", $"生命自动回复 {sign}{v}/秒");
+                case Stat.Haste: return Loc.T($"スキル加速 {sign}{v}（記憶のクールダウン回復を速める）", $"Ability haste {sign}{v} (speeds up memory cooldown recovery)", $"技能加速 {sign}{v}（加快记忆的冷却恢复）");
+                case Stat.MoveSpeedPct: return Loc.T($"移動速度 {sign}{v}%", $"Movement speed {sign}{v}%", $"移动速度 {sign}{v}%");
+                case Stat.Tenacity: return Loc.T($"行動妨害耐性 {sign}{v}（受ける行動妨害の持続時間を短くする）", $"Tenacity {sign}{v} (shortens crowd-control effects on you)", $"行动干扰抗性 {sign}{v}（缩短所受控制效果的持续时间）");
+                case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%", $"火属性效果 {sign}{v}%");
+                case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%", $"冰属性效果 {sign}{v}%");
+                case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%", $"光属性效果 {sign}{v}%");
                 case Stat.AttackRangePct:
-                    if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
+                    if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%", $"通常攻击射程 {sign}{v}%");
                     {
                         int gain = TravelerCombat.RangeToSpeedGain(DisplayMeleeAttackSpeed, v);
                         // At the cap the gain is nothing: show "0%" without a sign so that reads at a glance (#542).
                         string gainSign = gain > 0 ? "+" : "";
                         int cap = StatCap(Stat.AttackSpeedPct);
                         return Loc.T($"攻撃速度 {gainSign}{gain}%（近接のため射程 {sign}{v}% から変換。攻撃速度は合計{cap}%まで）",
-                            $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)");
+                            $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)",
+                            $"攻击速度 {gainSign}{gain}%（近战时由射程 {sign}{v}% 转换。攻击速度合计最高{cap}%）");
                     }
-                case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)");
-                case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
-                case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
-                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%。自分・味方への回復が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.HealingReceivedPct: return Loc.T($"受けるHP回復量 {sign}{v}%", $"Healing received {sign}{v}%");
-                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%。自分・味方への障壁が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%。装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで。", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
-                default: return Loc.T($"闇属性効果 {sign}{v}%", $"Dark effect strength {sign}{v}%");
+                case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)", $"强化通常攻击所需次数 -{v}次（提前触发第4次强化攻击）");
+                case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)", $"精华槽 {sign}{v}（作用于装备中的本体记忆；星、刻印与装备的追加槽按每位旅人合计。每个记忆最高+{EssenceSlots.MaxPerLocation}，与移动合计最高+{EssenceSlots.MaxAdded}）");
+                case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)", $"精华槽 {sign}{v}（作用于装备中的移动记忆；星、刻印与装备的追加槽按每位旅人合计。每个记忆最高+{EssenceSlots.MaxPerLocation}，与本体合计最高+{EssenceSlots.MaxAdded}）");
+                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%。自分・味方への回復が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)", $"提供的治疗量 {sign}{v}%（作用于自己和队友；装备与星的同项能力值合计最高{StatCap(s)}%）");
+                case Stat.HealingReceivedPct: return Loc.T($"受けるHP回復量 {sign}{v}%", $"Healing received {sign}{v}%", $"受到的治疗量 {sign}{v}%");
+                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%。自分・味方への障壁が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)", $"提供的护盾量 {sign}{v}%（作用于自己和队友；装备与星的同项能力值合计最高{StatCap(s)}%）");
+                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)", $"自己召唤物的伤害 {sign}{v}%（装备与星的同项能力值合计最高{StatCap(s)}%）");
+                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%。装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで。", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)", $"消耗生命的技能的HP消耗 {-v:+0;-0;0}%（装备与星的同项减免合计最高{StatCap(s)}%）");
+                default: return Loc.T($"闇属性効果 {sign}{v}%", $"Dark effect strength {sign}{v}%", $"暗属性效果 {sign}{v}%");
             }
         }
 
@@ -5578,53 +5619,53 @@ namespace SodRpg.Core.Game
             if (CurrencyStars.IsPower(p)) return CurrencyStars.Name(p);
             switch (p)
             {
-                case Power.Momentum: return Loc.T("連撃", "Momentum");
-                case Power.Retaliation: return Loc.T("逆襲", "Retaliation");
-                case Power.Bulwark: return Loc.T("鉄の輪", "Bulwark");
-                case Power.Lifesteal: return Loc.T("吸命", "Lifesteal");
-                case Power.Thorns: return Loc.T("棘", "Thorns");
-                case Power.Executioner: return Loc.T("処刑", "Executioner");
-                case Power.Resonance: return Loc.T("共鳴", "Resonance");
-                case Power.Tailwind: return Loc.T("追い風", "Tailwind");
-                case Power.Barrier: return Loc.T("護りの灯", "Barrier");
-                case Power.SecondWind: return Loc.T("灯守", "Second Wind");
-                case Power.Blaze: return Loc.T("烈火", "Blaze");
-                case Power.ChainLightning: return Loc.T("雷鎖", "Chain Lightning");
-                case Power.Shatter: return Loc.T("爆砕", "Shatter");
-                case Power.Aegis: return Loc.T("守護霊", "Aegis");
-                case Power.Bloodlust: return Loc.T("血の渇き", "Bloodlust");
-                case Power.Ember: return Loc.T("火種", "Ember");
-                case Power.Frost: return Loc.T("霜", "Frost");
-                case Power.Radiance: return Loc.T("輝き", "Radiance");
-                case Power.Umbra: return Loc.T("影", "Umbra");
-                case Power.Convergence: return Loc.T("四元の共鳴", "Convergence");
-                case Power.EchoingDodge: return Loc.T("回避の残響", "Echoing Dodge");
-                case Power.UltimateSurge: return Loc.T("終の昂り", "Ultimate Surge");
-                case Power.SoulSiphon: return Loc.T("吸魂", "Soul Siphon");
-                case Power.Whirlwind: return Loc.T("旋風", "Whirlwind");
-                case Power.Frenzy: return Loc.T("乱戦", "Melee Frenzy");
-                case Power.OpeningStrike: return Loc.T("先制", "Opening Strike");
-                case Power.StarShield: return Loc.T("星の加護", "Star Shield");
-                case Power.Sprint: return Loc.T("疾駆", "Sprint");
-                case Power.Vigor: return Loc.T("万全", "Vigor");
-                case Power.Overload: return Loc.T("過負荷", "Overload");
-                case Power.Finale: return Loc.T("終曲", "Finale");
-                case Power.CriticalEcho: return Loc.T("会心の余韻", "Critical Echo");
-                case Power.Fetters: return Loc.T("足枷", "Fetters");
-                case Power.CrystalResonance: return Loc.T("結晶共鳴", "Crystal Resonance");
-                case Power.PreyPride: return Loc.T("狩人の誇り", "Hunter's Pride");
-                case Power.OverflowingLife: return Loc.T("溢れる命", "Overflowing Life");
-                case Power.Devotion: return Loc.T("祈願", "Devotion");
-                case Power.Wildfire: return Loc.T("飛び火", "Wildfire");
-                case Power.StillWater: return Loc.T("止水", "Still Water");
-                case Power.SpendersWard: return Loc.T("散財の護り", "Spender's Ward");
-                case Power.PerfectRead: return Loc.T("見切り", "Perfect Read");
-                case Power.LucidBoon: return Loc.T("明晰", "Lucid Boon");
-                case Power.ShadowStep: return Loc.T("瞬歩の刃", "Flash-Step Blade");
-                case Power.Steam: return Loc.T("蒸気", "Steam");
-                case Power.Eclipse: return Loc.T("蝕", "Eclipse");
-                case Power.Cinder: return Loc.T("燃え殻", "Cinder");
-                case Power.FrostCrystal: return Loc.T("氷晶", "Frost Crystal");
+                case Power.Momentum: return Loc.T("連撃", "Momentum", "连击");
+                case Power.Retaliation: return Loc.T("逆襲", "Retaliation", "反击");
+                case Power.Bulwark: return Loc.T("鉄の輪", "Bulwark", "铁壁之环");
+                case Power.Lifesteal: return Loc.T("吸命", "Lifesteal", "汲血");
+                case Power.Thorns: return Loc.T("棘", "Thorns", "荆棘");
+                case Power.Executioner: return Loc.T("処刑", "Executioner", "处刑");
+                case Power.Resonance: return Loc.T("共鳴", "Resonance", "共鸣");
+                case Power.Tailwind: return Loc.T("追い風", "Tailwind", "顺风");
+                case Power.Barrier: return Loc.T("護りの灯", "Barrier", "守护之灯");
+                case Power.SecondWind: return Loc.T("灯守", "Second Wind", "守灯人");
+                case Power.Blaze: return Loc.T("烈火", "Blaze", "烈焰");
+                case Power.ChainLightning: return Loc.T("雷鎖", "Chain Lightning", "闪电链");
+                case Power.Shatter: return Loc.T("爆砕", "Shatter", "爆碎");
+                case Power.Aegis: return Loc.T("守護霊", "Aegis", "守护灵");
+                case Power.Bloodlust: return Loc.T("血の渇き", "Bloodlust", "嗜血");
+                case Power.Ember: return Loc.T("火種", "Ember", "火种");
+                case Power.Frost: return Loc.T("霜", "Frost", "霜寒");
+                case Power.Radiance: return Loc.T("輝き", "Radiance", "辉光");
+                case Power.Umbra: return Loc.T("影", "Umbra", "暗影");
+                case Power.Convergence: return Loc.T("四元の共鳴", "Convergence", "四元共鸣");
+                case Power.EchoingDodge: return Loc.T("回避の残響", "Echoing Dodge", "闪避残响");
+                case Power.UltimateSurge: return Loc.T("終の昂り", "Ultimate Surge", "终局高昂");
+                case Power.SoulSiphon: return Loc.T("吸魂", "Soul Siphon", "汲魂");
+                case Power.Whirlwind: return Loc.T("旋風", "Whirlwind", "旋风");
+                case Power.Frenzy: return Loc.T("乱戦", "Melee Frenzy", "近战狂乱");
+                case Power.OpeningStrike: return Loc.T("先制", "Opening Strike", "先制打击");
+                case Power.StarShield: return Loc.T("星の加護", "Star Shield", "星辰庇护");
+                case Power.Sprint: return Loc.T("疾駆", "Sprint", "疾驰");
+                case Power.Vigor: return Loc.T("万全", "Vigor", "万全");
+                case Power.Overload: return Loc.T("過負荷", "Overload", "过载");
+                case Power.Finale: return Loc.T("終曲", "Finale", "终曲");
+                case Power.CriticalEcho: return Loc.T("会心の余韻", "Critical Echo", "暴击余韵");
+                case Power.Fetters: return Loc.T("足枷", "Fetters", "足枷");
+                case Power.CrystalResonance: return Loc.T("結晶共鳴", "Crystal Resonance", "结晶共鸣");
+                case Power.PreyPride: return Loc.T("狩人の誇り", "Hunter's Pride", "猎人的骄傲");
+                case Power.OverflowingLife: return Loc.T("溢れる命", "Overflowing Life", "满溢的生命");
+                case Power.Devotion: return Loc.T("祈願", "Devotion", "祈愿");
+                case Power.Wildfire: return Loc.T("飛び火", "Wildfire", "飞火");
+                case Power.StillWater: return Loc.T("止水", "Still Water", "止水");
+                case Power.SpendersWard: return Loc.T("散財の護り", "Spender's Ward", "散财之护");
+                case Power.PerfectRead: return Loc.T("見切り", "Perfect Read", "看破");
+                case Power.LucidBoon: return Loc.T("明晰", "Lucid Boon", "清明");
+                case Power.ShadowStep: return Loc.T("瞬歩の刃", "Flash-Step Blade", "瞬步之刃");
+                case Power.Steam: return Loc.T("蒸気", "Steam", "蒸汽");
+                case Power.Eclipse: return Loc.T("蝕", "Eclipse", "蚀");
+                case Power.Cinder: return Loc.T("燃え殻", "Cinder", "燃烬");
+                case Power.FrostCrystal: return Loc.T("氷晶", "Frost Crystal", "冰晶");
                 default: return "-";
             }
         }

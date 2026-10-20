@@ -12,7 +12,8 @@ namespace SodRpg.Mod
         private static readonly string[] OwnershipColors = { "#56B4E9", "#E69F00", "#009E73", "#CC79A7" };
         private readonly Label3D[] _ownershipMarks = new Label3D[8];
         private string _ownershipLegend;
-        private bool _ownershipLegendJa, _ownershipLegendFailed;
+        private LocLanguage _ownershipLegendJa;
+        private bool _ownershipLegendFailed;
         private readonly string[] _legendNames = new string[4], _legendIds = new string[4];
         private readonly double[] _legendFactors = new double[4];
         private readonly string[] _statusNames = new string[4], _statusIds = new string[4];
@@ -49,10 +50,11 @@ namespace SodRpg.Mod
         private DynamicDifficultyStatus _observedDynamicStatus;
         private DynamicDifficultyDisplay[] _observedDynamicDisplay;
         private string _dynamicLimits;
-        private bool _dynamicLimitsJa;
+        private LocLanguage _dynamicLimitsJa;
         private string _dynamicGap;
         private string _dynamicStatusText;
-        private bool _dynamicStatusJa, _dynamicStatusFailed;
+        private LocLanguage _dynamicStatusJa;
+        private bool _dynamicStatusFailed;
 
         private Label3D OwnershipMark(uint netId)
         {
@@ -70,7 +72,7 @@ namespace SodRpg.Mod
 
         private void DrawOwnershipLegend()
         {
-            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.Japanese;
+            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.Language;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -82,7 +84,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _ownershipLegendJa = Loc.Japanese;
+                _ownershipLegendJa = Loc.Language;
                 string legend = "";
                 for (int i = 0; i < OwnershipColors.Length; i++)
                 {
@@ -196,7 +198,7 @@ namespace SodRpg.Mod
             var status = host ? _observedDynamicStatus : _s.DynamicStatus;
             var display = _observedDynamicDisplay;
             bool changed = RememberDynamicStatus(status);
-            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.Japanese || _statusHost != host;
+            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.Language || _statusHost != host;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -217,7 +219,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _dynamicStatusJa = Loc.Japanese; _statusHost = host;
+                _dynamicStatusJa = Loc.Language; _statusHost = host;
                 _dynamicStatusText = BuildDynamicStatus(host, status, display);
             }
             GUILayout.Label(Loc.T("現在の状況", "Current status"), _st.Label);
@@ -294,33 +296,36 @@ namespace SodRpg.Mod
                 cfg.dynamicDifficultySolo = solo;
                 SaveEnemyOwnershipConfig?.Invoke();
             }
-            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Japanese)
+            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Language)
             {
-                _dynamicLimitsJa = Loc.Japanese;
+                _dynamicLimitsJa = Loc.Language;
                 // 2026-10-20：上がるときと下がるときで埋め方の強さが違う。上限は世界ごとの段階。
                 int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthUp * 100);
                 int dynamicRelief = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthDown * 100);
                 _dynamicGap = Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強くなるときは差の{dynamicClose}%、楽になるときは{dynamicRelief}%を埋めます。",
-                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap upward and {dynamicRelief}% downward.");
+                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap upward and {dynamicRelief}% downward.",
+                    $"根据战斗房间的伤害调整下一个房间的敌人。增强时弥补强度差距的{dynamicClose}%，变简单时弥补{dynamicRelief}%。");
                 string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                 string rewardMax = CoopBalance.DynamicDifficulty.RewardMaxMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                 var capStages = new System.Text.StringBuilder();
                 for (int i = 0; i < CoopBalance.DynamicDifficulty.MaxFactorWorlds; i++)
                 {
-                    if (i > 0) capStages.Append(Loc.T(" ・ ", " · "));
-                    if (i == 0) capStages.Append(Loc.T("世界", "World "));
+                    if (i > 0) capStages.Append(Loc.T(" ・ ", " · ", " ・ "));
+                    if (i == 0) capStages.Append(Loc.T("世界", "World ", "世界"));
                     capStages.Append(i + 1);
-                    if (i == CoopBalance.DynamicDifficulty.MaxFactorWorlds - 1) capStages.Append(Loc.T("以降", "+"));
+                    if (i == CoopBalance.DynamicDifficulty.MaxFactorWorlds - 1) capStages.Append(Loc.T("以降", "+", "及以后"));
                     capStages.Append(" ×").Append(CoopBalance.DynamicDifficulty.MaxFactor(i)
                         .ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 _dynamicLimits = Loc.T($"係数は{dynamicMin}以上で、上限は世界ごとに変わります（{capStages}）。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
-                    $"Factor starts at {dynamicMin} and is capped per world ({capStages}). Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.");
+                    $"Factor starts at {dynamicMin} and is capped per world ({capStages}). Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.",
+                    $"系数下限为{dynamicMin}，上限随世界变化（{capStages}）。变强会增加奖励（最高×{rewardMax}），变简单也不会减少奖励。");
             }
             GUILayout.Label(_dynamicGap, _st.Small);
             GUILayout.Label(_dynamicLimits, _st.Small);
             GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
-                "In co-op it runs together with enemy ownership."), _st.Small);
+                "In co-op it runs together with enemy ownership.",
+                "协作游玩时与敌人负责制一同生效。"), _st.Small);
             if (!_ownershipLegendFailed)
             {
                 try { DrawOwnershipLegend(); }

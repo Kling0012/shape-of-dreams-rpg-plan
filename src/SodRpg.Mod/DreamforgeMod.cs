@@ -63,7 +63,7 @@ namespace SodRpg.Mod
                 try { CulinaryIngredientDisplay.Install(harmony); }
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
-                Loc.Japanese = config.japanese;
+                Loc.Language = config.ResolveLanguage();
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
@@ -123,7 +123,7 @@ namespace SodRpg.Mod
         public override void OnConfigChanged()
         {
             if (!_running) return;
-            Loc.Japanese = config.japanese;
+            Loc.Language = config.ResolveLanguage();
             NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);

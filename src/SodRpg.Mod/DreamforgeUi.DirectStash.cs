@@ -12,7 +12,7 @@ namespace SodRpg.Mod
         private enum DirectStashLabel { Ready, Confirm, Used }
 
         private DirectStashLabel _directStashLabelKind = DirectStashLabel.Ready;
-        private bool _directStashLabelJapanese;
+        private LocLanguage _directStashLabelLanguage;
         private string _directStashLabel;
         private float _directStashArmedAt = -1f;
 
@@ -30,11 +30,11 @@ namespace SodRpg.Mod
             var kind = _s.DirectStashUsedThisRun ? DirectStashLabel.Used
                 : can && _directStashArmedAt >= 0f ? DirectStashLabel.Confirm
                 : DirectStashLabel.Ready;
-            bool japanese = Loc.Japanese;
-            if (_directStashLabel == null || _directStashLabelKind != kind || _directStashLabelJapanese != japanese)
+            LocLanguage language = Loc.Language; // 3値（#877）。真偽値だと英語⇔中国語で古い表示が残る。
+            if (_directStashLabel == null || _directStashLabelKind != kind || _directStashLabelLanguage != language)
             {
                 _directStashLabelKind = kind;
-                _directStashLabelJapanese = japanese;
+                _directStashLabelLanguage = language;
                 _directStashLabel = kind == DirectStashLabel.Confirm ? Loc.T(
                     "もう一度押すと保管庫へ送ります", "Press again to send to the stash")
                     : kind == DirectStashLabel.Used ? Loc.T("この遠征では使用済み", "Used this expedition")

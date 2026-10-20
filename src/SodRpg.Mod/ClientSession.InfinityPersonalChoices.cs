@@ -14,7 +14,8 @@ namespace SodRpg.Mod
         private DreamEvent _infinityPersonalOfferedEvent;
         private readonly StringBuilder _infinityNoticeNames = new StringBuilder();
         private int _infinityNoticeSecond = -1;
-        private bool _infinityNoticeJapanese, _infinityNoticeSubmitted;
+        private LocLanguage _infinityNoticeLanguage;
+        private bool _infinityNoticeSubmitted;
         private string _infinityNotice;
         private InfinityPersonalChoiceBarrier _infinityNoticeBarrier;
         private InfinityMode.PersonalChoiceWait _infinityNoticeWait;
@@ -56,10 +57,10 @@ namespace SodRpg.Mod
                 var wait = hostWaiting ? null : InfinityMode.PersonalWait;
                 bool submitted = InfinityPersonalSelectionMatchesCurrent;
                 int second = (int)Time.unscaledTime;
-                if (second == _infinityNoticeSecond && _infinityNoticeJapanese == Loc.Japanese
+                if (second == _infinityNoticeSecond && _infinityNoticeLanguage == Loc.Language
                     && submitted == _infinityNoticeSubmitted && ReferenceEquals(barrier, _infinityNoticeBarrier)
                     && ReferenceEquals(wait, _infinityNoticeWait)) return _infinityNotice;
-                _infinityNoticeSecond = second; _infinityNoticeJapanese = Loc.Japanese;
+                _infinityNoticeSecond = second; _infinityNoticeLanguage = Loc.Language;
                 _infinityNoticeSubmitted = submitted; _infinityNoticeBarrier = barrier; _infinityNoticeWait = wait;
                 if (hostWaiting)
                 {

@@ -58,7 +58,7 @@ Optional settings lighten the whole game: an FPS cap in the background and light
 
 - F6: Dreamforge menu
 - F7: Secure, F8: Delve (while the secure-point panel is shown)
-- Keys, language and UI scale can be changed in the mod settings. In-game text is currently available in Japanese and English (Chinese (Simplified) is in progress).
+- Keys, language and UI scale can be changed in the mod settings. The in-game language can be switched between Japanese, English and Chinese (Simplified); strings without a Chinese translation fall back to English.
 
 ## Multiplayer
 

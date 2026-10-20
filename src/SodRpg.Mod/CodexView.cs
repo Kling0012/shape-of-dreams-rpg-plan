@@ -29,7 +29,7 @@ namespace SodRpg.Mod
         /// <summary>プロフィールの切り替えなどで、一覧と詳細を作り直させる。</summary>
         public void Invalidate() => _dirty = true;
         private int _sigCodex = -1, _sigStash = -1, _sigLost = -1, _sigSatchel = -1;
-        private bool _sigJa;
+        private LocLanguage _sigJa;
 
         private readonly List<string> _rowText = new List<string>();
         private readonly List<Color> _rowFrame = new List<Color>();
@@ -279,13 +279,13 @@ namespace SodRpg.Mod
         private void Sync(Profile p)
         {
             int stash = p.Stash.Count, lost = p.LostAndFound.Count, sat = p.Run != null ? p.Run.Satchel.Count : 0;
-            if (!_dirty && p.Codex.Count == _sigCodex && stash == _sigStash && lost == _sigLost && sat == _sigSatchel && _sigJa == Loc.Japanese) return;
+            if (!_dirty && p.Codex.Count == _sigCodex && stash == _sigStash && lost == _sigLost && sat == _sigSatchel && _sigJa == Loc.Language) return;
             _dirty = false;
             _sigCodex = p.Codex.Count;
             _sigStash = stash;
             _sigLost = lost;
             _sigSatchel = sat;
-            _sigJa = Loc.Japanese;
+            _sigJa = Loc.Language;
             _state = new CodexState(p.Codex, CodexQuery.KnownPowers(p));
             _res = CodexQuery.Filter(_state, _filter, _res);
             if (_sel != null) _selFound = _state.IsFound(_sel);

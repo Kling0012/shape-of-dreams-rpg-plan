@@ -97,6 +97,10 @@ namespace SodRpg.Mod
     public sealed class DreamforgeConfig
     {
         public bool japanese;
+        // #877 中国語（簡体字）。実装側の DreamforgeConfig と同じ解決にする。
+        public bool chinese;
+        public LocLanguage ResolveLanguage() =>
+            chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
         public bool overflowDreamDust;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;

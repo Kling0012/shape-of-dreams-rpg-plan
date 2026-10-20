@@ -41,7 +41,7 @@ namespace SodRpg.Core.Game
         {
             new HintDef
             {
-                Id = Hint.Welcome, Title = new Txt("ようこそ、Dreamforge へ", "Welcome to Dreamforge"),
+                Id = Hint.Welcome, Title = new Txt("ようこそ、Dreamforge へ", "Welcome to Dreamforge", "欢迎来到 Dreamforge"),
                 Body = new Txt(
                     "このMODでは、Shape of Dreams の遠征で「持ち帰れる装備（遺物）」が手に入るようになります。\n" +
                     "① 敵を倒すと遺物が落ちます。協力プレイでも一人ひとりに別々に落ちます。\n" +
@@ -50,79 +50,94 @@ namespace SodRpg.Core.Game
                     "This mod adds take-home gear (relics) to your Shape of Dreams runs.\n" +
                     "1) Enemies drop relics (personal loot for each player).\n" +
                     "2) Each new zone is a secure point: Secure to keep your loot, or Delve for more loot and more danger.\n" +
-                    $"3) Gear, forge and the star map live in the [F6] menu. You get {Content.SlotCount} starter relics, auto-equipped on your first run."),
+                    $"3) Gear, forge and the star map live in the [F6] menu. You get {Content.SlotCount} starter relics, auto-equipped on your first run.",
+                    "本MOD让 Shape of Dreams 的远征掉落“可以带走的装备（遗物）”。\n" +
+                    "① 击败敌人会掉落遗物。协作游玩时每人都各自掉落。\n" +
+                    "② 抵达新区域时会开启“存仓点”。存入仓库即可带走拾取的物品；继续下潜可获得更多战利品，但危险也会增加。\n" +
+                    $"③ 装备、锻造、星图都在 [F6] 菜单中。已为你准备了{Content.SlotCount}件初始遗物，首次远征时会自动装备。"),
             },
             new HintDef
             {
-                Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped"),
+                Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped", "已装备初始遗物"),
                 Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
-                    "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. Relics you pick up can be equipped once secured into your stash (at a secure point during a run, or any time after)."),
+                    "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. Relics you pick up can be equipped once secured into your stash (at a secure point during a run, or any time after).",
+                    "已将初始遗物装入空缺的部位。可在左侧面板查看状态。拾取的遗物存入仓库后即可更换（远征中在存仓点，远征结束后随时可以）。"),
             },
             new HintDef
             {
-                Id = Hint.FirstDrop, Title = new Txt("遺物を拾いました", "You found a relic!"),
+                Id = Hint.FirstDrop, Title = new Txt("遺物を拾いました", "You found a relic!", "拾到了遗物"),
                 Body = new Txt("拾った遺物はまだ「未確保」です。次のゾーンに着いたときに「確保」すると保管庫に入り、装備できるようになります。全滅すると未確保の物は遺失物になります。",
-                    "New relics start unsecured. Secure them when you reach the next zone to send them to your stash and equip them. If your party is wiped, unsecured loot becomes Lost & Found."),
+                    "New relics start unsecured. Secure them when you reach the next zone to send them to your stash and equip them. If your party is wiped, unsecured loot becomes Lost & Found.",
+                    "刚拾取的遗物还处于“未存入”状态。抵达下一个区域时“存入仓库”，就会进入仓库并可以装备。全灭时，未存入的物品会变为遗失物。"),
             },
             new HintDef
             {
-                Id = Hint.FirstSecurePoint, Title = new Txt("確保地点に着きました", "Secure point"),
+                Id = Hint.FirstSecurePoint, Title = new Txt("確保地点に着きました", "Secure point", "抵达存仓点"),
                 Body = new Txt("ここでは次のどちらかを選びます。\n・確保する [F7]：拾った遺物と欠片を持ち帰ります。この先で全滅しても失いません。\n・深く潜る [F8]：潜行が1段深くなり、遺物が多く落ち、良い物も出やすくなります。悪夢化した敵が増え、受けるダメージも増えます。\n迷ったら、まずは確保しましょう。遠征中に [F6] で装備を付け替えられるのは、この確保地点だけです。",
-                    "Choose here.\n- Secure [F7]: keep your unsecured relics and shards (safe).\n- Delve [F8]: +1 delve level: more and better drops and nightmare elites, but more damage taken.\nWhen unsure, Secure. During a run, [F6] gear changes are only allowed here."),
+                    "Choose here.\n- Secure [F7]: keep your unsecured relics and shards (safe).\n- Delve [F8]: +1 delve level: more and better drops and nightmare elites, but more damage taken.\nWhen unsure, Secure. During a run, [F6] gear changes are only allowed here.",
+                    "在这里二选一。\n·存入仓库 [F7]：带走拾取的遗物和碎片。即使之后全灭也不会失去。\n·继续下潜 [F8]：下潜加深1段，遗物掉落更多、品质更好，但梦魇化的敌人增多，受到的伤害也会增加。\n拿不定主意时，先存入仓库。远征中只有在这里才能用 [F6] 更换装备。"),
             },
             new HintDef
             {
-                Id = Hint.FirstSecure, Title = new Txt("遺物を持ち帰りました", "Secured"),
+                Id = Hint.FirstSecure, Title = new Txt("遺物を持ち帰りました", "Secured", "遗物已带走"),
                 Body = new Txt("保管庫に入った遺物は、もう失われることはありません。[F6] の「装備」タブで比較して付け替え、「鍛冶」タブで強化・分解ができます。",
-                    "Stashed relics are safe forever. Compare and equip them in the [F6] Gear tab; enhance or salvage them in the Forge tab."),
+                    "Stashed relics are safe forever. Compare and equip them in the [F6] Gear tab; enhance or salvage them in the Forge tab.",
+                    "进入仓库的遗物不会再丢失。可在 [F6] 的“装备”页比较并更换，在“锻造”页强化或分解。"),
             },
             new HintDef
             {
-                Id = Hint.FirstDelve, Title = new Txt("さらに深く潜りました", "You delved deeper"),
+                Id = Hint.FirstDelve, Title = new Txt("さらに深く潜りました", "You delved deeper", "下潜得更深了"),
                 Body = new Txt("潜行が深いほど戦利品は増えますが、未確保の物を抱えたままです。次の確保地点で確保すると、潜行に応じて欠片のボーナスも付きます。",
-                    "Deeper delves bring more loot, but you are still carrying it unsecured. Secure at the next point to bank it, with a shard bonus for your delve level."),
+                    "Deeper delves bring more loot, but you are still carrying it unsecured. Secure at the next point to bank it, with a shard bonus for your delve level.",
+                    "下潜越深战利品越多，但这些物品仍未存入。在下一个存仓点存入仓库时，还会按深度获得碎片加成。"),
             },
             new HintDef
             {
-                Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke"),
+                Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke", "从梦中醒来"),
                 Body = DefeatBody(Content.RoomsToRecoverLost, Workshop.EchoPercent(null)),
                 BodyFor = p => DefeatBody(Workshop.RoomsToRecover(p), Workshop.EchoPercent(p)),
             },
             new HintDef
             {
-                Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned"),
+                Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned", "星图点数增加了"),
                 Body = new Txt($"この旅人の星の経験が溜まり、ポイントを得ました。撃破・確保・踏破で星の経験が増え、旅人ごとに最大{StarProgression.MaxPoints}ポイントを得られます。図鑑のボーナスは全旅人に加わります。遠征の外で [F6] の「星図」から星に振りましょう。振り直しは無料です。",
-                    $"This Traveler earned star experience and points. Kills, securing and victories earn up to {StarProgression.MaxPoints} points independently per Traveler; codex bonuses apply to everyone. Outside a run, spend them in the [F6] Star Map. Resets are free."),
+                    $"This Traveler earned star experience and points. Kills, securing and victories earn up to {StarProgression.MaxPoints} points independently per Traveler; codex bonuses apply to everyone. Outside a run, spend them in the [F6] Star Map. Resets are free.",
+                    $"这位旅人的星辰经验已积累并获得点数。击败、存入仓库、通关都会增加星辰经验，每位旅人最多可获得{StarProgression.MaxPoints}点。图鉴的加成适用于所有旅人。请在远征之外从 [F6] 的“星图”分配。重新分配是免费的。"),
             },
             new HintDef
             {
-                Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
+                Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked", "可以选择到达刻印了"),
                 Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶにはこの旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
-                    $"This Traveler's mastery now allows a keystone. You also need {Content.KeystoneRouteRequirement}+ points in this tree."),
+                    $"This Traveler's mastery now allows a keystone. You also need {Content.KeystoneRouteRequirement}+ points in this tree.",
+                    $"这位旅人的熟练度提升，现在可以选择到达刻印了。选择前还需要在该旅人的树中投入至少{Content.KeystoneRouteRequirement}点。"),
             },
             new HintDef
             {
-                Id = Hint.FirstNightmare, Title = new Txt("悪夢化した敵", "Nightmare enemies"),
+                Id = Hint.FirstNightmare, Title = new Txt("悪夢化した敵", "Nightmare enemies", "梦魇化的敌人"),
                 Body = new Txt("頭上にピンクの名札がある敵は「悪夢化」しています。普通より強いですが、倒すと1段上の格の戦利品を落とします。深く潜るほど増えます。",
-                    "Enemies with a pink tag are nightmares: tougher, but they drop loot one tier higher. They appear more as you delve deeper."),
+                    "Enemies with a pink tag are nightmares: tougher, but they drop loot one tier higher. They appear more as you delve deeper.",
+                    "头顶有粉色名牌的敌人已“梦魇化”。比普通敌人更强，但击败后掉落高1档的战利品。下潜越深出现越多。"),
             },
             new HintDef
             {
-                Id = Hint.FirstBounty, Title = new Txt("依頼を達成しました", "Bounty complete"),
+                Id = Hint.FirstBounty, Title = new Txt("依頼を達成しました", "Bounty complete", "完成委托"),
                 Body = new Txt("遠征ごとに依頼が3つあります（左のパネル）。聖堂・商人・強化など、本体での行動も依頼になります。",
-                    "Each run has 3 bounties (left Dreamforge panel). Many are about using the game's own shrines, merchants and upgrades."),
+                    "Each run has 3 bounties (left Dreamforge panel). Many are about using the game's own shrines, merchants and upgrades.",
+                    "每次远征有3个委托（左侧面板）。使用圣堂、商人、强化等本体中的行动也会成为委托。"),
             },
             new HintDef
             {
-                Id = Hint.ForgeReady, Title = new Txt("鍛冶を使ってみましょう", "Forge ready"),
+                Id = Hint.ForgeReady, Title = new Txt("鍛冶を使ってみましょう", "Forge ready", "来试试锻造吧"),
                 Body = new Txt($"欠片が貯まりました。[F6] の「鍛冶」タブで遺物を強化（+{Content.MaxEnhance}まで）したり、同じレア度の遺物を必要な個数集めて合成したりできます。",
-                    $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or collect the required number of relics of one rarity to transmute into a better one."),
+                    $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or collect the required number of relics of one rarity to transmute into a better one.",
+                    $"碎片已经攒够了。在 [F6] 的“锻造”页可以强化遗物（最高+{Content.MaxEnhance}），也可以集齐所需数量的同稀有度遗物合成为更好的遗物。"),
             },
         };
 
         private static Txt DefeatBody(int rooms, int echoPercent) => new Txt(
             $"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{rooms}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{echoPercent}%は、残響として戻っています。",
-            $"Your unsecured relics moved to Lost & Found. Clear {rooms} combat rooms next run to recover the best one. {echoPercent}% of your unsecured shards came back as echoes.");
+            $"Your unsecured relics moved to Lost & Found. Clear {rooms} combat rooms next run to recover the best one. {echoPercent}% of your unsecured shards came back as echoes.",
+            $"尚未带走的遗物已移入“遗失物”。下次远征突破{rooms}个战斗房间，即可取回其中最好的1件。未带走碎片的{echoPercent}%已作为残响返还。");
 
         public static HintDef Get(Hint h)
         {
@@ -179,7 +194,8 @@ namespace SodRpg.Core.Game
             p.StarterV119Granted = true;
             events.Add(new GameEvent(EventKind.Info, Loc.T(
                 "新しい装備の枠（頭・手・足）が増えました。それぞれの遺物を1つずつ保管庫に入れました。",
-                "New equipment slots (Head, Hands, Feet) are available. One relic for each has been added to your stash.")));
+                "New equipment slots (Head, Hands, Feet) are available. One relic for each has been added to your stash.",
+                "新增了装备部位（头部、手部、足部）。已将每个部位各1件遗物放入仓库。")));
             return events;
         }
 

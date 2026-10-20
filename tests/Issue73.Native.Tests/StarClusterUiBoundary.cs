@@ -43,7 +43,7 @@ namespace SodRpg.Mod
         {
             _starLayout = HeroTreeLayout.ForHero(heroKey);
             _starHero = heroKey;
-            _starJapanese = Loc.Japanese;
+            _starJapanese = Loc.Language;
             _starCapFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
             _starAuthoredFingerprint = StarClusters.AuthoredRegistryFingerprint;
             _starNodes = new StarNode[_starLayout.Nodes.Count];
