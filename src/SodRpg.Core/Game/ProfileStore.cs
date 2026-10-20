@@ -49,7 +49,7 @@ namespace SodRpg.Core.Game
             {
                 WritesBlocked = true;
                 Notes.Add(Loc.T("保存データの存在を確認できないため、前のデータを保護するために保存を止めています。次に起動したときにもう一度試します。",
-                    "Saving is paused to protect existing data because a save file's existence could not be checked. It will be tried again on the next launch."));
+                    "Saving is paused to protect existing data because a save file's existence could not be checked. It will be tried again on the next launch.", "无法确认存档是否存在，为保护已有数据已暂停保存。下次启动时将重试。"));
             }
             if (!WritesBlocked && ResetIfOld(mainRoot, backupRoot))
             {
@@ -100,7 +100,7 @@ namespace SodRpg.Core.Game
                 {
                     // Keep the migrated in-memory profile usable; the next load can safely retry from the old disk snapshot.
                     Notes.Add(Loc.T("星の払い戻し・改訂番号を保存できませんでした。次回の読み込みで再試行します: ",
-                        "Could not save star refunds and their revision; the next load will retry: ") + ex.Message);
+                        "Could not save star refunds and their revision; the next load will retry: ", "无法保存退还的星点及其修订号；下次读取时将重试：") + ex.Message);
                 }
             }
             return profile;
@@ -275,11 +275,11 @@ namespace SodRpg.Core.Game
                 for (int i = 2; _fs.Exists(copy); i++) copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + "-" + i + ".json");
                 _fs.Copy(path, copy, overwrite: false);
                 Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
-                    "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));
+                    "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + ".", "移除未知内容前的数据已保存在" + System.IO.Path.GetFileName(copy) + "中。"));
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
             {
-                Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ") + ex.Message);
+                Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ", "无法复制移除前的数据：") + ex.Message);
             }
         }
 
@@ -301,7 +301,7 @@ namespace SodRpg.Core.Game
                 _english = english;
             }
 
-            public override string Message => Loc.T(_japanese, _english);
+            public override string Message => Loc.T(_japanese, _english, LocZhGlossary.Lookup(_english));
 
             /// <summary>UI の言語と無関係に固定される英文（ログなど、言語が変わっても同じに出したい用途）。</summary>
             internal string EnglishMessage => _english;

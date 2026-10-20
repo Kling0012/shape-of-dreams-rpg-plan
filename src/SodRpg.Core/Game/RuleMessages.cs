@@ -10,16 +10,16 @@ namespace SodRpg.Core.Game
     {
         public static readonly Txt RegistryChanged = new Txt(
             "払い戻しの確認のあとで、星・装備・仕掛けの内容が変わりました。もう一度確認してください。",
-            "The allocation, equipment or shared mechanism registry changed after this refund preview. Preview again.");
+            "The allocation, equipment or shared mechanism registry changed after this refund preview. Preview again.", "退还预览后，星点分配、装备或共享机制注册信息发生变化。请重新预览。");
         public static readonly Txt NotEnoughStarPoints = new Txt(
             "この振り方には星のポイントが足りません。",
-            "Not enough star points for the proposed allocation.");
+            "Not enough star points for the proposed allocation.", "星点不足，无法按此方案分配。");
         public static readonly Txt RelicNotInStash = new Txt(
             "その遺物は保管庫にありません。",
-            "The relic is not in the stash.");
+            "The relic is not in the stash.", "该遗物不在仓库中。");
         public static readonly Txt RelicWrongSlot = new Txt(
             "その遺物はこの装備枠には入れられません。",
-            "The relic does not belong to that slot.");
+            "The relic does not belong to that slot.", "该遗物无法放入此装备部位。");
         public static readonly Txt KeystoneNotReady = new Txt(
             "この刻印はまだ選べません。取得済みの星とのつながり、取得した段数、熟練度の条件を満たしてください。",
             "This keystone is not available yet: connect it to your acquired stars and meet the rank and mastery requirements.");
