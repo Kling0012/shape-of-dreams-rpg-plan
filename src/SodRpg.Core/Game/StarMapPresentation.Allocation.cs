@@ -46,8 +46,8 @@ namespace SodRpg.Core.Game
                         int end = summary.IndexOf(separator, StringComparison.Ordinal);
                         if (end >= 0) summary = summary.Substring(0, end).Trim();
                     }
-                    // 日本語の文章は、最初の1文を要約にする。
-                    if (Loc.Japanese)
+                    // 日本語と中国語の文章は、最初の1文を要約にする（#992: 中国語も「。」で区切る）。
+                    if (Loc.Language != LocLanguage.English)
                     {
                         int sentenceEnd = summary.IndexOf('。');
                         if (sentenceEnd >= 0) summary = summary.Substring(0, sentenceEnd + 1);

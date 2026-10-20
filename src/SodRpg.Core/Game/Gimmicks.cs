@@ -306,6 +306,7 @@ namespace SodRpg.Core.Game
             string radius = Radius(def, AreaRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             string healRadius = Radius(def, AllyRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             if (Loc.Japanese) return DescribeJa(def, sourceText, value, n, duration, radius, healRadius, triggerText);
+            if (Loc.Language == LocLanguage.Chinese) return DescribeZh(def, sourceText, value, n, duration, radius, healRadius, triggerText);
             string memory = sourceText;
             string trigger;
             switch (def.Trigger)
@@ -450,6 +451,107 @@ namespace SodRpg.Core.Game
 
         private const string JaStrongestOnly = "同時に有効になるのは最も大きい1つだけで、重ならず、再発動すると効果時間が延びる。";
         private const string JaNoStarTrigger = "星の追加ダメージでは発動しない。";
+
+        /// <summary>仕掛けの中国語の説明（#992）。組み立ては <see cref="DescribeJa"/> と同じ（条件→結果、追記、限度、重なり、最後の一文）。
+        /// 用語は #961 の効果用語（障壁→护盾、通常攻撃→普通攻击など）に合わせる。</summary>
+        private static string DescribeZh(GimmickDef def, string memory, decimal value, string n, string duration, string radius, string healRadius, string triggerText)
+        {
+            string condition = ZhCondition(def, memory, triggerText);
+            string enemy = ZhHitEnemy(condition);
+            string effect, extra = "", stacking = "", cap = "效果数值最高为" + Cap(def.Effect) + "%";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Element:
+                    string element = def.Arg == 0 ? "火" : def.Arg == 1 ? "冰" : def.Arg == 2 ? "光" : "暗";
+                    int whole = (int)(value / 100);
+                    string chance = Math.Min(100, value % 100 + ChanceProbabilityUnits(def) / 100m).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string targets = def.Trigger == GimmickTrigger.OnUse ? "自己周围" + radius + "m内的敌人"
+                        : def.Trigger == GimmickTrigger.OnKill ? "被击杀敌人周围" + radius + "m内的敌人" : enemy;
+                    effect = whole == 0 ? "以" + chance + "%的概率为" + targets + "施加1层" + element
+                        : "为" + targets + "施加" + whole + "层" + element + (chance == "0" ? "" : "，并以" + chance + "%的概率再施加1层");
+                    cap = "一次施加的层数基础最高为" + Cap(def.Effect) / 100 + "层，提高概率的效果最多再增加1层";
+                    break;
+                case GimmickEffect.Burst:
+                    string center = def.Trigger == GimmickTrigger.OnUse ? "自己" : def.Trigger == GimmickTrigger.OnKill ? "被击杀的敌人" : "被命中的敌人";
+                    effect = "对" + center + "周围" + radius + "m内的敌人，造成相当于攻击力与法术强度中较高一方" + n + "%的额外伤害，法术强度较高时为魔法伤害";
+                    break;
+                case GimmickEffect.Shield:
+                    effect = "获得持续" + duration + "秒、相当于自己最大生命值" + n + "%的护盾";
+                    extra = "星之护盾对每个施加者与接受者只保留1个，保留剩余量与新生成量中较高的一方，并刷新持续时间。";
+                    break;
+                case GimmickEffect.Heal:
+                    effect = def.Arg == 1 ? "为自己与" + healRadius + "m以内的队友，回复各自最大生命值" + n + "%的生命值" + HealFalloffNoteZh(def)
+                        : "回复自己最大生命值" + n + "%的生命值";
+                    break;
+                case GimmickEffect.Recharge:
+                    effect = "该记忆的剩余冷却缩短" + n + "%";
+                    break;
+                case GimmickEffect.Reload:
+                    effect = "该记忆的使用次数恢复1次，不会超过最大使用次数；使用次数为1次的记忆，改为重置全部剩余冷却";
+                    cap = "效果最高为1次";
+                    break;
+                case GimmickEffect.RechargeOther:
+                    effect = "装备中的其他普通记忆（不含移动、奥义和身份记忆）的剩余冷却缩短" + n + "%";
+                    break;
+                case GimmickEffect.Quicken:
+                    effect = "攻击速度在" + duration + "秒内提升" + n + "%";
+                    stacking = ZhStrongestOnly;
+                    break;
+                case GimmickEffect.Empower:
+                    effect = "攻击力与法术强度在" + duration + "秒内提升" + n + "%";
+                    stacking = ZhStrongestOnly;
+                    break;
+                case GimmickEffect.Expose:
+                    effect = enemy + "在" + duration + "秒内，受到来自你的伤害增加" + n + "%";
+                    stacking = ZhStrongestOnly;
+                    break;
+                default:
+                    effect = "将命中伤害的" + n + "%作为追击，在0.3秒后再次造成";
+                    break;
+            }
+            return ZhSentence(condition, effect) + extra + ZhLimits(def.Cooldown, cap) + stacking + ZhNoStarTrigger;
+        }
+
+        private const string ZhStrongestOnly = "同时只有一个最大的数值生效，不叠加，重新发动时刷新持续时间。";
+        private const string ZhNoStarTrigger = "星产生的额外伤害不会触发。";
+
+        /// <summary>発動条件の節（中国語。「〜时」で終える）。別の箇所が組み立てた条件文は、前置きと「。」を外して取り込む。</summary>
+        private static string ZhCondition(GimmickDef def, string memory, string triggerText)
+        {
+            if (triggerText != null)
+            {
+                string text = triggerText.Trim();
+                if (text.StartsWith("触发条件：", StringComparison.Ordinal)) text = text.Substring("触发条件：".Length);
+                return text.TrimEnd('。');
+            }
+            switch (def.Trigger)
+            {
+                case GimmickTrigger.OnUse: return "使用" + memory + "时";
+                case GimmickTrigger.OnHit: return memory + "命中敌人时";
+                case GimmickTrigger.OnKill: return memory + "击杀敌人时";
+                default: return memory + "暴击命中敌人时";
+            }
+        }
+
+        /// <summary>条件が「〜命中（一名）敌人时」なら「该敌人」、それ以外は「被命中的敌人」。</summary>
+        private static string ZhHitEnemy(string condition) =>
+            condition.EndsWith("命中一名敌人时", StringComparison.Ordinal) || condition.EndsWith("命中敌人时", StringComparison.Ordinal)
+                ? "该敌人" : "被命中的敌人";
+
+        private static string ZhSentence(string condition, string effect) => condition + "，" + effect + "。";
+
+        /// <summary>間隔と上限の文（中国語）。cap は名詞句で終わる節。</summary>
+        private static string ZhLimits(float cooldown, string cap)
+        {
+            float cd = Math.Min(cooldown, MaxCooldown);
+            return (cd > 0 ? "此星每" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒最多发动一次，"
+                : "无发动间隔限制，") + cap + "。";
+        }
+
+        // The host heals allies through the co-op distance falloff at the default radius (as Siphon does). Chinese variant (#992).
+        private static string HealFalloffNoteZh(GimmickDef def)
+            => Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange
+                ? "。" + CoopDistance.DescribeZh().TrimEnd('。') : "";
 
         /// <summary>発動条件の節（「〜とき」で終える）。別の箇所が組み立てた条件文は、前置きと「。」を外して取り込む。</summary>
         internal static string JaCondition(GimmickDef def, string memory, string triggerText)

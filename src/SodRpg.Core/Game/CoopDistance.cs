@@ -6,11 +6,19 @@ namespace SodRpg.Core.Game
     /// <summary>Shared distance curve. State is transient and belongs to one ordered hero pair.</summary>
     public static class CoopDistance
     {
-        public static string Description => Describe(Loc.Japanese);
+        public static string Description => Loc.Language switch
+        {
+            LocLanguage.Japanese => Describe(true),
+            LocLanguage.Chinese => DescribeZh(),
+            _ => Describe(false),
+        };
 
         public static string Describe(bool japanese) => japanese
             ? $" 距離減衰が有効な場合、味方への効果量は{CoopBalance.FullRange}mまで全量、{CoopBalance.FullRange}～{CoopBalance.OuterRange}mで線形に0まで減衰する。範囲外へ出てから{CoopBalance.GraceSeconds}秒は直前の係数を保持する。距離減衰が無効な場合は{CoopBalance.FullRange}mまで全量で、{CoopBalance.FullRange}mを超えると猶予なしで切れる。効果の範囲を強化すると、全量が届く距離と減衰の外端も同じ比率で伸びる。距離減衰が無効な場合も全量が届く距離は伸びる。{CoopBalance.FullRange}m未満の範囲を持つ効果は、距離減衰の設定にかかわらず元の範囲を超えると猶予なしで切れる。"
             : $" With distance falloff enabled, allied effects are full through {CoopBalance.FullRange}m, fade linearly to zero from {CoopBalance.FullRange} to {CoopBalance.OuterRange}m, and retain the last coefficient for {CoopBalance.GraceSeconds}s after leaving range. With falloff disabled, they are full through {CoopBalance.FullRange}m and end beyond {CoopBalance.FullRange}m with no grace. Radius upgrades extend both the full-strength distance and the fade-out edge proportionally. The full-strength distance also extends when falloff is disabled. Effects with a radius below {CoopBalance.FullRange}m end beyond their own radius with no grace, regardless of the falloff setting.";
+
+        /// <summary>距離減衰の中国語の説明（#992）。日本語版と同じ内容を簡体字で組み立てる。</summary>
+        public static string DescribeZh() => $" 距离衰减生效时，对队友的效果量在{CoopBalance.FullRange}m以内为全量，从{CoopBalance.FullRange}m到{CoopBalance.OuterRange}m线性衰减至0，离开范围后{CoopBalance.GraceSeconds}秒内保持此前的系数。距离衰减关闭时，{CoopBalance.FullRange}m以内为全量，超过{CoopBalance.FullRange}m后无宽限立即失效。提升效果范围时，全量距离与衰减外沿按相同比例延长；距离衰减关闭时，全量距离同样会延长。范围不足{CoopBalance.FullRange}m的效果，无论距离衰减设置如何，超过自身范围后无宽限立即失效。";
 
         /// <param name="fullRange">The effect's own full-strength radius (a radius upgrade widens it);
         /// the fade-out edge scales with it so the curve keeps its shape.</param>

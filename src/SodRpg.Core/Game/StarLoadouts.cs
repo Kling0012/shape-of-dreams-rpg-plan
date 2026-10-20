@@ -47,13 +47,20 @@ namespace SodRpg.Core.Game
         public const int Count = 5;
         public const int MaxNameLength = 24;
 
-        public static string DefaultName(int index, bool japanese) => japanese ? "ロードアウト" + (index + 1) : "Loadout " + (index + 1);
-        public static string DisplayName(HeroState hero, int index, bool japanese) => hero.StarLoadouts[index]?.Name ?? DefaultName(index, japanese);
+        /// <summary>欄の既定の名前。中国語は #992 で追加（ProfileCodec の「配装」の用語に合わせる）。</summary>
+        public static string DefaultName(int index, LocLanguage language) => language switch
+        {
+            LocLanguage.Japanese => "ロードアウト" + (index + 1),
+            LocLanguage.Chinese => "配装" + (index + 1),
+            _ => "Loadout " + (index + 1),
+        };
+        public static string DisplayName(HeroState hero, int index, LocLanguage language) => hero.StarLoadouts[index]?.Name ?? DefaultName(index, language);
 
         public static string NormalizeName(string name, int index)
         {
             name = name?.Trim();
-            if (string.IsNullOrEmpty(name) || name == DefaultName(index, true) || name == DefaultName(index, false)) return null;
+            if (string.IsNullOrEmpty(name) || name == DefaultName(index, LocLanguage.Japanese) || name == DefaultName(index, LocLanguage.English)
+                || name == DefaultName(index, LocLanguage.Chinese)) return null;
             name = name.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ');
             if (name.Length <= MaxNameLength) return name;
             int length = char.IsHighSurrogate(name[MaxNameLength - 1]) ? MaxNameLength - 1 : MaxNameLength;

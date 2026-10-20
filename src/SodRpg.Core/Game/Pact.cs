@@ -349,23 +349,45 @@ namespace SodRpg.Core.Game
             return ja ? "少し" : "slightly ";
         }
 
+        /// <summary>中国語の運の副詞（#992）。「容易掉落」の前に置く。しきい値は <see cref="LuckWord"/> と同じ。</summary>
+        private static string LuckWordZh(double luck)
+        {
+            if (luck >= 1.2) return "非常";
+            if (luck >= 0.7) return "明显";
+            if (luck >= 0.45) return "更";
+            return "稍微更";
+        }
+
         private static string Mult(double m) => m.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         private static readonly string DepthBonusJa =
             $"確保したときの潜行ボーナスが{PactBalance.DoubleDepthBonusMultiplier}倍になる";
         private static readonly string DepthBonusEn =
             (PactBalance.DoubleDepthBonusMultiplier == 2 ? "double" : $"x{PactBalance.DoubleDepthBonusMultiplier}") + " delve bonus when you secure";
+        private static readonly string DepthBonusZh =
+            $"存入仓库时的下潜奖励变为{PactBalance.DoubleDepthBonusMultiplier}倍";
 
         /// <summary>契約の説明を、数値から作る（代償：…。見返り：…。）。</summary>
         public static string Describe(PactDef d, Profile p = null)
         {
-            bool ja = Loc.Japanese;
+            // #992: 中国語は日本語版と同じ組み立て（代償→見返り、文の区切りは「。」）で足す。
+            bool ja = Loc.Japanese, zh = Loc.Language == LocLanguage.Chinese;
             var gains = new List<string>();
-            if (d.DropBonus > 0) gains.Add(ja ? $"遺物が{(int)Math.Round(d.DropBonus * 100)}%多く落ちる" : $"{(int)Math.Round(d.DropBonus * 100)}% more relic drops");
-            if (d.Luck > 0) gains.Add(ja ? $"レア度の高い遺物が{LuckWord(d.Luck, true)}出やすくなる" : $"{LuckWord(d.Luck, false)}better relic rarity");
-            if (d.ShardMult > 1.0) gains.Add(ja ? $"敵を倒して得る欠片が{Mult(d.ShardMult)}倍になる" : $"x{Mult(d.ShardMult)} shards from kills");
-            if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる" : $"x{Mult(d.XpMult)} experience from kills");
-            if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
-            if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : DepthBonusEn);
+            if (d.DropBonus > 0) gains.Add(ja ? $"遺物が{(int)Math.Round(d.DropBonus * 100)}%多く落ちる"
+                : zh ? $"遗物掉落增加{(int)Math.Round(d.DropBonus * 100)}%"
+                : $"{(int)Math.Round(d.DropBonus * 100)}% more relic drops");
+            if (d.Luck > 0) gains.Add(ja ? $"レア度の高い遺物が{LuckWord(d.Luck, true)}出やすくなる"
+                : zh ? $"高稀有度的遗物{LuckWordZh(d.Luck)}容易掉落"
+                : $"{LuckWord(d.Luck, false)}better relic rarity");
+            if (d.ShardMult > 1.0) gains.Add(ja ? $"敵を倒して得る欠片が{Mult(d.ShardMult)}倍になる"
+                : zh ? $"击杀敌人获得的碎片变为{Mult(d.ShardMult)}倍"
+                : $"x{Mult(d.ShardMult)} shards from kills");
+            if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる"
+                : zh ? $"击杀敌人获得的经验值变为{Mult(d.XpMult)}倍"
+                : $"x{Mult(d.XpMult)} experience from kills");
+            if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす"
+                : zh ? $"精英和首领额外掉落{d.TuningOnElite}颗调律石"
+                : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
+            if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : zh ? DepthBonusZh : DepthBonusEn);
             // 一部の能力値の説明は文の形（末尾が「。」）なので、つなぐ前に外して「。。」にしない。
             foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value).TrimEnd('。'));
             string curse = PactDef.StrengthName(d.CurseStrength);
@@ -374,6 +396,11 @@ namespace SodRpg.Core.Game
                 string cost = d.CurseStrength >= 3 ? "強い" : d.CurseStrength == 2 ? "中くらいの" : "弱い";
                 string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(p)}%）も戻らない" : "";
                 return $"代償：{cost}呪いを1つ受ける{echo}。見返り：{string.Join("。", gains)}。";
+            }
+            if (zh)
+            {
+                string echo = d.NoEcho ? $"。全灭时本应归还的碎片（{Workshop.EchoPercent(p)}%）也不会归还" : "";
+                return $"代价：承受1个{curse}诅咒{echo}。回报：{string.Join("。", gains)}。";
             }
             string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(p)}% shard echoes you would recover on a party wipe are lost instead" : "";
             return $"Cost: a {curse.ToLowerInvariant()} curse{echoEn}. Reward: {string.Join("; ", gains)}.";

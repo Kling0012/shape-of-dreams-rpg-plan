@@ -111,7 +111,13 @@ namespace SodRpg.Core.Game
                 if (NamedId != null && NamedItems.TryGetNamed(NamedId, out var named)) return named.Name.ToString();
                 // エピックは、1つ目の固有効果から銘が付く（例：猛火の連なりの剣）。
                 if (Rarity == Rarity.Epic && Powers.Count > 0 && Content.Epithet(Powers[0].Power) is Txt ep)
-                    return Loc.Japanese ? ep.Ja + " " + Base.Name.Ja : ep.En + " " + Base.Name.En; // 「乱戦の 共鳴の衣」のように区切って読みやすく
+                    return Loc.Language switch
+                    {
+                        LocLanguage.Japanese => ep.Ja + " " + Base.Name.Ja, // 「乱戦の 共鳴の衣」のように区切って読みやすく
+                        // 中国語は区切らずに連結する（「烈火的连环剑」）。銘・土台とも訳が無ければ英語に戻す。
+                        LocLanguage.Chinese => (ep.Zh ?? Loc.Zh(ep.En)) + (Base.Name.Zh ?? Loc.Zh(Base.Name.En)),
+                        _ => ep.En + " " + Base.Name.En,
+                    };
                 return Base.Name.ToString();
             }
         }

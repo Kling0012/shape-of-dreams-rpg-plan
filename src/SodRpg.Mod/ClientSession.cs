@@ -434,7 +434,9 @@ namespace SodRpg.Mod
                     {
                         _writeFailureSource = source;
                         _writeFailureLanguage = language;
-                        _writeFailureText = (language == LocLanguage.Japanese ? "保存に失敗しました。自動で再試行します: " : "Saving failed; retrying automatically: ") + source;
+                        _writeFailureText = (language == LocLanguage.Japanese ? "保存に失敗しました。自動で再試行します: "
+                            : language == LocLanguage.Chinese ? "保存失败。将自动重试：" // #992
+                            : "Saving failed; retrying automatically: ") + source;
                     }
                     SetSaveErrorText(_writeFailureText);
                     _saveErrorFromWriteFailure = true;

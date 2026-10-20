@@ -395,13 +395,13 @@ namespace SodRpg.Core.Game
             p.SettleSatchelOverflow();
             int count = p.SatchelOverflowCount, shards = p.SatchelOverflowShards, discarded = p.SatchelOverflowDiscarded;
             p.SatchelOverflowCount = p.SatchelOverflowShards = p.SatchelOverflowDiscarded = 0;
-            string text = Loc.Japanese
-                ? $"鞄あふれ：欠片 +{shards}（遺物 {count} 個）"
-                : $"Satchel overflow: shards +{shards} ({count} relics)";
+            string text = Loc.T($"鞄あふれ：欠片 +{shards}（遺物 {count} 個）",
+                $"Satchel overflow: shards +{shards} ({count} relics)",
+                $"背包溢出：碎片 +{shards}（遗物 {count} 件）"); // #992: 中国語でも英語にならないように3言語で組み立てる
             if (discarded != 0)
-                text += Loc.Japanese
-                    ? $"。道標の報酬停止で {discarded} 個は対価なし。"
-                    : $". The waypoint suppressed rewards for {discarded} relics.";
+                text += Loc.T($"。道標の報酬停止で {discarded} 個は対価なし。",
+                    $". The waypoint suppressed rewards for {discarded} relics.",
+                    $"。路标奖励停止期间，其中 {discarded} 件没有报酬。");
             return new GameEvent(EventKind.Info, text)
             {
                 SatchelOverflowCount = count, SatchelOverflowShards = shards, SatchelOverflowDiscarded = discarded,

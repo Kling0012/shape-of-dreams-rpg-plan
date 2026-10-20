@@ -1075,24 +1075,28 @@ namespace SodRpg.Mod
 
         private static readonly int[] InfinityIntervals = { InfinityRunState.ShortInterval, InfinityRunState.MiddleInterval, InfinityRunState.LongInterval };
         private static readonly string[] InfinityIntervalLabels = Array.ConvertAll(InfinityIntervals, interval => interval.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        private static readonly string[] InfinityIntervalEffectsJa = Array.ConvertAll(InfinityIntervals, value => InfinityIntervalEffects(value, true));
-        private static readonly string[] InfinityIntervalEffectsEn = Array.ConvertAll(InfinityIntervals, value => InfinityIntervalEffects(value, false));
+        private static readonly string[] InfinityIntervalEffectsJa = Array.ConvertAll(InfinityIntervals, value => InfinityIntervalEffects(value, LocLanguage.Japanese));
+        private static readonly string[] InfinityIntervalEffectsEn = Array.ConvertAll(InfinityIntervals, value => InfinityIntervalEffects(value, LocLanguage.English));
+        private static readonly string[] InfinityIntervalEffectsZh = Array.ConvertAll(InfinityIntervals, value => InfinityIntervalEffects(value, LocLanguage.Chinese));
         private float _infinityEffectsWidth;
         private GUILayoutOption[] _infinityEffectsSize;
 
-        private static string InfinityIntervalEffects(int interval, bool japanese)
+        private static string InfinityIntervalEffects(int interval, LocLanguage language)
         {
             int pressure = InfinityIntervalScaling.PressureOffset(interval);
             double countBonus = InfinityIntervalScaling.EnemyCountBonus(interval);
             double relics = InfinityIntervalScaling.RelicMultiplier(interval);
             string difficulty = interval == InfinityRunState.LongInterval
-                ? (japanese ? "基準・通常の遺物量" : "Baseline · normal relics")
+                ? (language == LocLanguage.Japanese ? "基準・通常の遺物量" : language == LocLanguage.Chinese ? "基准·通常遗物量" : "Baseline · normal relics")
                 : interval == InfinityRunState.MiddleInterval
-                    ? (japanese ? "高難度・遺物多め" : "Hard · more relics")
-                    : (japanese ? "最高難度・遺物さらに多め" : "Hardest · most relics");
-            return japanese
-                ? $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選 ×{relics:0.##}"
-                : $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary rolls ×{relics:0.##}";
+                    ? (language == LocLanguage.Japanese ? "高難度・遺物多め" : language == LocLanguage.Chinese ? "高难度·遗物较多" : "Hard · more relics")
+                    : (language == LocLanguage.Japanese ? "最高難度・遺物さらに多め" : language == LocLanguage.Chinese ? "最高难度·遗物更多" : "Hardest · most relics");
+            return language switch
+            {
+                LocLanguage.Japanese => $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選 ×{relics:0.##}",
+                LocLanguage.Chinese => $"<b>{interval}房间 · {difficulty}</b>\n压力阶段 +{pressure} · 敌人数 +{countBonus * 100:0}%\n普通遗物抽选 ×{relics:0.##}",
+                _ => $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary rolls ×{relics:0.##}",
+            };
         }
 
         private void DrawInfinityChoice()
@@ -1119,7 +1123,12 @@ namespace SodRpg.Mod
             GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            var effects = Loc.Japanese ? InfinityIntervalEffectsJa : InfinityIntervalEffectsEn;
+            var effects = Loc.Language switch
+            {
+                LocLanguage.Japanese => InfinityIntervalEffectsJa,
+                LocLanguage.Chinese => InfinityIntervalEffectsZh, // #992: 中国語の区間効果
+                _ => InfinityIntervalEffectsEn,
+            };
             float effectWidth = (_windowWidth - 28f) / effects.Length;
             if (_infinityEffectsSize == null || _infinityEffectsWidth != effectWidth)
             {

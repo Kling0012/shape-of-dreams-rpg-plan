@@ -344,7 +344,7 @@ namespace SodRpg.Core.Game
                     $"Boss reward stage {link.Value} enabled: while you equip {ItemName(link.Requires[0])}. Highest stage per matching set only.",
                     $"固有奖励阶段{link.Value}已启用：装备{ItemName(link.Requires[0])}时。对应的各个套装中，只有最高的阶段生效。");
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
-            string limitJa, limitEn;
+            string limitJa, limitEn, limitZh;
             switch (link.Kind)
             {
                 case LinkKind.MemoryHaste:
@@ -355,10 +355,14 @@ namespace SodRpg.Core.Game
                     limitEn = EssenceCapsBalance.MemoryHasteEnabled
                         ? " (Combined with star reductions, removes at most " + hasteCap + "% of remaining cooldown per cast.)"
                         : " (Total reduction per cast is capped at 100%.)";
+                    limitZh = EssenceCapsBalance.MemoryHasteEnabled
+                        ? "每次发动可缩短的量，与星的缩短合计后，最多为剩余冷却的" + hasteCap + "%。"
+                        : "每次发动可缩短的总量最多为100%。";
                     break;
                 case LinkKind.MemorySurge:
                     limitJa = "同時に有効になるのは最も大きい1つだけで、重ならずに時間が延びる。装備条件を外すと解除される。";
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
+                    limitZh = "同时只有一个最大的连携生效，不叠加并刷新持续时间，解除装备条件后失效。";
                     break;
                 default:
                     // Build.Compute が装備の連携の元値合計に使う上限と同じ値を示す。
@@ -366,9 +370,15 @@ namespace SodRpg.Core.Game
                     string capText = linkCap.ToString("0.##", CultureInfo.InvariantCulture);
                     limitJa = linkCap > 0 ? $"同じ種類・条件の連携は足し合わされ、装備の元の値の合計で最大{capText}%まで（星の連携は別に加わる）。" : "同じ種類・条件の連携は足し合わされ、合計の上限はない。";
                     limitEn = linkCap > 0 ? $" (Links of the same kind and requirements add together; equipped links are capped at {capText}% of the original values, and star links add on top.)" : " (Links of the same kind and requirements add together, with no total cap.)";
+                    limitZh = linkCap > 0 ? $"同种类、同条件的连携相互叠加，装备原值合计最多{capText}%（星的连携另行相加）。" : "同种类、同条件的连携相互叠加，总量无上限。";
                     break;
             }
-            string text = Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
+            string text = Loc.Language switch
+            {
+                LocLanguage.Japanese => DescribeJa(link, isSatisfied, value) + limitJa,
+                LocLanguage.Chinese => DescribeZh(link, isSatisfied, value) + limitZh,
+                _ => DescribeEn(link, isSatisfied, value) + limitEn,
+            };
             float coefficient = 1f;
             bool hasTraveler = false;
             foreach (string target in link.Requires)
@@ -417,6 +427,52 @@ namespace SodRpg.Core.Game
 
         private static string JoinJa(List<string> items) =>
             items.Count == 1 ? items[0] : string.Join("と", items);
+
+        /// <summary>中国語の条件の節（#992）。「装备着…」と旅人の条件を「且」でつなぎ、全体を「时」で終える。</summary>
+        private static string ConditionZh(LinkDef link, Func<string, bool> isSatisfied)
+        {
+            var travelers = new List<string>();
+            var items = new List<string>(link.Requires.Length);
+            foreach (string t in link.Requires)
+            {
+                if (IsTraveler(Canon(t))) travelers.Add(Name(t).ToString() + Mark(t, isSatisfied));
+                else items.Add(ItemName(t) + Mark(t, isSatisfied));
+            }
+            string itemClause = items.Count == 0 ? null : "装备着" + string.Join("、", items) + (items.Count > 1 ? "的全部" : "");
+            string travelerClause = null;
+            if (travelers.Count == 1)
+                travelerClause = "自己是" + travelers[0] + "，或有效范围内存在存活的队友" + travelers[0];
+            else if (travelers.Count > 1)
+                travelerClause = string.Join("、", travelers) + "之中1人为自己，且其余旅人为有效范围内存活的队友";
+            if (travelerClause == null) return itemClause + "时";
+            return itemClause == null ? travelerClause + "时" : travelerClause + "，且" + itemClause + "时";
+        }
+
+        /// <summary>中国語の説明（#992）。日本語版と同じく条件の節を主語にして一文にまとめる。</summary>
+        private static string DescribeZh(LinkDef link, Func<string, bool> isSatisfied, string value)
+        {
+            string cond = ConditionZh(link, isSatisfied);
+            switch (link.Kind)
+            {
+                case LinkKind.MemoryDamage:
+                    return cond + "，" + (MemoryCount(link) == 1 ? "该记忆的伤害提升" : "条件中列出的记忆伤害均提升") + value + "%。";
+                case LinkKind.Attune:
+                    return cond + "，攻击力与法术强度提升" + value + "%。";
+                case LinkKind.Guard:
+                    return cond + "，最大生命值提升" + value + "%，护甲增加" + value + "。";
+                case LinkKind.MemoryHaste:
+                    return cond + "，使用" + MemorySubjectZh(link) + "后，其剩余冷却缩短"
+                        + (EssenceCapsBalance.MemoryHasteEnabled ? value + "%。" : "最大冷却的" + value + "%。");
+                case LinkKind.MemorySurge:
+                    return cond + "，使用" + MemorySubjectZh(link) + "后5秒内，攻击力与法术强度提升" + value + "%。";
+                default:
+                    return "连携的生效条件为：" + cond + "。";
+            }
+        }
+
+        /// <summary>記憶を使う効果の主語（中国語）。条件の記憶が1つならその記憶、複数ならそのどれか1つ。</summary>
+        private static string MemorySubjectZh(LinkDef link) =>
+            MemoryCount(link) == 1 ? "该记忆" : "条件中列出的任意记忆";
 
         private static string DescribeJa(LinkDef link, Func<string, bool> isSatisfied, string value)
         {
