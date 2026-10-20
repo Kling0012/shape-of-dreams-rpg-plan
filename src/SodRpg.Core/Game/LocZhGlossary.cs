@@ -340,6 +340,20 @@ namespace SodRpg.Core.Game
                 ["Saving is paused because the previous data cannot be safely preserved. It will be tried again on the next launch."] = "无法安全保留已有数据，已暂停保存。下次启动时将重试。",
                 ["The saved file did not read back identically."] = "保存文件的读取内容不一致。",
                 ["The profile did not survive a save/load round trip."] = "档案经过保存和读取后的内容不一致。",
+                ["Legendary"] = "传说",
+                ["Normal memory"] = "普通记忆",
+                ["Basic attack"] = "通常攻击",
+                ["Ability power"] = "法术强度",
+                ["Shield"] = "护盾",
+                ["Cooldown reduction"] = "冷却缩减",
+                ["Follow-up damage"] = "追击伤害",
+                ["Bridge combo"] = "桥接组合技",
+                ["Cooperative trade"] = "合作交易",
+                ["Escrow"] = "托管",
+                ["Receipt"] = "收据",
+                ["Unsecured relics"] = "尚未存入仓库的遗物",
+                ["Awakening points"] = "觉醒点",
+                ["Star experience"] = "星之经验",
                 ["Keystone"] = "刻印",
                 ["Nightmare"] = "梦魇",
                 ["Overcharge"] = "过载",
@@ -482,6 +496,9 @@ namespace SodRpg.Core.Game
 
                 // 図鑑の固有効果名は Content.PowerName の明示訳を使う。
                 // Barrier / Second Wind などの固有名訳を一般語へ適用しない。
+                // 図鑑以外の2引数の翻訳が参照する既訳は残す。
+                ["Wildfire"] = "飞火",
+                ["Vigor"] = "万全",
 
                 // 旅人名（#962）
                 ["Vesper"] = "维斯珀",
