@@ -171,7 +171,7 @@ namespace SodRpg.Mod
             else
             {
                 // The wire carries the 0-based run order; players count worlds from 1.
-                text.Append(status.world < 0 ? Loc.T("ラン外", "Outside a run", "远征之外") : Loc.T("世界", "World ", "世界") + (status.world + 1))
+                text.Append(status.world < 0 ? Loc.T("ラン外", "Outside a run", "远征之外") : Loc.T("世界", "World ", "世界 ") + (status.world + 1))
                     .Append(Loc.T("（減衰 ", " (", "（衰减 ")).Append(status.decayPercent).Append(Loc.T("%）", "% less)", "%）"));
             }
             text.Append('\n').Append(Loc.T("　段階：", "　Stages: ", "　阶段："));
@@ -180,7 +180,7 @@ namespace SodRpg.Mod
             {
                 var table = status.decayByWorld;
                 text.Append(OwnershipHelp.StageTable(world => table[world], table.Length,
-                    Loc.T("世界", "World ", "世界"), Loc.T("以降", "+", "及以后")));
+                    Loc.T("世界", "World ", "世界 "), Loc.T("以降", "+", "及以后")));
             }
             return text.ToString();
         }
@@ -248,7 +248,7 @@ namespace SodRpg.Mod
             }
             else _s.TryDynamicDifficultyFor(local.guid, out f);
             if (double.IsNaN(f)) return;
-            sb.Append("\n<size=13>").Append(Loc.T("動的難易度 ", "Dynamic difficulty: ", "动态难度 "));
+            sb.Append("\n<size=13>").Append(Loc.T("動的難易度 ", "Dynamic difficulty: ", "动态难度："));
             if (f >= 0.995 && f <= 1.005) sb.Append(Loc.T("標準", "standard", "标准"));
             else
             {
@@ -259,7 +259,7 @@ namespace SodRpg.Mod
                 double rewardMultiplier = Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
                     1 + status.rewardShare / 1000d * Math.Max(0, f - 1));
                 string rewardPercent = SignedPercent(rewardMultiplier);
-                if (rewardPercent.Length > 0) sb.Append(Loc.T("・報酬 ", " · Rewards ", "· 奖励 ")).Append(rewardPercent);
+                if (rewardPercent.Length > 0) sb.Append(Loc.T("・報酬 ", " · Rewards ", " · 奖励 ")).Append(rewardPercent);
                 if (f < 0.995) sb.Append(Loc.T("（やさしめ）", " (easier)", "（偏易）"));
             }
             sb.Append("</size>");
@@ -325,7 +325,7 @@ namespace SodRpg.Mod
             GUILayout.Label(_dynamicLimits, _st.Small);
             GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
                 "In co-op it runs together with enemy ownership.",
-                "协作游玩时与敌人负责制一同生效。"), _st.Small);
+                "协作游玩时与敌人归属制一同生效。"), _st.Small);
             if (!_ownershipLegendFailed)
             {
                 try { DrawOwnershipLegend(); }
