@@ -272,21 +272,21 @@ namespace SodRpg.Core.Game
                 : Loc.T(memory + "を装着中、その記憶から発動する星の効果を強化", "while " + memory + " is equipped; enhances the star effects triggered by it", "装备" + memory + "时，强化其触发的星之效果");
             string basis = modifier.Param == GimmickParam.ExtraTargets || modifier.Param == GimmickParam.Chance ? ""
                 : Loc.T("（元の" + field + "の" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍）",
-                    " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")");
-            string linked = string.Join(Loc.T("、", ", "), partners.Where(id => id != null).OrderBy(id => id, StringComparer.Ordinal).Select(Links.ItemName));
-            string heading = !modifier.Param.HasValue ? Loc.T("効果量", "Effect amount") : field;
+                    " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")", "（×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍原" + field + "）");
+            string linked = string.Join(Loc.T("、", ", ", "、"), partners.Where(id => id != null).OrderBy(id => id, StringComparer.Ordinal).Select(Links.ItemName));
+            string heading = !modifier.Param.HasValue ? Loc.T("効果量", "Effect amount", "效果数值") : field;
             if (modifier.Param == GimmickParam.WindowDuration)
             {
-                string combo = string.Join(Loc.T("、", ", "), combos.Distinct());
+                string combo = string.Join(Loc.T("、", ", ", "、"), combos.Distinct());
                 string factor = (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture);
-                return heading + " +" + amount + Loc.T("：", ": ")
+                return heading + " +" + amount + Loc.T("：", ": ", "：")
                     + Loc.T("橋の合わせ技" + (combo.Length > 0 ? "「" + combo + "」" : "") + "が成立するまでの受付時間を、元の" + factor + "倍に延長",
-                        "lengthens the time allowed to complete the bridge combo" + (combo.Length > 0 ? " \"" + combo + "\"" : "") + " to ×" + factor + " of the original")
+                        "lengthens the time allowed to complete the bridge combo" + (combo.Length > 0 ? " \"" + combo + "\"" : "") + " to ×" + factor + " of the original", "完成桥接组合技" + (combo.Length > 0 ? "“" + combo + "”" : "") + "的时限延长至原来的×" + factor + "倍")
                     + ModifierCapDescription(modifier);
             }
-            return heading + " +" + amount + Loc.T("：", ": ") + scope + basis
-                + Loc.T("。強化される効果：", ". Enhanced effects: ") + effects + ModifierCapDescription(modifier)
-                + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ") + linked : "");
+            return heading + " +" + amount + Loc.T("：", ": ", "：") + scope + basis
+                + Loc.T("。強化される効果：", ". Enhanced effects: ", "。强化效果：") + effects + ModifierCapDescription(modifier)
+                + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ", "。联动记忆：") + linked : "");
         }
 
         /// <summary>
@@ -332,7 +332,7 @@ namespace SodRpg.Core.Game
                     for (int arg = 0; arg < 4; arg++) order.Add(EffectLabel(new GimmickDef { Effect = GimmickEffect.Element, Arg = arg }));
                 order.Add(EffectLabel(effect));
             }
-            order.Add(Loc.T("追加ダメージ", "extra damage"));
+            order.Add(Loc.T("追加ダメージ", "extra damage", "额外伤害"));
             order.Add(WardLabel(null, true));
             order.Add(WardLabel(null, false));
             return labels.Select((label, i) => (label, i, rank: order.IndexOf(label) < 0 ? int.MaxValue : order.IndexOf(label)))
@@ -346,18 +346,18 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.Gimmick: return EffectLabel(spec.Gimmick);
                 case AuthoredMechanismKind.DirectedRecharge: return EffectLabel(GimmickEffect.Recharge);
                 case AuthoredMechanismKind.BridgeSuccess:
-                    return string.Join(Loc.T("・", ", "), new[] { spec.Bridge.BasePayoff }.Concat(spec.Bridge.Extras).Select(p =>
+                    return string.Join(Loc.T("・", ", ", "、"), new[] { spec.Bridge.BasePayoff }.Concat(spec.Bridge.Extras).Select(p =>
                         p.Gimmick != null ? EffectLabel(p.Gimmick) : p.Kind == BridgePayloadKind.Recharge ? EffectLabel(GimmickEffect.Recharge)
-                        : p.Kind == BridgePayloadKind.Damage ? Loc.T("追加ダメージ", "extra damage")
+                        : p.Kind == BridgePayloadKind.Damage ? Loc.T("追加ダメージ", "extra damage", "额外伤害")
                         : p.Ward != null ? WardLabel(p.Ward) : EffectLabel(GimmickEffect.Shield)).Distinct());
                 case AuthoredMechanismKind.MemoryPrimed: return EffectLabel(GimmickEffect.Primed);
-                case AuthoredMechanismKind.RelayWindow: return Loc.T("記憶ダメージ", "memory damage");
+                case AuthoredMechanismKind.RelayWindow: return Loc.T("記憶ダメージ", "memory damage", "记忆伤害");
                 case AuthoredMechanismKind.AlliedWard: return WardLabel(spec.Ward);
                 case AuthoredMechanismKind.SacrificeShield:
                 case AuthoredMechanismKind.StunSourceFilter: return EffectLabel(GimmickEffect.Shield);
-                case AuthoredMechanismKind.PressureDividend: return Loc.T("欠片獲得確率", "fragment reward chance");
-                case AuthoredMechanismKind.IdentityStrike: return Loc.T("追加ダメージ", "extra damage");
-                case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の強化", "memory enhancement");
+                case AuthoredMechanismKind.PressureDividend: return Loc.T("欠片獲得確率", "fragment reward chance", "碎片获取概率");
+                case AuthoredMechanismKind.IdentityStrike: return Loc.T("追加ダメージ", "extra damage", "额外伤害");
+                case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の強化", "memory enhancement", "记忆强化");
                 default: throw new ArgumentOutOfRangeException(nameof(spec));
             }
         }
@@ -365,43 +365,43 @@ namespace SodRpg.Core.Game
         private static string WardLabel(AlliedWardDefinition ward) => WardLabel(ward, ward.RecipientKind == WardRecipientKind.OwnedSummons);
         private static string WardLabel(AlliedWardDefinition ward, bool summons) =>
             summons
-                ? Loc.T("召喚獣への障壁", "shields for your summons")
-                : Loc.T("味方旅人への障壁", "shields for allied travelers");
+                ? Loc.T("召喚獣への障壁", "shields for your summons", "为你的召唤物提供护盾")
+                : Loc.T("味方旅人への障壁", "shields for allied travelers", "为友方旅人提供护盾");
 
         internal static string EffectLabel(GimmickDef def)
         {
             if (def.Effect != GimmickEffect.Element) return EffectLabel(def.Effect);
-            string element = def.Arg == 0 ? Loc.T("火", "Fire") : def.Arg == 1 ? Loc.T("冷気", "Cold")
-                : def.Arg == 2 ? Loc.T("光", "Light") : Loc.T("闇", "Dark");
-            return element + Loc.T("付与", " application");
+            string element = def.Arg == 0 ? Loc.T("火", "Fire", "火焰") : def.Arg == 1 ? Loc.T("冷気", "Cold", "寒冷")
+                : def.Arg == 2 ? Loc.T("光", "Light", "光") : Loc.T("闇", "Dark", "暗");
+            return element + Loc.T("付与", " application", "施加");
         }
 
         internal static string EffectLabel(GimmickEffect effect)
         {
             switch (effect)
             {
-                case GimmickEffect.Element: return Loc.T("属性付与", "element application");
-                case GimmickEffect.Burst: return Loc.T("範囲追加ダメージ", "area damage");
-                case GimmickEffect.Shield: return Loc.T("障壁", "shield");
-                case GimmickEffect.Heal: return Loc.T("回復", "healing");
-                case GimmickEffect.Recharge: return Loc.T("クールダウン短縮", "cooldown reduction");
-                case GimmickEffect.Quicken: return Loc.T("攻撃速度", "attack speed");
-                case GimmickEffect.Empower: return Loc.T("攻撃力・魔力", "attack damage and ability power");
-                case GimmickEffect.Expose: return Loc.T("被ダメージ増加", "damage vulnerability");
-                case GimmickEffect.Echo: return Loc.T("追撃", "echo damage");
-                case GimmickEffect.Reload: return Loc.T("使用回数回復", "charge restoration");
-                case GimmickEffect.RechargeOther: return Loc.T("他の記憶のクールダウン短縮", "other-memory cooldown reduction");
-                case GimmickEffect.Wound: return Loc.T("継続ダメージ", "damage over time");
-                case GimmickEffect.Daze: return Loc.T("スタン", "stun");
-                case GimmickEffect.Ricochet: return Loc.T("跳弾", "ricochet damage");
-                case GimmickEffect.Siphon: return Loc.T("吸収回復", "damage-based healing");
-                case GimmickEffect.Rampart: return Loc.T("命中数による障壁", "per-target shield");
-                case GimmickEffect.Primed: return Loc.T("次の通常攻撃強化", "next basic attack");
-                case GimmickEffect.Crescendo: return Loc.T("記憶ダメージ累積強化", "stacking memory damage");
-                case GimmickEffect.ElementEdge: return Loc.T("属性ごとの追撃", "per-element damage");
-                case GimmickEffect.PackMend: return Loc.T("召喚獣回復", "summon healing");
-                case GimmickEffect.Sap: return Loc.T("与ダメージ低下", "damage reduction");
-                case GimmickEffect.Weakspot: return Loc.T("弱点", "weakspot");
+                case GimmickEffect.Element: return Loc.T("属性付与", "element application", "施加属性");
+                case GimmickEffect.Burst: return Loc.T("範囲追加ダメージ", "area damage", "范围伤害");
+                case GimmickEffect.Shield: return Loc.T("障壁", "shield", "护盾");
+                case GimmickEffect.Heal: return Loc.T("回復", "healing", "治疗");
+                case GimmickEffect.Recharge: return Loc.T("クールダウン短縮", "cooldown reduction", "冷却缩减");
+                case GimmickEffect.Quicken: return Loc.T("攻撃速度", "attack speed", "攻击速度");
+                case GimmickEffect.Empower: return Loc.T("攻撃力・魔力", "attack damage and ability power", "攻击力与法术强度");
+                case GimmickEffect.Expose: return Loc.T("被ダメージ増加", "damage vulnerability", "受到的伤害增加");
+                case GimmickEffect.Echo: return Loc.T("追撃", "echo damage", "追击伤害");
+                case GimmickEffect.Reload: return Loc.T("使用回数回復", "charge restoration", "使用次数恢复");
+                case GimmickEffect.RechargeOther: return Loc.T("他の記憶のクールダウン短縮", "other-memory cooldown reduction", "其他记忆的冷却缩减");
+                case GimmickEffect.Wound: return Loc.T("継続ダメージ", "damage over time", "持续伤害");
+                case GimmickEffect.Daze: return Loc.T("スタン", "stun", "眩晕");
+                case GimmickEffect.Ricochet: return Loc.T("跳弾", "ricochet damage", "弹射伤害");
+                case GimmickEffect.Siphon: return Loc.T("吸収回復", "damage-based healing", "伤害吸血");
+                case GimmickEffect.Rampart: return Loc.T("命中数による障壁", "per-target shield", "按命中目标数获得护盾");
+                case GimmickEffect.Primed: return Loc.T("次の通常攻撃強化", "next basic attack", "下一次通常攻击强化");
+                case GimmickEffect.Crescendo: return Loc.T("記憶ダメージ累積強化", "stacking memory damage", "记忆伤害叠加强化");
+                case GimmickEffect.ElementEdge: return Loc.T("属性ごとの追撃", "per-element damage", "按属性追击");
+                case GimmickEffect.PackMend: return Loc.T("召喚獣回復", "summon healing", "召唤物治疗");
+                case GimmickEffect.Sap: return Loc.T("与ダメージ低下", "damage reduction", "造成的伤害降低");
+                case GimmickEffect.Weakspot: return Loc.T("弱点", "weakspot", "弱点");
                 default: throw new ArgumentOutOfRangeException(nameof(effect));
             }
         }
@@ -409,14 +409,14 @@ namespace SodRpg.Core.Game
         private static string ModifierCapDescription(ScopedModifierDef modifier)
         {
             if (modifier.CapProfileId == null && !modifier.Param.HasValue)
-                return Loc.T("各効果の最終上限は超えない", " (never exceeds each effect's final cap)");
+                return Loc.T("各効果の最終上限は超えない", " (never exceeds each effect's final cap)", "（不超过各效果的最终上限）");
             int units = modifier.CapProfileId != null ? ScopedCapMaximumUnits(modifier.CapProfileId)
                 : modifier.Param == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets
                 : modifier.Param == GimmickParam.Chance ? 10000 : Gimmicks.MaxParameterPercent * 100;
             string maximum = (modifier.Param == GimmickParam.ExtraTargets ? units : units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string jaUnit = modifier.Param == GimmickParam.ExtraTargets ? "体" : "%";
             string enUnit = modifier.Param == GimmickParam.ExtraTargets ? " targets" : modifier.Param == GimmickParam.Chance ? " percentage points" : "%";
-            return Loc.T("同じ効果への強化は合計で最大" + maximum + jaUnit + "まで", " (enhancements to the same effect total at most " + maximum + enUnit + ")");
+            return Loc.T("同じ効果への強化は合計で最大" + maximum + jaUnit + "まで", " (enhancements to the same effect total at most " + maximum + enUnit + ")", "（同一效果的强化合计最多" + maximum + (modifier.Param == GimmickParam.ExtraTargets ? "个目标" : modifier.Param == GimmickParam.Chance ? "个百分点" : "%") + "）");
         }
 
         /// <summary>Total of several native stars sharing one effect: no per-star cap note, which would misread as a cap on the total.</summary>
@@ -425,10 +425,10 @@ namespace SodRpg.Core.Game
             string value = (units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "のダメージが" + value + "%増える。", "Damage dealt by " + memory + " +" + value + "%")
+                ? Loc.T(memory + "のダメージが" + value + "%増える。", "Damage dealt by " + memory + " +" + value + "%", "记忆伤害加成：" + memory + " +" + value + "%")
                 : EssenceCapsBalance.MemoryHasteEnabled
-                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown") + MemoryHasteCapDescription()
-                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown", "冷却缩减 +" + value + "%：使用" + memory + "时，缩短其剩余冷却时间的" + value + "%") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown", "冷却缩减 +" + value + "%：使用" + memory + "时，从剩余冷却时间中减去其最大冷却时间的" + value + "%");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
