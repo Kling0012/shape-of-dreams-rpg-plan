@@ -220,7 +220,7 @@ namespace SodRpg.Core.Game
                 powers.Add(new CodexEntry
                 {
                     Category = CodexCategory.Powers, Id = p.ToString(), Power = p, SlotMask = mask, LineMask = AllLines,
-                    Name = new Txt(PowerNameIn(p, true), PowerNameIn(p, false), LocZhGlossary.Lookup(PowerNameIn(p, false))),
+                    Name = new Txt(PowerNameIn(p, LocLanguage.Japanese), PowerNameIn(p, LocLanguage.English), PowerNameIn(p, LocLanguage.Chinese)),
                     Carriers = (IReadOnlyList<UniqueDef>)cu ?? Array.Empty<UniqueDef>(),
                     CarrierSets = (IReadOnlyList<SetDef>)cs ?? Array.Empty<SetDef>(),
                 });
@@ -269,12 +269,12 @@ namespace SodRpg.Core.Game
             return new IReadOnlyList<CodexEntry>[] { bases, uniques, sets, powers, namedEntries, miniSetEntries };
         }
 
-        private static string PowerNameIn(Power p, bool ja)
+        private static string PowerNameIn(Power p, LocLanguage language)
         {
-            bool old = Loc.Japanese;
-            Loc.Japanese = ja;
+            var old = Loc.Language;
+            Loc.Language = language;
             try { return Content.PowerName(p); }
-            finally { Loc.Japanese = old; }
+            finally { Loc.Language = old; }
         }
 
         /// <summary>固有効果の、見本として見せる値の範囲。落ちる効果は装備の値域、固有品だけの効果はその固定値。</summary>

@@ -31,6 +31,15 @@ namespace UnityEngine
     internal partial class Transform : Component
     {
         internal Quaternion rotation { get; set; }
+
+        // NativeMerchantPropIdlePerf の SetIfChanged が本体経路へ戻るときの受け口。実機は
+        // 位置と回転を1回のネイティブ呼び出しで書くが、境界では position / rotation の
+        // 各プロパティへ写すだけでよい（境界のプロパティはただの値）。
+        internal void SetPositionAndRotation(Vector3 position, Quaternion rotation)
+        {
+            this.position = position;
+            this.rotation = rotation;
+        }
     }
 }
 

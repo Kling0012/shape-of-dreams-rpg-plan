@@ -659,7 +659,7 @@ namespace SodRpg.Core.Game
                 || infinity.GraphEpoch == long.MaxValue || infinity.RoomEpoch == long.MaxValue)) return ev;
             if (pact != Pact.None)
             {
-                if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约不在提示之列。"));
+                if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约不在可选之列。"));
                 run.Pacts.Add(pact);
                 p.Stats.PactsSworn = SaturatingAdd(p.Stats.PactsSworn, 1);
                 AdvanceBounty(p, BountyKind.PactBearer, 1, false, ev);
