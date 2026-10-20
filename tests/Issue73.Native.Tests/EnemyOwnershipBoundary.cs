@@ -9,7 +9,9 @@ using UnityEngine;
 // リンクされた実ソース側がそのまま実行する。
 namespace UnityEngine
 {
-    internal struct Vector3
+    // NetMessages.BossEffects.cs（リンク）が public フィールドで持つため public にする
+    // （本体の UnityEngine.Vector3 と同じ公開度）。
+    public struct Vector3
     {
         public float x, y, z;
         public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
