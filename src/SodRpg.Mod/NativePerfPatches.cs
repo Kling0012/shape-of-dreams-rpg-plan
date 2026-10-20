@@ -22,6 +22,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.GuestPublishLimit = config.nativeGuestPublishLimit;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
             NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
@@ -49,6 +50,10 @@ namespace SodRpg.Mod
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
+            NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
+            NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
+            NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
+            NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
         }
     }
 
@@ -61,6 +66,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool GuestPublishLimit = true;
         internal static bool AttachFaceIdle = true;
         internal static bool EmbracePosition = true;
         internal static bool AccessoryOffset = true;
@@ -87,6 +93,10 @@ namespace SodRpg.Mod
         internal static bool HeroWeaponIdle = true;
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
+        internal static bool RoomStartDependency = true;
+        internal static bool ChatMuteCheckAlloc = true;
+        internal static bool ProxyPositionIdle = true;
+        internal static bool EnemyHitFxBudget = true;
     }
 
     internal static class NativePerfPatch
@@ -4049,5 +4059,261 @@ namespace SodRpg.Mod
         private static MethodBase TargetMethod() => _target;
         private static void Prefix(Gem __instance) => NativeGemCooldownPerf.Publishing(__instance);
         private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomStartDependencyPerf
+    {
+        // Room.GetSortedByStartDependency runs on every room start — on the host from
+        // StartRoom and on every guest through RpcInvokeRoomStart. Each call re-reads
+        // RoomComponentStartDependencyAttribute via GetCustomAttributes (the runtime
+        // re-creates the attribute instances and arrays on every call) and rebuilds the
+        // topological order with LINQ Any/Where enumerators and a closure per dequeued
+        // component. The attribute set depends only on the component Type, so it is
+        // cached across rooms; SortByStartDependency is the same first-in first-out
+        // sort over the same arrays: it keeps the original order, the type-based
+        // filtering and the "Circular dependency detected." throw, and replaces slots
+        // with freshly allocated filtered arrays exactly like the native Where().ToArray(),
+        // so the shared cache entries are never mutated.
+        private static readonly Dictionary<Type, RoomComponentStartDependencyAttribute[]> AttributeCache
+            = new Dictionary<Type, RoomComponentStartDependencyAttribute[]>();
+
+        private static MethodInfo _target;
+        private static bool _warned;
+        private static bool _reportedCircularFallback;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Room), "GetSortedByStartDependency", new[] { typeof(RoomComponent[]) });
+                if (_target == null || _target.IsStatic || _target.ReturnType != typeof(RoomComponent[]))
+                    throw new MissingMethodException("Room.GetSortedByStartDependency");
+                // Harmony binds the Prefix's `arr` by name; give up softly if renamed.
+                foreach (ParameterInfo parameter in _target.GetParameters())
+                    if (parameter.Name == "arr" && parameter.ParameterType == typeof(RoomComponent[]))
+                        return true;
+                throw new MissingMethodException("Room.GetSortedByStartDependency(RoomComponent[] arr)");
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room start dependency", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(RoomComponent[] arr, ref RoomComponent[] __result)
+        {
+            if (!NativePerfOptions.RoomStartDependency) return true;
+            try
+            {
+                __result = SortByStartDependency(arr);
+                return false;
+            }
+            catch (Exception ex) when (ex.GetType() == typeof(Exception) && ex.Message == "Circular dependency detected.")
+            {
+                // Keep a diagnostic even if only the replica detects a cycle; let the
+                // original handle the input without consuming the patch warning.
+                if (!_reportedCircularFallback)
+                {
+                    _reportedCircularFallback = true;
+                    Log.Info("Native performance patch fallback: room start dependency: " + ex.Message);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room start dependency", ex.Message);
+                return true;
+            }
+        }
+
+        private static RoomComponentStartDependencyAttribute[] AttributeArrayOf(Type type)
+        {
+            if (!AttributeCache.TryGetValue(type, out RoomComponentStartDependencyAttribute[] cached))
+            {
+                object[] customAttributes = type.GetCustomAttributes(typeof(RoomComponentStartDependencyAttribute), inherit: true);
+                cached = new RoomComponentStartDependencyAttribute[customAttributes.Length];
+                for (int i = 0; i < customAttributes.Length; i++)
+                    cached[i] = (RoomComponentStartDependencyAttribute)customAttributes[i];
+                AttributeCache[type] = cached;
+            }
+            return cached;
+        }
+
+        private static RoomComponent[] SortByStartDependency(RoomComponent[] arr)
+        {
+            int count = arr.Length;
+            RoomComponentStartDependencyAttribute[][] attributes = new RoomComponentStartDependencyAttribute[count][];
+            for (int i = 0; i < count; i++)
+                attributes[i] = AttributeArrayOf(arr[i].GetType());
+
+            List<RoomComponent> sorted = new List<RoomComponent>(count);
+            Queue<RoomComponent> queue = new Queue<RoomComponent>(count);
+            for (int i = 0; i < count; i++)
+                if (attributes[i].Length == 0)
+                    queue.Enqueue(arr[i]);
+
+            while (queue.Count > 0)
+            {
+                RoomComponent rc = queue.Dequeue();
+                sorted.Add(rc);
+                Type rcType = rc.GetType();
+                for (int m = 0; m < count; m++)
+                {
+                    RoomComponentStartDependencyAttribute[] deps = attributes[m];
+                    if (deps.Length == 0) continue;
+                    int matches = 0;
+                    for (int d = 0; d < deps.Length; d++)
+                        if (deps[d].targetRoomComponent == rcType) matches++;
+                    if (matches == 0) continue;
+                    RoomComponentStartDependencyAttribute[] remaining = new RoomComponentStartDependencyAttribute[deps.Length - matches];
+                    int write = 0;
+                    for (int d = 0; d < deps.Length; d++)
+                        if (deps[d].targetRoomComponent != rcType) remaining[write++] = deps[d];
+                    attributes[m] = remaining;
+                    if (remaining.Length == 0)
+                        queue.Enqueue(arr[m]);
+                }
+            }
+
+            if (sorted.Count < count)
+                throw new Exception("Circular dependency detected.");
+            return sorted.ToArray();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChatMuteAllocPerf
+    {
+        // ChatManager.IsPlayerMutedByNetId runs once per received Chat or UnlockedAchievement
+        // message on every client (UserCode_BroadcastMessage / UserCode_TargetBroadcastMessage),
+        // guests included. The native body resolves the sender through
+        // DewPlayer.allHumanPlayers.Find with a lambda capturing playerNetId, so every received
+        // message allocates a display-class closure plus a delegate just to compare uint netIds
+        // against a list that holds one entry per human player (typically <= 4). The loop below
+        // is the same first-match scan with the identical verdict — including "netId not among
+        // human players counts as muted" — and allocates nothing. The mute-list decision itself
+        // stays native (IsPlayerMuted), so any future change to that logic keeps applying.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(ChatManager), "IsPlayerMutedByNetId",
+                new[] { typeof(uint) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                // Harmony binds the prefix's playerNetId by name; give up softly if renamed.
+                foreach (ParameterInfo parameter in _target.GetParameters())
+                    if (parameter.Name == "playerNetId" && parameter.ParameterType == typeof(uint))
+                        return true;
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", "native parameter renamed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ChatManager __instance, uint playerNetId, ref bool __result)
+        {
+            if (_disabled || !NativePerfOptions.ChatMuteCheckAlloc) return true;
+            try
+            {
+                List<DewPlayer> players = DewPlayer.allHumanPlayers;
+                DewPlayer found = null;
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (players[i].netId == playerNetId)
+                    {
+                        found = players[i];
+                        break;
+                    }
+                }
+                __result = found == null || __instance.IsPlayerMuted(found);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeProxyPositionIdlePerf
+    {
+        // DewPhysics.UpdateProxyPosition stores the entity's flat physics-proxy position as
+        // (position.x, position.z, 0f) and is called unconditionally at the end of
+        // EntityControl.LogicUpdate for every awake entity on every machine (plus once per
+        // teleport) — that is, once per logic tick per entity, on the guest included, for
+        // every monster, summon and other player's hero it only observes. Unity's
+        // Transform.position setter always decomposes, stores and dirties the transform even
+        // when the value is unchanged, so an entity standing still rewrites the same three
+        // floats and re-marks the proxy transform every tick.
+        //
+        // The prefix reads the live proxy transform and skips the call only when the write
+        // would store exactly the bits already there — i.e. the transform already holds
+        // (position.x, position.z, 0f), component for component (per-component float ==;
+        // +0 and -0 compare equal, which cannot matter because the y component is
+        // discarded by the 2D proxy and x/z go into the same physics pose either way;
+        // NaN fails every comparison and reaches the native write, which recovers it the
+        // same way vanilla does). Because the comparison is against the live transform —
+        // not a remembered last-sent value — anything that moves the proxy between two
+        // calls makes the next comparison fail and the native body runs, exactly as
+        // without this patch. The skipped write changes no bit anywhere: the transform
+        // keeps its old (identical) value, Transform.hasChanged semantics aside (a
+        // same-value write sets it, and nothing in the shipped game reads it — verified
+        // by grep over the decompiled assemblies). Physics2D copies collider poses from
+        // transforms on its simulation step regardless of a setter call, and a
+        // same-value write cannot alter that pose.
+        // A proxy that is null or already missing its transform (pooled/destroyed between
+        // the caller's check and here) is not this patch's business: it goes straight to
+        // the native body — which handles or throws on it exactly as without the patch —
+        // and only a genuinely unexpected exception disables this optimization (one
+        // warning) for the session.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(DewPhysics), "UpdateProxyPosition",
+                new[] { typeof(ProxyCollider), typeof(Vector3) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ProxyCollider proxy, Vector3 position)
+        {
+            if (_disabled || !NativePerfOptions.ProxyPositionIdle) return true;
+            // Pooled or destroyed proxies are handed to the native body untouched; one
+            // bad proxy must not switch this optimization off for every other entity.
+            if (proxy == null || proxy.transform == null) return true;
+            try
+            {
+                Vector3 current = proxy.transform.position;
+                if (current.x == position.x && current.y == position.z && current.z == 0f)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "proxy position idle", ex.Message);
+            }
+            return true;
+        }
     }
 }

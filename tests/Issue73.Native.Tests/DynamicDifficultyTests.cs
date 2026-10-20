@@ -125,7 +125,8 @@ namespace Issue73.Native.Tests
         }
 
         // OnDynamicRoomLoading と同じ式（生成定数から）。同じ対数比の部屋を rooms 回更新した後の D。
-        private static double ExpectedFactor(double logRatio, int rooms)
+        // 2026-10-20：上がりは strengthUp・下がりは strengthDown、上限は世界ごとの段階（既定はラン外 = 最初の値）。
+        private static double ExpectedFactor(double logRatio, int rooms, int world = -1)
         {
             double average = 0;
             for (int i = 0; i < rooms; i++)
@@ -134,7 +135,8 @@ namespace Issue73.Native.Tests
                 average += alpha * (logRatio - average);
             }
             if (rooms < MinRooms) return 1;
-            return Math.Max(MinFactor, Math.Min(SafetyMaxFactor, Math.Exp(Strength * average)));
+            double strength = average >= 0 ? StrengthUp : StrengthDown;
+            return Math.Min(MaxFactor(world), Math.Max(MinFactor, Math.Min(SafetyMaxFactor, Math.Exp(strength * average))));
         }
 
         private static object PlayerState(HostAuthority host, DewPlayer player)
@@ -332,9 +334,9 @@ namespace Issue73.Native.Tests
             Assert.Equal(ExpectedFactor(Math.Log(3d), 8), after8, 5);
             Assert.True(after2 < after8 && after8 < Math.Sqrt(3d), "差の半分: r の平方根に満たない高さへ近づく");
 
-            // 圧倒的な速さでは3倍を超え、数値あふれ用の安全装置以下に収まる。
+            // 圧倒的な速さでは最初の世界の上限で止まる（数値あふれ用の安全装置よりずっと低い）。
             DriveRooms(host, a, 120, 1e9, 1);
-            Assert.True(FactorOf(host, a) > 3d);
+            Assert.Equal(MaxFactor(-1), FactorOf(host, a), 10);
             Assert.True(FactorOf(host, a) <= SafetyMaxFactor);
             Assert.Empty(Log.Warnings);
         }
@@ -350,10 +352,10 @@ namespace Issue73.Native.Tests
             DriveRooms(host, b, 100, 0.6d, 2);
             double factor = FactorOf(host, b);
             Assert.Equal(ExpectedFactor(Math.Log(0.6d), 2), factor, 5);
-            double withoutAlphaDown = Math.Exp(Strength * (1 - Math.Pow(1 - Alpha, 2)) * Math.Log(0.6d));
+            double withoutAlphaDown = Math.Exp(StrengthDown * (1 - Math.Pow(1 - Alpha, 2)) * Math.Log(0.6d));
             Assert.NotEqual(withoutAlphaDown, factor);
 
-            // さらに苦戦が続いても下限で止まる（2026-10-19 の弱い strength では深い苦戦で届く）。
+            // さらに苦戦が続いても下限で止まる（下向きの strengthDown でも深い苦戦で届く）。
             DriveRooms(host, b, 110, 0.1d, 2);
             Assert.Equal(MinFactor, FactorOf(host, b), 10);
             Assert.Empty(Log.Warnings);

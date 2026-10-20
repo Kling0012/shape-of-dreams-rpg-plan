@@ -10,6 +10,130 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.28 — Lighter enemy targeting（2026-10-20）
+
+敵が狙う相手を決めるときの余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when enemies pick a target, making it a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が狙う相手を決めるたびに、召喚体に関係しない敵でも、プレイヤー全員の状態を確かめる余分な処理が走っていました。この問題を直しました。敵が多い部屋ほどホストのゲームが少し軽くなりますが、1回あたりの効果は小さめです。敵が狙う相手や召喚体の動きは、これまでと変わりません。 / Fixed the game checking every player's state each time an enemy picked a target, even for enemies unrelated to summons. Rooms with many enemies are now slightly lighter for the host, though the gain per check is small. Which targets enemies choose and how summons behave are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.27 — Lighter handling of incoming chat messages（2026-10-20）
+
+チャットや実績解除の知らせを受け取ったときに起きていた余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when it receives chat messages and achievement notices, making it a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- チャットのメッセージや実績解除の知らせを受け取るたびに、送り主をミュートしているかを確かめていました。この確認で毎回わずかに余分なメモリを使っていた問題を直しました。ホストと参加者のどちらのゲームでも、受け取るときの処理が少し軽くなります。こうしたメッセージが届く回数は多くないため、効果は小さめです。ミュートの効き方や、表示されるメッセージはこれまでと変わりません。 / Fixed the game using a little extra memory every time it received a chat message or achievement notice, while checking whether the sender was muted. Receiving these messages is now slightly lighter for both host and guests. These messages arrive only occasionally, so the gain is small. How muting works and which messages are shown are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.26 — Lighter combat with idle characters and Thorned enemies（2026-10-20）
+
+止まっている敵や仲間の当たり判定の位置を、毎回同じ値で書き直さないようにしました。トゲ付きの敵に攻撃を当てたときの余分な処理も省き、戦闘中のゲームの動作を軽くしました。 / The game no longer rewrites the same collision position for idle enemies and allies, and it does less extra work when you hit Thorned enemies, making combat a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵や召喚体、ほかのプレイヤーの英雄が止まっているあいだも、当たり判定の位置を毎回同じ値で書き直していました。この無駄な処理をする問題を直しました。位置が変わっていないときは書き直しを省くので、止まっているものが多い場面ほど軽くなります。特に協力プレイの参加者のゲームで効果があります。止まっているものが40体いる場面では、1秒あたりおよそ1200回の無駄な書き込みが減る見込みです。動いているものやテレポートしたものは、これまでどおり位置が更新されます。当たり判定や動きはこれまでと変わりません。 / Fixed the game rewriting the same collision position every update for enemies, summons, and other players' heroes, even while they were standing still. The rewrite is now skipped when the position has not changed, so scenes with many idle characters get lighter, especially for guests in co-op. With 40 idle characters on screen, this is expected to cut roughly 1,200 wasted writes per second. Moving or teleporting characters still update their position as before. Collisions and movement are unchanged.
+- トゲ付きの敵に攻撃を当てるたびに、反射の間隔を確かめる処理が、毎回わずかに余分なメモリを使っていました。この問題を直しました。トゲ付きの敵がいる戦闘で、ホストのゲームが少し軽くなります。1回あたりの効果は小さく、トゲ付きの敵がいない場面では変わりません。反射が起きる時機やダメージは、これまでと変わりません。 / Fixed the game using a little extra memory every time you hit a Thorned enemy, while checking when it can reflect damage next. Fights with Thorned enemies are now slightly lighter for the host. The gain per hit is small, and nothing changes when no Thorned enemies are present. When reflections happen and how much damage they deal are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.25 — Lighter co-op enemy resync（2026-10-20）
+
+協力プレイで敵の情報を送り直すときに、意味のない通信を送らないようにし、部屋を移るときのゲームの動作を軽くしました。 / Co-op no longer sends pointless messages when enemy information is resent, making the game lighter when you move between rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで部屋を移ったときなどに、ホストが参加者へ敵の情報をまとめて送り直す場面がありました。このとき、生きている敵1体ごとに、参加者のゲームでは何も起こらない通信を1通ずつ送っていた問題を直しました。この通信は送らないようにしたので、ホストと参加者のどちらのゲームでも少し軽くなります。普通の敵が大半の部屋では、送り直す通信がおよそ半分に減る見込みです。敵の動きや見え方は、これまでと変わりません。 / Fixed the host sending guests one message per living enemy that had no effect on the guest's game. This happened in co-op whenever enemy information was resent in bulk, for example after moving to another room. These messages are no longer sent, so the game gets a little lighter for both host and guests. In rooms where most enemies are ordinary ones, this is expected to cut the resent messages roughly in half. How enemies behave and how they look are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.24 — Lighter room transitions（2026-10-20）
+
+部屋に入るときの準備から無駄な処理を省き、部屋を移るときのゲームの動作を軽くしました。 / Room entry now does less unnecessary setup work, making the game lighter when you move between rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 部屋に入るたびに、部屋の中の仕組みを動かし始める順番を決める処理が、同じ情報を毎回調べ直していた問題を直しました。一度調べた情報は使い回すので、部屋を移るときの一瞬の重さと、そのあとのメモリの片付けが少し軽くなります。部屋を移るごとに、数十〜数百回分の無駄な準備が減る見込みです。ホストと参加者のどちらのゲームでも軽くなります。2部屋目からは、調べ直しがほぼ要らなくなります。部屋の中で起こることや、その順番はこれまでと変わりません。 / Fixed the game re-reading the same information every time you entered a room to decide the order in which the room's systems start. This information is now reused, so room transitions cause a slightly smaller momentary slowdown and less memory cleanup afterward. This is expected to cut tens to hundreds of wasted setup steps per room change, for both host and guests. From the second room onward, almost no re-reading is needed. What happens in each room, and the order it happens in, are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.23 — Fix lingering pickup effects and lighter performance（2026-10-20）
+
+### 不具合の修正 / Bug fixes
+- ドリームダストと富のエッセンスのコイン獲得の演出が、プレイヤーに残らず消えるようにしました。 / Fixed dream dust and wealth essence coin pickup effects so they disappear without lingering on the player.
+
+---
+
+## v3.8.22 — Lighter boss attack warnings and co-op Resonance Ward display（2026-10-20）
+
+ボスの攻撃予告の表示と、協力プレイでの共鳴の盾の表示から無駄を省き、ゲームの動作を軽くしました。 / Boss attack warnings and the co-op Resonance Ward display now do less unnecessary work, making the game lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボスの攻撃予告を描くたびに、隣り合う線がつながる点の画面上の位置を2回ずつ計算していた問題を直しました。今は1つの点につき1回だけ計算して使い回すので、予告が出ている間の描画が少し軽くなります。輪や扇の形をした予告では、計算の回数がおよそ半分になる見込みです。たとえば、品質を高くしたときの輪の予告では、1回描くごとに48回だった計算が25回に減ります。予告の形、色、向き、表示される範囲はこれまでと変わりません。 / Fixed boss attack warnings calculating the on-screen position of each point where neighboring lines meet twice every time they were drawn. Each point is now calculated once and reused, so drawing is a little lighter while warnings are shown. For ring- and fan-shaped warnings, this is expected to roughly halve the number of calculations. For example, a ring warning at high quality now needs 25 calculations per draw instead of 48. The shape, color, direction, and visible area of warnings are unchanged.
+- 協力プレイで、参加者のゲームが、敵の名札を描くたびに共鳴の盾を表示するかどうかを確かめ直していた問題を直しました。敵の多い部屋では、1フレームに百数十回も確かめていました。今は1フレームに1回だけ確かめるので、参加者のゲームが少し軽くなります。60fps で動いている場合、1秒に9千回を超えていた確認が約60回に減る見込みです。共鳴の盾の見え方、ゲームの判定、ホストと参加者の間のタイミングはこれまでと変わりません。 / Fixed guests' games in co-op rechecking whether to show the Resonance Ward each time an enemy nameplate was drawn. In rooms with many enemies, this check ran over a hundred times per frame. It now runs once per frame, so guests' games get a little lighter. At 60 fps, this is expected to cut the checks from over 9,000 per second to about 60. How the Resonance Ward looks, game rules, and timing between host and guests are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.21 — Dynamic difficulty in the HUD summary and lighter co-op（2026-10-20）
+
+### 新機能 / New features
+- 画面左上のまとめ表示に、動的難易度で敵の体力と報酬がどれだけ変わっているかを出すようにしました。 / The top-left HUD summary now shows how much dynamic difficulty changes enemy HP and rewards.
+
+---
+
 ## v3.8.20 — Lighter co-op: less work for still units, kill handling, and gem cooldowns（2026-10-19）
 
 ### 不具合の修正 / Bug fixes

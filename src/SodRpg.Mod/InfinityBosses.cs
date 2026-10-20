@@ -238,7 +238,9 @@ namespace SodRpg.Mod
 
         internal static BossMonster ReplacementBoss(SpawnMonsterSettings settings, Entity original)
         {
-            if (!NetworkServer.active || !Enabled || !(original is BossMonster) || settings?.rule?.isBossSpawn != true) return null;
+            // SpawnMonsterImp runs for every monster spawn: the cheap boss-only checks must
+            // precede Enabled (run state + customData lookups) so ordinary spawns skip all of it.
+            if (!NetworkServer.active || !(original is BossMonster) || settings?.rule?.isBossSpawn != true || !Enabled) return null;
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
             if (zone == null || zone.currentNodeIndex < 0 || zone.currentNode.type != WorldNodeType.ExitBoss) return null;
             var plan = CurrentBossPlan;
@@ -252,7 +254,7 @@ namespace SodRpg.Mod
 
         internal static void ObserveSpawnedBoss(Entity entity)
         {
-            if (!NetworkServer.active || !Enabled || !(entity is BossMonster)) return;
+            if (!NetworkServer.active || !(entity is BossMonster) || !Enabled) return;
             var plan = CurrentBossPlan;
             if (plan == null) return;
             // DarkMoon belongs to WhiteNight's encounter, not a separate lottery candidate.

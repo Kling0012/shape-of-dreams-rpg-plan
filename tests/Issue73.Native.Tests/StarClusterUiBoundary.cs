@@ -82,10 +82,4 @@ namespace SodRpg.Mod
             _starClusterScroll = Vector2.zero;
         }
     }
-
-    // RefreshStarState が読む ClientSession の表面（ClientSession.RunGrowth.cs はリンク外）。
-    internal sealed partial class ClientSession
-    {
-        internal int RunGrowthVersion { get; set; }
-    }
 }
