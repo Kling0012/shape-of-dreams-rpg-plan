@@ -732,8 +732,14 @@ namespace SodRpg.Mod
             // (RefreshSharedObjectiveOwnership earlier in this same iteration) and, just above,
             // exclusion/boss state. When those facts already match TryOwnership's success
             // conditions, go straight to the owner's pressure instead of re-running the full
-            // check (player enumeration + ward lookup + dictionary) per enemy per scan.
+            // check (player enumeration + ward lookup) per enemy per scan. The enemy null
+            // check and the dictionary lookup keep mirroring TryOwnership's first conditions:
+            // steps earlier in this same iteration (boss shares, reassignment, entity-removed
+            // hooks) may drop or swap the dictionary entry after the loop's liveness check,
+            // and a destroyed enemy must fall back to the full check like TryOwnership does.
             if (running && (_ownershipFailed & OwnershipPart.Strength) == 0
+                && state.Enemy != null
+                && _enemyOwnership.TryGetValue(state.Enemy, out var liveState) && ReferenceEquals(liveState, state)
                 && !state.Excluded && !state.SharedObjective && state.Owner != null
                 && !state.Enemy.IsAnyBoss() && OwnershipConnected(state.Owner))
                 return (float)OwnershipEnemyPressure(state).HealthMultiplier;
