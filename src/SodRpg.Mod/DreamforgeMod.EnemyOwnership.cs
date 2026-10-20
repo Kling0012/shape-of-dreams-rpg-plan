@@ -22,7 +22,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Enemy ownership settings save failed: " + ex.Message);
-                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }
 
@@ -32,7 +32,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Enemy ownership display settings save failed: " + ex.Message);
-                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }
 

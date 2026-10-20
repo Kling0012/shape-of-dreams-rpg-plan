@@ -83,17 +83,17 @@ namespace SodRpg.Mod
                 string deadline = currentWait && wait.Started ? (Loc.Japanese
                     ? $"（残り{wait.RemainingSeconds}秒）" : $" ({wait.RemainingSeconds}s remaining)") : "";
                 return _infinityNotice = (submitted
-                    ? Loc.T("個人の選択を送信しました。ホストと他の参加者を待っています。", "Personal choices submitted. Waiting for the host and other players.")
-                    : Loc.T("自分の契約・道標・出来事を選び、選択完了またはスキップを押してください。", "Choose your own pact, waypoint and event, then Finish choices or Skip.")) + deadline;
+                    ? Loc.T("個人の選択を送信しました。ホストと他の参加者を待っています。", "Personal choices submitted. Waiting for the host and other players.", "已发送个人选择。正在等待主机和其他参与者。")
+                    : Loc.T("自分の契約・道標・出来事を選び、選択完了またはスキップを押してください。", "Choose your own pact, waypoint and event, then Finish choices or Skip.", "请选择自己的契约・路标・事件，然后按下选择完成或跳过。")) + deadline;
             }
         }
 
         public string CompleteInfinityPersonalChoice(Pact pact = Pact.None, bool skip = false)
         {
             if (!CanChooseInfinityPersonal)
-                return Loc.T("個人の選択は現在完了できません。", "Personal choices cannot be completed right now.");
+                return Loc.T("個人の選択は現在完了できません。", "Personal choices cannot be completed right now.", "个人选择现在无法完成。");
             if (!skip && pact != Pact.None && !Profile.Run.OfferedPacts.Contains(pact))
-                return Loc.T("その契約は提示されていません。", "That pact is not on offer.");
+                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约未在提示中。");
             RecordInfinityPersonalChoice(skip ? Pact.None : pact, skip);
             return null;
         }

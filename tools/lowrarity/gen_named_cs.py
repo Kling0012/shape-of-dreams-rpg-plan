@@ -103,10 +103,31 @@ def cs(text):
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def txt(entry, key, keep=None):
+    """new Txt(ja, en[, zh])。中国語は JSON の <key>Zh を優先し、なければ既存の
+    生成物から (ja, en) が一致した訳を引き継ぐ（再生成で訳を落とさない）。"""
+    ja, en = cs(entry[key + "Ja"]), cs(entry[key + "En"])
+    values = [ja, en]
+    if entry.get(key + "Zh") is not None:
+        values.append(cs(entry[key + "Zh"]))
+    elif keep is not None and (ja, en) in keep:
+        values.append(keep[(ja, en)])  # 既存生成物から拾った C# リテラルをそのまま使う
+    return "new Txt(%s)" % ", ".join(values)
+
+
 def render_outputs(power_pools=None):
     bases, pools, ranges, power_set, stat_set, rarity_rank, conditional, currency = load_reference(power_pools)
     named_json = load_json(ROOT / IN_NAMED)
     sets_json = load_json(ROOT / IN_SETS)
+    # Chinese translations are authored in the C# data. Keep them only while
+    # both source strings match; JSON still owns definitions and numeric values.
+    existing = ROOT / OUT
+    literal = r'"(?:[^"\\]|\\.)*"'
+    translations = dict(
+        ((ja, en), zh) for ja, en, zh in re.findall(
+            rf'new Txt\(({literal}), ({literal}), ({literal})\)',
+            existing.read_text(encoding="utf-8") if existing.is_file() else ""))
+
     errs = []
 
     def check(cond, msg):
@@ -157,8 +178,8 @@ def render_outputs(power_pools=None):
             values.append(band_value(mn, mx, band))
         if len(values) not in (1, 2) or any(v is None for v in values):
             continue  # already reported; do not emit a broken def
-        name = "new Txt(%s, %s)" % (cs(e["nameJa"]), cs(e["nameEn"]))
-        lore = "new Txt(%s, %s)" % (cs(e["loreJa"]), cs(e["loreEn"]))
+        name = txt(e, "name", translations)
+        lore = txt(e, "lore", translations)
         mini = "null" if e.get("miniSetId") is None else cs(e["miniSetId"])
         args = [cs(nid), cs(base_id), "Rarity." + rarity, name, lore, mini]
         for power, value in zip([q["power"] for q in e["powers"]], values):
@@ -211,7 +232,7 @@ def render_outputs(power_pools=None):
         if not ok:
             continue
         piece_args = ", ".join(cs(p) for p in pieces)
-        args = [cs(sid), "new Txt(%s, %s)" % (cs(s["nameJa"]), cs(s["nameEn"])),
+        args = [cs(sid), txt(s, "name", translations),
                 "new[] { %s }" % piece_args, "new StatLine(Stat.%s, %s)" % (stat, value)]
         if three_line is not None:
             args.append("new PowerLine(%s, %s)" % three_line)

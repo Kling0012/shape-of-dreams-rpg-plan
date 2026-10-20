@@ -32,11 +32,11 @@ namespace SodRpg.Mod
                 string label;
                 switch (i)
                 {
-                    case 0: label = Loc.T("装備", "Gear"); break;
-                    case 1: label = Loc.T("鍛冶", "Forge"); break;
-                    case 2: label = Loc.T("星図", "Star Map"); break;
-                    case 3: label = Loc.T("工房", "Workshop"); break;
-                    case 4: label = Loc.T("記録", "Records"); break;
+                    case 0: label = Loc.T("装備", "Gear", "装备"); break;
+                    case 1: label = Loc.T("鍛冶", "Forge", "锻造"); break;
+                    case 2: label = Loc.T("星図", "Star Map", "星图"); break;
+                    case 3: label = Loc.T("工房", "Workshop", "工坊"); break;
+                    case 4: label = Loc.T("記録", "Records", "记录"); break;
                     default: label = CoopTradeTabLabel(); break;
                 }
                 if (GUILayout.Button(label, i == _tab ? _st.TabSel : _st.Tab)) { ReleaseTextInput(); CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
@@ -63,7 +63,7 @@ namespace SodRpg.Mod
 
             if (_s.CoopTradeLocked && _tab != 5)
                 GUILayout.Label(Loc.T("交換の確認中です。「交換」タブで内容を変更・取消できます。予約中はホストの結果を待ちます。",
-                    "A trade is confirmed. Edit or cancel it in Trade; reserved trades await the host's decision."), _st.Warn);
+                    "A trade is confirmed. Edit or cancel it in Trade; reserved trades await the host's decision.", "交易确认中。可在“交易”标签页更改或取消内容。预留期间将等待主机的结果。"), _st.Warn);
             else
             switch (_tab)
             {

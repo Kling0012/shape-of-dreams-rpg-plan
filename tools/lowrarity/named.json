@@ -7,8 +7,10 @@
     "family": "Plain",
     "nameJa": "鎖の輪舞",
     "nameEn": "Chain Ronde",
+    "nameZh": "锁链轮舞",
     "loreJa": "鎖が鳴るたび、歩みが速くなる。",
     "loreEn": "Each clink of chain quickens the step.",
+    "loreZh": "锁链每响一声，脚步便快一分。",
     "powers": [
       {
         "power": "Momentum",
@@ -26,8 +28,10 @@
     "family": "Plain",
     "nameJa": "城砦の雷紋",
     "nameEn": "Citadel Lightning Crest",
+    "nameZh": "城塞雷纹",
     "loreJa": "石壁を伝う稲妻は、味方の合図。",
     "loreEn": "Lightning along stone is a signal to allies.",
+    "loreZh": "沿石壁游走的闪电，是给同伴的信号。",
     "powers": [
       {
         "power": "ChainLightning",
@@ -45,8 +49,10 @@
     "family": "Plain",
     "nameJa": "革の先手",
     "nameEn": "Leather First Move",
+    "nameZh": "皮革先手",
     "loreJa": "革の軋みは、敵より先に鳴る。",
     "loreEn": "The leather creaks before the enemy moves.",
+    "loreZh": "皮革的吱声，总在敌人动作之前响起。",
     "powers": [
       {
         "power": "OpeningStrike",
@@ -64,8 +70,10 @@
     "family": "Frost",
     "nameJa": "極光の足止め",
     "nameEn": "Aurora Snare",
+    "nameZh": "极光困足",
     "loreJa": "揺れる光に、追われる足が止まる。",
     "loreEn": "Under the wavering light, fleeing feet slow.",
+    "loreZh": "在摇曳的光下，逃跑的脚步慢了下来。",
     "powers": [
       {
         "power": "Fetters",
@@ -82,8 +90,10 @@
     "family": "Frost",
     "nameJa": "霜法衣の湯気",
     "nameEn": "Frost-Robe Steam",
+    "nameZh": "霜衣白雾",
     "loreJa": "冷たい衣の内側で、白い霧が育つ。",
     "loreEn": "Inside the cold robe, white mist gathers.",
+    "loreZh": "冰冷法衣的内侧，白雾渐聚。",
     "powers": [
       {
         "power": "Steam",
@@ -101,8 +111,10 @@
     "family": "Flame",
     "nameJa": "玄武の火脈",
     "nameEn": "Basalt Firevein",
+    "nameZh": "玄武火脉",
     "loreJa": "岩の割れ目から、四つ目の火が噴く。",
     "loreEn": "From the rock's cracks, the fourth fire spouts.",
+    "loreZh": "岩石的裂隙间，喷出第四道火。",
     "powers": [
       {
         "power": "Blaze",
@@ -120,8 +132,10 @@
     "family": "Flame",
     "nameJa": "舞手の火の粉",
     "nameEn": "Dancer's Sparks",
+    "nameZh": "舞者火星",
     "loreJa": "衣の裾が、火の粉を撒き散らす。",
     "loreEn": "The hem scatters sparks as it turns.",
+    "loreZh": "衣摆旋转，撒出点点火星。",
     "powers": [
       {
         "power": "Ember",
@@ -139,8 +153,10 @@
     "family": "Flame",
     "nameJa": "燠火の黒種",
     "nameEn": "Emberforged Seed",
+    "nameZh": "余烬黑种",
     "loreJa": "焼けた鎧の縫い目に、黒い種がある。",
     "loreEn": "In the seams of the fired plate, a black seed waits.",
+    "loreZh": "灼烧过的甲胄缝隙里，藏着一粒黑色种子。",
     "powers": [
       {
         "power": "Cinder",
@@ -158,8 +174,10 @@
     "family": "Light",
     "nameJa": "暁光の灯",
     "nameEn": "Dawnlight Lamp",
+    "nameZh": "晓光之灯",
     "loreJa": "暁の光が、ひと息ごとに盾を織る。",
     "loreEn": "Dawnlight weaves a shield with every breath.",
+    "loreZh": "晓光随每一次呼吸织成护盾。",
     "powers": [
       {
         "power": "Barrier",
@@ -176,8 +194,10 @@
     "family": "Light",
     "nameJa": "朝露の輝き",
     "nameEn": "Morning-Dew Radiance",
+    "nameZh": "朝露辉光",
     "loreJa": "露の粒が、小さな光を重ねる。",
     "loreEn": "Each dewdrop stacks a little light.",
+    "loreZh": "每一滴露水都叠上一层微光。",
     "powers": [
       {
         "power": "Radiance",
@@ -195,8 +215,10 @@
     "family": "Dark",
     "nameJa": "奇襲の断末",
     "nameEn": "Ambush Finale",
+    "nameZh": "奇袭终音",
     "loreJa": "息の根を止めるのは、最初の一手。",
     "loreEn": "The first move is what stops the breath.",
+    "loreZh": "让呼吸停止的，是最初的一击。",
     "powers": [
       {
         "power": "Executioner",
@@ -214,8 +236,10 @@
     "family": "Dark",
     "nameJa": "黄昏織りの影",
     "nameEn": "Duskweave Shadow",
+    "nameZh": "黄昏织影",
     "loreJa": "織り上がるのは、夕暮れそのもの。",
     "loreEn": "What it weaves is dusk itself.",
+    "loreZh": "它织出的，正是黄昏本身。",
     "powers": [
       {
         "power": "Umbra",
@@ -233,8 +257,10 @@
     "family": "Dark",
     "nameJa": "墨染めの蝕",
     "nameEn": "Ink-Dyed Eclipse",
+    "nameZh": "墨染之蚀",
     "loreJa": "墨が滲む処で、光と影が交わる。",
     "loreEn": "Where ink bleeds, light and shadow meet.",
+    "loreZh": "墨迹晕开之处，光与影交汇。",
     "powers": [
       {
         "power": "Eclipse",
@@ -252,8 +278,10 @@
     "family": "Guard",
     "nameJa": "甲羅の返し棘",
     "nameEn": "Shell's Returning Spine",
+    "nameZh": "甲壳反棘",
     "loreJa": "叩いた手が、痛い。",
     "loreEn": "The hand that strikes it aches.",
+    "loreZh": "拍上来的手，反而作痛。",
     "powers": [
       {
         "power": "Thorns",
@@ -270,8 +298,10 @@
     "family": "Guard",
     "nameJa": "護りの不動",
     "nameEn": "Guardian Immovability",
+    "nameZh": "守护不动",
     "loreJa": "構えを守れば、守られる。",
     "loreEn": "Hold the stance, and be held.",
+    "loreZh": "守住架势，便会被守护。",
     "powers": [
       {
         "power": "ImmovableStance",
@@ -288,8 +318,10 @@
     "family": "Gale",
     "nameJa": "流れの旋風",
     "nameEn": "Flowing Whirlwind",
+    "nameZh": "流转旋风",
     "loreJa": "身をひねれば、外套が渦になる。",
     "loreEn": "Twist away, and the cloak becomes a whirl.",
+    "loreZh": "身形一拧，外套便卷成旋涡。",
     "powers": [
       {
         "power": "Whirlwind",
@@ -306,8 +338,10 @@
     "family": "Gale",
     "nameJa": "水銀の乱戦",
     "nameEn": "Quicksilver Melee",
+    "nameZh": "水银混战",
     "loreJa": "混むほど、水銀は沸き立つ。",
     "loreEn": "The more crowded, the more the mercury seethes.",
+    "loreZh": "越是拥挤，水银越是沸腾。",
     "powers": [
       {
         "power": "Frenzy",
@@ -324,8 +358,10 @@
     "family": "Gale",
     "nameJa": "疾歩の追風",
     "nameEn": "Swiftstep Tailwind",
+    "nameZh": "疾步顺风",
     "loreJa": "倒した敵の分だけ、風が追う。",
     "loreEn": "For every foe felled, the wind follows harder.",
+    "loreZh": "每放倒一个敌人，风便追得更紧。",
     "powers": [
       {
         "power": "Tailwind",
@@ -343,8 +379,10 @@
     "family": "Mend",
     "nameJa": "燭光の満ち",
     "nameEn": "Candlelight Fullness",
+    "nameZh": "烛光盈满",
     "loreJa": "溢れた灯が、蝋の盾になる。",
     "loreEn": "The overflowing flame becomes a wax shield.",
+    "loreZh": "溢出的烛光化作蜡之护盾。",
     "powers": [
       {
         "power": "OverflowingLife",
@@ -361,8 +399,10 @@
     "family": "Mend",
     "nameJa": "癒し帯の吸命",
     "nameEn": "Healing Sash Leech",
+    "nameZh": "治愈带吸命",
     "loreJa": "締めた帯が、痛みを吸い取る。",
     "loreEn": "The bound sash draws the pain out.",
+    "loreZh": "束紧的腰带，把疼痛吸走。",
     "powers": [
       {
         "power": "Lifesteal",
@@ -380,8 +420,10 @@
     "family": "Summon",
     "nameJa": "小盾の分け前",
     "nameEn": "Buckler Share",
+    "nameZh": "小盾分担",
     "loreJa": "小さな盾も、二つなら大きい。",
     "loreEn": "A small shield, doubled, is large.",
+    "loreZh": "小盾若是成双，也就不小了。",
     "powers": [
       {
         "power": "SharedWard",
@@ -398,8 +440,10 @@
     "family": "Summon",
     "nameJa": "誓板の共演",
     "nameEn": "Oathplate Co-Star",
+    "nameZh": "誓板联袂",
     "loreJa": "誓いを並べれば、舞台ができる。",
     "loreEn": "Line up the oaths, and a stage appears.",
+    "loreZh": "誓言排成列，舞台自现。",
     "powers": [
       {
         "power": "CoStar",
@@ -417,8 +461,10 @@
     "family": "Memory",
     "nameJa": "樹皮の終曲",
     "nameEn": "Barkbound Finale",
+    "nameZh": "树皮终曲",
     "loreJa": "年輪の果てに、幕引きの音がある。",
     "loreEn": "At the rings' end sounds the closing note.",
+    "loreZh": "年轮的尽头，响起落幕之音。",
     "powers": [
       {
         "power": "Finale",
@@ -436,8 +482,10 @@
     "family": "Memory",
     "nameJa": "月絹の巡り",
     "nameEn": "Moonsilk Cycle",
+    "nameZh": "月绢巡回",
     "loreJa": "絹が月光を巻き戻す。",
     "loreEn": "The silk winds the moonlight back.",
+    "loreZh": "绢丝把月光重新卷起。",
     "powers": [
       {
         "power": "StardustCycle",
@@ -455,8 +503,10 @@
     "family": "Plain",
     "nameJa": "火の粉の砕音",
     "nameEn": "Cinder Crack",
+    "nameZh": "火星碎响",
     "loreJa": "灰を払えば、下から音が砕ける。",
     "loreEn": "Brush the ash away and something cracks beneath.",
+    "loreZh": "拂去灰烬，底下有什么应声碎裂。",
     "powers": [
       {
         "power": "Shatter",
@@ -474,8 +524,10 @@
     "family": "Plain",
     "nameJa": "遊撃の割れ盾",
     "nameEn": "Skirmisher's Shieldbreak",
+    "nameZh": "游击裂盾",
     "loreJa": "小さな盾も、割れれば音になる。",
     "loreEn": "Even a small shield makes a sound when it breaks.",
+    "loreZh": "小盾碎裂时，也会发出声响。",
     "powers": [
       {
         "power": "ShieldbreakBurst",
@@ -492,8 +544,10 @@
     "family": "Frost",
     "nameJa": "霜織りの衣",
     "nameEn": "Frostweave Mantle",
+    "nameZh": "霜织之衣",
     "loreJa": "織り込んだ霜が、触れた者を凍らせる。",
     "loreEn": "The woven frost freezes whoever touches it.",
+    "loreZh": "织入的寒霜，冻结触碰之人。",
     "powers": [
       {
         "power": "Frost",
@@ -511,8 +565,10 @@
     "family": "Frost",
     "nameJa": "氷河の晶鎧",
     "nameEn": "Glacial Crystal Harness",
+    "nameZh": "冰河晶铠",
     "loreJa": "削られた氷が、光を鎧として纏う。",
     "loreEn": "Carved ice wears light as its armor.",
+    "loreZh": "削落的冰以光为甲。",
     "powers": [
       {
         "power": "FrostCrystal",
@@ -530,8 +586,10 @@
     "family": "Frost",
     "nameJa": "潮縛の脆氷",
     "nameEn": "Tidebound Brittle Ice",
+    "nameZh": "潮缚脆冰",
     "loreJa": "潮を吸った氷は、諸共に割れる。",
     "loreEn": "Tide-soaked ice shatters all together.",
+    "loreZh": "吸饱潮水的冰，与之俱碎。",
     "powers": [
       {
         "power": "BrittleIce",
@@ -549,8 +607,10 @@
     "family": "Flame",
     "nameJa": "残り火の飛び路",
     "nameEn": "Ember's Leaping Path",
+    "nameZh": "余烬飞路",
     "loreJa": "一つの火が、もう一つの火を呼ぶ。",
     "loreEn": "One flame calls another.",
+    "loreZh": "一团火焰，唤起另一团。",
     "powers": [
       {
         "power": "Wildfire",
@@ -568,8 +628,10 @@
     "family": "Flame",
     "nameJa": "竜鱗の輪",
     "nameEn": "Dragon Scale Ring",
+    "nameZh": "龙鳞之环",
     "loreJa": "鱗は重なり、囲まれても毀れない。",
     "loreEn": "Scales overlap; a ring that will not chip.",
+    "loreZh": "鳞片层叠，围成一圈不碎之环。",
     "powers": [
       {
         "power": "Bulwark",
@@ -586,8 +648,10 @@
     "family": "Light",
     "nameJa": "鏡絹の星盾",
     "nameEn": "Mirrorsilk Starshield",
+    "nameZh": "镜绢星盾",
     "loreJa": "絹が星を映せば、盾の形になる。",
     "loreEn": "When silk mirrors a star, it takes a shield's shape.",
+    "loreZh": "绢丝映出星辰，便化作盾形。",
     "powers": [
       {
         "power": "StarShield",
@@ -604,8 +668,10 @@
     "family": "Light",
     "nameJa": "祈りの返礼",
     "nameEn": "Prayer's Kind Return",
+    "nameZh": "祈祷回礼",
     "loreJa": "捧げた祈りは、誰かの親切になる。",
     "loreEn": "A given prayer becomes someone's kindness.",
+    "loreZh": "献出的祈祷，会成为某人的善意。",
     "powers": [
       {
         "power": "KindnessReturns",
@@ -623,8 +689,10 @@
     "family": "Light",
     "nameJa": "陽光の継ぎ糸",
     "nameEn": "Sunlit Lifeline",
+    "nameZh": "阳光生命线",
     "loreJa": "日だまりの中で、命が縫い合わされる。",
     "loreEn": "In the sunpatch, life is stitched back together.",
+    "loreZh": "在阳光照耀处，生命被重新缝合。",
     "powers": [
       {
         "power": "Lifeline",
@@ -642,8 +710,10 @@
     "family": "Dark",
     "nameJa": "狩りの吸魂",
     "nameEn": "Hunter's Siphon",
+    "nameZh": "狩猎摄魂",
     "loreJa": "獲物の最後の息を、着ていく。",
     "loreEn": "It wears the prey's final breath home.",
+    "loreZh": "它把猎物最后的气息穿回家。",
     "powers": [
       {
         "power": "SoulSiphon",
@@ -661,8 +731,10 @@
     "family": "Dark",
     "nameJa": "影織りの跡目",
     "nameEn": "Shadowweave Heirloom",
+    "nameZh": "影织继承",
     "loreJa": "外套を継いだ者に、影が従う。",
     "loreEn": "The shadow obeys whoever inherits the cloak.",
+    "loreZh": "影子听从继承外套之人。",
     "powers": [
       {
         "power": "UmbralHeritage",
@@ -680,8 +752,10 @@
     "family": "Guard",
     "nameJa": "反撃の守護霊",
     "nameEn": "Counter Guardian",
+    "nameZh": "反击守护灵",
     "loreJa": "痛い一撃には、霊が蓋をする。",
     "loreEn": "Against the worst blows, a spirit throws the lid.",
+    "loreZh": "面对最重的一击，灵体会张盖抵挡。",
     "powers": [
       {
         "power": "Aegis",
@@ -698,8 +772,10 @@
     "family": "Guard",
     "nameJa": "鉄樹の備え",
     "nameEn": "Ironbark Readiness",
+    "nameZh": "铁树戒备",
     "loreJa": "硬い樹は、嵐の前に身を固める。",
     "loreEn": "The hard tree braces before the storm.",
+    "loreZh": "坚硬的树，在风暴来临前先扎稳身形。",
     "powers": [
       {
         "power": "ReadyGuard",
@@ -716,8 +792,10 @@
     "family": "Guard",
     "nameJa": "土塁の残身",
     "nameEn": "Rampart Echo",
+    "nameZh": "土垒余韵",
     "loreJa": "かわした体が、次の一手を覚える。",
     "loreEn": "The dodging body remembers the next move.",
+    "loreZh": "闪避过的身体，记得下一手。",
     "powers": [
       {
         "power": "EchoingDodge",
@@ -734,8 +812,10 @@
     "family": "Gale",
     "nameJa": "嵐前の疾駆",
     "nameEn": "Stormfront Dash",
+    "nameZh": "风暴前疾驰",
     "loreJa": "嵐の前の風は、足に乗る。",
     "loreEn": "The wind before the storm rides your feet.",
+    "loreZh": "风暴前的大风，托着你的双脚。",
     "powers": [
       {
         "power": "Sprint",
@@ -752,8 +832,10 @@
     "family": "Gale",
     "nameJa": "旅人の渡り路",
     "nameEn": "Traveler's Crossing",
+    "nameZh": "旅人渡路",
     "loreJa": "馴れた道ほど、刃が冴える。",
     "loreEn": "On well-worn roads, the edge shines.",
+    "loreZh": "越是走惯的路，刀刃越亮。",
     "powers": [
       {
         "power": "WanderersEdge",
@@ -771,8 +853,10 @@
     "family": "Mend",
     "nameJa": "深根の薬師",
     "nameEn": "Deeproot Apothecary",
+    "nameZh": "深根药师",
     "loreJa": "根が届く範囲まで、手当てが届く。",
     "loreEn": "Care reaches as far as the roots.",
+    "loreZh": "根须所及之处，便是救治所及之处。",
     "powers": [
       {
         "power": "Apothecary",
@@ -789,8 +873,10 @@
     "family": "Mend",
     "nameJa": "灯守の再起",
     "nameEn": "Lampkeeper's Second Wind",
+    "nameZh": "守灯人回气",
     "loreJa": "灯が消えかけても、芯は残る。",
     "loreEn": "Even as the flame gutters, the wick remains.",
+    "loreZh": "纵使火苗摇曳欲熄，灯芯仍在。",
     "powers": [
       {
         "power": "SecondWind",
@@ -808,8 +894,10 @@
     "family": "Mend",
     "nameJa": "行者の止水",
     "nameEn": "Ascetic Stillwater",
+    "nameZh": "行者止水",
     "loreJa": "動じなければ、水面が盾になる。",
     "loreEn": "Unshaken, the water's surface becomes a shield.",
+    "loreZh": "心不为所动，水面便化作盾。",
     "powers": [
       {
         "power": "StillWater",
@@ -826,8 +914,10 @@
     "family": "Summon",
     "nameJa": "織り火の見守り",
     "nameEn": "Emberweave Watch",
+    "nameZh": "织火守望",
     "loreJa": "肩に掛けた火が、仲間を見ている。",
     "loreEn": "The fire on your shoulder watches your friends.",
+    "loreZh": "肩上的火，注视着你的同伴。",
     "powers": [
       {
         "power": "WatchfulHand",
@@ -844,8 +934,10 @@
     "family": "Summon",
     "nameJa": "海沫の継ぎ手",
     "nameEn": "Seafoam Relay",
+    "nameZh": "海沫接力",
     "loreJa": "泡が弾ければ、次の波に渡す。",
     "loreEn": "When foam pops, it hands off to the next wave.",
+    "loreZh": "泡沫破灭时，便交棒给下一道浪。",
     "powers": [
       {
         "power": "RelayHand",
@@ -863,8 +955,10 @@
     "family": "Memory",
     "nameJa": "霧衣の余韻",
     "nameEn": "Mist-Robe Echo",
+    "nameZh": "雾衣余韵",
     "loreJa": "霧が晴れても、音は残る。",
     "loreEn": "After the mist clears, the sound remains.",
+    "loreZh": "雾散之后，声音犹存。",
     "powers": [
       {
         "power": "CriticalEcho",
@@ -882,8 +976,10 @@
     "family": "Memory",
     "nameJa": "共鳴の切札",
     "nameEn": "Resonant Trump",
+    "nameZh": "共鸣王牌",
     "loreJa": "袖の中に、一枚だけ残してある。",
     "loreEn": "One card is kept back in the sleeve.",
+    "loreZh": "袖中总留着一张牌。",
     "powers": [
       {
         "power": "AceInHand",
@@ -901,8 +997,10 @@
     "family": "Plain",
     "nameJa": "棘付きの静水",
     "nameEn": "Spineplate Stillwater",
+    "nameZh": "棘板止水",
     "loreJa": "棘は返し、水は受け止める。",
     "loreEn": "The spikes give back; the water receives.",
+    "loreZh": "棘刺回敬，止水承受。",
     "powers": [
       {
         "power": "Thorns",
@@ -923,8 +1021,10 @@
     "family": "Frost",
     "nameJa": "冬毛の囲い",
     "nameEn": "Winterwool Enclosure",
+    "nameZh": "冬毛围篱",
     "loreJa": "厚い毛は冷えと敵を、同時に防ぐ。",
     "loreEn": "Thick wool keeps out cold and foes alike.",
+    "loreZh": "厚厚的毛，同时挡住寒气与敌人。",
     "powers": [
       {
         "power": "Fetters",
@@ -945,8 +1045,10 @@
     "family": "Flame",
     "nameJa": "火山の返し火",
     "nameEn": "Volcanic Backfire",
+    "nameZh": "火山回火",
     "loreJa": "火を吐けば、灰が棘になって戻る。",
     "loreEn": "Spit fire, and the ash comes back as thorns.",
+    "loreZh": "吐出火焰，灰烬便化作棘刺归来。",
     "powers": [
       {
         "power": "Blaze",
@@ -968,8 +1070,10 @@
     "family": "Light",
     "nameJa": "加護の二重織",
     "nameEn": "Wardsigil Double Weave",
+    "nameZh": "庇佑双重织",
     "loreJa": "二つの護りを、一枚の布に織り込んだ。",
     "loreEn": "Two wards woven into a single cloth.",
+    "loreZh": "两重守护，织入同一块布。",
     "powers": [
       {
         "power": "Barrier",
@@ -990,8 +1094,10 @@
     "family": "Dark",
     "nameJa": "ねじれ鎖の処罰",
     "nameEn": "Twisted-Chain Verdict",
+    "nameZh": "扭链断罪",
     "loreJa": "歪んだ鎖は、悪を締め上げ灯をともす。",
     "loreEn": "The twisted chain strangles evil and lights a lamp.",
+    "loreZh": "扭曲的锁链绞紧邪恶，点亮灯火。",
     "powers": [
       {
         "power": "Executioner",
@@ -1013,8 +1119,10 @@
     "family": "Guard",
     "nameJa": "棘鎧の壁",
     "nameEn": "Thorn Wall Mail",
+    "nameZh": "棘铠之壁",
     "loreJa": "棘の壁は、巨浪も霊も弾く。",
     "loreEn": "The thorn wall turns aside waves and spirits.",
+    "loreZh": "棘刺之壁，弹开巨浪与灵体。",
     "powers": [
       {
         "power": "Bulwark",
@@ -1035,8 +1143,10 @@
     "family": "Gale",
     "nameJa": "西風の舞い衣",
     "nameEn": "Zephyr Dancing Robe",
+    "nameZh": "西风舞衣",
     "loreJa": "袖が膨らめば、渦と喧騒が来る。",
     "loreEn": "When the sleeves fill, whirl and clamor follow.",
+    "loreZh": "衣袖鼓起之时，旋风与喧嚣随行。",
     "powers": [
       {
         "power": "Whirlwind",
@@ -1057,8 +1167,10 @@
     "family": "Mend",
     "nameJa": "夜織りの溢れ",
     "nameEn": "Nightloom Overflow",
+    "nameZh": "夜织满溢",
     "loreJa": "夜に織った分だけ、命が余る。",
     "loreEn": "For all woven by night, life is left over.",
+    "loreZh": "夜里织就多少，生命便余下多少。",
     "powers": [
       {
         "power": "OverflowingLife",
@@ -1079,8 +1191,10 @@
     "family": "Summon",
     "nameJa": "星屑の双護",
     "nameEn": "Stardust Twin Ward",
+    "nameZh": "星屑双护",
     "loreJa": "降る星屑が、護りを分け合う。",
     "loreEn": "Falling stardust shares out its warding.",
+    "loreZh": "降落的星屑，把守护分给众人。",
     "powers": [
       {
         "power": "SharedWard",
@@ -1101,8 +1215,10 @@
     "family": "Summon",
     "nameJa": "喚び獣の目付",
     "nameEn": "Summoner's Watchpost",
+    "nameZh": "召唤兽哨位",
     "loreJa": "呼んだ獣が、死角を見張る。",
     "loreEn": "The called beast guards your blind side.",
+    "loreZh": "被唤来的兽，替你盯住死角。",
     "powers": [
       {
         "power": "WatchfulHand",
@@ -1123,8 +1239,10 @@
     "family": "Memory",
     "nameJa": "根鎖の終章",
     "nameEn": "Rootbound Finale",
+    "nameZh": "根锁终章",
     "loreJa": "根が絡めば、幕は早く下りる。",
     "loreEn": "When the roots entangle, the curtain falls sooner.",
+    "loreZh": "根须缠住之时，幕布提前落下。",
     "powers": [
       {
         "power": "Finale",
@@ -1146,8 +1264,10 @@
     "family": "Memory",
     "nameJa": "星読みの余韻",
     "nameEn": "Stargazer's Echo",
+    "nameZh": "观星余韵",
     "loreJa": "読んだ星の分だけ、間が詰まる。",
     "loreEn": "Each star read closes the gap a little.",
+    "loreZh": "每读懂一颗星，间隙便窄一分。",
     "powers": [
       {
         "power": "CriticalEcho",
@@ -1169,8 +1289,10 @@
     "family": "Plain",
     "nameJa": "牙の連鳴",
     "nameEn": "Fang Chaincall",
+    "nameZh": "獠牙连鸣",
     "loreJa": "牙が鳴るたび、拍子が上がる。",
     "loreEn": "Each click of fang lifts the rhythm.",
+    "loreZh": "獠牙每响一声，节拍便升高一分。",
     "powers": [
       {
         "power": "Momentum",
@@ -1188,8 +1310,10 @@
     "family": "Plain",
     "nameJa": "狩印の雷鎖",
     "nameEn": "Hunter's Lightning Seal",
+    "nameZh": "狩印雷链",
     "loreJa": "印を押した獲物へ、雷が渡る。",
     "loreEn": "Lightning crosses to whatever the seal marks.",
+    "loreZh": "闪电会渡向印章标记的猎物。",
     "powers": [
       {
         "power": "ChainLightning",
@@ -1207,8 +1331,10 @@
     "family": "Plain",
     "nameJa": "遠当ての静水",
     "nameEn": "Longshot Stillwater",
+    "nameZh": "远击止水",
     "loreJa": "遠くからでも、水は静かに効く。",
     "loreEn": "Even from afar, the water works in stillness.",
+    "loreZh": "即使相隔遥远，止水依然静静生效。",
     "powers": [
       {
         "power": "StillWater",
@@ -1226,8 +1352,10 @@
     "family": "Frost",
     "nameJa": "霜息の垂飾",
     "nameEn": "Frostbreath Pendant",
+    "nameZh": "霜息坠饰",
     "loreJa": "吐く息ごとに、冷気が深まる。",
     "loreEn": "With every breath, the cold deepens.",
+    "loreZh": "每一次呼吸，寒意更深一层。",
     "powers": [
       {
         "power": "Frost",
@@ -1244,8 +1372,10 @@
     "family": "Frost",
     "nameJa": "月鈴の霜晶",
     "nameEn": "Moon Bell Frostcrystal",
+    "nameZh": "月铃霜晶",
     "loreJa": "鈴の音に、冷たい光が応える。",
     "loreEn": "Cold light answers the bell's ring.",
+    "loreZh": "冷光应和着铃声。",
     "powers": [
       {
         "power": "FrostCrystal",
@@ -1262,8 +1392,10 @@
     "family": "Flame",
     "nameJa": "焔の黒種",
     "nameEn": "Blaze Black Seed",
+    "nameZh": "焰之黑种",
     "loreJa": "燃え残りが、影と手を結ぶ。",
     "loreEn": "The charred remnant joins hands with shadow.",
+    "loreZh": "烧剩的残烬，与影子携手。",
     "powers": [
       {
         "power": "Cinder",
@@ -1280,8 +1412,10 @@
     "family": "Flame",
     "nameJa": "火芯の四連",
     "nameEn": "Cindercore Quadruple",
+    "nameZh": "火芯四连",
     "loreJa": "蓋を開けるたび、火が覚える。",
     "loreEn": "Each time it opens, the fire remembers.",
+    "loreZh": "每次打开，火焰便多记住一次。",
     "powers": [
       {
         "power": "Blaze",
@@ -1299,8 +1433,10 @@
     "family": "Flame",
     "nameJa": "残り火の飛び火",
     "nameEn": "Ember Locket Wildfire",
+    "nameZh": "余烬飞火",
     "loreJa": "胸の火が、隣へ移る。",
     "loreEn": "The fire at the chest leaps to the next.",
+    "loreZh": "胸口的火，跳向下一个。",
     "powers": [
       {
         "power": "Wildfire",
@@ -1318,8 +1454,10 @@
     "family": "Light",
     "nameJa": "暁糸の星傘",
     "nameEn": "Dawnsilk Starshade",
+    "nameZh": "晓丝星伞",
     "loreJa": "編んだ糸が、星の傘になる。",
     "loreEn": "The woven thread becomes a star's parasol.",
+    "loreZh": "编织的丝线，化作星辰之伞。",
     "powers": [
       {
         "power": "StarShield",
@@ -1336,8 +1474,10 @@
     "family": "Light",
     "nameJa": "共鳴の継ぎ糸",
     "nameEn": "Resonant Lifeline",
+    "nameZh": "共鸣生命线",
     "loreJa": "波長が合えば、命が繋がる。",
     "loreEn": "Where wavelengths meet, life is joined.",
+    "loreZh": "波长相合之处，生命相连。",
     "powers": [
       {
         "power": "Lifeline",
@@ -1354,8 +1494,10 @@
     "family": "Dark",
     "nameJa": "宵珠の影重ね",
     "nameEn": "Duskbead Shadow Stack",
+    "nameZh": "暮珠叠影",
     "loreJa": "一珠ごとに、影が濃くなる。",
     "loreEn": "Each bead darkens the shadow a shade.",
+    "loreZh": "每一颗珠子，都让影色更深一层。",
     "powers": [
       {
         "power": "Umbra",
@@ -1372,8 +1514,10 @@
     "family": "Dark",
     "nameJa": "墨硯の吸魂",
     "nameEn": "Inkstone Siphon",
+    "nameZh": "砚台摄魂",
     "loreJa": "すった墨が、誰かの最後を知る。",
     "loreEn": "The ground ink knows someone's last moment.",
+    "loreZh": "磨过的墨，知晓某人的最后一刻。",
     "powers": [
       {
         "power": "SoulSiphon",
@@ -1390,8 +1534,10 @@
     "family": "Dark",
     "nameJa": "仮面の跡目",
     "nameEn": "Mask's Shadow Heir",
+    "nameZh": "面具继承",
     "loreJa": "被った者から、次へ影が渡る。",
     "loreEn": "The shadow passes from wearer to wearer.",
+    "loreZh": "影子从一位佩戴者传向下一位。",
     "powers": [
       {
         "power": "UmbralHeritage",
@@ -1408,8 +1554,10 @@
     "family": "Guard",
     "nameJa": "壁印の備え",
     "nameEn": "Bulwark Readiness",
+    "nameZh": "壁印戒备",
     "loreJa": "印は盾ではなく、心構え。",
     "loreEn": "The seal is not a shield but a stance.",
+    "loreZh": "印章不是盾，而是心里的架势。",
     "powers": [
       {
         "power": "ReadyGuard",
@@ -1426,8 +1574,10 @@
     "family": "Guard",
     "nameJa": "守護の棘",
     "nameEn": "Guardian Spines",
+    "nameZh": "守护之棘",
     "loreJa": "護る心に、棘が生える。",
     "loreEn": "A guarding heart grows spines.",
+    "loreZh": "护人之心，生出棘刺。",
     "powers": [
       {
         "power": "Thorns",
@@ -1445,8 +1595,10 @@
     "family": "Gale",
     "nameJa": "鉄結びの旋風",
     "nameEn": "Ironknot Whirl",
+    "nameZh": "铁结旋风",
     "loreJa": "結び目がほどける時、渦が起きる。",
     "loreEn": "When the knot slips loose, a whirl begins.",
+    "loreZh": "结扣松开之时，旋风骤起。",
     "powers": [
       {
         "power": "Whirlwind",
@@ -1463,8 +1615,10 @@
     "family": "Gale",
     "nameJa": "追撃の疾駆",
     "nameEn": "Pursuit Dash",
+    "nameZh": "追击疾驰",
     "loreJa": "かわすことが、追うことになる。",
     "loreEn": "To dodge is already to pursue.",
+    "loreZh": "闪避本身，已是追击。",
     "powers": [
       {
         "power": "Sprint",
@@ -1481,8 +1635,10 @@
     "family": "Gale",
     "nameJa": "追風の渡り路",
     "nameEn": "Tailwind Crossing",
+    "nameZh": "顺风渡路",
     "loreJa": "風に乗れば、帰りも知っている。",
     "loreEn": "Ride the wind, and you know the way home.",
+    "loreZh": "乘上风，便认得回家的路。",
     "powers": [
       {
         "power": "WanderersEdge",
@@ -1500,8 +1656,10 @@
     "family": "Mend",
     "nameJa": "光環の再燃",
     "nameEn": "Halo Rekindling",
+    "nameZh": "光环再燃",
     "loreJa": "輪が細っても、芯は燃え直す。",
     "loreEn": "Though the ring thins, the core relights.",
+    "loreZh": "光环纵然变细，核心仍会重燃。",
     "powers": [
       {
         "power": "SecondWind",
@@ -1518,8 +1676,10 @@
     "family": "Mend",
     "nameJa": "炉端の吸命",
     "nameEn": "Hearthstone Leech",
+    "nameZh": "炉边吸命",
     "loreJa": "温もりの分を、どこかから貰う。",
     "loreEn": "Its warmth is borrowed from somewhere.",
+    "loreZh": "它的温暖，是从某处借来的。",
     "powers": [
       {
         "power": "Lifesteal",
@@ -1537,8 +1697,10 @@
     "family": "Summon",
     "nameJa": "獣語の分け合い",
     "nameEn": "Beasttongue Share",
+    "nameZh": "兽语共享",
     "loreJa": "言葉が通じれば、盾も分け合う。",
     "loreEn": "Where words reach, shields are shared.",
+    "loreZh": "言语相通之处，盾亦共享。",
     "powers": [
       {
         "power": "SharedWard",
@@ -1555,8 +1717,10 @@
     "family": "Summon",
     "nameJa": "深根の見守り",
     "nameEn": "Deeproot Watch",
+    "nameZh": "深根守望",
     "loreJa": "根の張った先まで、目は届く。",
     "loreEn": "Sight reaches wherever roots have spread.",
+    "loreZh": "目光所及，如根须蔓延。",
     "powers": [
       {
         "power": "WatchfulHand",
@@ -1573,8 +1737,10 @@
     "family": "Memory",
     "nameJa": "ぜんまいの切札",
     "nameEn": "Clockwork Trump",
+    "nameZh": "发条王牌",
     "loreJa": "捲くたびに、一枚増える。",
     "loreEn": "Every wind adds a card.",
+    "loreZh": "每上一次发条，便多一张牌。",
     "powers": [
       {
         "power": "AceInHand",
@@ -1591,8 +1757,10 @@
     "family": "Memory",
     "nameJa": "蝕環の欠片",
     "nameEn": "Eclipse Shard",
+    "nameZh": "蚀环碎片",
     "loreJa": "欠けた分だけ、恵みが積もる。",
     "loreEn": "For every missing piece, a boon accrues.",
+    "loreZh": "缺了几块，恩泽便积几分。",
     "powers": [
       {
         "power": "ShardBoon",
@@ -1609,8 +1777,10 @@
     "family": "Plain",
     "nameJa": "鉄印の先手",
     "nameEn": "Iron First Seal",
+    "nameZh": "铁印先手",
     "loreJa": "押した瞬間に、勝負は半ば決まる。",
     "loreEn": "The instant it presses, half the contest is won.",
+    "loreZh": "盖下的一瞬，胜负已定一半。",
     "powers": [
       {
         "power": "OpeningStrike",
@@ -1628,8 +1798,10 @@
     "family": "Plain",
     "nameJa": "四元の巡り輪",
     "nameEn": "Ring of Four Colors",
+    "nameZh": "四元轮环",
     "loreJa": "火霜光影が揃う瞬間、輪が光る。",
     "loreEn": "When fire, frost, light and shadow align, the ring glows.",
+    "loreZh": "火霜光影齐聚之时，环为之发光。",
     "powers": [
       {
         "power": "Convergence",
@@ -1646,8 +1818,10 @@
     "family": "Frost",
     "nameJa": "氷晶の湯気",
     "nameEn": "Glacier Steam",
+    "nameZh": "冰晶白雾",
     "loreJa": "氷と火が触れ、白い幕を張る。",
     "loreEn": "Ice meets fire and hangs a white curtain.",
+    "loreZh": "冰与火相遇，垂下一道白幕。",
     "powers": [
       {
         "power": "Steam",
@@ -1664,8 +1838,10 @@
     "family": "Frost",
     "nameJa": "雪華の枷",
     "nameEn": "Snowbloom Shackles",
+    "nameZh": "雪华之枷",
     "loreJa": "咲いた花の数だけ、足が重い。",
     "loreEn": "For every blossom, a foot grows heavy.",
+    "loreZh": "花开几朵，脚上便沉几分。",
     "powers": [
       {
         "power": "Fetters",
@@ -1683,8 +1859,10 @@
     "family": "Frost",
     "nameJa": "潮衛の脆氷",
     "nameEn": "Tidewarden Brittle Ice",
+    "nameZh": "潮卫脆冰",
     "loreJa": "守った潮が、敵の装甲を弱らせる。",
     "loreEn": "The guarded tide softens the foe's armor.",
+    "loreZh": "受守护的潮水，软化敌人的护甲。",
     "powers": [
       {
         "power": "BrittleIce",
@@ -1702,8 +1880,10 @@
     "family": "Flame",
     "nameJa": "彗星の火種",
     "nameEn": "Comet Spark",
+    "nameZh": "彗星火种",
     "loreJa": "尾を引けば、火が残る。",
     "loreEn": "Draw the tail, and fire remains.",
+    "loreZh": "拖过尾焰，火种便留了下来。",
     "powers": [
       {
         "power": "Ember",
@@ -1721,8 +1901,10 @@
     "family": "Flame",
     "nameJa": "紅玉の追風",
     "nameEn": "Garnet Tailwind",
+    "nameZh": "红玉顺风",
     "loreJa": "深紅の輝きが、背を押す。",
     "loreEn": "The deep red gleam pushes at your back.",
+    "loreZh": "深红的辉光，在背后推你一把。",
     "powers": [
       {
         "power": "Tailwind",
@@ -1739,8 +1921,10 @@
     "family": "Light",
     "nameJa": "鋭眼の返し",
     "nameEn": "Keen-Eye Kindness",
+    "nameZh": "锐眼回善",
     "loreJa": "見逃した者に、情けが戻る。",
     "loreEn": "Kindness returns for those spared.",
+    "loreZh": "放过的善意，终会归来。",
     "powers": [
       {
         "power": "KindnessReturns",
@@ -1757,8 +1941,10 @@
     "family": "Light",
     "nameJa": "星屑の灯",
     "nameEn": "Stardust Lamp",
+    "nameZh": "星屑之灯",
     "loreJa": "集めた星屑が、定めに灯る。",
     "loreEn": "Gathered stardust lights a steady lamp.",
+    "loreZh": "集起的星屑，点亮一盏安稳的灯。",
     "powers": [
       {
         "power": "Barrier",
@@ -1776,8 +1962,10 @@
     "family": "Light",
     "nameJa": "陽の重ね輝き",
     "nameEn": "Sunlight Stacked Glow",
+    "nameZh": "阳光叠辉",
     "loreJa": "陽が当たるたび、光が重なる。",
     "loreEn": "Each touch of sun stacks another glow.",
+    "loreZh": "阳光每照一次，便多叠一层光。",
     "powers": [
       {
         "power": "Radiance",
@@ -1795,8 +1983,10 @@
     "family": "Dark",
     "nameJa": "鴉羽の蝕",
     "nameEn": "Raven-Quill Eclipse",
+    "nameZh": "鸦羽之蚀",
     "loreJa": "羽で書けば、昼と夜が交わる。",
     "loreEn": "Write with the quill, and day crosses night.",
+    "loreZh": "以羽笔书写，昼与夜便相交。",
     "powers": [
       {
         "power": "Eclipse",
@@ -1813,8 +2003,10 @@
     "family": "Dark",
     "nameJa": "影環の断罪",
     "nameEn": "Shadow Ring Verdict",
+    "nameZh": "影环断罪",
     "loreJa": "怯えた影から、順に刈られる。",
     "loreEn": "The frightened shadows are reaped in turn.",
+    "loreZh": "胆怯的影子，被依次收割。",
     "powers": [
       {
         "power": "Executioner",
@@ -1832,8 +2024,10 @@
     "family": "Guard",
     "nameJa": "鎖首の輪",
     "nameEn": "Chain Necklace Ring",
+    "nameZh": "锁颈之环",
     "loreJa": "囲まれて、鎖は固く鳴る。",
     "loreEn": "Surrounded, the chain rings hard.",
+    "loreZh": "身陷包围，锁链反而响得更紧。",
     "powers": [
       {
         "power": "Bulwark",
@@ -1851,8 +2045,10 @@
     "family": "Guard",
     "nameJa": "鉄羽の守護霊",
     "nameEn": "Iron-Feather Guardian",
+    "nameZh": "铁羽守护灵",
     "loreJa": "大波を受け、羽が盾になる。",
     "loreEn": "It takes the great wave; the feather turns shield.",
+    "loreZh": "迎下巨浪，羽化作盾。",
     "powers": [
       {
         "power": "Aegis",
@@ -1870,8 +2066,10 @@
     "family": "Guard",
     "nameJa": "脈打つ不動",
     "nameEn": "Pulsing Immovability",
+    "nameZh": "脉动不动",
     "loreJa": "鼓動は速くても、地に根が張る。",
     "loreEn": "The beat may race, yet roots hold the ground.",
+    "loreZh": "心跳再快，根仍扎于大地。",
     "powers": [
       {
         "power": "ImmovableStance",
@@ -1889,8 +2087,10 @@
     "family": "Gale",
     "nameJa": "雷雲の乱気",
     "nameEn": "Stormcloud Turbulence",
+    "nameZh": "雷云乱流",
     "loreJa": "雲が低いほど、中は荒れる。",
     "loreEn": "The lower the cloud, the wilder inside.",
+    "loreZh": "云压得越低，其中越狂乱。",
     "powers": [
       {
         "power": "Frenzy",
@@ -1908,8 +2108,10 @@
     "family": "Gale",
     "nameJa": "風鈴の助走",
     "nameEn": "Wind-Chime Run-Up",
+    "nameZh": "风铃助跑",
     "loreJa": "鳴った分だけ、距離が縮む。",
     "loreEn": "Every chime shortens the distance.",
+    "loreZh": "铃每响一声，距离便短一截。",
     "powers": [
       {
         "power": "RunUp",
@@ -1927,8 +2129,10 @@
     "family": "Mend",
     "nameJa": "囲炉裏の薬環",
     "nameEn": "Hearthside Remedy Ring",
+    "nameZh": "围炉药环",
     "loreJa": "火を囲んだ手は、薬を覚える。",
     "loreEn": "Hands that circle a fire remember medicine.",
+    "loreZh": "围着炉火的手，记得药方。",
     "powers": [
       {
         "power": "Apothecary",
@@ -1945,8 +2149,10 @@
     "family": "Mend",
     "nameJa": "蓮印の溢れ",
     "nameEn": "Lotus Overflow",
+    "nameZh": "莲印满溢",
     "loreJa": "満ちた水は、葉を盾に変える。",
     "loreEn": "Water that overfills turns leaves to shields.",
+    "loreZh": "溢满的水，把叶化作盾。",
     "powers": [
       {
         "power": "OverflowingLife",
@@ -1964,8 +2170,10 @@
     "family": "Mend",
     "nameJa": "癒し匣の砕音",
     "nameEn": "Mender's Crack",
+    "nameZh": "治愈匣碎响",
     "loreJa": "開けた匣の中で、何かが弾ける。",
     "loreEn": "Inside the opened locket, something bursts.",
+    "loreZh": "打开的匣中，有什么迸裂开来。",
     "powers": [
       {
         "power": "Shatter",
@@ -1982,8 +2190,10 @@
     "family": "Summon",
     "nameJa": "岩塊の共演",
     "nameEn": "Boulder Co-Star",
+    "nameZh": "巨岩联袂",
     "loreJa": "岩と並べば、道は広がる。",
     "loreEn": "Stand beside the boulder and the road widens.",
+    "loreZh": "与巨岩并肩，路便宽了。",
     "powers": [
       {
         "power": "CoStar",
@@ -2000,8 +2210,10 @@
     "family": "Summon",
     "nameJa": "牙飾りの継ぎ",
     "nameEn": "Fang Relay",
+    "nameZh": "牙饰接力",
     "loreJa": "一本の牙が、次の牙へ繋ぐ。",
     "loreEn": "One fang passes the charge to the next.",
+    "loreZh": "一颗獠牙，把接力传给下一颗。",
     "powers": [
       {
         "power": "RelayHand",
@@ -2018,8 +2230,10 @@
     "family": "Memory",
     "nameJa": "夢鏡の循環",
     "nameEn": "Dreaming-Lens Circuit",
+    "nameZh": "梦镜循环",
     "loreJa": "覗くたび、光が環を描く。",
     "loreEn": "Each look makes the light loop once more.",
+    "loreZh": "每看一次，光便多绕一圈。",
     "powers": [
       {
         "power": "CrystalCircuit",
@@ -2036,8 +2250,10 @@
     "family": "Memory",
     "nameJa": "風羽の終曲",
     "nameEn": "Windfeather Finale",
+    "nameZh": "风羽终曲",
     "loreJa": "羽が揃えば、幕が早まる。",
     "loreEn": "When the feathers gather, the curtain hurries.",
+    "loreZh": "羽毛聚齐之时，帷幕提前落下。",
     "powers": [
       {
         "power": "Finale",
@@ -2055,8 +2271,10 @@
     "family": "Plain",
     "nameJa": "戦角の凱歌",
     "nameEn": "War-Horn Victory Note",
+    "nameZh": "战角凯歌",
     "loreJa": "角笛が鳴り、砕けた後に息が戻る。",
     "loreEn": "The horn sounds; after the shattering, breath returns.",
+    "loreZh": "号角吹响；碎裂之后，呼吸回归。",
     "powers": [
       {
         "power": "Shatter",
@@ -2077,8 +2295,10 @@
     "family": "Frost",
     "nameJa": "冬樫の白息",
     "nameEn": "Winter Oak White Breath",
+    "nameZh": "冬栎白息",
     "loreJa": "樫の葉が落ちる頃、霧が味方する。",
     "loreEn": "When oak leaves fall, the mist takes your side.",
+    "loreZh": "栎叶飘落之时，雾气便站在你这边。",
     "powers": [
       {
         "power": "Frost",
@@ -2099,8 +2319,10 @@
     "family": "Flame",
     "nameJa": "戦鼓の白煙",
     "nameEn": "War-Drum White Smoke",
+    "nameZh": "战鼓白烟",
     "loreJa": "打ち鳴らせば、煙と種が散る。",
     "loreEn": "Every beat scatters smoke and seeds.",
+    "loreZh": "每一记鼓点，都散出烟与种子。",
     "powers": [
       {
         "power": "Steam",
@@ -2121,8 +2343,10 @@
     "family": "Light",
     "nameJa": "陽輪の二重奏",
     "nameEn": "Sunspoke Duet",
+    "nameZh": "阳轮二重奏",
     "loreJa": "傘と情けを、同時に差し出す。",
     "loreEn": "It offers a parasol and a kindness at once.",
+    "loreZh": "同时递出伞与善意。",
     "powers": [
       {
         "power": "StarShield",
@@ -2143,8 +2367,10 @@
     "family": "Dark",
     "nameJa": "嵐鈴の夜噛み",
     "nameEn": "Storm Bell Nightbite",
+    "nameZh": "风暴铃夜噬",
     "loreJa": "鐘が鳴る夜は、影が魂を舐める。",
     "loreEn": "On nights the bell rings, shadow licks at souls.",
+    "loreZh": "铃声响起的夜晚，影子舔舐灵魂。",
     "powers": [
       {
         "power": "Umbra",
@@ -2165,8 +2391,10 @@
     "family": "Guard",
     "nameJa": "石心の備え風",
     "nameEn": "Stone Heart Readywind",
+    "nameZh": "石心戒备风",
     "loreJa": "石は構え、風だけが動く。",
     "loreEn": "The stone holds its guard; only the wind moves.",
+    "loreZh": "石头守住架势，只有风在动。",
     "powers": [
       {
         "power": "ReadyGuard",
@@ -2187,8 +2415,10 @@
     "family": "Gale",
     "nameJa": "西風の二つ輪",
     "nameEn": "Zephyr Twin Rings",
+    "nameZh": "西风双环",
     "loreJa": "追風と旋風を、一本の指で。",
     "loreEn": "Tailwind and whirlwind on a single finger.",
+    "loreZh": "一根手指上，顺风与旋风。",
     "powers": [
       {
         "power": "Tailwind",
@@ -2209,8 +2439,10 @@
     "family": "Mend",
     "nameJa": "樫守の二の息",
     "nameEn": "Oak Second Breath",
+    "nameZh": "栎守回气",
     "loreJa": "倒れても、根から息が戻る。",
     "loreEn": "Even felled, breath returns through the roots.",
+    "loreZh": "纵然倒下，气息也会顺着根回来。",
     "powers": [
       {
         "power": "SecondWind",
@@ -2231,8 +2463,10 @@
     "family": "Summon",
     "nameJa": "海沫の分け輪",
     "nameEn": "Seafoam Shared Ring",
+    "nameZh": "海沫分环",
     "loreJa": "泡の輪は、嵐を半分にする。",
     "loreEn": "A ring of foam halves the storm.",
+    "loreZh": "一圈泡沫，把风暴减去一半。",
     "powers": [
       {
         "power": "SharedWard",
@@ -2253,8 +2487,10 @@
     "family": "Summon",
     "nameJa": "爪飾りの二役",
     "nameEn": "Talon's Two Roles",
+    "nameZh": "爪饰双职",
     "loreJa": "並び立ち、そして見守る。",
     "loreEn": "It stands with you, and it watches.",
+    "loreZh": "与你并肩，也替你守望。",
     "powers": [
       {
         "power": "CoStar",
@@ -2275,8 +2511,10 @@
     "family": "Memory",
     "nameJa": "氷心の切り札",
     "nameEn": "Frozen-Heart Trump",
+    "nameZh": "冰心王牌",
     "loreJa": "凍えた胸に、最後の一枚がある。",
     "loreEn": "In the frozen chest waits the final card.",
+    "loreZh": "冻结的胸膛里，候着最后一张牌。",
     "powers": [
       {
         "power": "AceInHand",
@@ -2297,8 +2535,10 @@
     "family": "Memory",
     "nameJa": "古時計の循環",
     "nameEn": "Old-Clock Circuit",
+    "nameZh": "旧时钟循环",
     "loreJa": "針が一周すれば、恵みが落ちる。",
     "loreEn": "Each full turn of the hands drops a boon.",
+    "loreZh": "指针每走满一圈，便落下一份恩泽。",
     "powers": [
       {
         "power": "CrystalCircuit",
@@ -2319,8 +2559,10 @@
     "family": "Plain",
     "nameJa": "灰踏みの静雷",
     "nameEn": "Ashwalker Quiet Lightning",
+    "nameZh": "踏灰静雷",
     "loreJa": "灰の上を、光が這う。",
     "loreEn": "Light crawls across the ash.",
+    "loreZh": "光在灰烬上爬行。",
     "powers": [
       {
         "power": "ChainLightning",
@@ -2338,8 +2580,10 @@
     "family": "Plain",
     "nameJa": "追跡の砕け音",
     "nameEn": "Tracker's Crack",
+    "nameZh": "追踪碎响",
     "loreJa": "踏み抜いた先で、音が弾ける。",
     "loreEn": "Where the boot breaks through, sound bursts.",
+    "loreZh": "靴子踏破之处，声音迸裂。",
     "powers": [
       {
         "power": "Shatter",
@@ -2357,8 +2601,10 @@
     "family": "Plain",
     "nameJa": "棘靴の止水",
     "nameEn": "Spiked Stillwater",
+    "nameZh": "棘靴止水",
     "loreJa": "踏み込んだ足元が、水面になる。",
     "loreEn": "Where the boot plants, still water forms.",
+    "loreZh": "靴子踏定之处，止水成面。",
     "powers": [
       {
         "power": "StillWater",
@@ -2376,8 +2622,10 @@
     "family": "Frost",
     "nameJa": "暁霧の白霜",
     "nameEn": "Dawnmist Rime",
+    "nameZh": "晓雾白霜",
     "loreJa": "霧の靴跡が、霜になる。",
     "loreEn": "The misty footprints turn to rime.",
+    "loreZh": "雾中的脚印，凝成白霜。",
     "powers": [
       {
         "power": "Frost",
@@ -2395,8 +2643,10 @@
     "family": "Frost",
     "nameJa": "霜踏みの湯気",
     "nameEn": "Froststride Steam",
+    "nameZh": "踏霜白雾",
     "loreJa": "冷たい歩みの後ろに、白い幕。",
     "loreEn": "Behind the cold stride, a white curtain.",
+    "loreZh": "寒冷脚步之后，垂着一道白幕。",
     "powers": [
       {
         "power": "Steam",
@@ -2414,8 +2664,10 @@
     "family": "Flame",
     "nameJa": "暁足の四連火",
     "nameEn": "Dawnstep Quadruple",
+    "nameZh": "晓步四连火",
     "loreJa": "四歩目ごとに、火が灯る。",
     "loreEn": "Every fourth step kindles a flame.",
+    "loreZh": "每走四步，便点燃一簇火。",
     "powers": [
       {
         "power": "Blaze",
@@ -2433,8 +2685,10 @@
     "family": "Flame",
     "nameJa": "燠火履きの粉",
     "nameEn": "Embered-Slipper Sparks",
+    "nameZh": "余烬履火星",
     "loreJa": "歩くたび、火の粉が残る。",
     "loreEn": "Each step leaves sparks behind.",
+    "loreZh": "每一步，都留下火星。",
     "powers": [
       {
         "power": "Ember",
@@ -2452,8 +2706,10 @@
     "family": "Flame",
     "nameJa": "突風履きの種",
     "nameEn": "Mistral Black Seed",
+    "nameZh": "阵风黑种",
     "loreJa": "風が運んだ火の種を、履いて歩く。",
     "loreEn": "It walks wearing fire's seed the wind brought.",
+    "loreZh": "脚上穿着风带来的火种而行。",
     "powers": [
       {
         "power": "Cinder",
@@ -2471,8 +2727,10 @@
     "family": "Light",
     "nameJa": "彗星履きの灯",
     "nameEn": "Comet-Stride Lamp",
+    "nameZh": "彗星履之灯",
     "loreJa": "流れた跡に、灯が残る。",
     "loreEn": "Along the comet's wake, a lamp remains.",
+    "loreZh": "流星掠过的轨迹上，留下一盏灯。",
     "powers": [
       {
         "power": "Barrier",
@@ -2490,8 +2748,10 @@
     "family": "Light",
     "nameJa": "賢履きの星傘",
     "nameEn": "Sage's Starshade",
+    "nameZh": "贤履星伞",
     "loreJa": "歩みの果てに、星が差しかかる。",
     "loreEn": "At the walk's end, a star shades you.",
+    "loreZh": "走到路的尽头，星辰为你撑伞。",
     "powers": [
       {
         "power": "StarShield",
@@ -2509,8 +2769,10 @@
     "family": "Dark",
     "nameJa": "必中の吸魂",
     "nameEn": "Deadeye Siphon",
+    "nameZh": "必中摄魂",
     "loreJa": "外さない脚が、息を拾う。",
     "loreEn": "Feet that never miss gather breath.",
+    "loreZh": "从不失脚的脚，收集着气息。",
     "powers": [
       {
         "power": "SoulSiphon",
@@ -2527,8 +2789,10 @@
     "family": "Dark",
     "nameJa": "宵踏みの断罪",
     "nameEn": "Duskstep Verdict",
+    "nameZh": "暮步断罪",
     "loreJa": "黄昏の中で、終わりを踏む。",
     "loreEn": "In the dusk it treads on endings.",
+    "loreZh": "在黄昏中，踏碎终结。",
     "powers": [
       {
         "power": "Executioner",
@@ -2546,8 +2810,10 @@
     "family": "Dark",
     "nameJa": "霧履きの蝕",
     "nameEn": "Mist-Shoe Eclipse",
+    "nameZh": "雾履之蚀",
     "loreJa": "霧の中で、昼と夜が入れ替わる。",
     "loreEn": "Inside the mist, day and night trade places.",
+    "loreZh": "雾中，昼与夜互换位置。",
     "powers": [
       {
         "power": "Eclipse",
@@ -2565,8 +2831,10 @@
     "family": "Guard",
     "nameJa": "沈錘の輪",
     "nameEn": "Ballast Ring",
+    "nameZh": "压舱之环",
     "loreJa": "重い靴ほど、輪は固い。",
     "loreEn": "The heavier the boot, the harder the ring.",
+    "loreZh": "靴越沉重，环越坚固。",
     "powers": [
       {
         "power": "Bulwark",
@@ -2583,8 +2851,10 @@
     "family": "Guard",
     "nameJa": "鎖脛の守護霊",
     "nameEn": "Chain-Greave Guardian",
+    "nameZh": "锁胫守护灵",
     "loreJa": "鎖の重みが、大波を止める。",
     "loreEn": "The chain's weight halts the great wave.",
+    "loreZh": "锁链之重，挡下巨浪。",
     "powers": [
       {
         "power": "Aegis",
@@ -2601,8 +2871,10 @@
     "family": "Gale",
     "nameJa": "電光足の追風",
     "nameEn": "Blitz Tailwind",
+    "nameZh": "电光足顺风",
     "loreJa": "閃いた後を、風が追う。",
     "loreEn": "After the flash, the wind gives chase.",
+    "loreZh": "闪光过后，风追了上来。",
     "powers": [
       {
         "power": "Tailwind",
@@ -2619,8 +2891,10 @@
     "family": "Gale",
     "nameJa": "舞鞋の旋風",
     "nameEn": "Dancer's Whirl",
+    "nameZh": "舞鞋旋风",
     "loreJa": "回れば、靴先が渦になる。",
     "loreEn": "Every turn, the toe draws a whirl.",
+    "loreZh": "每一旋身，鞋尖都画出旋涡。",
     "powers": [
       {
         "power": "Whirlwind",
@@ -2637,8 +2911,10 @@
     "family": "Gale",
     "nameJa": "追撃脛の助走",
     "nameEn": "Hunter's Run-Up",
+    "nameZh": "追击胫甲助跑",
     "loreJa": "距離こそ、爪の長さ。",
     "loreEn": "Distance is the claw's true length.",
+    "loreZh": "距离，才是爪子的真正长度。",
     "powers": [
       {
         "power": "RunUp",
@@ -2655,8 +2931,10 @@
     "family": "Mend",
     "nameJa": "深根靴の溢れ",
     "nameEn": "Deeproot Overflow",
+    "nameZh": "深根靴满溢",
     "loreJa": "根が吸い過ぎて、盾が実る。",
     "loreEn": "Roots that drink too much bear shields.",
+    "loreZh": "喝得太饱的根，结出护盾。",
     "powers": [
       {
         "power": "OverflowingLife",
@@ -2673,8 +2951,10 @@
     "family": "Mend",
     "nameJa": "守靴の灯守",
     "nameEn": "Guardian Warden",
+    "nameZh": "守靴守灯",
     "loreJa": "倒れかけた時、靴が灯る。",
     "loreEn": "Just before falling, the boots light up.",
+    "loreZh": "倒下之前，靴子亮起。",
     "powers": [
       {
         "power": "SecondWind",
@@ -2692,8 +2972,10 @@
     "family": "Summon",
     "nameJa": "獣趾靴の見守り",
     "nameEn": "Beastpaw Watch",
+    "nameZh": "兽趾靴守望",
     "loreJa": "獣の足跡が、後ろを見る。",
     "loreEn": "The paw prints watch behind you.",
+    "loreZh": "兽的足印，替你看着身后。",
     "powers": [
       {
         "power": "WatchfulHand",
@@ -2710,8 +2992,10 @@
     "family": "Summon",
     "nameJa": "棘踏みの共演",
     "nameEn": "Thorntread Co-Star",
+    "nameZh": "踏棘联袂",
     "loreJa": "棘の上で、誰かと並んで立つ。",
     "loreEn": "On the thorns, it stands beside someone.",
+    "loreZh": "在棘刺之上，与某人并肩而立。",
     "powers": [
       {
         "power": "CoStar",
@@ -2729,8 +3013,10 @@
     "family": "Memory",
     "nameJa": "鴉羽靴の欠片",
     "nameEn": "Raven-Boot Shard",
+    "nameZh": "鸦羽靴碎片",
     "loreJa": "落とした羽の数だけ、恵み。",
     "loreEn": "For every feather shed, a boon.",
+    "loreZh": "每落一根羽毛，便有一份恩泽。",
     "powers": [
       {
         "power": "ShardBoon",
@@ -2747,8 +3033,10 @@
     "family": "Memory",
     "nameJa": "星座履きの余韻",
     "nameEn": "Constellation Echo",
+    "nameZh": "星座履余韵",
     "loreJa": "星の並びが、鋭く響く。",
     "loreEn": "The stars' arrangement rings sharp.",
+    "loreZh": "星辰的排布，尖锐作响。",
     "powers": [
       {
         "power": "CriticalEcho",
@@ -2766,8 +3054,10 @@
     "family": "Plain",
     "nameJa": "鉄下駄の先手",
     "nameEn": "Iron-Clog First Move",
+    "nameZh": "铁木屐先手",
     "loreJa": "重い一歩が、勝負を決める。",
     "loreEn": "One heavy step settles the contest.",
+    "loreZh": "沉重的一步，定下胜负。",
     "powers": [
       {
         "power": "OpeningStrike",
@@ -2785,8 +3075,10 @@
     "family": "Plain",
     "nameJa": "岩靴の見切り",
     "nameEn": "Stone-Boot Read",
+    "nameZh": "岩靴看破",
     "loreJa": "動かない足が、次を読む。",
     "loreEn": "Feet that do not move read what comes.",
+    "loreZh": "不动的脚，读懂来势。",
     "powers": [
       {
         "power": "PerfectRead",
@@ -2803,8 +3095,10 @@
     "family": "Frost",
     "nameJa": "氷上の足留め",
     "nameEn": "Ice-Skimmer Snare",
+    "nameZh": "冰上困足",
     "loreJa": "滑った跡で、追う足が止まる。",
     "loreEn": "Along the glide, pursuing feet slow.",
+    "loreZh": "滑行而过之处，追赶的脚步慢下来。",
     "powers": [
       {
         "power": "Fetters",
@@ -2822,8 +3116,10 @@
     "family": "Frost",
     "nameJa": "鉄波の晶",
     "nameEn": "Iron-Wave Crystal",
+    "nameZh": "铁浪之晶",
     "loreJa": "寄せる鉄の波が、光を鎧う。",
     "loreEn": "The advancing iron wave arms itself with light.",
+    "loreZh": "涌来的铁浪，以光为甲。",
     "powers": [
       {
         "power": "FrostCrystal",
@@ -2841,8 +3137,10 @@
     "family": "Frost",
     "nameJa": "根靴の脆氷",
     "nameEn": "Rooted Brittle Ice",
+    "nameZh": "根靴脆冰",
     "loreJa": "張った根の周りで、氷が割れる。",
     "loreEn": "Around the spread roots, ice cracks.",
+    "loreZh": "蔓开的根须周围，冰应声开裂。",
     "powers": [
       {
         "power": "BrittleIce",
@@ -2860,8 +3158,10 @@
     "family": "Flame",
     "nameJa": "火駆けの飛び火",
     "nameEn": "Emberdash Wildfire",
+    "nameZh": "火驰燎原",
     "loreJa": "駆けた跡で、火が増える。",
     "loreEn": "Along the dash, the fires multiply.",
+    "loreZh": "奔跑过的路上，火越烧越多。",
     "powers": [
       {
         "power": "Wildfire",
@@ -2879,8 +3179,10 @@
     "family": "Flame",
     "nameJa": "影履きの拍子",
     "nameEn": "Shadow-Slipper Rhythm",
+    "nameZh": "影履节拍",
     "loreJa": "影を踏むたび、足が軽い。",
     "loreEn": "Each shadow stepped on lightens the feet.",
+    "loreZh": "每踏过一道影子，脚便轻一分。",
     "powers": [
       {
         "power": "Momentum",
@@ -2897,8 +3199,10 @@
     "family": "Light",
     "nameJa": "騎靴の重ね光",
     "nameEn": "Knight's Stacked Glow",
+    "nameZh": "骑士靴叠光",
     "loreJa": "鉄の靴が、光を弾き返す。",
     "loreEn": "The iron shoe rebounds the light.",
+    "loreZh": "铁靴把光弹了回去。",
     "powers": [
       {
         "power": "Radiance",
@@ -2916,8 +3220,10 @@
     "family": "Light",
     "nameJa": "陽だまりの返し",
     "nameEn": "Sunwarm Kind Return",
+    "nameZh": "阳地回善",
     "loreJa": "温めた分が、誰かの情けで戻る。",
     "loreEn": "The warmth given returns as kindness.",
+    "loreZh": "付出的温暖，化作善意归来。",
     "powers": [
       {
         "power": "KindnessReturns",
@@ -2935,8 +3241,10 @@
     "family": "Light",
     "nameJa": "陽蹴りの継ぎ糸",
     "nameEn": "Sunspur Lifeline",
+    "nameZh": "阳踢生命线",
     "loreJa": "蹴った光が、命に繋がる。",
     "loreEn": "The kicked light links to a life.",
+    "loreZh": "踢出的光，连向一条生命。",
     "powers": [
       {
         "power": "Lifeline",
@@ -2954,8 +3262,10 @@
     "family": "Dark",
     "nameJa": "残り火の影踏み",
     "nameEn": "Ember-Tread Shadow",
+    "nameZh": "余烬踏影",
     "loreJa": "火の周りの影を、歩いて濃くする。",
     "loreEn": "It walks the shadows thicker round the fire.",
+    "loreZh": "它把火四周的影子，越走越浓。",
     "powers": [
       {
         "power": "Umbra",
@@ -2973,8 +3283,10 @@
     "family": "Dark",
     "nameJa": "夜帳の跡目",
     "nameEn": "Nightveil Heirloom",
+    "nameZh": "夜幕继承",
     "loreJa": "夜を継いだ足に、影が従う。",
     "loreEn": "Shadow follows feet that inherited night.",
+    "loreZh": "影子跟随着继承了黑夜的脚。",
     "powers": [
       {
         "power": "UmbralHeritage",
@@ -2992,8 +3304,10 @@
     "family": "Guard",
     "nameJa": "城塞鉄鞋の棘",
     "nameEn": "Bastion Spines",
+    "nameZh": "城塞铁鞋之棘",
     "loreJa": "城門の前で、棘が返る。",
     "loreEn": "Before the gate, the spines give back.",
+    "loreZh": "城门之前，棘刺回敬来者。",
     "powers": [
       {
         "power": "Thorns",
@@ -3010,8 +3324,10 @@
     "family": "Guard",
     "nameJa": "鉄脛の不動",
     "nameEn": "Iron-Greave Immovability",
+    "nameZh": "铁胫不动",
     "loreJa": "踏ん張った鉄は、動かない。",
     "loreEn": "Iron set against the ground does not move.",
+    "loreZh": "咬住大地的铁，寸步不移。",
     "powers": [
       {
         "power": "ImmovableStance",
@@ -3028,8 +3344,10 @@
     "family": "Guard",
     "nameJa": "土塁脛の備え",
     "nameEn": "Rampart Readiness",
+    "nameZh": "土垒胫甲戒备",
     "loreJa": "土の盛りは、いつも構えている。",
     "loreEn": "The earthwork is always braced.",
+    "loreZh": "土垒永远处于戒备。",
     "powers": [
       {
         "power": "ReadyGuard",
@@ -3046,8 +3364,10 @@
     "family": "Gale",
     "nameJa": "烈風脛の疾駆",
     "nameEn": "Gale-Greave Dash",
+    "nameZh": "烈风胫甲疾驰",
     "loreJa": "かわせば、風が足に乗る。",
     "loreEn": "Dodge, and the wind mounts your feet.",
+    "loreZh": "一闪身，风便乘上双脚。",
     "powers": [
       {
         "power": "Sprint",
@@ -3064,8 +3384,10 @@
     "family": "Gale",
     "nameJa": "嵐駆けの乱気",
     "nameEn": "Stormrunner Turbulence",
+    "nameZh": "驰暴乱流",
     "loreJa": "嵐の中は、歩くほど速い。",
     "loreEn": "Inside the storm, the more feet, the faster.",
+    "loreZh": "风暴之中，越走越快。",
     "powers": [
       {
         "power": "Frenzy",
@@ -3083,8 +3405,10 @@
     "family": "Mend",
     "nameJa": "火華履きの吸命",
     "nameEn": "Firebloom Leech",
+    "nameZh": "火华履吸命",
     "loreJa": "咲いた火から、少しずつ貰う。",
     "loreEn": "It sips a little from each blossom of fire.",
+    "loreZh": "从每一朵火花中，浅浅啜饮。",
     "powers": [
       {
         "power": "Lifesteal",
@@ -3102,8 +3426,10 @@
     "family": "Mend",
     "nameJa": "癒し靴の薬",
     "nameEn": "Mender's Remedy Shoes",
+    "nameZh": "治愈鞋之药",
     "loreJa": "歩いた道が、薬の処方。",
     "loreEn": "The road walked writes the prescription.",
+    "loreZh": "走过的路，写就药方。",
     "powers": [
       {
         "power": "Apothecary",
@@ -3121,8 +3447,10 @@
     "family": "Mend",
     "nameJa": "巡礼靴の残身",
     "nameEn": "Pilgrim's Echo",
+    "nameZh": "朝圣靴余韵",
     "loreJa": "かわした道が、次の一歩を教える。",
     "loreEn": "The path dodged teaches the next step.",
+    "loreZh": "闪避过的路，教会下一步。",
     "powers": [
       {
         "power": "EchoingDodge",
@@ -3139,8 +3467,10 @@
     "family": "Summon",
     "nameJa": "水銀脛の分け合い",
     "nameEn": "Quicksilver Share",
+    "nameZh": "水银胫甲分担",
     "loreJa": "流れた分を、味方に回す。",
     "loreEn": "Whatever flows off is routed to allies.",
+    "loreZh": "流走的部分，尽归同伴。",
     "powers": [
       {
         "power": "SharedWard",
@@ -3158,8 +3488,10 @@
     "family": "Summon",
     "nameJa": "潮溜まりの継ぎ",
     "nameEn": "Tidepool Relay",
+    "nameZh": "潮池接力",
     "loreJa": "波が引けば、次の溜まりへ渡す。",
     "loreEn": "As the wave recedes, it hands to the next pool.",
+    "loreZh": "浪退去时，交棒给下一处潮池。",
     "powers": [
       {
         "power": "RelayHand",
@@ -3177,8 +3509,10 @@
     "family": "Memory",
     "nameJa": "根草履の終曲",
     "nameEn": "Root-Sandal Finale",
+    "nameZh": "根草鞋终曲",
     "loreJa": "編み終わった縄が、幕を引く。",
     "loreEn": "The finished braid draws the curtain.",
+    "loreZh": "编完的绳，拉下帷幕。",
     "powers": [
       {
         "power": "Finale",
@@ -3196,8 +3530,10 @@
     "family": "Memory",
     "nameJa": "星渡りの巡り",
     "nameEn": "Starstep Cycle",
+    "nameZh": "星渡巡回",
     "loreJa": "渡った星路が、巡って戻る。",
     "loreEn": "The star-road crossed circles back.",
+    "loreZh": "渡过的星路，绕回原处。",
     "powers": [
       {
         "power": "StardustCycle",
@@ -3215,8 +3551,10 @@
     "family": "Plain",
     "nameJa": "旅靴の二の拍",
     "nameEn": "Traveler's Second Beat",
+    "nameZh": "旅靴二拍",
     "loreJa": "歩いた分だけ、息も余る。",
     "loreEn": "For every mile walked, breath left over.",
+    "loreZh": "走过多少路，气息便剩多少。",
     "powers": [
       {
         "power": "Momentum",
@@ -3237,8 +3575,10 @@
     "family": "Frost",
     "nameJa": "冬毛の白い舞",
     "nameEn": "Winterhide White Dance",
+    "nameZh": "冬毛白舞",
     "loreJa": "雪の上を、舞いながら渡る。",
     "loreEn": "Across the snow it goes, dancing.",
+    "loreZh": "踏雪而行，且舞且渡。",
     "powers": [
       {
         "power": "Frost",
@@ -3260,8 +3600,10 @@
     "family": "Flame",
     "nameJa": "潮履きの焔壁",
     "nameEn": "Tide-Sandal Fire Wall",
+    "nameZh": "潮履焰壁",
     "loreJa": "潮風が火を運び、輪を固める。",
     "loreEn": "The sea wind bears fire and closes the ring.",
+    "loreZh": "海风载着火，把环合拢。",
     "powers": [
       {
         "power": "Blaze",
@@ -3283,8 +3625,10 @@
     "family": "Light",
     "nameJa": "護り草鞋の棘",
     "nameEn": "Wardstep Thorns",
+    "nameZh": "护草鞋之棘",
     "loreJa": "結んだ縄が、灯と棘になる。",
     "loreEn": "The knotted rope becomes lamp and thorn.",
+    "loreZh": "打结的绳，化作灯与棘。",
     "powers": [
       {
         "power": "Barrier",
@@ -3306,8 +3650,10 @@
     "family": "Dark",
     "nameJa": "忍び足の収穫",
     "nameEn": "Stalker's Harvest",
+    "nameZh": "潜行足收获",
     "loreJa": "音もなく歩き、息を集める。",
     "loreEn": "It walks soundless and gathers breath.",
+    "loreZh": "无声行走，收集气息。",
     "powers": [
       {
         "power": "SoulSiphon",
@@ -3328,8 +3674,10 @@
     "family": "Guard",
     "nameJa": "亀甲の二重殻",
     "nameEn": "Tortoise Twin Shell",
+    "nameZh": "龟甲双壳",
     "loreJa": "二枚の甲羅が、輪と霊を担ぐ。",
     "loreEn": "Two shells carry the ring and the spirit.",
+    "loreZh": "两片甲壳，担起环与灵。",
     "powers": [
       {
         "power": "Bulwark",
@@ -3350,8 +3698,10 @@
     "family": "Gale",
     "nameJa": "風履きの二重渦",
     "nameEn": "Wind-Sandal Twin Whirl",
+    "nameZh": "风履双重涡",
     "loreJa": "追風を纏い、渦を残す。",
     "loreEn": "Wrapped in tailwind, it leaves a whirl.",
+    "loreZh": "裹着顺风，留下旋涡。",
     "powers": [
       {
         "power": "Tailwind",
@@ -3372,8 +3722,10 @@
     "family": "Mend",
     "nameJa": "石衛の溢れ残り",
     "nameEn": "Stoneguard Overflow",
+    "nameZh": "石卫余溢",
     "loreJa": "石の懐に、余った命を隠す。",
     "loreEn": "The stone's folds hide the life left over.",
+    "loreZh": "石的褶皱里，藏着余下的生命。",
     "powers": [
       {
         "power": "OverflowingLife",
@@ -3394,8 +3746,10 @@
     "family": "Summon",
     "nameJa": "狼皮の見張り狩り",
     "nameEn": "Wolfskin Watch-Hunt",
+    "nameZh": "狼皮守猎",
     "loreJa": "狼は見張り、息を集める。",
     "loreEn": "The wolf keeps watch and gathers breath.",
+    "loreZh": "狼守望着，收集气息。",
     "powers": [
       {
         "power": "WatchfulHand",
@@ -3416,8 +3770,10 @@
     "family": "Summon",
     "nameJa": "狼歩きの二役",
     "nameEn": "Wolfstride Two Roles",
+    "nameZh": "狼步双职",
     "loreJa": "盾を分け、後ろを見る。",
     "loreEn": "It splits its shield and watches behind.",
+    "loreZh": "分出护盾，同时看着身后。",
     "powers": [
       {
         "power": "SharedWard",
@@ -3439,8 +3795,10 @@
     "family": "Memory",
     "nameJa": "星履きの駆け恵み",
     "nameEn": "Starlit Dash-Boon",
+    "nameZh": "星履驰恩",
     "loreJa": "駆けた分だけ、恵みが積もる。",
     "loreEn": "The farther the dash, the deeper the boons.",
+    "loreZh": "奔得越远，恩泽越厚。",
     "powers": [
       {
         "power": "ShardBoon",
@@ -3461,8 +3819,10 @@
     "family": "Memory",
     "nameJa": "囁き織りの幕",
     "nameEn": "Whisperweave Curtain",
+    "nameZh": "低语织幕",
     "loreJa": "織り上げた囁きが、幕を早める。",
     "loreEn": "The woven whispers hurry the curtain.",
+    "loreZh": "织入的低语，催促着帷幕。",
     "powers": [
       {
         "power": "Finale",
@@ -3484,8 +3844,10 @@
     "family": "Plain",
     "nameJa": "射手の砕け腕",
     "nameEn": "Archer's Crack Bracers",
+    "nameZh": "射手碎响护腕",
     "loreJa": "放った矢の先で、何かが弾ける。",
     "loreEn": "Where the arrow lands, something bursts.",
+    "loreZh": "箭矢落下之处，有什么迸裂。",
     "powers": [
       {
         "power": "Shatter",
@@ -3502,8 +3864,10 @@
     "family": "Plain",
     "nameJa": "弓張りの先手",
     "nameEn": "Bowmaster's First Move",
+    "nameZh": "弓手先手",
     "loreJa": "弦を引く手が、勝負を先取る。",
     "loreEn": "The drawing hand takes the lead.",
+    "loreZh": "拉弓之手，先声夺人。",
     "powers": [
       {
         "power": "OpeningStrike",
@@ -3520,8 +3884,10 @@
     "family": "Plain",
     "nameJa": "鉄篭手の盾打",
     "nameEn": "Iron Shieldbash",
+    "nameZh": "铁笼手盾击",
     "loreJa": "籠手そのものが、盾になる。",
     "loreEn": "The gauntlet itself becomes the shield.",
+    "loreZh": "笼手本身，便是盾。",
     "powers": [
       {
         "power": "ShieldBash",
@@ -3538,8 +3904,10 @@
     "family": "Frost",
     "nameJa": "霜手袋の白息",
     "nameEn": "Frost-Mitt Breath",
+    "nameZh": "霜手套白息",
     "loreJa": "握ったものから、熱を奪う。",
     "loreEn": "It steals heat from whatever it holds.",
+    "loreZh": "从握住的东西上，夺走热量。",
     "powers": [
       {
         "power": "Frost",
@@ -3556,8 +3924,10 @@
     "family": "Frost",
     "nameJa": "光巻きの湯気",
     "nameEn": "Radiant Steam Wraps",
+    "nameZh": "光缠白雾",
     "loreJa": "光と冷気が、白い幕を作る。",
     "loreEn": "Light and cold weave a white curtain.",
+    "loreZh": "光与寒气，织出一道白幕。",
     "powers": [
       {
         "power": "Steam",
@@ -3574,8 +3944,10 @@
     "family": "Flame",
     "nameJa": "火織りの四連",
     "nameEn": "Blazeknit Quadruple",
+    "nameZh": "火织四连",
     "loreJa": "編み目が四つ数え、火を噴く。",
     "loreEn": "Four stitches counted, and fire spouts.",
+    "loreZh": "数满四针，火便喷出。",
     "powers": [
       {
         "power": "Blaze",
@@ -3592,8 +3964,10 @@
     "family": "Flame",
     "nameJa": "鎖拳の火の粉",
     "nameEn": "Chain-Fist Sparks",
+    "nameZh": "锁拳火星",
     "loreJa": "巻いた鎖から、火の粉が散る。",
     "loreEn": "Sparks fly off the wrapped chain.",
+    "loreZh": "缠在拳上的锁链，撒出火星。",
     "powers": [
       {
         "power": "Ember",
