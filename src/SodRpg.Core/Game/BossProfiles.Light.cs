@@ -9,7 +9,7 @@ namespace SodRpg.Core.Game
         public const string LightEventOrder = "native-input-once;charge-three-next-input-consumes;stage2-beam350;actual-clipped-terminal-stage3-lightning650;stage6-independent-cd12-three-sweeps300-400each;parts-independent;nonentity-crystals-replaced-max2-life3s;beam-target-once;native-success-three-same-target-gap1s-ledger3-endpulse350-cd6-life2-pending1";
         public const string LightNativeContract = "Mon_Special_BossLightElemental;Ai_U_WorldCracker-owned-installed-St_U_WorldCracker-parent-caster-actor-life-room-run;loaded-positive-angleSpeed-plus30-cap1.5;loaded-positive-radius-plus.30-cap1.5;restore-exact-loaded-fields;native-channel-cost-duration-interval-raycast-maxDistance-preserved;ActiveLogicUpdate-local1-clipped-num-after-ground-raycast-distance-plus2-exact-Dispatch;positive-final-native-ticks-only-generated-excluded;stop-cancels-pending;normal-stages-no-required-memory;nonEntity-crystals-no-summon-proc-loot;bounded-owner64-native128-beams12-targets8-scan64-wall32";
 
-        private static BossMoveProfile LightProfile(string suffix, string ja, string en, string zh = null, BossChannelDef[] channels, params BossAction[] actions)
+        private static BossMoveProfile LightProfile(string suffix, string ja, string en, string zh, BossChannelDef[] channels, params BossAction[] actions)
             => new BossMoveProfile("boss_light_elemental." + suffix, LightSetId, new Txt(ja, en, zh), channels, actions);
         private static BossAction LightBeam(BossEvent trigger, string channel, int cd, int delay, int range, int width, int duration = 0, int angle = 0, int count = 1)
             => new BossAction(trigger, BossMechanism.ShapeAttack, BossPayload.Damage, channel, BossShape.Line,
