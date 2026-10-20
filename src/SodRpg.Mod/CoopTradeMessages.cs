@@ -30,7 +30,7 @@ namespace SodRpg.Mod
         public string reasonCode;
         public string LocalizedStatus() => StatusText()?.ToString();
         internal Txt StatusText() => CoopTradeRules.IsKnownReason(reasonCode)
-            ? CoopTradeRules.ReasonMessage(reasonCode) : status == null ? null : new Txt(status, status);
+            ? CoopTradeRules.ReasonMessage(reasonCode) : status == null ? null : new Txt(status, status, status);
         /// <summary>
         /// The one place where the host pairs a status with its code — for every kind (error, cancelled,
         /// view, roster), so those displays localize the same way. Unknown reasons keep no code and

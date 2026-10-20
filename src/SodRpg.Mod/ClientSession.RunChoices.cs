@@ -111,7 +111,7 @@ namespace SodRpg.Mod
 
         public string ChooseDreamDepth(int depth)
         {
-            if (!CanChooseDepth) return Loc.T("夢の深さは遠征前にホストが選びます。", "The host chooses dream depth before the expedition.");
+            if (!CanChooseDepth) return Loc.T("夢の深さは遠征前にホストが選びます。", "The host chooses dream depth before the expedition.", "梦境深度由主机在远征前选择。");
             Profile.LastDreamDepth = DreamDepth.Clamp(depth);
             MarkDirty(false);
             SaveNow();
@@ -121,10 +121,10 @@ namespace SodRpg.Mod
 
         public string ChooseWaypoint(Waypoint waypoint)
         {
-            if (!CanChooseRunRules && !CanChooseInfinityPersonal) return Loc.T("道標はホストが選びます。", "The host chooses the waypoint.");
+            if (!CanChooseRunRules && !CanChooseInfinityPersonal) return Loc.T("道標はホストが選びます。", "The host chooses the waypoint.", "路标由主机选择。");
             if (Profile.Run?.Infinity != null && (InfinityPersonalSelectionMatchesCurrent || InfinityMode.PersonalIntentPending))
-                return Loc.T("個人の選択はすでに完了しています。", "Personal choices are already complete.");
-            if (!RunActive || !Profile.Run.AwaitingChoice) return Loc.T("道標は確保地点で選べます。", "Choose a waypoint at a secure point.");
+                return Loc.T("個人の選択はすでに完了しています。", "Personal choices are already complete.", "个人选择已完成。");
+            if (!RunActive || !Profile.Run.AwaitingChoice) return Loc.T("道標は確保地点で選べます。", "Choose a waypoint at a secure point.", "可在存仓点选择路标。");
             try { Emit(Rules.PickWaypoint(Profile, waypoint)); }
             catch (InvalidOperationException ex) { return ex.Message; }
             MarkDirty(true);
@@ -281,7 +281,7 @@ namespace SodRpg.Mod
             PublishRunChoices();
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                 "確保地点に到着。未確保の戦利品を「確保」するか、「深く潜る」かを選んでください。",
-                "Secure point reached. Choose to Secure your loot or Delve deeper.")));
+                "Secure point reached. Choose to Secure your loot or Delve deeper.", "已抵达存仓点。请选择将未存仓的战利品“存入仓库”，或“深入下潜”。")));
             SaveNow();
         }
 
@@ -435,8 +435,8 @@ namespace SodRpg.Mod
         }
 
         private string SecureChoiceUnavailable() => HasPendingTrades
-            ? Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.")
-            : Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve.");
+            ? Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.", "正在等待交易完成。")
+            : Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve.", "请等待主机确定路标并选择存入仓库或下潜。");
     }
 
     /// <summary>Primus death starts an ending sequence; the native result arrives only after its cutscene.</summary>

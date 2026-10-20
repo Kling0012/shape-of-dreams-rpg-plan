@@ -227,7 +227,7 @@ namespace SodRpg.Mod
                 {
                     _fusionCacheValid = false;
                     _confirmFusion = false;
-                    SetStatus(Loc.T("融合のみ停止しました：", "Only Fusion stopped: ") + ex.Message);
+                    SetStatus(Loc.T("融合のみ停止しました：", "Only Fusion stopped: ", "仅融合已停用：") + ex.Message);
                 }
             }
             GUI.enabled = true;
