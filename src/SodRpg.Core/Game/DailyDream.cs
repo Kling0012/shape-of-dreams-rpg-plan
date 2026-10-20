@@ -77,7 +77,7 @@ namespace SodRpg.Core.Game
             },
             new DailyDream
             {
-                Id = 6, Name = new Txt("悪夢の夜", "Night of Nightmares", "噩梦之夜"),
+                Id = 6, Name = new Txt("悪夢の夜", "Night of Nightmares", "梦魇之夜"),
                 NightmareMult = DailyDreamBalance.Day6NightmareMult,
             },
             new DailyDream
@@ -157,7 +157,7 @@ namespace SodRpg.Core.Game
             },
             new DailyDream
             {
-                Id = 22, Name = new Txt("悪夢の祭り", "Festival of Nightmares", "噩梦祭典"),
+                Id = 22, Name = new Txt("悪夢の祭り", "Festival of Nightmares", "梦魇祭典"),
                 NightmareMult = DailyDreamBalance.Day22NightmareMult, XpMult = DailyDreamBalance.Day22XpMult,
             },
             new DailyDream

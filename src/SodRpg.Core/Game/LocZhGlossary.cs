@@ -52,7 +52,7 @@ namespace SodRpg.Core.Game
         // 星図・遠征で繰り返し使う訳語（#960）。複合語を訳すときの参照用。
         // Keystone: 刻印 → 刻印、Cluster: 星団 → 星团、Bridge: 記憶の橋 → 记忆之桥
         // Rank: 段 → 阶、Loadout: 構成 → 配置、Training: 鍛錬 → 锻炼
-        // Nightmare: 悪夢 → 噩梦、Mastery: 熟練度 → 熟练度、Identity memory: 固有記憶 → 身份记忆
+        // Nightmare: 悪夢 → 梦魇、Mastery: 熟練度 → 熟练度、Identity memory: 固有記憶 → 身份记忆
         // Shield: 障壁 → 护盾、Ability Power: 魔力 → 法术强度、Crit: 会心 → 暴击
         // Keen: 冴え → 精妙、Dream Ring: 夢輪 → 梦环、Rime: 薄氷 → 霜华
         // 通常セットの説明（#963）: Cold → 冰冷、Shield → 护盾、Critical → 暴击、
@@ -211,7 +211,6 @@ namespace SodRpg.Core.Game
                 ["Rank"] = "阶",
                 ["Loadout"] = "配置",
                 ["Training"] = "锻炼",
-                ["Nightmare"] = "噩梦",
                 ["Mastery"] = "熟练度",
                 ["Identity memory"] = "身份记忆",
                 ["Shield"] = "护盾",
@@ -292,7 +291,6 @@ namespace SodRpg.Core.Game
                 ["Powder Keg Sympathy"] = "火药桶殉爆",
                 ["Keen Spreading Powder"] = "精妙扩散火药",
                 ["Burning Intensity"] = "燃烧浓度",
-                ["Wildfire"] = "蔓延之火",
                 ["Leaving the Firing Line"] = "脱离射线",
                 ["Countershot Arm"] = "反击射手",
                 ["Dodge Reset"] = "闪避重整",
@@ -1019,7 +1017,6 @@ namespace SodRpg.Core.Game
                 // 取引・図鑑・星団・敵の担当表示で繰り返し出る語
                 ["Cancel"] = "取消",
                 ["Dream Dust"] = "梦尘",
-                ["Legendary"] = "传说",
                 ["Memory cluster"] = "记忆星团",
                 ["Bridge cluster"] = "记忆之桥星团",
                 ["Outer cluster"] = "外缘星团",

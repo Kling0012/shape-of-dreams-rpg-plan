@@ -327,7 +327,7 @@ namespace SodRpg.Core.Game
         public static string Label(NightmareAffix a)
         {
             if ((a & NightmareAffix.Nemesis) != 0) return Loc.T("宿敵・", "Nemesis: ", "宿敌：") + Forbidden.NemesisName;
-            var parts = new List<string> { Loc.T("悪夢", "Nightmare", "噩梦") };
+            var parts = new List<string> { Loc.T("悪夢", "Nightmare", "梦魇") };
             foreach (var x in AllAffixes)
                 if ((a & x) != 0) parts.Add(AffixName(x));
             return string.Join(Loc.T("・", " ", " "), parts);
