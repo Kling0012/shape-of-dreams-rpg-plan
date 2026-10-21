@@ -3965,24 +3965,29 @@ namespace SodRpg.Mod
             GUILayout.Space(4);
             GUILayout.Label(Loc.T("自動分解と通知", "Auto salvage & notices", "自动分解与通知"), _st.Header);
             var choices = AutoSalvageChoices();
-            int salvageChoice = Mathf.Clamp((int)cfg.autoSalvageRarity, 0, choices.Length - 1);
+            // 壊れた保存値（範囲外の整数）は、効いている実態と同じ「しない」で表示する（AutoSalvageBelow と同じ防御）。
+            // ボタンを押すまでは保存値へ書き戻さない。Clamp の結果を無条件に書き戻すと、
+            // 利用者が選んでいない設定（例：レジェンダリー未満）が保存され、次の起動で有効になってしまう。
+            int salvageChoice = cfg.autoSalvageRarity >= AutoSalvageRarity.None && cfg.autoSalvageRarity <= AutoSalvageRarity.BelowLegendary
+                ? (int)cfg.autoSalvageRarity
+                : 0;
+            bool changed = false;
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T($"自動分解：{choices[salvageChoice]}", $"Auto salvage: {choices[salvageChoice]}", $"自动分解：{choices[salvageChoice]}"), _st.Small, GUILayout.Width(300));
-            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) salvageChoice--;
-            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) salvageChoice++;
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) { salvageChoice--; changed = true; }
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) { salvageChoice++; changed = true; }
             GUILayout.EndHorizontal();
+            // 行数も読み出し側（Notify など）と同じ Clamp で表示する。保存値が範囲外でもボタンを押すまでは書き戻さない。
             int toastLines = Mathf.Clamp(cfg.toastMaxLines, 0, 7);
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T($"通知の行数：{toastLines}", $"Notice lines: {toastLines}", $"通知行数：{toastLines}"), _st.Small, GUILayout.Width(300));
-            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) toastLines--;
-            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) toastLines++;
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) { toastLines--; changed = true; }
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) { toastLines++; changed = true; }
             GUILayout.EndHorizontal();
-            salvageChoice = Mathf.Clamp(salvageChoice, 0, choices.Length - 1);
-            toastLines = Mathf.Clamp(toastLines, 0, 7);
-            if (salvageChoice != (int)cfg.autoSalvageRarity || toastLines != cfg.toastMaxLines)
+            if (changed)
             {
-                cfg.autoSalvageRarity = (AutoSalvageRarity)salvageChoice;
-                cfg.toastMaxLines = toastLines;
+                cfg.autoSalvageRarity = (AutoSalvageRarity)Mathf.Clamp(salvageChoice, 0, choices.Length - 1);
+                cfg.toastMaxLines = Mathf.Clamp(toastLines, 0, 7);
                 _saveLevelEssenceConfig?.Invoke();
             }
             GUILayout.Label(Loc.T("選んだレア度未満の遺物を、拾った時点でドリームダストに分解します。固有品とセット装備は対象外です。分解の通知は画面に出ません。",
