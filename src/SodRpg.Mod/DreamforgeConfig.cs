@@ -36,11 +36,27 @@ namespace SodRpg.Mod
         public LocLanguage ResolveLanguage() =>
             chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
 
+        /// <summary>自動分解の設定から分解してよいレア度の境界（この値未満）を返す。「しない」のときは null。</summary>
+        public Rarity? AutoSalvageBelow() =>
+            autoSalvageRarity == AutoSalvageRarity.None ? (Rarity?)null : (Rarity)autoSalvageRarity;
+
         [LabelText("UI scale / 表示の大きさ")]
         public float uiScale = 1f;
 
         [LabelText("Show drops below Rare / レア未満の拾得通知")]
         public bool showToasts = true;
+
+        // #1010: 拾った時点で自動分解するレア度。列挙の値は Rarity と同じ番号で、「そのレア度未満」を意味する。
+        // 固有品（セット装備を含む）はレア度に関わらず対象外。既定は「しない」。
+        [LabelText("Auto salvage drops below a rarity / 自動分解するレア度")]
+        [Description("Relics below the chosen rarity are salvaged for Dream Dust when picked up. Uniques and set gear are never auto-salvaged. / "
+            + "選んだレア度未満の遺物を拾った時点でドリームダストに分解します。固有品とセット装備は自動分解しません。")]
+        public AutoSalvageRarity autoSalvageRarity = AutoSalvageRarity.None;
+
+        // #1010: 画面左の通知の最大行数。0のときはドロップと通常の案内を消し、レベルアップ・確保・警告など大事な通知だけ最新の1行を出す。
+        [LabelText("Toast lines on the left (0-7) / 画面左の通知の行数（0〜7）")]
+        [UnityEngine.Range(0, 7)]
+        public int toastMaxLines = 7;
 
         [LabelText("Overflow relics: shards + Dream Dust /\n鞄からあふれた遺物で、欠片に加えてドリームダストも受け取る")]
         public bool overflowDreamDust = false;
@@ -280,6 +296,16 @@ namespace SodRpg.Mod
         Full = 0,
         Compact = 1,
         Off = 2,
+    }
+
+    /// <summary>#1010: 自動分解するレア度の選択。値は Rarity の番号に合わせ、「そのレア度未満」で分解する。</summary>
+    public enum AutoSalvageRarity
+    {
+        None = 0,
+        BelowUncommon = 1,
+        BelowRare = 2,
+        BelowEpic = 3,
+        BelowLegendary = 4,
     }
 
     public enum LightweightMode

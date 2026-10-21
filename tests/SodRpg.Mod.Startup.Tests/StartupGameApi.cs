@@ -94,6 +94,8 @@ namespace SodRpg.Mod
     [AttributeUsage(AttributeTargets.Method)]
     public sealed class ConsoleCommand : Attribute { public ConsoleCommand(string help, string name) { } }
     public enum LightweightMode { Off, Light, Strong, Max }
+    // #1010 自動分解のレア度（実装側の DreamforgeConfig と同じ選択）。
+    public enum AutoSalvageRarity { None, BelowUncommon, BelowRare, BelowEpic, BelowLegendary }
     public sealed class DreamforgeConfig
     {
         public bool japanese;
@@ -102,6 +104,7 @@ namespace SodRpg.Mod
         public LocLanguage ResolveLanguage() =>
             chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
         public bool overflowDreamDust;
+        public AutoSalvageRarity autoSalvageRarity;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;

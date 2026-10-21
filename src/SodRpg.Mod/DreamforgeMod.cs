@@ -81,6 +81,7 @@ namespace SodRpg.Mod
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _session.ConfigureOverflowBonus(config.overflowDreamDust);
+                _session.ConfigureAutoSalvage(config.autoSalvageRarity);
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
@@ -127,6 +128,7 @@ namespace SodRpg.Mod
             NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
+            _session?.ConfigureAutoSalvage(config.autoSalvageRarity);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyAutoCastCoopConfig();

@@ -216,10 +216,26 @@ namespace SodRpg.Mod
                 return;
             }
             if (e.Kind != EventKind.Drop && e.Kind != EventKind.Bounty) Log.Info(e.Text);
+            // #1010: 鞄あふれの欠片への変換は通知に出さない。ログとHUDの再構築は上で済ませているので、ここで止める。
+            if (e.SatchelOverflowCount > 0) return;
             if (!_cfg().showToasts && e.Kind == EventKind.Drop && e.Rarity.HasValue && e.Rarity.Value < Rarity.Rare) return;
+            // #1010: 画面左の通知の最大行数（0〜7、既定7）。0のときはドロップと通常の案内を出さず、
+            // レベルアップ・確保・警告など色付きの大事な通知だけ最新の1行を出す（警告は消さない）。
+            int maxLines = Mathf.Clamp(_cfg().toastMaxLines, 0, 7);
+            if (maxLines == 0)
+            {
+                if (e.Kind == EventKind.Drop || e.Kind == EventKind.Info) return;
+                _toasts.Add(new Toast
+                {
+                    Text = e.Rarity.HasValue ? UiStyles.Colored(e.Text, UiStyles.RarityHex(e.Rarity.Value)) : Decorate(e),
+                    Until = Time.unscaledTime + (e.Kind == EventKind.Drop ? 6f : 8f),
+                });
+                while (_toasts.Count > 1) _toasts.RemoveAt(0);
+                return;
+            }
             string text = e.Rarity.HasValue ? UiStyles.Colored(e.Text, UiStyles.RarityHex(e.Rarity.Value)) : Decorate(e);
             _toasts.Add(new Toast { Text = text, Until = Time.unscaledTime + (e.Kind == EventKind.Drop ? 6f : 8f) });
-            while (_toasts.Count > 7) _toasts.RemoveAt(0);
+            while (_toasts.Count > maxLines) _toasts.RemoveAt(0);
         }
 
         private static string Decorate(GameEvent e)
@@ -1464,10 +1480,13 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             for (int i = _toasts.Count - 1; i >= 0; i--)
                 if (_toasts[i].Until < now) _toasts.RemoveAt(i);
-            // v1.25.2：本体の呪いの表示（画面の右側）と重ならないよう、左側の上部の表示の下に並べる。新しい物を上に、最大6件。
+            // v1.25.2：本体の呪いの表示（画面の右側）と重ならないよう、左側の上部の表示の下に並べる。新しい物を上に。
+            // #1010: 行数は設定（0〜7、既定7）。0のときは大事な通知の1行だけ（Notify が追加を抑える）。
+            int shownCap = Mathf.Max(1, Mathf.Clamp(_cfg().toastMaxLines, 0, 7));
+            while (_toasts.Count > shownCap) _toasts.RemoveAt(0);
             float y = (Time.frameCount - _hudFrame <= 2 ? _hudBottom : 0) + 10;
             int shown = 0;
-            for (int i = _toasts.Count - 1; i >= 0 && shown < 6; i--, shown++)
+            for (int i = _toasts.Count - 1; i >= 0 && shown < shownCap; i--, shown++)
             {
                 var t = _toasts[i];
                 if (t.Content == null)
@@ -3767,6 +3786,7 @@ namespace SodRpg.Mod
             DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
             DrawCoopOmenSettings(cfg);
+            DrawAutoSalvageSettings(cfg);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ", "存档文件：") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ", "保存错误：") + _s.SaveError, _st.Warn);
@@ -3874,6 +3894,58 @@ namespace SodRpg.Mod
             GUI.enabled = wasEnabled;
             GUILayout.Label(Loc.T("2 人以上で部屋に入ると、ときどき協力が必要な兆しが出ます。抽選は次の部屋から反映されます。",
                 "With two or more players, some rooms require cooperation. Draw changes apply from the next room.", "2人以上进入房间时，有时会出现需要协作的预兆。抽选结果从下一个房间开始生效。"), _st.Small);
+        }
+
+        // #1010: 自動分解のレア度と、画面左の通知の行数。自分の戦利品にだけ効く個人の設定。
+        // 文言は表示言語が変わったときに組み立て直す（他のラベルのキャッシュと同じ）。
+        private LocLanguage _autoSalvageLabelLanguage;
+        private readonly string[] _autoSalvageChoiceLabels = new string[5];
+
+        private string[] AutoSalvageChoices()
+        {
+            if (_autoSalvageLabelLanguage != Loc.Language)
+            {
+                _autoSalvageLabelLanguage = Loc.Language;
+                _autoSalvageChoiceLabels[0] = Loc.T("しない", "Off", "不分解");
+                _autoSalvageChoiceLabels[1] = Loc.T("アンコモン未満", "Below Uncommon", "优秀以下");
+                _autoSalvageChoiceLabels[2] = Loc.T("レア未満", "Below Rare", "稀有以下");
+                _autoSalvageChoiceLabels[3] = Loc.T("エピック未満", "Below Epic", "史诗以下");
+                _autoSalvageChoiceLabels[4] = Loc.T("レジェンダリー未満", "Below Legendary", "传说以下");
+            }
+            return _autoSalvageChoiceLabels;
+        }
+
+        private void DrawAutoSalvageSettings(DreamforgeConfig cfg)
+        {
+            GUILayout.Space(4);
+            GUILayout.Label(Loc.T("自動分解と通知", "Auto salvage & notices", "自动分解与通知"), _st.Header);
+            var choices = AutoSalvageChoices();
+            int salvageChoice = Mathf.Clamp((int)cfg.autoSalvageRarity, 0, choices.Length - 1);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T($"自動分解：{choices[salvageChoice]}", $"Auto salvage: {choices[salvageChoice]}", $"自动分解：{choices[salvageChoice]}"), _st.Small, GUILayout.Width(300));
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) salvageChoice--;
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) salvageChoice++;
+            GUILayout.EndHorizontal();
+            int toastLines = Mathf.Clamp(cfg.toastMaxLines, 0, 7);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T($"通知の行数：{toastLines}", $"Notice lines: {toastLines}", $"通知行数：{toastLines}"), _st.Small, GUILayout.Width(300));
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) toastLines--;
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) toastLines++;
+            GUILayout.EndHorizontal();
+            salvageChoice = Mathf.Clamp(salvageChoice, 0, choices.Length - 1);
+            toastLines = Mathf.Clamp(toastLines, 0, 7);
+            if (salvageChoice != (int)cfg.autoSalvageRarity || toastLines != cfg.toastMaxLines)
+            {
+                cfg.autoSalvageRarity = (AutoSalvageRarity)salvageChoice;
+                cfg.toastMaxLines = toastLines;
+                _saveLevelEssenceConfig?.Invoke();
+            }
+            GUILayout.Label(Loc.T("選んだレア度未満の遺物を、拾った時点でドリームダストに分解します。固有品とセット装備は対象外です。分解の通知は画面に出ません。",
+                "Relics below the chosen rarity are salvaged for Dream Dust as you pick them up. Uniques and set gear are excluded. Salvage notices stay out of the screen.",
+                "拾取时自动将低于所选稀有度的遗物分解为梦境之尘。固有遗物与套装装备不在范围内。分解通知不会显示在画面上。"), _st.Small);
+            GUILayout.Label(Loc.T("通知の行数は0〜7で選べます。0ではドロップと通常の案内を消し、レベルアップ・確保・警告など大事な通知だけ最新の1行を出します。変更は即反映して保存します。",
+                "Notice lines are 0-7. At 0, drops and routine notes disappear; only the latest important notice (level-ups, securing, warnings) keeps one line. Changes apply and save immediately.",
+                "通知行数可在0〜7之间选择。为0时隐藏掉落与一般提示，仅保留最新一行重要通知（升级、存仓、警告等）。更改会立即生效并保存。"), _st.Small);
         }
 
         private void DrawLevelEssenceSettings(DreamforgeConfig cfg)
