@@ -189,6 +189,13 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
         public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
         public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
+        // Native currency surface for the compiled HostAuthority.Trades.cs: the host settles and
+        // verifies native balances through these, so the stub applies the exact deltas it is asked for.
+        public int gold;
+        public int dreamDust;
+        public void SpendGold(int amount) => gold -= amount;
+        public void SpendDreamDust(int amount) => dreamDust -= amount;
+        public void EarnDreamDust(int amount) => dreamDust += amount;
     }
     public static class DewSave
     {
@@ -792,6 +799,8 @@ namespace SodRpg.Mod
         public int ambientLevel;
         public virtual void LoadNextZone() { }
         public void WrapUpAndShowResult(DewGameResult.ResultType type) { }
+        // HostAuthority.Trades.cs asks the host's authoritative cost scale; this harness has none.
+        public float GetAdjustedGoldAmount_Cost(float amount) => 1f;
     }
     public sealed class Difficulty { public string name; }
     public struct ListReturnHandle<T> { public void Return() { } }

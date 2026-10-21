@@ -150,7 +150,7 @@ namespace SodRpg.Mod
                 {
                     // 世界ごとの分解ダストの上限に合わせて支払いを削る。残りが無ければ支払わず、
                     // 未払いの累計はそのまま残す（世界が変わればまた支払える）。
-                    long remaining = _tradeAuthority.ZoneDustRemaining(key, peer.RunId, TradeZoneIndex(), SalvageScaleFor(owner));
+                    long remaining = _tradeAuthority.ZoneDustRemaining(key, peer.RunId, TradeZoneIndex(), SalvageScaleFor(owner), TradeZoneEpoch());
                     int grant = (int)Math.Min(delta, remaining);
                     if (grant > 0)
                     {
@@ -213,7 +213,7 @@ namespace SodRpg.Mod
             reply.blockedWorld = TradeZoneIndex();
             reply.worldBlocked = peer.BlockedWorldAck && available && reply.blockedWorld >= 0
                 && peer.RunId == TradeRunId() && peer.Total > reply.paid
-                && _tradeAuthority.ZoneDustRemaining(TradePlayerKey(owner), peer.RunId, reply.blockedWorld, SalvageScaleFor(owner)) == 0;
+                && _tradeAuthority.ZoneDustRemaining(TradePlayerKey(owner), peer.RunId, reply.blockedWorld, SalvageScaleFor(owner), TradeZoneEpoch()) == 0;
             if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
             else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }

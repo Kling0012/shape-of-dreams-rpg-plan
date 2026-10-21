@@ -215,6 +215,9 @@ namespace SodRpg.Core.Game
         /// <summary>消えた記録の下限を覚える（クライアントの世代）の上限。超えたら照会は常に「lost」で答える（実際には起こらない）。</summary>
         public const int MaxFloorGenerations = 64;
 
+        /// <summary>世界の世代をまだ知らない印（新しい台帳・計数の項目がない旧い保存）。この間は世界が変わっても計数を戻さず、現在の世界を採るだけ。</summary>
+        public const long UnknownZoneEpoch = -1;
+
         private sealed class PlayerLedger
         {
             /// <summary>
@@ -238,6 +241,12 @@ namespace SodRpg.Core.Game
             public long PreviousOverflowBonusPaid;
             /// <summary>現在の世界（0始まり。-1 は不明）。世界が変わったら <see cref="ZoneDust"/> を 0 に戻す。</summary>
             public int ZoneIndex = -1;
+            /// <summary>
+            /// 世界の識別に使うホスト側の世代（インフィニティの潜行ごとに増える。通常モードでは 0）。
+            /// 本体の番号が同じままでも、この値が変われば別の世界として <see cref="ZoneDust"/> を 0 に戻す。
+            /// <see cref="UnknownZoneEpoch"/>（旧い保存の再開・まだ世界を知らない）は現在の世界を採るだけ。
+            /// </summary>
+            public long ZoneEpoch = UnknownZoneEpoch;
             /// <summary>この世界で分解（手動・鞄あふれ・旧あふれ取引）から支払ったドリームダスト。世界ごとの上限の計数。</summary>
             public long ZoneDust;
             public readonly Queue<long> Order = new Queue<long>();
@@ -298,7 +307,8 @@ namespace SodRpg.Core.Game
         /// <param name="dust">そのプレイヤーの現在のドリームダスト（同上）。</param>
         /// <param name="goldCostScale">本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)。ホスト側の値）。</param>
         /// <param name="zoneIndex">現在の世界の番号（0始まり。-1 は不明）。世界が変わったら分解ダストの計数を 0 に戻す。</param>
-        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1, int zoneIndex = -1)
+        /// <param name="zoneEpoch">世界の識別に使うホスト側の世代（インフィニティの潜行ごとに増える。通常モードでは 0）。本体の番号が同じままでも、この値が変われば計数を 0 に戻す。</param>
+        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1, int zoneIndex = -1, long zoneEpoch = 0)
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
@@ -354,7 +364,7 @@ namespace SodRpg.Core.Game
             // 残りが1回分より少なければ残りの分だけ支払って成立させ、残りがなければ断る（遺物は戻る）。
             if (req.Kind == TradeKind.SalvageForDust || req.Kind == TradeKind.SatchelOverflowDust)
             {
-                ApplyZone(ledger, zoneIndex);
+                ApplyZone(ledger, zoneIndex, zoneEpoch);
                 long remaining = Economy.DustCap(ledger.ZoneIndex, salvageScale) - ledger.ZoneDust;
                 if (remaining <= 0) { d.Reason = "dustcap"; return d; }
                 if (d.EarnDust > remaining) d.EarnDust = (int)Math.Min(remaining, int.MaxValue);
@@ -414,19 +424,31 @@ namespace SodRpg.Core.Game
 
         private static int ClientGeneration(long token) => (int)(token >> 32);
 
-        /// <summary>世界が変わったら分解ダストの計数を 0 に戻す。不明（負）の世界では何もしない。</summary>
-        private static void ApplyZone(PlayerLedger ledger, int zoneIndex)
+        /// <summary>
+        /// 世界が変わったら分解ダストの計数を 0 に戻す。不明（負）の世界や世代では何もしない。
+        /// 世界の世代をまだ知らない台帳（新しい台帳・計数の項目がない旧い保存の再開）は、
+        /// 現在の世界を採るだけで計数を動かさない（保存と再開だけで上限を取り直せないように）。
+        /// </summary>
+        private static void ApplyZone(PlayerLedger ledger, int zoneIndex, long zoneEpoch)
         {
-            if (zoneIndex < 0 || ledger.ZoneIndex == zoneIndex) return;
+            if (zoneIndex < 0 || zoneEpoch < 0) return;
+            if (ledger.ZoneEpoch == UnknownZoneEpoch)
+            {
+                ledger.ZoneIndex = zoneIndex;
+                ledger.ZoneEpoch = zoneEpoch;
+                return;
+            }
+            if (ledger.ZoneIndex == zoneIndex && ledger.ZoneEpoch == zoneEpoch) return;
             ledger.ZoneIndex = zoneIndex;
+            ledger.ZoneEpoch = zoneEpoch;
             ledger.ZoneDust = 0;
         }
 
         /// <summary>そのプレイヤーが今の世界であとどれだけ分解ダストを受け取れるか（支払いの前に世界を反映する）。</summary>
-        public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale)
+        public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale, long zoneEpoch = 0)
         {
             var ledger = Ledger(playerKey, runId);
-            ApplyZone(ledger, zoneIndex);
+            ApplyZone(ledger, zoneIndex, zoneEpoch);
             long remaining = Economy.DustCap(ledger.ZoneIndex, salvageScale) - ledger.ZoneDust;
             return remaining < 0 ? 0 : remaining;
         }
@@ -556,6 +578,7 @@ namespace SodRpg.Core.Game
                 ledger.OverflowBonusBlocked = false;
                 // 遠征が変わったら分解ダストの世界ごとの計数も最初から。
                 ledger.ZoneIndex = -1;
+                ledger.ZoneEpoch = UnknownZoneEpoch;
                 ledger.ZoneDust = 0;
             }
             return ledger;

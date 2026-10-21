@@ -141,6 +141,12 @@ namespace SodRpg.Core.Game
         public long SalvageDustEarned { get => _salvageDustEarned; set => _salvageDustEarned = Math.Max(0, value); }
         /// <summary>計数が対応する世界の番号（0始まり。-1 はまだ世界を知らない）。保存・再開で保つ。</summary>
         public int SalvageDustZoneIndex { get; set; } = -1;
+        /// <summary>
+        /// 計数が対応する世界の世代（ホストから同期されたインフィニティの世代。通常モードでは 0）。
+        /// 本体の番号が同じままでも潜行でこの値が変わるため、計数はこの値とも合わせて切り替える。
+        /// -1 はまだ世界を知らない旧い保存（いまの世界を採るだけ）。
+        /// </summary>
+        public long SalvageDustWorldEpoch { get; set; } = -1;
         private long _salvageDustOverflowPaidSeen;
         /// <summary>追加ダストの支払い済み累計の最後に見た値（この世界への加算に使う。ラン全体の累計）。</summary>
         public long SalvageDustOverflowPaidSeen { get => _salvageDustOverflowPaidSeen; set => _salvageDustOverflowPaidSeen = Math.Max(0, value); }
@@ -239,6 +245,7 @@ namespace SodRpg.Core.Game
                 WorldInfinitySegment = WorldInfinitySegment,
                 SalvageDustEarned = SalvageDustEarned,
                 SalvageDustZoneIndex = SalvageDustZoneIndex,
+                SalvageDustWorldEpoch = SalvageDustWorldEpoch,
                 SalvageDustOverflowPaidSeen = SalvageDustOverflowPaidSeen,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
