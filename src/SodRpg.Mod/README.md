@@ -335,6 +335,8 @@ Gemini案より実コードを優先した箇所：
 | `NetMessages.cs` | ゲームの CustomRpc で送る型 |
 | `about/` | Workshop 用（metadata.json・description.txt・icon.png・preview.png）。画像は `tools/make_about_images.py` で再生成できる |
 
+`about/description.txt` の説明を変えるときは、同じPRで `../../docs/README.ja.md` の対応箇所も更新してください。ワークショップとGitHubの日本語の説明がずれないようにします。
+
 ゲームのルールはすべて `../SodRpg.Core/Game/`（純C#、`dotnet test` で検証）にあり、このプロジェクトはそれをコンパイルに取り込んで1つのDLLにする（ゲームは読み込み時にアセンブリ名を書き換えるため、DLLを分けない）。
 
 v1.23 の固有効果は、終曲・会心の余韻・足枷・結晶共鳴・獲物の誇り・溢れる命・祈願・飛び火の8種。ホストがスキル使用・会心命中・状態異常・超過回復・聖堂使用・火の付与に反応し、エッセンス品質とハンター追跡度を0.25秒ごとに参照する。祈願はゾーン読み込み時にリセットする。各効果の初回発動時に `[DreamforgeRPG] power Finale triggered` の形でログを出す（効果名は列挙値名）。

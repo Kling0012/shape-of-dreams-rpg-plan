@@ -44,7 +44,7 @@ namespace SodRpg.Core.Tests
             long token = 1; ulong uid = 1;
             while (paid < cap)
             {
-                var d = a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0);
+                var d = a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0, zoneEpoch: 0);
                 Assert.True(d.Ok);
                 Assert.False(d.Replayed);
                 Assert.InRange(d.EarnDust, 1, each);
@@ -54,7 +54,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(cap, a.TrackedZoneDust("p"));
 
             // 上限に達したら、理由つきで断る（遺物は失わない）。
-            var refused = a.Evaluate("p", "run", Salvage(token, uid), 0, 0, zoneIndex: 0);
+            var refused = a.Evaluate("p", "run", Salvage(token, uid), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.False(refused.Ok);
             Assert.Equal("dustcap", refused.Reason);
             Assert.Equal(cap, a.TrackedZoneDust("p"));
@@ -64,11 +64,11 @@ namespace SodRpg.Core.Tests
         public void Replayed_salvage_does_not_count_twice()
         {
             var a = new TradeAuthority();
-            var first = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var first = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(first.Ok);
             Assert.Equal(first.EarnDust, a.TrackedZoneDust("p"));
 
-            var replay = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var replay = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(replay.Ok);
             Assert.True(replay.Replayed);
             Assert.Equal(first.EarnDust, replay.EarnDust);
@@ -82,7 +82,7 @@ namespace SodRpg.Core.Tests
             int each = LootEconomyInputs.SalvageDust(Rarity.Epic, 1);
             long cap0 = Economy.DustCap(0, 1);
             long token = 1; ulong uid = 1;
-            while (a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0).Ok) { }
+            while (a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0, zoneEpoch: 0).Ok) { }
             Assert.Equal(cap0, a.TrackedZoneDust("p"));
 
             // 次の世界では、その世界の上限まで回復する。
@@ -90,14 +90,14 @@ namespace SodRpg.Core.Tests
             long paid = 0;
             while (paid < cap1)
             {
-                var d = a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 1);
+                var d = a.Evaluate("p", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 1, zoneEpoch: 0);
                 Assert.True(d.Ok);
                 paid += d.EarnDust;
             }
             Assert.Equal(cap1, paid);
 
             // 遠征が変わっても 0 から。
-            var fresh = a.Evaluate("p", "run2", Salvage(token, uid), 0, 0, zoneIndex: 1);
+            var fresh = a.Evaluate("p", "run2", Salvage(token, uid), 0, 0, zoneIndex: 1, zoneEpoch: 0);
             Assert.True(fresh.Ok);
             Assert.Equal(fresh.EarnDust, a.TrackedZoneDust("p"));
         }
@@ -106,10 +106,10 @@ namespace SodRpg.Core.Tests
         public void Unknown_zone_keeps_the_current_count_instead_of_resetting()
         {
             var a = new TradeAuthority();
-            var first = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 2);
+            var first = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 2, zoneEpoch: 0);
             Assert.True(first.Ok);
             // 世界が分からない（-1）間は、計数を勝手に戻さない。
-            var second = a.Evaluate("p", "run", Salvage(2, 2), 0, 0, zoneIndex: -1);
+            var second = a.Evaluate("p", "run", Salvage(2, 2), 0, 0, zoneIndex: -1, zoneEpoch: 0);
             Assert.True(second.Ok);
             Assert.Equal(first.EarnDust + second.EarnDust, a.TrackedZoneDust("p"));
         }
@@ -119,11 +119,11 @@ namespace SodRpg.Core.Tests
         {
             var a = new TradeAuthority();
             long token = 1; ulong uid = 1;
-            while (a.Evaluate("p1", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0).Ok) { }
+            while (a.Evaluate("p1", "run", Salvage(token++, uid++), 0, 0, zoneIndex: 0, zoneEpoch: 0).Ok) { }
             Assert.Equal(Economy.DustCap(0, 1), a.TrackedZoneDust("p1"));
             Assert.Equal(0, a.TrackedZoneDust("p2"));
 
-            var other = a.Evaluate("p2", "run", Salvage(1, 999), 0, 0, zoneIndex: 0);
+            var other = a.Evaluate("p2", "run", Salvage(1, 999), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(other.Ok);
             Assert.Equal(other.EarnDust, a.TrackedZoneDust("p2"));
         }
@@ -134,11 +134,11 @@ namespace SodRpg.Core.Tests
             var a = new TradeAuthority();
             int each = Economy.SalvageDust(Rarity.Epic, 0, 1);
             ulong uid = 1; long token = 1;
-            while (a.Evaluate("p", "run", OverflowTrade(token++, uid++), 0, 0, zoneIndex: 0).Ok) { }
+            while (a.Evaluate("p", "run", OverflowTrade(token++, uid++), 0, 0, zoneIndex: 0, zoneEpoch: 0).Ok) { }
             Assert.Equal(Economy.DustCap(0, 1), a.TrackedZoneDust("p"));
 
             // 上限を超えた旧あふれ取引は断られ、クライアントは欠片へ換える。
-            var refused = a.Evaluate("p", "run", OverflowTrade(token, uid), 0, 0, zoneIndex: 0);
+            var refused = a.Evaluate("p", "run", OverflowTrade(token, uid), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.False(refused.Ok);
             Assert.Equal("dustcap", refused.Reason);
         }
@@ -147,7 +147,7 @@ namespace SodRpg.Core.Tests
         public void Definite_native_failure_returns_the_counted_dust_for_a_new_token()
         {
             var a = new TradeAuthority();
-            var accepted = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var accepted = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(accepted.Ok);
             Assert.Equal(accepted.EarnDust, a.TrackedZoneDust("p"));
 
@@ -156,7 +156,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, a.TrackedZoneDust("p"));
 
             // 遺物は戻るので、新しい取引idでまた分解できる。
-            var retry = a.Evaluate("p", "run", Salvage(2, 1), 0, 0, zoneIndex: 0);
+            var retry = a.Evaluate("p", "run", Salvage(2, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(retry.Ok);
             Assert.Equal(retry.EarnDust, a.TrackedZoneDust("p"));
         }
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Tests
         public void Unknown_native_failure_keeps_the_counted_dust()
         {
             var a = new TradeAuthority();
-            var accepted = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var accepted = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(accepted.Ok);
 
             var lost = a.FailExecution("p", "run", Salvage(1, 1), outcomeUnknown: true);
@@ -181,12 +181,12 @@ namespace SodRpg.Core.Tests
             var a = new TradeAuthority();
             long ledger = a.LedgerIdOf("p", "run");
             long cap = Economy.DustCap(0, 1);
-            Assert.Equal(cap, a.ZoneDustRemaining("p", "run", 0, 1));
+            Assert.Equal(cap, a.ZoneDustRemaining("p", "run", 0, 1, zoneEpoch: 0));
 
             // 累計120の追加ダストは全額支払われる（支払いはホストが delta と世界の残りの小さい方だけ行う）。
             int delta = a.PendingOverflowBonus("p", "run", 120, ledger);
             Assert.Equal(120, delta);
-            long grant = Math.Min(delta, a.ZoneDustRemaining("p", "run", 0, 1));
+            long grant = Math.Min(delta, a.ZoneDustRemaining("p", "run", 0, 1, zoneEpoch: 0));
             Assert.Equal(120, a.CommitOverflowBonusGrant("p", "run", 120, grant, ledger));
             Assert.Equal(120, a.TrackedZoneDust("p"));
 
@@ -194,19 +194,19 @@ namespace SodRpg.Core.Tests
             long total = cap + 200;
             delta = a.PendingOverflowBonus("p", "run", total, ledger);
             Assert.Equal(cap + 80, delta);
-            grant = Math.Min(delta, a.ZoneDustRemaining("p", "run", 0, 1));
+            grant = Math.Min(delta, a.ZoneDustRemaining("p", "run", 0, 1, zoneEpoch: 0));
             Assert.Equal(cap - 120, grant);
             Assert.Equal(cap, a.CommitOverflowBonusGrant("p", "run", total, grant, ledger));
             Assert.Equal(cap, a.TrackedZoneDust("p"));
-            Assert.Equal(0, a.ZoneDustRemaining("p", "run", 0, 1));
+            Assert.Equal(0, a.ZoneDustRemaining("p", "run", 0, 1, zoneEpoch: 0));
             // 世界の上限で止まった分は、未払いの累計として残る。
             Assert.Equal(200, a.PendingOverflowBonus("p", "run", total, ledger));
-            var refused = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var refused = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.False(refused.Ok);
             Assert.Equal("dustcap", refused.Reason);
 
             // 次の世界では上限が回復し、未払いの累計からまた支払える。
-            Assert.Equal(cap + CapPerWorld(), a.ZoneDustRemaining("p", "run", 1, 1));
+            Assert.Equal(cap + CapPerWorld(), a.ZoneDustRemaining("p", "run", 1, 1, zoneEpoch: 0));
             Assert.Equal(total, a.CommitOverflowBonusGrant("p", "run", total, 200, ledger));
             Assert.Equal(200, a.TrackedZoneDust("p"));
             Assert.Equal(0, a.PendingOverflowBonus("p", "run", total, ledger));
@@ -229,7 +229,7 @@ namespace SodRpg.Core.Tests
         public void Checkpoint_keeps_the_world_count_and_old_snapshots_start_at_zero()
         {
             var saved = new TradeAuthority();
-            var first = saved.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 2);
+            var first = saved.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 2, zoneEpoch: 0);
             Assert.True(first.Ok);
             string checkpoint = saved.CaptureCheckpoint();
 
@@ -237,7 +237,7 @@ namespace SodRpg.Core.Tests
             resumed.RestoreCheckpoint(checkpoint);
             Assert.Equal(first.EarnDust, resumed.TrackedZoneDust("p"));
             // 再開後も同じ世界の上限は続く（残りだけ支払われる）。
-            var next = resumed.Evaluate("p", "run", Salvage(2, 2), 0, 0, zoneIndex: 2);
+            var next = resumed.Evaluate("p", "run", Salvage(2, 2), 0, 0, zoneIndex: 2, zoneEpoch: 0);
             Assert.True(next.Ok);
             Assert.Equal(first.EarnDust + next.EarnDust, resumed.TrackedZoneDust("p"));
 
@@ -247,7 +247,7 @@ namespace SodRpg.Core.Tests
                 "{\"key\":\"k\",\"id\":4294967297,\"runId\":\"run\",\"floors\":[],\"floorOverflow\":false,\"executed\":[]," +
                 "\"cancelled\":[],\"salvage\":[],\"overflowBonusPaid\":0,\"overflowBonusBlocked\":false}]}");
             Assert.Equal(0, old.TrackedZoneDust("k"));
-            var fresh = old.Evaluate("k", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            var fresh = old.Evaluate("k", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             Assert.True(fresh.Ok);
             Assert.Equal(fresh.EarnDust, old.TrackedZoneDust("k"));
         }
@@ -256,7 +256,7 @@ namespace SodRpg.Core.Tests
         public void Checkpoint_rejects_out_of_range_zone_counts()
         {
             var a = new TradeAuthority();
-            a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
+            a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0, zoneEpoch: 0);
             string checkpoint = a.CaptureCheckpoint();
             Assert.Contains("\"zoneDust\":", checkpoint);
             Assert.Throws<LedgerFormatException>(() => a.RestoreCheckpoint(checkpoint.Replace("\"zoneDust\":", "\"zoneDust\":-")));
