@@ -30,18 +30,9 @@
 - 追加効果の `FlushNewPowers` は処理した呼び出しでだけ `Observe` を呼ぶ。空のまま呼び出されなくても、次の空の観測で記録した時刻からの経過を判定する。今回、呼び出し条件や処理順は変えていない。
 - 部屋変更時の処理は既存のものを維持する。飛び道具側の `TickRoom` は診断状態と合体処理の状態を更新する処理であり、予算全体を新たにリセットする変更は加えない。
 
-## 修正ラウンドの検証
+## 検証
 
-2026-10-21、この作業ディレクトリで以下を実行した。利用可能なランタイムは .NET 10 のみだったため、net8.0 のテストには `DOTNET_ROLL_FORWARD=Major` を付けた。パッケージキャッシュは環境の `NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` を使用した。
-
-- 2か所の時刻リセットを一時的に外し、既存の再現テストを実行した。6件中4件が失敗、2件が合格した。失敗は両キューの早期縮小と待機の数え直しで、期待した予算1に対して実際は0だった。
-- リセットを復元し、`DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.FxBudget.Tests/SodRpg.Mod.FxBudget.Tests.csproj -c Release --filter 'FullyQualifiedName~PowerFlushBudgetTests|FullyQualifiedName~NativeProcSpawnSpreadTests'` を実行した。6件合格、失敗・スキップとも0件だった。
-- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.FxBudget.Tests/SodRpg.Mod.FxBudget.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~NativeFxBudgetTests'` を実行した。既存の6件が合格、失敗・スキップとも0件だった。
-- `git diff --exit-code -- src/SodRpg.Mod/HostAuthority.PowerCommandQueue.cs src/SodRpg.Mod/NativeProcSpawnSpread.cs` が成功し、一時的に外した修正を元どおり復元したことを確認した。
-
-テストのビルドでは既存の CS0649 と xUnit2013 の警告が出た。今回、新しいテストの作成や既存テストの変更はしていない。前ラウンドの実装が要件を満たすことを確認し、結果 JSON の `requirements_done` に FR-1〜FR-8 と対応ファイルを記録する。
-
-## 未実行
-
-- ゲーム内の挙動・FPS・協力プレイ中の負荷計測: この環境ではゲームを起動できないため未実行。
-- リポジトリ全体のテストと低速テスト、ゲーム DLL を使う MOD 全体のビルド: 修正範囲の既存テストに限定する依頼に従い未実行。後続の検証工程で扱う。
+```sh
+dotnet test tests/SodRpg.Mod.FxBudget.Tests/SodRpg.Mod.FxBudget.Tests.csproj -c Release --filter 'FullyQualifiedName~PowerFlushBudgetTests|FullyQualifiedName~NativeProcSpawnSpreadTests'
+dotnet test tests/SodRpg.Mod.FxBudget.Tests/SodRpg.Mod.FxBudget.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~NativeFxBudgetTests'
+```
