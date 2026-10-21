@@ -12,6 +12,8 @@ namespace SodRpg.Mod
         private static long _bountySequence;
         private string _localBountyReturnRun;
         private uint _localBountyReturnHero;
+        private InfinityMode.InfinityChoice _bountyWaitingChoice;
+        private float _bountyReturnWaitStarted;
         private readonly Dictionary<DewPlayer, DreamforgeBountyReturnMsg> _bountyReturns =
             new Dictionary<DewPlayer, DreamforgeBountyReturnMsg>();
 
@@ -67,13 +69,40 @@ namespace SodRpg.Mod
         internal static bool InfinityBountiesSettled(InfinityMode.InfinityChoice choice)
         {
             var host = NativeInstance;
-            if (host == null) return false;
+            if (host == null || choice == null || !choice.Secure || choice.Boundary) return false;
+            if (!ReferenceEquals(host._bountyWaitingChoice, choice))
+            {
+                host._bountyWaitingChoice = choice;
+                host._bountyReturnWaitStarted = Time.unscaledTime;
+            }
+            float grace = Math.Max(0f, Math.Min(30f, choice.PersonalAckGraceSeconds));
+            bool expired = choice.PersonalTimedOut || Time.unscaledTime - host._bountyReturnWaitStarted >= grace;
             foreach (var player in DewPlayer.gamePlayers)
             {
-                if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
-                if (!host._bountyReturns.TryGetValue(player, out var receipt) || !receipt.received
-                    || player.hero == null || receipt.heroNetId != player.hero.netId
-                    || !SameBountyReturn(receipt, choice)) return false;
+                if (player == null || !player.isHumanPlayer || player == DewPlayer.local || player.hero == null) continue;
+                bool participated = false;
+                if (choice.PersonalChoices != null)
+                    foreach (var selection in choice.PersonalChoices)
+                        if (selection != null && selection.PlayerId == player.guid) { participated = true; break; }
+                if (!participated) continue;
+                bool matching = host._bountyReturns.TryGetValue(player, out var receipt)
+                    && receipt.heroNetId == player.hero.netId && SameBountyReturn(receipt, choice);
+                if (matching && receipt.received) continue;
+                if (!expired) return false;
+                // Flush while the host still has its run; silent/older guests must not block return forever.
+                if (!host.PrepareBountyReturn(player.hero, choice.RunId)) return false;
+                if (!matching)
+                {
+                    receipt = new DreamforgeBountyReturnMsg
+                    {
+                        runId = choice.RunId, heroNetId = player.hero.netId, revision = choice.Revision,
+                        graphEpoch = choice.GraphEpoch, segmentEpoch = choice.SegmentEpoch,
+                    };
+                    host._bountyReturns[player] = receipt;
+                }
+                host._registeredOn.CustomRpc_SendMessageToClient(player, receipt);
+                Log.Warn("Infinity: bounty receipt wait expired for player " + player.guid
+                    + "; pending reports flushed before host return without remote confirmation.");
             }
             return true;
         }
