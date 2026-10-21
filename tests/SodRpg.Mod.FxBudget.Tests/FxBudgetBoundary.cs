@@ -13,7 +13,7 @@ using Xunit;
 // the real Harmony reflection used at startup.
 namespace UnityEngine
 {
-    public static class Time { public static float time; public static int frameCount; }
+    public static class Time { public static float time; public static float unscaledTime; public static float unscaledDeltaTime; public static int frameCount; }
     public static class Mathf
     {
         public static float Min(float a, float b) => a < b ? a : b;
@@ -100,6 +100,15 @@ namespace SodRpg.Mod
         public readonly GameObject gameObject = new GameObject();
         // Patch anchor for the pool-return restore; the doubles never install detours.
         public void OnDisable() { }
+        // Native immediate creation for the linked NativeProcSpawnSpread.cs when
+        // Defer() declines (the projectile queue's fallback path). The double only
+        // records that the creation ran.
+        public T CreateAbilityInstance<T>(Vector3 position, Quaternion? rotation, CastInfo info,
+            Action<T> beforePrepare) where T : AbilityInstance
+        {
+            Dew.Spawned++;
+            return null;
+        }
     }
     public class DewEffect
     {
