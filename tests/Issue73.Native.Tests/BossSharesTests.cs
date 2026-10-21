@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
 using SodRpg.Mod;
@@ -156,6 +157,10 @@ namespace Issue73.Native.Tests
             catch (TargetInvocationException error) when (error.InnerException != null)
             { System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException).Throw(); throw; }
         }
+
+        // OwnershipRunning が例外を出す状態を作る接ぎ木（ハーネスの入力は素のフィールドで
+        // 例外を出せないため、Harmony の prefix で投げさせる）。
+        private static void ThrowFromOwnershipCheck() => throw new InvalidOperationException("ownership check threw");
 
         private static Type ObjectType(object target) => target is Type type ? type : target.GetType();
         private static object Instance(object target) => target is Type ? null : target;
@@ -560,6 +565,64 @@ namespace Issue73.Native.Tests
             Assert.False(cold.Result, "未稼働なら冷経路も偽");
             Assert.Null(cold.Shares);
             Assert.Null(SharesOf(host, enemy)); // 冷経路は null のまま
+            Assert.Empty(Log.Warnings);
+        }
+
+        // 稼働中×キャッシュ済み×失敗印: TryBossShares は偽かつ shares==null（旧実装と同じ）。
+        [Fact]
+        public void TryBossShares_returns_false_for_failed_cached_shares_while_running()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            var b = Player(9);
+            BuildFor(host, b, 8, 40);
+            PatchNativeShareHooks();
+            var boss = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f);
+            Assert.NotNull(SharesOf(host, boss));
+
+            // 持ち分を成立させた後に失敗印を付け、稼働中のまま入り口を呼ぶ。
+            Call(host, "FailBossShares", State(host, boss), new InvalidOperationException("failed for test"));
+            Assert.NotEmpty(Log.Warnings); // 失敗印を付ける経路が通った
+
+            var failed = TryShares(host, boss);
+            Assert.False(failed.Result, "稼働中でも失敗印ありのキャッシュは偽");
+            Assert.Null(failed.Shares); // 偽のとき shares は null（契約）
+            Assert.NotNull(failed.State);
+            Assert.NotNull(SharesOf(host, boss)); // 失敗印はキャッシュ自体を壊さない
+        }
+
+        // 稼働確認で例外が出た場面: TryBossShares は例外を呼び出し元へ伝え、FailBossShares の
+        // 副作用（警告・失敗印）を出さない。速経路も冷経路（PrepareBossShares の try の外の
+        // 稼働確認）も同じで、変更前の && 連鎖で投じていた伝わり方と一致する。
+        [Fact]
+        public void TryBossShares_propagates_an_OwnershipRunning_exception_without_fail_side_effects()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            var b = Player(9);
+            BuildFor(host, b, 8, 40);
+            PatchNativeShareHooks();
+            var boss = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f);
+            var enemy = Spawn(host, 101); // 通常敵: 冷経路（Shares は null）
+            Assert.NotNull(SharesOf(host, boss));
+            var cached = SharesOf(host, boss);
+
+            var harmony = new Harmony("issue73.bossshares.throw." + Guid.NewGuid().ToString("N"));
+            try
+            {
+                harmony.Patch(typeof(HostAuthority).GetMethod("OwnershipRunning", Hidden),
+                    prefix: new HarmonyMethod(typeof(BossSharesTests).GetMethod(nameof(ThrowFromOwnershipCheck), Hidden)));
+                Assert.Throws<InvalidOperationException>(() => TryShares(host, boss)); // 速経路（キャッシュ済み）
+                Assert.Throws<InvalidOperationException>(() => TryShares(host, enemy)); // 冷経路
+            }
+            finally { harmony.UnpatchAll(harmony.Id); }
+
+            // 例外は呼び出し元へ伝わっただけで、失敗印も警告も付かない。
+            Assert.Same(cached, SharesOf(host, boss));
+            Assert.False((bool)Get(cached, "Failed"));
+            Assert.Null(SharesOf(host, enemy));
             Assert.Empty(Log.Warnings);
         }
 

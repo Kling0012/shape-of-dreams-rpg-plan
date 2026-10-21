@@ -37,9 +37,18 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: boss solo health capture ignored: " + ex.Message); return false; }
         }
 
+        // Cached-shares judgment shared by the damage path (TryBossShares) and the head of
+        // PrepareBossShares (ScanBossShares): the cache is usable unless the failure mark is
+        // set. Route both call sites through here so their answers cannot drift apart.
+        private static BossShares CachedBossShares(EnemyOwnership state)
+        {
+            var cached = state.Shares;
+            return cached != null && !cached.Failed ? cached : null;
+        }
+
         private BossShares PrepareBossShares(EnemyOwnership state)
         {
-            if (state.Shares != null) return state.Shares.Failed ? null : state.Shares;
+            if (state.Shares != null) return CachedBossShares(state);
             if (!OwnershipRunning() || !NativeAttributedHpDamage.BossShareSupported || !BossShareDamageScope.NotificationSupported
                 || !(state.Enemy is Monster monster) || !monster.IsAnyBoss()
                 || !_bossNativeHealth.ContainsKey(monster) || OwnershipBossParent(monster)) return null;
@@ -101,9 +110,10 @@ namespace SodRpg.Mod
             // (kept for ScanBossShares), which bails out without side effects when not running.
             if (state.Shares != null)
             {
-                if (!OwnershipRunning() || state.Shares.Failed) return false;
-                shares = state.Shares;
-                return true;
+                // Same cached-shares judgment as PrepareBossShares (CachedBossShares);
+                // the damage path additionally requires the run to still be running.
+                shares = OwnershipRunning() ? CachedBossShares(state) : null;
+                return shares != null;
             }
             shares = PrepareBossShares(state);
             return shares != null;
