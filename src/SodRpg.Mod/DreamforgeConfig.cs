@@ -68,6 +68,18 @@ namespace SodRpg.Mod
         [LabelText("Show enemy ownership marks (client) / 担当の印を表示（クライアント）")]
         public bool showEnemyOwnershipMarks = true;
 
+        // 敵の名札の表示方法（#1009）。各プレイヤーの見た目だけの設定で、通信には乗せない。
+        // 担当の印（showEnemyOwnershipMarks）と協力プレイの守りの印は、この設定にかかわらずそれぞれの設定に従う。
+        [LabelText("Enemy nameplates: names / danger marks / hidden (client) /\n敵の名札：名前・印だけ・表示しない（クライアント）")]
+        [Description("Names shows the current nameplates. Marks only replaces them with * / ** / *** by danger (variant, nightmare, 3+ affixes or Nemesis). Hidden removes them. Ownership and co-op ward marks keep their own settings. / "
+            + "名前は今の名札を表示します。印だけは危険度で *・**・***（変種、悪夢、性質3個以上か宿敵）を出します。表示しないは消します。担当の印と守りの印はそれぞれの設定に従います。")]
+        public EnemyNameplateMode enemyNameplates = EnemyNameplateMode.Name;
+
+        /// <summary>名札の表示方法。壊れた保存値は既定（名前）に戻す。</summary>
+        public EnemyNameplateMode ResolveNameplates() =>
+            enemyNameplates == EnemyNameplateMode.Marks || enemyNameplates == EnemyNameplateMode.Hidden
+                ? enemyNameplates : EnemyNameplateMode.Name;
+
         [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
         [Description("Falloff from " + CoopBalance.FullRangeText + " to " + CoopBalance.OuterRangeText + "m with " + CoopBalance.GraceSecondsText + "s grace; when off, the effect ends beyond " + CoopBalance.FullRangeText + "m. / "
             + CoopBalance.FullRangeText + "～" + CoopBalance.OuterRangeText + "mで減衰し、猶予は" + CoopBalance.GraceSecondsText + "秒。オフでは" + CoopBalance.FullRangeText + "mを超えると切れる。")]
@@ -280,6 +292,14 @@ namespace SodRpg.Mod
         Full = 0,
         Compact = 1,
         Off = 2,
+    }
+
+    /// <summary>敵の名札（悪夢・変種）の表示方法（#1009）。既定は Name（今の見た目）。</summary>
+    public enum EnemyNameplateMode
+    {
+        Name = 0,
+        Marks = 1,
+        Hidden = 2,
     }
 
     public enum LightweightMode

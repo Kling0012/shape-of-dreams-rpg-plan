@@ -333,6 +333,15 @@ namespace SodRpg.Core.Game
             return string.Join(Loc.T("・", " ", " "), parts);
         }
 
+        /// <summary>付いた性質の数（#1009 の頭上の印用）。宿敵のビットは数に入れない。</summary>
+        public static int AttachedAffixCount(NightmareAffix a)
+        {
+            int count = 0;
+            foreach (var x in AllAffixes)
+                if ((a & x) != 0) count++;
+            return count;
+        }
+
         /// <summary>悪夢化した敵の撃破を、何の格として抽選するか。通常・雑魚はエリート相当、エリートはボス相当。</summary>
         public static MonsterTier RewardTier(MonsterTier tier)
         {
