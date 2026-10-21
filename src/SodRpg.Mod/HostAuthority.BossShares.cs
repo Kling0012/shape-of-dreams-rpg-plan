@@ -95,8 +95,13 @@ namespace SodRpg.Mod
         {
             state = null;
             shares = null;
-            return enemy != null && _enemyOwnership.TryGetValue(enemy, out state) && OwnershipRunning()
-                && (shares = PrepareBossShares(state)) != null;
+            if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out state)) return false;
+            // This runs once per damage event. PrepareBossShares re-checks OwnershipRunning on its
+            // cold path, so evaluate it here only after the cached path to keep one check per hit.
+            shares = PrepareBossShares(state);
+            if (shares == null) return false;
+            if (!OwnershipRunning()) { shares = null; return false; }
+            return true;
         }
 
         private void OverrideBossShareHealth(Entity enemy, ref float multiplier)
