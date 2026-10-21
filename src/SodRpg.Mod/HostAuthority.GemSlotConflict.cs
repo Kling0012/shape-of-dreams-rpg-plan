@@ -1,4 +1,5 @@
 using Mirror;
+using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
@@ -9,7 +10,11 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active || _registeredOn == null || hero == null || hero.netId == 0) return;
             var owner = hero.owner;
-            if (owner == null || !owner.isHumanPlayer || owner.hero != hero) return;
+            // The local client runs this same mod build, whose handler decodes the message and
+            // acts on nothing (it always carries our own Protocol.Version), so addressing it to
+            // ourselves only paid a JSON serialize plus Mirror's local TargetRpc loopback and a
+            // matching deserialize on every build application.
+            if (owner == null || owner == DewPlayer.local || !owner.isHumanPlayer || owner.hero != hero) return;
             _registeredOn.CustomRpc_SendMessageToClient(owner, new DreamforgeGemSlotConflictMsg
             {
                 heroNetId = hero.netId,

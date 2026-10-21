@@ -1,8 +1,9 @@
 # Dreamforge RPG (English guide)
 
+[日本語](README.ja.md) | **English** | [中文](README.zh.md)
+
 This page is the English description of the Dreamforge RPG mod for *Shape of Dreams*.
-The Japanese description is on the [Steam Workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988).
-A Chinese (Simplified) guide is available at [docs/README.zh.md](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md).
+Patch notes, bug reports and guides in other languages are linked from the [GitHub page](https://github.com/Kling0012/dreamforge-rpg).
 
 - Subscribe: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
 - Changes per version: [Patch notes](https://github.com/Kling0012/dreamforge-rpg/releases)

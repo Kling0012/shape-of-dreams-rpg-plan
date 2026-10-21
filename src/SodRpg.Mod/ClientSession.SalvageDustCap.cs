@@ -19,6 +19,8 @@ namespace SodRpg.Mod
         {
             var run = Profile.Run;
             if (run == null || dust <= 0) return 0;
+            // 潜行直後の応答は定期更新より先に届くため、先に現在の世界を反映する。
+            TickSalvageDustCap();
             long room = Economy.DustCap(run.SalvageDustZoneIndex, SalvageScale) - run.SalvageDustEarned;
             long granted = Math.Min(dust, Math.Max(0, room));
             if (granted > 0)
@@ -29,17 +31,36 @@ namespace SodRpg.Mod
             return granted;
         }
 
+        /// <summary>
+        /// ホストから同期された世界の世代（インフィニティの潜行・境界ごとに増える。通常モードでは 0）。
+        /// インフィニティは本体の世界番号が進まないため、計数はこの値とも合わせて切り替える（#1030）。
+        /// </summary>
+        internal long SalvageDustWorldEpoch
+        {
+            get
+            {
+                try { return Math.Max(0, Profile.Run?.Infinity?.GraphEpoch ?? 0); }
+                catch (Exception) { return 0; }
+            }
+        }
+
         /// <summary>世界の切り替えで計数を戻し、追加ダストの支払い済み累計の増えた分を数える。上限に達したら1回だけ案内する。</summary>
         private void TickSalvageDustCap()
         {
             var run = Profile.Run;
             if (run == null) return;
             int zone = CurrentZoneIndex;
-            if (zone >= 0 && run.SalvageDustZoneIndex != zone)
+            long epoch = SalvageDustWorldEpoch;
+            if (zone >= 0 && (run.SalvageDustZoneIndex != zone || run.SalvageDustWorldEpoch != epoch))
             {
+                // 世代をまだ知らない旧い保存の再開は、いまの世界を採るだけ（計数を戻さない）。
+                if (run.SalvageDustWorldEpoch >= 0)
+                {
+                    run.SalvageDustEarned = 0;
+                    _salvageDustCapNotified = false;
+                }
                 run.SalvageDustZoneIndex = zone;
-                run.SalvageDustEarned = 0;
-                _salvageDustCapNotified = false;
+                run.SalvageDustWorldEpoch = epoch;
             }
             // ホストが追加ダストとして支払った累計（同じランのもの）の増えた分だけこの世界に数える。
             // 基準はラン全体で保つ（世界をまたいでも、支払いの増加分だけを次の世界へ数える）。

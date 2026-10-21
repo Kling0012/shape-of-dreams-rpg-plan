@@ -30,6 +30,8 @@ namespace SodRpg.Mod
         private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
         private void RegisterOverflowBonus(Actor actor) { }
         private void UnregisterOverflowBonus(Actor actor) { }
+        // HostAuthority.Continue.cs is not compiled here; OnTrade's Continue replay is a no-op in this harness.
+        private void ApplyContinueTrades() { }
 
         private sealed class KillReplayCursor { public string PeerId; }
     }

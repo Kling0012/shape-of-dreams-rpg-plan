@@ -99,6 +99,14 @@ namespace SodRpg.Core.Game
         {
             if (profile.LoadedVersion == Profile.CurrentVersion)
                 return WriteProfile(profile, true, preserveLegacyContinue: true);
+            if (profile.LoadedVersion == 7)
+            {
+                profile.SettleSatchelOverflow();
+                // Version 7 predates per-hero Limbo unlocks and the optional run counters.
+                var legacyBody = WriteBody(profile, true, profile.LegacyContinueEncoding,
+                    includeVersionEightFields: false);
+                return Json.Write(new JsonObject().Add("format", Format).Add("version", 7L).Add("body", legacyBody));
+            }
             if (profile.LoadedVersion != 6) return null; // Cooperative trading began in version 6.
             profile.SettleSatchelOverflow();
             var body = new JsonObject();

@@ -19,7 +19,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="../../src/SodRpg.Mod/NativeFxBudget.cs" Link="ModUnderTest/NativeFxBudget.cs" />
+    <!-- #1029: the flush budget (HostAuthority.PowerCommandQueue.cs) and the
+         deferred projectile queue (NativeProcSpawnSpread.cs) are compiled in
+         so the DrainedSince bookkeeping runs unmodified. -->
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.PowerCommandQueue.cs" Link="ModUnderTest/HostAuthority.PowerCommandQueue.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NativeProcSpawnSpread.cs" Link="ModUnderTest/NativeProcSpawnSpread.cs" />
   </ItemGroup>
 
 </Project>
