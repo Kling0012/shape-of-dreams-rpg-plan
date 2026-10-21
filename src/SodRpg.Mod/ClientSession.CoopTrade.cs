@@ -22,6 +22,12 @@ namespace SodRpg.Mod
         private string _coopHostKey, _coopFrozenProfile;
         private CoopTradeOffer _coopPendingOffer;
         private string _coopOfferInFlight;
+        // #1027: Own confirm whose split transfer the host may still be assembling. While these
+        // match the incoming view, ownConfirmed=false only means the confirm has not fully arrived
+        // yet, so the confirm-time profile (_coopFrozenProfile) survives that view. The host
+        // reflecting the confirm, a revision change or another trade id ends the protection.
+        private string _coopConfirmId, _coopConfirmTransferId;
+        private int _coopConfirmRevision;
         private float _coopOfferSentAt, _nextCoopOfferRetry;
         private bool _coopNativeSaving, _coopSettlementUnsaved, _coopDisabled, _coopHostFusion;
         private long _coopPrepareSaveRevision;
@@ -208,6 +214,7 @@ namespace SodRpg.Mod
                 _coopPeers.Clear();
                 CoopTrade = null;
                 _coopFrozenProfile = null;
+                _coopConfirmId = _coopConfirmTransferId = null;
                 _coopPendingOffer = null;
                 _coopOfferInFlight = null;
                 _nextCoopOfferRetry = 0;
@@ -395,6 +402,9 @@ namespace SodRpg.Mod
             return ProfileCodec.WriteCheckpointProfile(copy);
         }
 
+        private bool CoopConfirmTraveling(string id, int revision)
+            => _coopConfirmTransferId != null && _coopConfirmId == id && _coopConfirmRevision == revision;
+
         private void FlushCoopPayloads()
         {
             if (!_coopSendQueue.Pending || !_coopSendQueue.BeginFlush()) return;
@@ -440,7 +450,13 @@ namespace SodRpg.Mod
                 _coopOfferInFlight = transferId;
                 _coopOfferSentAt = Time.unscaledTime;
             }
-            if (action == "confirm") _coopFrozenProfile = snapshot;
+            if (action == "confirm")
+            {
+                _coopFrozenProfile = snapshot;
+                _coopConfirmId = id;
+                _coopConfirmRevision = revision;
+                _coopConfirmTransferId = transferId;
+            }
             DiagnoseCoopTrade(action == "confirm" ? "confirm-queued" : "offer-queued", id, revision);
             FlushCoopPayloads();
         }
@@ -560,6 +576,7 @@ namespace SodRpg.Mod
                         _coopSendQueue.Reset();
                         _coopPendingOffer = null;
                         _coopOfferInFlight = null;
+                        _coopConfirmTransferId = null;
                     }
                     bool acknowledged = _coopOfferInFlight != null && msg.offerAck == _coopOfferInFlight;
                     if (acknowledged)
@@ -585,7 +602,16 @@ namespace SodRpg.Mod
                         OtherProfile = CoopTrade?.Id == msg.id ? CoopTrade.OtherProfile : null,
                     };
                     DiagnoseCoopTrade("view-applied", msg.id, msg.revision);
-                    if (!msg.ownConfirmed) _coopFrozenProfile = null;
+                    // #1027: A same-revision view can report our own confirm as not applied yet
+                    // simply because its split transfer is still traveling to the host (the partner
+                    // confirming in the meantime produces exactly that view). Only discard the
+                    // confirm-time profile once this trade+revision is no longer traveling: the host
+                    // reflected the confirm, the offer revision moved on, or another trade replaced
+                    // this one. The prepare comparison against the live profile stays unchanged.
+                    if (_coopConfirmId == msg.id && (msg.ownConfirmed || _coopConfirmRevision != msg.revision))
+                        _coopConfirmTransferId = null;
+                    if (!msg.ownConfirmed && !CoopConfirmTraveling(msg.id, msg.revision))
+                        _coopFrozenProfile = null;
                     if (msg.incoming && !msg.accepted)
                         Emit(new GameEvent(EventKind.Info, Loc.T("トレードの申し込み：", "Trade request: ", "交易申请：") + msg.partner));
                     if (acknowledged && _coopPendingOffer != null) SendCoopProfile("offer", _coopPendingOffer);
