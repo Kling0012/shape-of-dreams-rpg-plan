@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.42 — Enemy nameplate display options and a lighter Double Tap for the host（2026-10-21）
+
+### 新機能 / New features
+- 敵の名札の表示方法を「名前・印だけ・表示しない」から選べるようになりました。印だけのときは危険度で区別し、夢の変種は `*`、悪夢は `**`、性質3個以上か宿敵は `***` を出します。担当の印と守りの印は今までどおりです。 / Enemy nameplates can now be set to names, danger marks only, or hidden. With marks, dream variants show `*`, nightmares `**`, and nightmares with 3+ affixes or Nemesis `***`. Ownership and co-op ward marks are unchanged.
+
+---
+
 ## v3.8.41 — Lighter host performance for burrow attacks and Last Starlight（2026-10-21）
 
 地中から飛び出す攻撃が敵に当たるときと、黒穴が消えるまでの間に行っていた余分な処理を減らし、ホストのゲームが少し軽くなるようにしました。 / This version cuts extra work when burrow emerge attacks hit enemies and while a black hole is fading out, making the game a little lighter for the host.
