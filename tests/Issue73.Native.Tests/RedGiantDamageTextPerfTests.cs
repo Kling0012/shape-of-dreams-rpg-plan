@@ -25,6 +25,10 @@ namespace Issue73.Native.Tests
     /// (f) 0 → -0 のフレームでは再び組み立てて本体と同じ "-0" 表示を入れること
     ///     （前ラウンド指摘 F1: float の == は 0 と -0 を同値と読むが、書式は
     ///     "0" と "-0" を分ける）。
+    /// (g)（#1025）同じテキスト実体のまま ON → OFF → ON と設定を切り替えたとき、
+    ///     OFF の間の書き込みがキャッシュに残らないせいで、再び ON に戻した
+    ///     最初のフレーム（計測値が前回 ON 時と同じ組へ戻る）で古いキャッシュに
+    ///     一致して return し、OFF 中に書いた表示が残ることの回帰検査。
     /// </summary>
     public sealed class RedGiantDamageTextPerfTests : IDisposable
     {
@@ -227,6 +231,54 @@ namespace Issue73.Native.Tests
                 RunFrame(vanilla);
                 Assert.Equal("Total: 0\r\nDPS: -0\r\nMax Single Dmg: 0", giant.dpsText.text);
                 Assert.Equal(vanilla.dpsText.text, giant.dpsText.text); // 本体と同じ "-0" 表示
+            }
+            finally
+            {
+                harmony.UnpatchAll(harmony.Id);
+            }
+        }
+
+        // (g)（#1025）同じテキスト実体のまま ON: 0/0/0 → OFF: 100/50/40 → ON: 0/0/0 の
+        // 順に通す。ON の間は値が同じフレームで書き込みを省くが、OFF の間の書き込みは
+        // キャッシュを更新しないため、3回目（再び ON の 0/0/0）では表示が 100/50/40 の
+        // ままでもキャッシュ（0/0/0）と一致して return してしまう。3回目のフレームで
+        // 本体と同じゼロ表示に書き直り、その後の同値フレームは再び省かれること。
+        [Fact]
+        public void ReEnablingAfterAnOffWindowRewritesTheVanillaZero()
+        {
+            var harmony = Patch();
+            try
+            {
+                var giant = Spawn(0f, 0f, 0f);
+                RunFrame(giant); // ON: 0/0/0。キャッシュも 0/0/0 になる。
+                Assert.Equal(1, giant.dpsText.TextWrites);
+                Assert.Equal("Total: 0\r\nDPS: 0\r\nMax Single Dmg: 0", giant.dpsText.text);
+
+                NativePerfOptions.RedGiantDamageText = false;
+                giant._totalDamage = 100f;
+                giant._dps = 50f;
+                giant._maxSingleDmg = 40f;
+                RunFrame(giant); // OFF: 表示は 100/50/40 に変わるが、キャッシュは 0/0/0 のまま。
+                Assert.Equal(2, giant.dpsText.TextWrites);
+                Assert.Equal("Total: 100\r\nDPS: 50\r\nMax Single Dmg: 40", giant.dpsText.text);
+
+                NativePerfOptions.RedGiantDamageText = true;
+                giant._totalDamage = 0f;
+                giant._dps = 0f;
+                giant._maxSingleDmg = 0f;
+                RunFrame(giant); // 再び ON の最初のフレーム。計測値 0/0/0 は古いキャッシュと
+                // 同値でも、実際の表示（100/50/40）とは食い違うため書き直ること。
+
+                var vanilla = Spawn(0f, 0f, 0f);
+                RunFrame(vanilla);
+                Assert.Equal(vanilla.dpsText.text, giant.dpsText.text); // 本体と同じゼロ表示
+                Assert.Equal(3, giant.dpsText.TextWrites); // 3回目のフレームで代入される
+
+                // 3回目の後の同値フレームは再び省く（書き込み省略の最適化は残る）。
+                RunFrame(giant);
+                RunFrame(giant);
+                Assert.Equal(3, giant.dpsText.TextWrites);
+                Assert.Equal(vanilla.dpsText.text, giant.dpsText.text);
             }
             finally
             {
