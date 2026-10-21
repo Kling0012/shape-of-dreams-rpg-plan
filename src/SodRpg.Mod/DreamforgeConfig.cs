@@ -279,6 +279,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged transform writes on generic synced objects (guests) / 汎用同期オブジェクトの同じ位置・向きの毎フレーム再書き込みを省く（参加者）")]
         public bool nativeGenericTransformIdle = true;
 
+        [LabelText("Drop the leftover \"HELLO\" debug log when the Obliviax abduction plays (every client) / オブリヴィアクスの連れ去り演出時に残るデバッグログ「HELLO」を省く（各端末）")]
+        public bool nativeObliviaxKidnapLog = true;
+
         [LabelText("Mirage Skin delusion: skip post-process volume rewrites whose values did not change (host and guests) / ミラージュスキンの「妄想」：値が変わったフレームだけポストプロセスのボリュームを書き直す（ホストと参加者） / 幻象皮肤的“妄想”：仅在数值变化的帧更新后处理体积（主机和其他玩家）")]
         public bool nativeMirageVolumeIdle = true;
 
