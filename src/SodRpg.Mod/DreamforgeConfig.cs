@@ -279,6 +279,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged transform writes on generic synced objects (guests) / 汎用同期オブジェクトの同じ位置・向きの毎フレーム再書き込みを省く（参加者）")]
         public bool nativeGenericTransformIdle = true;
 
+        [LabelText("Drop the leftover \"HELLO\" debug log when the Obliviax abduction plays (every client) / オブリヴィアクスの連れ去り演出時に残るデバッグログ「HELLO」を省く（各端末）")]
+        public bool nativeObliviaxKidnapLog = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
