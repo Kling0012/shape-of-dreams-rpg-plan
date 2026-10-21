@@ -639,12 +639,7 @@ namespace Issue73.Native.Tests
             typeof(NativeGenericTransformIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
             typeof(NativeGenericTransformIdlePerf).GetField("_warned", Hidden).SetValue(null, false);
             NativePerfOptions.GenericTransformIdle = true;
-            // 本体 DLL を読む契約テスト（NativeEmbraceContractTests）が先に走ると、実物の
-            // Dew.Core.dll が AppDomain に残り、短い名前 "GenericTransformSync" は実物の
-            // 同名クラス（グローバル名前空間）へ解決されて _pos の Vector3 が実機の型になり、
-            // 式のコンパイルが落ちる。名前空間付きの完全名なら常にこの模倣へ解決される
-            //（TypeByName は点を含む名前を完全一致で探すだけなので、実物が読み込まれていても変わらない）。
-            Assert.True(NativeGenericTransformIdlePerf.TryPrepare(typeof(GenericTransformSync).FullName));
+            Assert.True(NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync"));
         }
 
         public void Dispose()

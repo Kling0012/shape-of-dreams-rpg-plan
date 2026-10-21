@@ -5669,9 +5669,11 @@ namespace SodRpg.Mod
         // failure only ever means this patch stays out.
         private static bool IsLeftoverLogBlock(List<CodeInstruction> code, int logIndex, MethodInfo victimGetter)
         {
-            if (!(code[logIndex - 10].operand is string message) || message != "HELLO") return false;
+            if (code[logIndex - 10].opcode != OpCodes.Ldstr
+                || !(code[logIndex - 10].operand is string message) || message != "HELLO") return false;
             if (!IsThisCopyLoad(code[logIndex - 9])) return false;
-            if (!(code[logIndex - 8].operand is MethodInfo victim) || victim != victimGetter) return false;
+            if (code[logIndex - 8].opcode != OpCodes.Call
+                || !(code[logIndex - 8].operand is MethodInfo victim) || victim != victimGetter) return false;
             if (code[logIndex - 7].opcode != OpCodes.Dup) return false;
             if (code[logIndex - 6].opcode != OpCodes.Brtrue_S) return false;
             if (code[logIndex - 5].opcode != OpCodes.Pop) return false;

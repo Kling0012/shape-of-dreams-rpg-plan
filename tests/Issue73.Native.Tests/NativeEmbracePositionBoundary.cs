@@ -33,13 +33,16 @@ namespace UnityEngine
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
-    // Log は NativeObliviaxKidnapLogPerf が参照するだけで、検証で中身は読まない。
+    // Log は NativeObliviaxKidnapLogPerf の差し替え先 MaybeLog が設定無効時に呼ぶ本体の呼び出し。
+    // 検証では渡された引数をそのままため込み、ObliviaxKidnapLogPerfTests が読む。
     internal static class Debug
     {
         internal static readonly System.Collections.Generic.List<System.Exception> Logged
             = new System.Collections.Generic.List<System.Exception>();
+        internal static readonly System.Collections.Generic.List<object> LoggedMessages
+            = new System.Collections.Generic.List<object>();
         public static void LogException(System.Exception exception) => Logged.Add(exception);
-        public static void Log(object message) { }
+        public static void Log(object message) => LoggedMessages.Add(message);
     }
 }
 namespace SodRpg.Mod
