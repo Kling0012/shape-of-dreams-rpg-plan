@@ -291,6 +291,7 @@ namespace SodRpg.Mod
                 if (!ReferenceEquals(player, null))
                 {
                     _builds.Remove(player);
+                    _bountyReturns.Remove(player);
                     _incomingBuilds.Remove(player);
                     RemoveBuildValidationPeer(player);
                     RemoveKillPeer(player);
@@ -1272,10 +1273,12 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBountyReturnMsg>(OnBountyReturn); } catch (Exception) { }
                 }
                 // RPC transport replacement is not removal of the surviving hero's loadout.
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt, restoreGemSlots: false); }
                 _runtimes.Clear();
+                _bountyReturns.Clear();
                 ReleaseCurrency();
                 _builds.Clear();
                 _incomingBuilds.Clear();
@@ -1296,6 +1299,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeKillReceiptMsg>(nameof(DreamforgeKillReceiptMsg), OnKillReceipt);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBountyReturnMsg>(nameof(DreamforgeBountyReturnMsg), OnBountyReturn);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -1473,6 +1477,8 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBountyReturnMsg>(OnBountyReturn); } catch (Exception) { }
+                _bountyReturns.Clear();
                 UnregisterHello(_registeredOn);
                 _registeredOn = null;
             }

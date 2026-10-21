@@ -1,0 +1,2 @@
+### 不具合の修正 / Bug fixes
+- インフィニティで「確保して帰還」を選ぶと、未送信の依頼進捗と、その進捗で達成する依頼の記録・報酬が失われる問題を修正しました。帰還前に各参加者の進捗の適用を待ち、後のフラッシュによる二重加算を防ぎます。協力プレイでは全員が同じ版に更新してください。 / Fixed Infinity secured returns losing unsent bounty progress and the completion records and rewards earned by that progress. Each participant now waits for progress to be applied before returning, without counting it again on later flushes. All co-op players must update to the same version.

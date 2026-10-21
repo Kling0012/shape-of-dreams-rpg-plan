@@ -123,8 +123,19 @@ namespace SodRpg.Mod
         public uint heroNetId;
         public string runId;
         public int shields, allyHeals;
+        public long sequence;
         // Index is the original four-element mask, preserving overlapping elements.
         public int[] elementalKills;
+    }
+
+    [Serializable]
+    public sealed class DreamforgeBountyReturnMsg
+    {
+        public int version = 1;
+        public string runId;
+        public uint heroNetId;
+        public long revision, graphEpoch, segmentEpoch;
+        public bool received;
     }
 
     [Serializable]
