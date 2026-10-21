@@ -55,6 +55,10 @@ namespace SodRpg.Mod
     {
         internal static readonly Type ClosureType, IteratorType;
         internal static readonly FieldInfo Source, Fired;
+        // Compiled readers for the per-attack capture path: FieldInfo.GetValue boxes the EventInfoAttackFired
+        // struct on every Double Tap proc, a ref-returning FieldRef copies it without boxing.
+        internal static readonly AccessTools.FieldRef<object, Se_D_DoubleTap> SourceRef;
+        internal static readonly AccessTools.FieldRef<object, EventInfoAttackFired> FiredRef;
         internal static readonly MethodInfo Factory, MoveNext;
         internal static readonly bool Available;
         static NativeDoubleTapCoroutineContract()
@@ -70,6 +74,8 @@ namespace SodRpg.Mod
                 if (Source == null || Source.IsStatic || Source.FieldType != typeof(Se_D_DoubleTap)
                     || Fired == null || Fired.IsStatic || Fired.FieldType != typeof(EventInfoAttackFired))
                     throw new MissingFieldException("Native Double Tap source/fired-event capture is unavailable.");
+                SourceRef = AccessTools.FieldRefAccess<Se_D_DoubleTap>(ClosureType, "<>4__this");
+                FiredRef = AccessTools.FieldRefAccess<EventInfoAttackFired>(ClosureType, "obj");
                 Factory = ClosureType.GetMethod("<EntityEventOnAttackFired>g__Routine|0",
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     ?? throw new MissingMethodException("Native Double Tap coroutine factory is unavailable.");
@@ -118,8 +124,8 @@ namespace SodRpg.Mod
         private static void Postfix(object __instance, IEnumerator __result)
         {
             if (!NetworkServer.active || __result == null) return;
-            var source = (Se_D_DoubleTap)NativeDoubleTapCoroutineContract.Source.GetValue(__instance);
-            var fired = (EventInfoAttackFired)NativeDoubleTapCoroutineContract.Fired.GetValue(__instance);
+            var source = NativeDoubleTapCoroutineContract.SourceRef(__instance);
+            var fired = NativeDoubleTapCoroutineContract.FiredRef(__instance);
             var pending = HostAuthority.NativeInstance?.CaptureDoubleTapCoroutine(source, fired)
                 ?? new NativeDoubleTapCoroutineContract.PendingDoubleTap { Source = source, Rejected = true };
             NativeDoubleTapCoroutineContract.Pending.Add(__result, pending);
