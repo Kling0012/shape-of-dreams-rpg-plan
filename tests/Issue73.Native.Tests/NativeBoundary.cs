@@ -866,13 +866,16 @@ namespace SodRpg.Mod
     // 本体 Dew.Core FxVolume／FxInterpolatedEffectBase（2026-10-21 逆コンパイル確認）の、
     // パッチが読む範囲の模倣: currentValue・targetStrength・UpdateVolume の宣言と、
     // Prepare が FieldRef で掴む _volume／_contextMultiplier。Volume は下の UnityEngine.Rendering 側。
+    // updateVolumeCalls は本体にはない記録で、ApplyVolume が呼び出しを省いたかどうかを
+    // テスト（MirageVolumeIdlePerfTests）が数えるためのもの。
     internal class FxVolume
     {
         public float currentValue;
         public float targetStrength = 1f;
         private UnityEngine.Rendering.Volume _volume;
         private float _contextMultiplier = 1f;
-        public void UpdateVolume() { }
+        public int updateVolumeCalls;
+        public void UpdateVolume() { updateVolumeCalls++; }
     }
     internal static class ManagerBase<T> { public static T softInstance; }
     // （#763）本体と同じ意味のカメラ角度。実物は get が public のプロパティで、セッターが
