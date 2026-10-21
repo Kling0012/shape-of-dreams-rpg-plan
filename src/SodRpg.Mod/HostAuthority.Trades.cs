@@ -25,7 +25,7 @@ namespace SodRpg.Mod
                 return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request);
             }
 
-            var decision = _tradeAuthority.Evaluate(playerKey, runId, request, owner.gold, owner.dreamDust, TradeGoldCostScale(), 1, TradeZoneIndex());
+            var decision = _tradeAuthority.Evaluate(playerKey, runId, request, owner.gold, owner.dreamDust, TradeGoldCostScale(), 1, TradeZoneIndex(), TradeZoneEpoch());
             if (!decision.Ok || decision.Replayed) return decision;
             int before = owner.dreamDust;
             try
@@ -123,7 +123,7 @@ namespace SodRpg.Mod
                     int goldBefore = caller.gold, dustBefore = caller.dreamDust;
                     var d = req.Kind == TradeKind.SatchelOverflowDust && !req.Query
                         ? GrantSatchelOverflow(msg, caller, req)
-                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale(), SalvageScaleFor(caller), TradeZoneIndex());
+                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale(), SalvageScaleFor(caller), TradeZoneIndex(), TradeZoneEpoch());
                     if (d.Ok && !d.Replayed && req.Kind != TradeKind.SatchelOverflowDust)
                         d = ExecuteManualTrade(caller, playerKey, runId, req, d, goldBefore, dustBefore);
                     ok = d.Ok;
@@ -165,6 +165,16 @@ namespace SodRpg.Mod
         {
             try { return NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1; }
             catch (Exception) { return -1; }
+        }
+
+        /// <summary>
+        /// 世界の識別に使うホスト側の世代（インフィニティの潜行・境界ごとに増える。通常モードでは 0 のまま）。
+        /// インフィニティは本体の世界番号が進まないため、上限の計数はこの世代とも切り替える（#1030）。
+        /// </summary>
+        private static long TradeZoneEpoch()
+        {
+            try { return Math.Max(0, InfinityMode.State?.GraphEpoch ?? 0); }
+            catch (Exception) { return 0; }
         }
 
         /// <summary>本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)、ホスト側の権威ある値）。</summary>

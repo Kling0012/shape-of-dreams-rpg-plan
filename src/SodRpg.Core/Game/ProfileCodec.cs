@@ -63,7 +63,8 @@ namespace SodRpg.Core.Game
             return loaded;
         }
 
-        private static JsonObject WriteBody(Profile p, bool includeContinue, bool legacyContinue = false)
+        private static JsonObject WriteBody(Profile p, bool includeContinue, bool legacyContinue = false,
+            bool includeVersionEightFields = true)
         {
             var mats = new JsonObject();
             // 既知素材は Materials.Known の並びで書き、それ以外の正の値も書き残す。読み込み側の
@@ -86,8 +87,8 @@ namespace SodRpg.Core.Game
                 for (int i = 1; i < h.Keystones.Length && h.Keystones[i] != null; i++) keystones.Add(h.Keystones[i]);
                 var hero = new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
                     .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
-                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion)
-                    .Add("limboInfinityUnlocked", h.LimboInfinityUnlocked);
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion);
+                if (includeVersionEightFields) hero.Add("limboInfinityUnlocked", h.LimboInfinityUnlocked);
                 if (h.ExtraPoints != 0) hero.Add("xp2", (long)h.ExtraPoints);
                 WriteStarLoadouts(hero, h);
                 heroes.Add(kv.Key, hero);
@@ -140,17 +141,21 @@ namespace SodRpg.Core.Game
                 // Old/default runs carry no optional bonus payload.
                 if (r.OverflowDreamDustTotal != 0) run.Add("overflowDreamDustTotal", r.OverflowDreamDustTotal);
                 if (r.OverflowDreamDustLedgerId != 0) run.Add("overflowDreamDustLedgerId", r.OverflowDreamDustLedgerId);
-                // Optional run-world order (#700); old saves omit it and start counting from the current world.
-                if (r.WorldIndex >= 0 && r.WorldZoneIndex >= 0)
+                if (includeVersionEightFields)
                 {
-                    run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
-                    if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
-                    if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
+                    // Optional run-world order (#700); old saves omit it and start counting from the current world.
+                    if (r.WorldIndex >= 0 && r.WorldZoneIndex >= 0)
+                    {
+                        run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
+                        if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
+                        if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
+                    }
+                    // 旧い保存（計数がない）は 0 から始める。
+                    if (r.SalvageDustEarned != 0) run.Add("salvageDustEarned", r.SalvageDustEarned);
+                    if (r.SalvageDustZoneIndex != -1) run.Add("salvageDustZone", (long)r.SalvageDustZoneIndex);
+                    if (r.SalvageDustWorldEpoch != -1) run.Add("salvageDustEpoch", r.SalvageDustWorldEpoch);
+                    if (r.SalvageDustOverflowPaidSeen != 0) run.Add("salvageDustOverflowSeen", r.SalvageDustOverflowPaidSeen);
                 }
-                // 旧い保存（計数がない）は 0 から始める。
-                if (r.SalvageDustEarned != 0) run.Add("salvageDustEarned", r.SalvageDustEarned);
-                if (r.SalvageDustZoneIndex != -1) run.Add("salvageDustZone", (long)r.SalvageDustZoneIndex);
-                if (r.SalvageDustOverflowPaidSeen != 0) run.Add("salvageDustOverflowSeen", r.SalvageDustOverflowPaidSeen);
             }
 
             var body = new JsonObject()
@@ -537,6 +542,7 @@ namespace SodRpg.Core.Game
                     WorldInfinitySegment = rj.TryGet("worldInfinitySegment", out _) ? Math.Max(-1, Long(rj, "worldInfinitySegment")) : -1,
                     SalvageDustEarned = Long(rj, "salvageDustEarned"),
                     SalvageDustZoneIndex = rj.TryGet("salvageDustZone", out _) ? (int)Clamp(Long(rj, "salvageDustZone"), -1, int.MaxValue) : -1,
+                    SalvageDustWorldEpoch = rj.TryGet("salvageDustEpoch", out _) ? Math.Max(-1, Long(rj, "salvageDustEpoch")) : -1,
                     SalvageDustOverflowPaidSeen = Long(rj, "salvageDustOverflowSeen"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),

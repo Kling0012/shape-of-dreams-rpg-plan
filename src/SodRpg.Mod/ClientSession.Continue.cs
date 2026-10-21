@@ -198,6 +198,7 @@ namespace SodRpg.Mod
             var session = _hostSession;
             if (!NetworkServer.active || session == null || data?.serverActorData == null) return;
             session._nativeContinueRestoring = true;
+            // Arm every restore before callbacks or checkpoint-related early returns.
             session._nativeContinueRestoreDeadline = Time.unscaledTime + 30f;
             HostAuthority.GemContinueSources.Reset();
             HostAuthority.NativeInstance?.BeginNativeContinueRestore();
@@ -364,6 +365,8 @@ namespace SodRpg.Mod
 
         private void ObserveContinueGame(GameManager gm)
         {
+            // LoadNativeContinue always arms a finite deadline; while restoring, infinity
+            // therefore means TickContinueRestore already handled the timeout, not the initial value.
             if (_nativeContinueRestoring && float.IsPositiveInfinity(_nativeContinueRestoreDeadline)
                 && (gm == null || _continueGame == null))
             {

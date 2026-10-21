@@ -132,6 +132,54 @@ namespace Issue73.Native.Tests
         private static CoopTradeReceipt Receipt(string id) => CoopTradeRules.CreateReceipt(id, "host-key",
             "player-a", Profile.CreateNew(17), new CoopTradeOffer(), "player-b", Profile.CreateNew(18), new CoopTradeOffer());
 
+        [Theory]
+        [InlineData("probe", true, "roster", 7)]
+        [InlineData("query", true, "executed", 7)]
+        [InlineData("cancel", true, "executed", 7)]
+        [InlineData("request", true, "view", 7)]
+        [InlineData("query", false, "cancelled", 7)]
+        [InlineData("cancel", false, "cancelled", 7)]
+        [InlineData("probe", true, "roster", 8)]
+        [InlineData("query", true, "executed", 8)]
+        [InlineData("cancel", true, "executed", 8)]
+        [InlineData("request", true, "view", 8)]
+        [InlineData("query", false, "cancelled", 8)]
+        [InlineData("cancel", false, "cancelled", 8)]
+        public void Version_seven_history_allows_host_entry_and_recovery(string action, bool committed, string expectedKind, int version)
+        {
+            CreateWorld();
+            Directory.CreateDirectory(_directory);
+            if (version == 7)
+            {
+                string saved = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "CoopTradeV7", "v7-journal.json"));
+                File.WriteAllText(_hostSession.CoopTradeJournalPath, saved);
+            }
+            else
+            {
+                new CoopTradeJournal(new RealFileSystem(), _hostSession.CoopTradeJournalPath)
+                    .Commit(Receipt("10280000000000000000000000000001"));
+            }
+            if (action != "probe")
+            {
+                Probe(_a);
+                Probe(_b);
+                _a.connectionToClient.Sent.Clear();
+            }
+            string id = committed ? "10280000000000000000000000000001" : "10280000000000000000000000000002";
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand
+                { action = action, id = id, target = "player-b", safe = true, fusion = true }, _a);
+
+            Assert.DoesNotContain(States(_a), state => state.kind == "error");
+            Assert.Contains(States(_a), state => state.kind == expectedKind);
+            var journal = Assert.IsType<CoopTradeJournal>(Get(_host, "_coopJournal"));
+            Assert.True(journal.TryGet("10280000000000000000000000000001", out var original));
+            if (expectedKind == "executed")
+                Assert.Equal(CoopTradeCodec.WriteReceipt(original), ReceivedText(_a, "executed", id));
+            if (expectedKind == "cancelled") Assert.True(journal.IsCancelled(id));
+            if (action == "request") Assert.NotNull(Get(_host, "_coopHostTrade"));
+            Assert.Empty(_errors);
+        }
+
         [Fact]
         public void Query_returns_the_live_view_without_cancelling_and_a_real_cancel_tombstones_once()
         {
