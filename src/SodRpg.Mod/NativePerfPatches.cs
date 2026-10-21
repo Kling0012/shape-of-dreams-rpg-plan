@@ -3007,11 +3007,17 @@ namespace SodRpg.Mod
 
         private static bool Prefix(AbilityTrigger __instance, int configIndex, int charge)
         {
-            if (_disabled || !NativePerfOptions.ChargeRpcIdle) return true;
+            if (_disabled) return true;
             try
             {
                 // Only the authority knows what it last sent; other paths keep vanilla behavior.
                 if (!Mirror.NetworkServer.active) return true;
+                if (!NativePerfOptions.ChargeRpcIdle)
+                {
+                    // Vanilla sends while OFF must not leave stale values for the next ON send.
+                    LastSent.Remove(__instance);
+                    return true;
+                }
                 var charges = __instance.currentCharges;
                 if (charges == null || (uint)configIndex >= (uint)charges.Length) return true;
                 var slots = LastSent.GetValue(__instance, CreateSlotsCallback);
