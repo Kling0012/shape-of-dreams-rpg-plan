@@ -19,6 +19,8 @@ namespace SodRpg.Mod
         {
             var run = Profile.Run;
             if (run == null || dust <= 0) return 0;
+            // 潜行直後の応答は定期更新より先に届くため、先に現在の世界を反映する。
+            TickSalvageDustCap();
             long room = Economy.DustCap(run.SalvageDustZoneIndex, SalvageScale) - run.SalvageDustEarned;
             long granted = Math.Min(dust, Math.Max(0, room));
             if (granted > 0)
