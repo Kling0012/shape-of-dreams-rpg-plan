@@ -18,6 +18,10 @@ namespace SodRpg.Mod
         private readonly List<PendingTrade> _autoSalvagePrepared = new List<PendingTrade>();
         // 自動分解で始めた取引の識別子。成功の案内を画面に出さずログにだけ残すために使う。
         private readonly HashSet<long> _autoSalvageTokens = new HashSet<long>();
+        // 最初の候補が入ってから送るまでの猶予（秒）。ドロップがフレームに分かれて届く戦闘中に
+        // 確認付き保存（SaveNow(true)）が毎フレーム走って引っかかりの原因にならないよう、1回にまとめる。
+        private const float AutoSalvageGraceSeconds = 0.5f;
+        private float _autoSalvageSendAt = -1f;
 
         internal void ConfigureAutoSalvage(AutoSalvageRarity setting)
         {
@@ -33,12 +37,16 @@ namespace SodRpg.Mod
         {
             if (relic == null || _autoSalvageBelow == null || relic.UniqueId != null
                 || relic.Rarity >= _autoSalvageBelow.Value) return;
+            // 猶予の基準は最初の候補だけ。続いて届くドロップは同じまとめ送りに加わり、遅延は0.5秒で頭打ちになる。
+            if (_autoSalvageQueue.Count == 0) _autoSalvageSendAt = Time.unscaledTime + AutoSalvageGraceSeconds;
             _autoSalvageQueue.Add(relic.Uid);
         }
 
         private void TickAutoSalvage()
         {
             if (_autoSalvageQueue.Count == 0) return;
+            // 猶予の間は確保済み取引の確認保存も送信も行わない（#1010 のまとめ送り）。
+            if (Time.unscaledTime < _autoSalvageSendAt) return;
             var run = Profile.Run;
             if (run == null || _autoSalvageBelow == null) { _autoSalvageQueue.Clear(); return; }
             // 台帳の識別子が分からない間は預けたまま、次の機会に送る。
@@ -55,10 +63,15 @@ namespace SodRpg.Mod
                 for (int i = 0; i < _autoSalvageQueue.Count; )
                 {
                     string uid = _autoSalvageQueue[i];
-                    var relic = run.Satchel.Find(r => r.Uid == uid);
+                    // キューを処理する Tick でも確保を増やさないよう、検索はクロージャを作らない for ループで行う。
+                    Relic relic = null;
+                    for (int s = 0; s < run.Satchel.Count; s++)
+                        if (run.Satchel[s].Uid == uid) { relic = run.Satchel[s]; break; }
+                    bool reserved = _trades.IsReserved(uid);
+                    for (int s = 0; !reserved && s < Profile.PendingSalvage.Count; s++)
+                        if (Profile.PendingSalvage[s].Relic.Uid == uid) reserved = true;
                     // 既に鞄に無い（確保・あふれ・手での分解など）か、設定が変わって対象外になった物は捨てる。
-                    if (relic == null || relic.UniqueId != null || relic.Rarity >= _autoSalvageBelow.Value
-                        || _trades.IsReserved(uid) || Profile.PendingSalvage.Exists(s => s.Relic.Uid == uid))
+                    if (relic == null || relic.UniqueId != null || relic.Rarity >= _autoSalvageBelow.Value || reserved)
                     {
                         _autoSalvageQueue.RemoveAt(i);
                         continue;
