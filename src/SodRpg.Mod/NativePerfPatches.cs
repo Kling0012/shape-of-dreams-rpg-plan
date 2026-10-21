@@ -5204,10 +5204,12 @@ namespace SodRpg.Mod
         // pre-off triple, skip and leave the off window's text on screen. A null dpsText
         // still throws exactly where vanilla throws.
         // LastText is the per-TMP_Text record of the last written triple, option on or
-        // off alike. It starts as NaN (never equal to the spawn-frame 0/0/0), so the very
-        // first call always formats and assigns — vanilla writes on every frame including
-        // the first, and the prefab's placeholder TMP string must not survive until the
-        // first non-zero value.
+        // off alike; a fail-soft stop is the one exception — the stopped helper never
+        // touches the record again and just writes like vanilla. It starts
+        // as NaN (never equal to the spawn-frame 0/0/0), so the very first call always
+        // formats and assigns — vanilla writes on every frame including the first, and
+        // the prefab's placeholder TMP string must not survive until the first non-zero
+        // value.
         private sealed class LastText
         {
             internal float Total = float.NaN;
@@ -5326,7 +5328,11 @@ namespace SodRpg.Mod
         private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
         {
             var skip = false;
-            if (text != null)
+            // _disabled gates the whole block, not just the skip: the stop-triggering
+            // exception may come from the table itself, so a stopped helper must not
+            // touch the record again (it only writes, like vanilla) — re-throwing into
+            // the catch every frame would keep allocating exceptions per frame.
+            if (!_disabled && text != null)
             {
                 try
                 {
@@ -5335,7 +5341,7 @@ namespace SodRpg.Mod
                     // off window writes text.text directly, so its values must land in
                     // the record too, or the first re-enabled frame matches the stale
                     // pre-off triple and skips with the off window's text still shown.
-                    skip = !_disabled && NativePerfOptions.RedGiantDamageText
+                    skip = NativePerfOptions.RedGiantDamageText
                         && SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max);
                     last.Total = total;
                     last.Dps = dps;
