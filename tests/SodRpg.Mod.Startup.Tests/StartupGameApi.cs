@@ -433,7 +433,7 @@ namespace SodRpg.Mod
         internal void SetInputFocus(bool hasFocus) { }
         internal void ReleaseTextInput() { }
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null,
-            Action saveLanguageConfig = null) { }
+            Action saveLanguageConfig = null, Action saveNameplateConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
         public void Close() { }

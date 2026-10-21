@@ -41,9 +41,14 @@ namespace SodRpg.Mod
         private const string NemesisNameplateColor = "#4dd8ff";
         private const string NightmareNameplateColor = "#ff6ad5";
         private const string VariantNameplateColor = "#ffb347";
+        // #1009: 「印だけ」のときの危険度の印。言語によらない固定の文字列で、名前と同じ仕組みでキャッシュする。
+        private const string VariantDangerMark = "*";
+        private const string NightmareDangerMark = "**";
+        private const string DeadlyDangerMark = "***";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
         private LocLanguage _labelCacheJa;
+        private EnemyNameplateMode _labelCacheMode;
 
         /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
         private readonly List<Hint> _hints = new List<Hint>();
@@ -74,6 +79,8 @@ namespace SodRpg.Mod
         private readonly Action _saveLevelEssenceConfig;
         // メニューの言語はホストかどうかに関係なく各自の設定へ保存する。
         private readonly Action _saveLanguageConfig;
+        // 名札の表示方法（#1009）も言語と同じく、各自の見た目だけの設定として保存する。
+        private readonly Action _saveNameplateConfig;
         private readonly UiStyles _st = new UiStyles();
         private readonly ImeInput _ime = new ImeInput();
 
@@ -129,13 +136,14 @@ namespace SodRpg.Mod
         public bool MouseOverPanel { get; private set; }
 
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null,
-            Action saveLanguageConfig = null)
+            Action saveLanguageConfig = null, Action saveNameplateConfig = null)
         {
             _s = session;
             _cfg = cfg;
             _linkTravelerCoefficient = LinkTravelerCoefficient;
             _saveLevelEssenceConfig = saveLevelEssenceConfig;
             _saveLanguageConfig = saveLanguageConfig;
+            _saveNameplateConfig = saveNameplateConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
@@ -1205,9 +1213,12 @@ namespace SodRpg.Mod
         /// <summary>担当の印・共鳴の盾・分類の名札を、共通の表示枠で左から並べる。</summary>
         private void DrawNightmareLabels(float scale)
         {
-            if (_labelCacheJa != Loc.Language)
+            // #1009: 言語か名札の表示方法が変わったら、名前と印の文字列を作り直す。
+            var mode = _cfg().ResolveNameplates();
+            if (_labelCacheJa != Loc.Language || _labelCacheMode != mode)
             {
                 _labelCacheJa = Loc.Language;
+                _labelCacheMode = mode;
                 _nightmareLabelCache.Clear();
                 _variantLabelCache.Clear();
             }
@@ -1230,25 +1241,25 @@ namespace SodRpg.Mod
             _drawnMonsterLabels.Clear();
             foreach (var kv in _s.Nightmare)
             {
-                DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                DrawMonsterLabel(kv.Key, cam, scale, mode, ref remaining);
                 if (remaining == 0) return;
             }
             foreach (var kv in _s.Variant)
             {
-                if (!_s.Nightmare.ContainsKey(kv.Key)) DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (!_s.Nightmare.ContainsKey(kv.Key)) DrawMonsterLabel(kv.Key, cam, scale, mode, ref remaining);
                 if (remaining == 0) return;
             }
             for (int slot = 0; slot < 3; slot++)
             {
                 uint netId = _s.CoopWardId(slot);
-                if (netId != 0) DrawMonsterLabel(netId, cam, scale, ref remaining);
+                if (netId != 0) DrawMonsterLabel(netId, cam, scale, mode, ref remaining);
                 if (remaining == 0) return;
             }
             if (_ownershipLabelsFailed || !_cfg().showEnemyOwnershipMarks) return;
             foreach (var kv in _s.EnemyOwners)
             {
                 if (kv.Value.Protected || kv.Value.BossShares != null)
-                    DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                    DrawMonsterLabel(kv.Key, cam, scale, mode, ref remaining);
                 if (remaining == 0) return;
             }
         }
@@ -1282,7 +1293,7 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private void DrawMonsterLabel(uint netId, Camera cam, float scale, ref int remaining)
+        private void DrawMonsterLabel(uint netId, Camera cam, float scale, EnemyNameplateMode mode, ref int remaining)
         {
             // Keep pre-spawn/out-of-interest records until authoritative removal; resolve only live identities.
             if (!_drawnMonsterLabels.Add(netId)) return;
@@ -1294,26 +1305,34 @@ namespace SodRpg.Mod
             var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
             if (sp.z <= 0 || sp.x < 0 || sp.x > Screen.width || sp.y < 0 || sp.y > Screen.height) return;
             Label3D label = null, mark = null;
-            if (_s.Nightmare.TryGetValue(netId, out var nightmare))
+            // #1009: 「表示しない」のときは悪夢と変種の名札だけを飛ばす。担当の印と守りの印はこの下で今までどおり出す。
+            if (mode != EnemyNameplateMode.Hidden)
             {
-                if (!_nightmareLabelCache.TryGetValue((int)nightmare, out label))
+                if (_s.Nightmare.TryGetValue(netId, out var nightmare))
                 {
-                    string color = (nightmare & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
-                    string text = UiStyles.Colored(Nightmares.Label(nightmare), color);
-                    var content = new GUIContent(text);
-                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _nightmareLabelCache[(int)nightmare] = label;
+                    if (!_nightmareLabelCache.TryGetValue((int)nightmare, out label))
+                    {
+                        bool nemesis = (nightmare & NightmareAffix.Nemesis) != 0;
+                        string color = nemesis ? NemesisNameplateColor : NightmareNameplateColor;
+                        // 印の危険度は名札と同じ判定順（宿敵 → 悪夢 → 変種）。宿敵か性質3個以上は ***、ほかの悪夢は **。
+                        string text = UiStyles.Colored(mode == EnemyNameplateMode.Marks
+                            ? nemesis || Nightmares.AttachedAffixCount(nightmare) >= 3 ? DeadlyDangerMark : NightmareDangerMark
+                            : Nightmares.Label(nightmare), color);
+                        var content = new GUIContent(text);
+                        label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                        _nightmareLabelCache[(int)nightmare] = label;
+                    }
                 }
-            }
-            else if (_s.Variant.TryGetValue(netId, out var variant))
-            {
-                var def = Variants.Get(variant);
-                if (def != null && !_variantLabelCache.TryGetValue(variant, out label))
+                else if (_s.Variant.TryGetValue(netId, out var variant))
                 {
-                    string text = UiStyles.Colored(Variants.Label(def), VariantNameplateColor);
-                    var content = new GUIContent(text);
-                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _variantLabelCache[variant] = label;
+                    var def = Variants.Get(variant);
+                    if (def != null && !_variantLabelCache.TryGetValue(variant, out label))
+                    {
+                        string text = UiStyles.Colored(mode == EnemyNameplateMode.Marks ? VariantDangerMark : Variants.Label(def), VariantNameplateColor);
+                        var content = new GUIContent(text);
+                        label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                        _variantLabelCache[variant] = label;
+                    }
                 }
             }
             if (!_ownershipLabelsFailed)
@@ -3781,6 +3800,32 @@ namespace SodRpg.Mod
                 _saveLanguageConfig?.Invoke();
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさはゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings.", "按键与画面大小可在游戏的MOD设置中更改。"), _st.Small);
+            GUILayout.EndHorizontal();
+            // #1009: 敵の名札の表示方法。言語ボタンと同じ並びで3つのボタンを置き、選ばれている物は押せない見た目にする。
+            // 各プレイヤーの見た目だけの設定で、担当の印と守りの印はそれぞれの設定に従う。
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("敵の名札：", "Enemy nameplates: ", "敌人名牌："), _st.Small, GUILayout.Width(130));
+            var nameplates = cfg.ResolveNameplates();
+            bool panelEnabled = GUI.enabled;
+            GUI.enabled = panelEnabled && nameplates != EnemyNameplateMode.Name;
+            if (GUILayout.Button(Loc.T("名前", "Names", "名称"), _st.Button, GUILayout.Width(90)))
+            {
+                cfg.enemyNameplates = EnemyNameplateMode.Name;
+                _saveNameplateConfig?.Invoke();
+            }
+            GUI.enabled = panelEnabled && nameplates != EnemyNameplateMode.Marks;
+            if (GUILayout.Button(Loc.T("印だけ", "Marks only", "仅标记"), _st.Button, GUILayout.Width(100)))
+            {
+                cfg.enemyNameplates = EnemyNameplateMode.Marks;
+                _saveNameplateConfig?.Invoke();
+            }
+            GUI.enabled = panelEnabled && nameplates != EnemyNameplateMode.Hidden;
+            if (GUILayout.Button(Loc.T("表示しない", "Hidden", "隐藏"), _st.Button, GUILayout.Width(110)))
+            {
+                cfg.enemyNameplates = EnemyNameplateMode.Hidden;
+                _saveNameplateConfig?.Invoke();
+            }
+            GUI.enabled = panelEnabled;
             GUILayout.EndHorizontal();
             DrawEnemyOwnershipSettings(cfg);
             DrawAutoCastSettings(cfg);

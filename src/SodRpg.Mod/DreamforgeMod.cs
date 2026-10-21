@@ -85,7 +85,7 @@ namespace SodRpg.Mod
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
-                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig, SaveLanguageConfig);
+                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig, SaveLanguageConfig, SaveNameplateConfig);
                 BindEnemyOwnershipSettings();
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
@@ -145,6 +145,17 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Language setting save failed: " + ex.Message);
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
+            }
+        }
+
+        // 名札の表示方法（#1009）は言語と同じく各自の設定。ホストかどうかに関係なく保存する。
+        private void SaveNameplateConfig()
+        {
+            try { SaveConfigsToDisk(); }
+            catch (Exception ex)
+            {
+                Log.Warn("Nameplate setting save failed: " + ex.Message);
                 _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }
