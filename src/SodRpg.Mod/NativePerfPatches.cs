@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Rendering;
 
 namespace SodRpg.Mod
 {
@@ -62,6 +63,7 @@ namespace SodRpg.Mod
             NativePerfOptions.StealthRevealOverlapScan = config.nativeStealthRevealOverlapScan;
             NativePerfOptions.MerchantPropIdle = config.nativeMerchantPropIdle;
             NativePerfOptions.GenericTransformIdle = config.nativeGenericTransformIdle;
+            NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
         }
     }
 
@@ -113,6 +115,7 @@ namespace SodRpg.Mod
         internal static bool StealthRevealOverlapScan = true;
         internal static bool MerchantPropIdle = true;
         internal static bool GenericTransformIdle = true;
+        internal static bool MirageVolumeIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -5560,6 +5563,107 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "generic transform idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeMirageVolumeIdle
+    {
+        // Se_MirageSkin_Delusion_Delusional.ActiveLogicUpdate smooths delusionalVolume.targetStrength
+        // with MoveTowards and then calls FxVolume.UpdateVolume() unconditionally every frame, on the
+        // host and on every guest, long after the smoothing has converged. UpdateVolume writes
+        // Volume.weight/enabled as a pure function of (currentValue, targetStrength, _contextMultiplier)
+        // and every native mutation of those inputs is followed by a real write: the base class writes
+        // on each currentValue change (ValueSetter), Play() writes after setting the context multiplier,
+        // and the transpiled callsite itself writes whenever targetStrength moves. Skipping a call whose
+        // inputs equal the last state this callsite wrote therefore leaves the same weight and enabled
+        // flag on screen. External targetStrength writers (FlavourManager) self-correct on the next
+        // frame because a changed value no longer matches the recorded state.
+        private sealed class Applied
+        {
+            internal float CurrentValue;
+            internal float TargetStrength;
+            internal float ContextMultiplier;
+        }
+
+        private static readonly ConditionalWeakTable<FxVolume, Applied> AppliedStates =
+            new ConditionalWeakTable<FxVolume, Applied>();
+        private static readonly ConditionalWeakTable<FxVolume, Applied>.CreateValueCallback CreateApplied =
+            _ => new Applied();
+        private static AccessTools.FieldRef<FxVolume, Volume> _volume;
+        private static AccessTools.FieldRef<FxVolume, float> _contextMultiplier;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Se_MirageSkin_Delusion_Delusional), "ActiveLogicUpdate",
+                new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _volume = AccessTools.FieldRefAccess<FxVolume, Volume>("_volume");
+                _contextMultiplier = AccessTools.FieldRefAccess<FxVolume, float>("_contextMultiplier");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "mirage volume", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var update = AccessTools.Method(typeof(FxVolume), nameof(FxVolume.UpdateVolume));
+            int sites = 0, site = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!code[i].Calls(update)) continue;
+                sites++;
+                site = i;
+            }
+            if (sites != 1 || site < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "mirage volume", "native volume callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeMirageVolumeIdle), nameof(ApplyVolume));
+            return code;
+        }
+
+        internal static void ApplyVolume(FxVolume volume)
+        {
+            if (_disabled || !NativePerfOptions.MirageVolumeIdle)
+            {
+                volume.UpdateVolume();
+                return;
+            }
+            try
+            {
+                var applied = AppliedStates.GetValue(volume, CreateApplied);
+                float current = volume.currentValue;
+                float strength = volume.targetStrength;
+                float context = _contextMultiplier(volume);
+                // An uninitialized Volume would throw in the native call too; call through for it.
+                if (_volume(volume) != null && applied.CurrentValue == current
+                    && applied.TargetStrength == strength && applied.ContextMultiplier == context)
+                    return;
+                applied.CurrentValue = current;
+                applied.TargetStrength = strength;
+                applied.ContextMultiplier = context;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "mirage volume", ex.Message);
+            }
+            volume.UpdateVolume();
         }
     }
 }
