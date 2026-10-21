@@ -267,8 +267,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSkillLockResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "skill lock watchdog", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickAutoSalvage, TickCurseResync, TickSkillLockResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "auto salvage", "curse resync", "skill lock watchdog", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -801,6 +801,8 @@ namespace SodRpg.Mod
         public void Emit(GameEvent e)
         {
             _dirty = true;
+            // #1010: 撃破で拾った遺物（ドロップの通知だけが遺物を持つ）を自動分解の候補に加える。
+            if (e.Kind == EventKind.Drop && e.Relic != null) QueueAutoSalvage(e.Relic);
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
             if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp || e.Kind == EventKind.Fused) MarkDirty(true);
             _notify?.Invoke(e);
@@ -1107,6 +1109,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 }
                 if (outcome == TradeOutcome.Failed)
                 {
+                    _autoSalvageTokens.Remove(t.Token); // #1010: 自動分解の失敗はこれ以降 手の分解と同じ扱い
                     RestoreSalvageTrade(t);
                     if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
                     else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
@@ -1131,7 +1134,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         {
                             // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
                             long paid = CountSalvageDustPaid(t.EarnDust);
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust", $"分解获得梦尘+{paid}")));
+                            var salvageNotice = new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust", $"分解获得梦尘+{paid}"));
+                            // #1010: 自動分解の成功の案内は画面に出さずログにだけ残す。手の分解は従来どおり通知する。
+                            if (_autoSalvageTokens.Remove(t.Token)) EmitLogOnly(salvageNotice);
+                            else Emit(salvageNotice);
                         }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();

@@ -185,6 +185,17 @@
     </ItemGroup>
   </Target>
 
+  <!-- 自動分解（#1010）。ClientSession.AutoSalvage.cs は未リンクのため、Emit・OnTradeResult・Tick の
+       抽出が参照する候補の登録・送信・成功案内の抑制とその状態を実ソースから抽出する。
+       ConfigureAutoSalvage は DreamforgeConfig（未リンク）の型を取るため抽出しない
+       （境界では _autoSalvageBelow が null のまま=既定の「しない」）。 -->
+  <Target Name="CompileAutoSalvage" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.AutoSalvage.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AutoSalvage.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="QueueAutoSalvage;TickAutoSalvage;EmitLogOnly" Fields="_autoSalvageBelow;_autoSalvageQueue;_autoSalvagePrepared;_autoSalvageTokens;AutoSalvageGraceSeconds;_autoSalvageSendAt" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)AutoSalvage.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- 星図の差分更新（#440）。左一覧の高さ部分再計算・TextRank/TextChoice スキップ・ツールチップ世代を
        実ソースから抽出したメソッドで直接検証する。境界は StarClusterUiBoundary.cs と NativeBoundary.cs の UnityEngine 部。 -->
   <Target Name="CompileStarClusterDiffUpdate" BeforeTargets="CoreCompile">

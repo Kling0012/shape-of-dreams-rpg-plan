@@ -21,23 +21,26 @@ namespace Issue73.Native.Tests
             var session = new ClientSession();
             var actions = session.PrepareTickIsolationProbe();
             Assert.Equal(actions.Length, session.TickNames.Length);
-            Assert.Equal("TickSalvageDustCap", actions[14].Method.Name);
-            Assert.Equal("salvage dust cap", session.TickNames[14]);
-            Assert.Equal("TickDirectStash", actions[19].Method.Name);
-            Assert.Equal("direct stash save", session.TickNames[19]);
-            Assert.Equal("TickKillSync", actions[20].Method.Name);
-            Assert.Equal("kill sync", session.TickNames[20]);
-            Assert.Equal("TickCoopTrade", actions[21].Method.Name);
-            Assert.Equal("coop trade", session.TickNames[21]);
-            Assert.Equal("TickRoomVisualSweep", actions[22].Method.Name);
-            Assert.Equal("room visual sweep", session.TickNames[22]);
+            // #1010: TickAutoSalvage が「run choices」の次に登録される（以降の番号は1つずつ後ろへ）。
+            Assert.Equal("TickAutoSalvage", actions[10].Method.Name);
+            Assert.Equal("auto salvage", session.TickNames[10]);
+            Assert.Equal("TickSalvageDustCap", actions[15].Method.Name);
+            Assert.Equal("salvage dust cap", session.TickNames[15]);
+            Assert.Equal("TickDirectStash", actions[20].Method.Name);
+            Assert.Equal("direct stash save", session.TickNames[20]);
+            Assert.Equal("TickKillSync", actions[21].Method.Name);
+            Assert.Equal("kill sync", session.TickNames[21]);
+            Assert.Equal("TickCoopTrade", actions[22].Method.Name);
+            Assert.Equal("coop trade", session.TickNames[22]);
+            Assert.Equal("TickRoomVisualSweep", actions[23].Method.Name);
+            Assert.Equal("room visual sweep", session.TickNames[23]);
         }
 
         [Theory]
-        [InlineData(19, "direct stash save")]
-        [InlineData(20, "kill sync")]
-        [InlineData(21, "coop trade")]
-        [InlineData(22, "room visual sweep")]
+        [InlineData(20, "direct stash save")]
+        [InlineData(21, "kill sync")]
+        [InlineData(22, "coop trade")]
+        [InlineData(23, "room visual sweep")]
         public void Tail_step_failure_keeps_original_error_and_continues_with_throttled_logging(int index, string name)
         {
             var session = new ClientSession();

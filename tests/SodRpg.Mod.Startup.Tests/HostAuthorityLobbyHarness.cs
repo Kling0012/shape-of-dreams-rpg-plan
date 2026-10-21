@@ -42,5 +42,7 @@ namespace SodRpg.Mod
         internal static string ContinueCheckpointId, ContinueResumeSession;
         internal static long HostKillReceiptForProgress(string streamId) => 0;
         internal void ConfigureOverflowBonus(bool enabled) { Profile.ReceiveOverflowDreamDust = enabled; }
+        // #1010 自動分解の設定受け入れ（この部分スタブでは使わない）。
+        internal void ConfigureAutoSalvage(AutoSalvageRarity setting) { }
     }
 }

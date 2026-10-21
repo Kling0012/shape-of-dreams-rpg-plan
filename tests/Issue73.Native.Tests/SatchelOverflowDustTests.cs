@@ -88,7 +88,8 @@ namespace Issue73.Native.Tests
             Assert.Equal(count, summary.SatchelOverflowCount);
             Assert.Equal(expected, summary.SatchelOverflowShards);
             Assert.Single(logs);
-            Assert.Equal(1, ui.ToastCount);
+            // #1010: 鞄あふれの集計はログとHUDの再構築だけを行い、画面の通知には出さない。
+            Assert.Equal(0, ui.ToastCount);
             Assert.Equal(0, ui.HudDeadline);
             Assert.NotEmpty(cachedBefore.Except(profile.Run.Satchel.Select(r => r.Uid)));
             Assert.Equal(profile.Run.Satchel.Select(r => r.Uid).OrderBy(uid => uid),
@@ -99,7 +100,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(before + expected, profile.Material(Materials.Shard));
             Assert.Single(session.Events);
             Assert.Single(logs);
-            Assert.Equal(1, ui.ToastCount);
+            Assert.Equal(0, ui.ToastCount);
             Assert.Equal(0, Get(session, "_saveCount"));
             Assert.Empty(transport.Sent);
             Assert.Empty(profile.PendingTrades);
