@@ -14,7 +14,8 @@ namespace SodRpg.Mod
             public float Until;
         }
 
-        private sealed class ToastConfig { public bool showToasts = true; }
+        // #1010: Notify の抽出が参照する設定。toastMaxLines の既定は本番の DreamforgeConfig と同じ 7。
+        private sealed class ToastConfig { public bool showToasts = true; public int toastMaxLines = 7; }
         private static readonly ToastConfig ToastConfiguration = new ToastConfig();
         private readonly Func<ToastConfig> _cfg = () => ToastConfiguration;
         private readonly List<Toast> _toasts = new List<Toast>();

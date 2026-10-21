@@ -162,6 +162,8 @@ namespace Mirror
         public static float Min(float a, float b) => a < b ? a : b;
         public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
         public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
+        // #1010: Notify の抽出が通知の行数（int）に使う本体 API。
+        public static int Clamp(int value, int min, int max) => value < min ? min : value > max ? max : value;
         public static float Floor(float value) => (float)Math.Floor(value);
         // NativePerfPatches.cs が nameof / AccessTools.Method で参照する本体 API。
         public static float MoveTowards(float current, float target, float maxDelta)
