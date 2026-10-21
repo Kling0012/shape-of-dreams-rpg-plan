@@ -48,10 +48,13 @@ namespace SodRpg.Core.Internal
             return sb.ToString();
         }
 
-        public static object Parse(string text)
+        public static object Parse(string text) => Parse(text, false);
+
+        // External translation files discard non-string values, including JSON numbers outside Int64.
+        internal static object Parse(string text, bool allowNonIntegerNumbers)
         {
             if (text == null) throw new LedgerFormatException("JSONが空です。");
-            var p = new Parser(text);
+            var p = new Parser(text, allowNonIntegerNumbers);
             p.SkipWhitespace();
             var v = p.ParseValue(0);
             p.SkipWhitespace();
@@ -128,9 +131,11 @@ namespace SodRpg.Core.Internal
         private sealed class Parser
         {
             private readonly string _s;
+            private readonly bool _allowNonIntegerNumbers;
+            private static readonly object NonIntegerNumber = new object();
             private int _i;
 
-            public Parser(string s) { _s = s; }
+            public Parser(string s, bool allowNonIntegerNumbers) { _s = s; _allowNonIntegerNumbers = allowNonIntegerNumbers; }
 
             public bool AtEnd => _i >= _s.Length;
 
@@ -167,6 +172,7 @@ namespace SodRpg.Core.Internal
 
             private object ParseInteger()
             {
+                if (_allowNonIntegerNumbers) return ParseTranslationNumber();
                 int start = _i;
                 if (_s[_i] == '-') _i++;
                 int digits = 0;
@@ -177,6 +183,30 @@ namespace SodRpg.Core.Internal
                 if (!long.TryParse(_s.Substring(start, _i - start), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long result))
                     throw new LedgerFormatException("数値が範囲外です。");
                 return result;
+            }
+
+            private object ParseTranslationNumber()
+            {
+                if (_s[_i] == '-') _i++;
+                if (AtEnd || _s[_i] < '0' || _s[_i] > '9') throw new LedgerFormatException("数値が不正です。");
+                if (_s[_i] == '0') _i++;
+                else while (!AtEnd && _s[_i] >= '0' && _s[_i] <= '9') _i++;
+                if (!AtEnd && _s[_i] == '.')
+                {
+                    _i++;
+                    int digits = _i;
+                    while (!AtEnd && _s[_i] >= '0' && _s[_i] <= '9') _i++;
+                    if (_i == digits) throw new LedgerFormatException("数値が不正です。");
+                }
+                if (!AtEnd && (_s[_i] == 'e' || _s[_i] == 'E'))
+                {
+                    _i++;
+                    if (!AtEnd && (_s[_i] == '+' || _s[_i] == '-')) _i++;
+                    int digits = _i;
+                    while (!AtEnd && _s[_i] >= '0' && _s[_i] <= '9') _i++;
+                    if (_i == digits) throw new LedgerFormatException("数値が不正です。");
+                }
+                return NonIntegerNumber;
             }
 
             private string ParseString()

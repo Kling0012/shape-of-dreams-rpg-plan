@@ -16,7 +16,7 @@ namespace SodRpg.Mod
         private static readonly string[] FontCandidates =
         {
             "Yu Gothic UI", "Meiryo UI", "Meiryo", "MS UI Gothic", "Microsoft YaHei UI", "Microsoft YaHei",
-            "Hiragino Sans", "Noto Sans CJK JP", "Noto Sans JP", "Arial",
+            "Hiragino Sans", "Noto Sans CJK JP", "Noto Sans JP", "Arial", "Malgun Gothic", "Noto Sans CJK KR",
             // #877: 簡体字中国語の字形のための候補。上の日本語フォントに無い字形をこれらで補う。
             "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "SimHei", "SimSun-ExtB", "SimSun", "NSimSun",
         };

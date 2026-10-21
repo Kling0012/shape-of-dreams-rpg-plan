@@ -10,6 +10,7 @@ namespace SodRpg.Core.Game
         Japanese = 0,
         English = 1,
         Chinese = 2,
+        External = 3,
     }
 
     /// <summary>日本語・英語・中国語（簡体字）の三言語テキスト。表示言語は Loc.Language で切り替える。
@@ -32,6 +33,7 @@ namespace SodRpg.Core.Game
         {
             LocLanguage.Japanese => Ja,
             LocLanguage.Chinese => Zh ?? Loc.Zh(En),
+            LocLanguage.External => Loc.Zh(En),
             _ => En,
         };
     }
@@ -51,6 +53,28 @@ namespace SodRpg.Core.Game
             set { _sharedLanguage = value; _language = value; }
         }
 
+        /// <summary>Allocation-free display cache key, including external dictionary reloads.</summary>
+        public static int CacheKey => Language == LocLanguage.External ? External?.CacheKey ?? 3 : (int)Language;
+
+        private static LocExternal _sharedExternal;
+        private static LocMissing _sharedMissing;
+        [ThreadStatic] private static LocExternal _external;
+        [ThreadStatic] private static LocMissing _missing;
+        [ThreadStatic] private static bool _externalSet;
+        [ThreadStatic] private static bool _missingSet;
+
+        public static LocExternal External
+        {
+            get => _externalSet ? _external : _sharedExternal;
+            set { _sharedExternal = value; _external = value; _externalSet = true; }
+        }
+
+        public static LocMissing Missing
+        {
+            get => _missingSet ? _missing : _sharedMissing;
+            set { _sharedMissing = value; _missing = value; _missingSet = true; }
+        }
+
         // 既存の真偽値での読み書き（#877 以前の互換）。false は英語。
         // 中国語は Language でのみ表現し、この getter は false を返すため、
         // ja/en 二択を前提にした既存のコードは中国語を英語側へ流す。
@@ -66,14 +90,32 @@ namespace SodRpg.Core.Game
         {
             LocLanguage.Japanese => ja,
             LocLanguage.Chinese => zh ?? Zh(en),
+            LocLanguage.External => Zh(en),
             _ => en,
         };
 
-        /// <summary>中国語表示のとき、未訳の文字列を用語集と照合し、なければ英語のまま返す。それ以外の言語はそのまま返す。</summary>
+        public static string F(string ja, string en, string zh, params object[] args)
+        {
+            try { return string.Format(T(ja, en, zh), args); }
+            catch (Exception ex) when (ex is FormatException || ex is ArgumentException)
+            {
+                try { return string.Format(en, args); }
+                catch (Exception fallback) when (fallback is FormatException || fallback is ArgumentException) { return en; }
+            }
+        }
+
+        /// <summary>中国語の用語集、または外部言語を引く。未訳は英語で返す。</summary>
         public static string Zh(string en)
         {
-            if (Language != LocLanguage.Chinese || en == null) return en;
-            return LocZhGlossary.Lookup(en);
+            if (en == null) return en;
+            var language = Language;
+            if (language == LocLanguage.Chinese) return LocZhGlossary.Lookup(en);
+            if (language != LocLanguage.External) return en;
+            var external = External;
+            if (external == null) return en;
+            if (external.TryGet(en, out var translated)) return translated;
+            Missing?.Record(external.Code, en);
+            return en;
         }
     }
 

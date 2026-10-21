@@ -45,6 +45,7 @@
   <ItemGroup>
     <None Include="about\**\*" />
     <None Include="icons\**\*" />
+    <None Include="lang\**\*" />
   </ItemGroup>
 
   <!--
@@ -86,10 +87,12 @@
     <ItemGroup>
       <AboutFiles Include="about\**\*" />
       <IconFiles Include="icons\**\*.png" />
+      <LanguageFiles Include="lang\**\*" />
     </ItemGroup>
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModDeployDir)" SkipUnchangedFiles="false" />
     <Copy SourceFiles="@(AboutFiles)" DestinationFolder="$(ModDeployDir)\about\%(RecursiveDir)" SkipUnchangedFiles="false" />
     <Copy SourceFiles="@(IconFiles)" DestinationFolder="$(ModDeployDir)\icons\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LanguageFiles)" DestinationFolder="$(ModDeployDir)\lang\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Message Importance="high" Text="Deployed to $(ModDeployDir)" />
   </Target>
 

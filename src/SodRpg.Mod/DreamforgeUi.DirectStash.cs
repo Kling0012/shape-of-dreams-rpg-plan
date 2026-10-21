@@ -12,7 +12,7 @@ namespace SodRpg.Mod
         private enum DirectStashLabel { Ready, Confirm, Used }
 
         private DirectStashLabel _directStashLabelKind = DirectStashLabel.Ready;
-        private LocLanguage _directStashLabelLanguage;
+        private int _directStashLabelLanguage;
         private string _directStashLabel;
         private float _directStashArmedAt = -1f;
 
@@ -30,7 +30,7 @@ namespace SodRpg.Mod
             var kind = _s.DirectStashUsedThisRun ? DirectStashLabel.Used
                 : can && _directStashArmedAt >= 0f ? DirectStashLabel.Confirm
                 : DirectStashLabel.Ready;
-            LocLanguage language = Loc.Language; // 3値（#877）。真偽値だと英語⇔中国語で古い表示が残る。
+            int language = Loc.CacheKey;
             if (_directStashLabel == null || _directStashLabelKind != kind || _directStashLabelLanguage != language)
             {
                 _directStashLabelKind = kind;

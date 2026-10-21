@@ -12,7 +12,7 @@ namespace SodRpg.Mod
         private static readonly string[] OwnershipColors = { "#56B4E9", "#E69F00", "#009E73", "#CC79A7" };
         private readonly Label3D[] _ownershipMarks = new Label3D[8];
         private string _ownershipLegend;
-        private LocLanguage _ownershipLegendJa;
+        private int _ownershipLegendJa;
         private bool _ownershipLegendFailed;
         private readonly string[] _legendNames = new string[4], _legendIds = new string[4];
         private readonly double[] _legendFactors = new double[4];
@@ -50,10 +50,10 @@ namespace SodRpg.Mod
         private DynamicDifficultyStatus _observedDynamicStatus;
         private DynamicDifficultyDisplay[] _observedDynamicDisplay;
         private string _dynamicLimits;
-        private LocLanguage _dynamicLimitsJa;
+        private int _dynamicLimitsJa;
         private string _dynamicGap;
         private string _dynamicStatusText;
-        private LocLanguage _dynamicStatusJa;
+        private int _dynamicStatusJa;
         private bool _dynamicStatusFailed;
 
         private Label3D OwnershipMark(uint netId)
@@ -72,7 +72,7 @@ namespace SodRpg.Mod
 
         private void DrawOwnershipLegend()
         {
-            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.Language;
+            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.CacheKey;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -84,7 +84,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _ownershipLegendJa = Loc.Language;
+                _ownershipLegendJa = Loc.CacheKey;
                 string legend = "";
                 for (int i = 0; i < OwnershipColors.Length; i++)
                 {
@@ -198,7 +198,7 @@ namespace SodRpg.Mod
             var status = host ? _observedDynamicStatus : _s.DynamicStatus;
             var display = _observedDynamicDisplay;
             bool changed = RememberDynamicStatus(status);
-            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.Language || _statusHost != host;
+            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.CacheKey || _statusHost != host;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -219,7 +219,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _dynamicStatusJa = Loc.Language; _statusHost = host;
+                _dynamicStatusJa = Loc.CacheKey; _statusHost = host;
                 _dynamicStatusText = BuildDynamicStatus(host, status, display);
             }
             GUILayout.Label(Loc.T("現在の状況", "Current status", "当前状态"), _st.Label);
@@ -296,9 +296,9 @@ namespace SodRpg.Mod
                 cfg.dynamicDifficultySolo = solo;
                 SaveEnemyOwnershipConfig?.Invoke();
             }
-            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Language)
+            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.CacheKey)
             {
-                _dynamicLimitsJa = Loc.Language;
+                _dynamicLimitsJa = Loc.CacheKey;
                 // 2026-10-20：上がるときと下がるときで埋め方の強さが違う。上限は世界ごとの段階。
                 int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthUp * 100);
                 int dynamicRelief = (int)Math.Round(CoopBalance.DynamicDifficulty.StrengthDown * 100);

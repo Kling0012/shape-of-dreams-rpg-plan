@@ -1704,6 +1704,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// </summary>
         private bool SaveNow(bool confirm)
         {
+            ExternalLanguages.FlushMissing();
             // Track guest and ordinary periodic Infinity writes too; otherwise a failed
             // guest kill receipt can hold the party boundary before a choice even exists.
             if (Profile.Run?.Infinity != null)

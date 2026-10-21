@@ -63,6 +63,7 @@ namespace SodRpg.Mod
                 try { CulinaryIngredientDisplay.Install(harmony); }
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
+                ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
                 Loc.Language = config.ResolveLanguage();
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
@@ -124,6 +125,7 @@ namespace SodRpg.Mod
         public override void OnConfigChanged()
         {
             if (!_running) return;
+            ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
             Loc.Language = config.ResolveLanguage();
             NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
@@ -470,6 +472,7 @@ namespace SodRpg.Mod
             try { NativeDreamContent.Stop(); } catch (Exception ex) { Log.Warn("Native dream cleanup: " + ex.Message); }
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
+            ExternalLanguages.Stop();
             try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }
             try { performance?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: performance restore: " + ex); }
             if (_iconsStarted)
