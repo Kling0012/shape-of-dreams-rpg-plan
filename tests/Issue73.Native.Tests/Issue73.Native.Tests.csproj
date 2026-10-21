@@ -14,6 +14,9 @@
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="../SodRpg.Core.Tests/Fixtures/CoopTradeV7/*.json" Link="Fixtures/CoopTradeV7/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
     <Compile Include="../../src/SodRpg.Mod/ImeInput.cs" Link="ModUnderTest/ImeInput.cs" />
     <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
