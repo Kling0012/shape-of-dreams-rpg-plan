@@ -37,9 +37,18 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: boss solo health capture ignored: " + ex.Message); return false; }
         }
 
+        // Cached-shares judgment shared by the damage path (TryBossShares) and the head of
+        // PrepareBossShares (ScanBossShares): the cache is usable unless the failure mark is
+        // set. Route both call sites through here so their answers cannot drift apart.
+        private static BossShares CachedBossShares(EnemyOwnership state)
+        {
+            var cached = state.Shares;
+            return cached != null && !cached.Failed ? cached : null;
+        }
+
         private BossShares PrepareBossShares(EnemyOwnership state)
         {
-            if (state.Shares != null) return state.Shares.Failed ? null : state.Shares;
+            if (state.Shares != null) return CachedBossShares(state);
             if (!OwnershipRunning() || !NativeAttributedHpDamage.BossShareSupported || !BossShareDamageScope.NotificationSupported
                 || !(state.Enemy is Monster monster) || !monster.IsAnyBoss()
                 || !_bossNativeHealth.ContainsKey(monster) || OwnershipBossParent(monster)) return null;
@@ -95,8 +104,19 @@ namespace SodRpg.Mod
         {
             state = null;
             shares = null;
-            return enemy != null && _enemyOwnership.TryGetValue(enemy, out state) && OwnershipRunning()
-                && (shares = PrepareBossShares(state)) != null;
+            if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out state)) return false;
+            // One OwnershipRunning() evaluation per damage event: cached shares check it here,
+            // and the cold path is gated by the same check at the top of PrepareBossShares
+            // (kept for ScanBossShares), which bails out without side effects when not running.
+            if (state.Shares != null)
+            {
+                // Same cached-shares judgment as PrepareBossShares (CachedBossShares);
+                // the damage path additionally requires the run to still be running.
+                shares = OwnershipRunning() ? CachedBossShares(state) : null;
+                return shares != null;
+            }
+            shares = PrepareBossShares(state);
+            return shares != null;
         }
 
         private void OverrideBossShareHealth(Entity enemy, ref float multiplier)
