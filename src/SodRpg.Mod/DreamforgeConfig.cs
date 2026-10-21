@@ -36,9 +36,12 @@ namespace SodRpg.Mod
         public LocLanguage ResolveLanguage() =>
             chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
 
-        /// <summary>自動分解の設定から分解してよいレア度の境界（この値未満）を返す。「しない」のときは null。</summary>
+        /// <summary>自動分解の設定から分解してよいレア度の境界（この値未満）を返す。
+        /// 「しない」と壊れた保存値（範囲外の整数）では null に戻す（ResolveNameplates と同じ防御）。</summary>
         public Rarity? AutoSalvageBelow() =>
-            autoSalvageRarity == AutoSalvageRarity.None ? (Rarity?)null : (Rarity)autoSalvageRarity;
+            autoSalvageRarity >= AutoSalvageRarity.BelowUncommon && autoSalvageRarity <= AutoSalvageRarity.BelowLegendary
+                ? (Rarity)autoSalvageRarity
+                : (Rarity?)null;
 
         [LabelText("UI scale / 表示の大きさ")]
         public float uiScale = 1f;

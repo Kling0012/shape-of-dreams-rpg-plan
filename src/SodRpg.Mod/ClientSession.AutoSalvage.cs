@@ -21,8 +21,11 @@ namespace SodRpg.Mod
 
         internal void ConfigureAutoSalvage(AutoSalvageRarity setting)
         {
-            try { _autoSalvageBelow = setting == AutoSalvageRarity.None ? (Rarity?)null : (Rarity)setting; }
-            catch (Exception) { _autoSalvageBelow = null; }
+            // 壊れた保存値（範囲外の整数）は既定の「しない」へ戻す（ResolveNameplates と同じ防御）。
+            // 範囲外のまま Rarity へキャストすると全レア度が対象になり、拾った遺物が失われる。
+            _autoSalvageBelow = setting >= AutoSalvageRarity.BelowUncommon && setting <= AutoSalvageRarity.BelowLegendary
+                ? (Rarity)setting
+                : (Rarity?)null;
         }
 
         /// <summary>拾った遺物（OnKill のドロップ）を自動分解の候補に加える。取引は Tick でまとめて送る。</summary>
