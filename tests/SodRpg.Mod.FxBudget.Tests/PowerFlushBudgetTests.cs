@@ -46,7 +46,7 @@ namespace SodRpg.Mod.FxBudget.Tests
         public void Observe_KeepsWidenedBudgetRightAfterDrainAndNarrowsOnlyAfterThreeIdleSeconds()
         {
             ObserveAt(0f, 0);    // drained once: DrainedSince = 0
-            ObserveAt(4.0f, 30); // carry starts; #1029: DrainedSince stays 0 in the current code
+            ObserveAt(4.0f, 30); // carry starts; DrainedSince is reset to -1f
             ObserveAt(4.4f, 30); // 0.4 s of carry: below the widen threshold
             Assert.Equal(0, _queue.Level);
 
