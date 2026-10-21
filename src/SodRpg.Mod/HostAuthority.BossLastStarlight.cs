@@ -209,6 +209,11 @@ namespace SodRpg.Mod
         private void ReconcileLastStarlight(LastStarlightState state,float now)
         {
             if (!BossNativeSameLife(state.Instance,state.Life)) return;
+            // A retired state can never regain a stage (LastStarlightCurrent starts with
+            // !Retired), so once its deltas have been unwound every further call recomputes
+            // the same stage-0/zero-delta answer; stop re-running the full body each frame.
+            if (state.Retired && state.Stage==0 && state.DelayDelta==0 && state.DurationDelta==0
+                && state.AttractionDelta==0 && state.TickDelta==0) return;
             if(!state.Retired && state.LastReconcile==now && state.Epoch==state.Runtime.ShieldEquipmentEpoch && ReferenceEquals(state.Build,state.Runtime.Powers.Build)) return;
             state.LastReconcile=now;
             bool current=LastStarlightCurrent(state);
