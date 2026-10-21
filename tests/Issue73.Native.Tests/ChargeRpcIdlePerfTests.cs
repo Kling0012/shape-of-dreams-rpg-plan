@@ -17,7 +17,9 @@ namespace Issue73.Native.Tests
     /// (e) サーバでなければ常に送る、(f) 設定が無効なら常に送る、
     /// (g) configIndex が範囲外か currentCharges が null なら常に送る、
     /// (h) 未送信の目印は実値と衝突しない（最初に送る値が -1 でも
-    /// int.MinValue でも、初回の送信を省かない）。
+    /// int.MinValue でも、初回の送信を省かない）、
+    /// (i) 設定を ON→OFF→ON と切り替えても（#1023）、ON に戻した直後の
+    /// 送信を古い記録だけでは省かない（3回目も送り、以後の同値は省く）。
     /// </summary>
     public sealed class ChargeRpcIdlePerfTests : IDisposable
     {
@@ -143,6 +145,22 @@ namespace Issue73.Native.Tests
             var extreme = TriggerWithCharges(0);
             Assert.True(Send(extreme, 0, int.MinValue));
             Assert.False(Send(extreme, 0, int.MinValue));
+        }
+
+        // (i) 設定を ON→OFF→ON と切り替える（#1023）。OFF 中は常に元の RPC を
+        // 通すが記録が更新されないため、ON に戻した直後の値が OFF より前の古い
+        // 記録と一致すると、参加者への必要な送信が省かれる。3回目の 1 は送られ
+        // なければならず、その後の同値 1 の再送は今までどおり省く。
+        [Fact]
+        public void AReEnabledOptionBroadcastsAfterOnOffOnToggle()
+        {
+            var trigger = TriggerWithCharges(0);
+            Assert.True(Send(trigger, 0, 1));
+            NativePerfOptions.ChargeRpcIdle = false;
+            Assert.True(Send(trigger, 0, 0));
+            NativePerfOptions.ChargeRpcIdle = true;
+            Assert.True(Send(trigger, 0, 1));
+            Assert.False(Send(trigger, 0, 1));
         }
     }
 }

@@ -282,6 +282,9 @@ namespace SodRpg.Mod
         [LabelText("Drop the leftover \"HELLO\" debug log when the Obliviax abduction plays (every client) / オブリヴィアクスの連れ去り演出時に残るデバッグログ「HELLO」を省く（各端末）")]
         public bool nativeObliviaxKidnapLog = true;
 
+        [LabelText("Mirage Skin delusion: skip post-process volume rewrites whose values did not change (guests) / ミラージュスキンの「妄想」：値が変わったフレームだけポストプロセスのボリュームを書き直す（参加者）")]
+        public bool nativeMirageVolumeIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

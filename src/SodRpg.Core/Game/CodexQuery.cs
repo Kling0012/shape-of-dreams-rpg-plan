@@ -39,7 +39,7 @@ namespace SodRpg.Core.Game
         private string _search;
         private LocLanguage _searchLanguage;
 
-        /// <summary>検索用の小文字化した文字列（名前の日英と、いまの言語の効果文）。言語が変わったら作り直す。
+        /// <summary>検索用の小文字化した文字列（名前の3言語と、いまの言語の効果文）。言語が変わったら作り直す。
         /// 中国語では効果文が中国語で入るため、英語⇔中国語の切替でも作り直す（#992。真偽値の鍵だと古い方が残る）。</summary>
         public string SearchText
         {
@@ -357,20 +357,20 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 検索の対象文字列。名前（日英）と効果の文を含める。見つけていない固有品・セット・固有効果は
+        /// 検索の対象文字列。名前（日英中）と効果の文を含める。見つけていない固有品・セット・固有効果は
         /// 名前も効果も隠すので、Filter 側で対象から外す。
         /// </summary>
         internal static string BuildSearch(CodexEntry e)
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append(e.Name.Ja).Append(' ').Append(e.Name.En).Append(' ');
+            AppendName(sb, e.Name);
             switch (e.Category)
             {
                 case CodexCategory.Bases:
                     sb.Append(Content.FormatStat(e.Base.ImplicitStat, e.Base.ImplicitValue));
                     break;
                 case CodexCategory.Uniques:
-                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
+                    if (e.Base != null) AppendName(sb, e.Base.Name);
                     foreach (var pw in e.Unique.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
                     if (BossProfiles.TryGetMove(e.Unique.BossMove, out var bossMove))
                         sb.Append(bossMove.Description.Ja).Append(' ').Append(bossMove.Description.En).Append(' ');
@@ -381,10 +381,10 @@ namespace SodRpg.Core.Game
                     sb.Append(e.Set.Describe());
                     break;
                 case CodexCategory.Named:
-                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
+                    if (e.Base != null) AppendName(sb, e.Base.Name);
                     foreach (var pw in e.Named.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
                     if (e.Named.MiniSetId != null && NamedItems.TryGetMiniSet(e.Named.MiniSetId, out var ms))
-                        sb.Append(ms.Name.Ja).Append(' ').Append(ms.Name.En).Append(' ');
+                        AppendName(sb, ms.Name);
                     sb.Append(e.Named.Lore.Ja).Append(' ').Append(e.Named.Lore.En);
                     break;
                 case CodexCategory.MiniSets:
@@ -396,6 +396,14 @@ namespace SodRpg.Core.Game
                     break;
             }
             return sb.ToString();
+        }
+
+        /// <summary>名前の3言語（日・英・中）を検索文字列へ足す。中国語の訳がないときは足さず、
+        /// 日英の検索は今までどおり効く（#1024。中国語表示で画面の名前をそのまま検索できるようにする）。</summary>
+        private static void AppendName(System.Text.StringBuilder sb, Txt name)
+        {
+            sb.Append(name.Ja).Append(' ').Append(name.En).Append(' ');
+            if (name.Zh != null) sb.Append(name.Zh).Append(' ');
         }
 
         /// <summary>

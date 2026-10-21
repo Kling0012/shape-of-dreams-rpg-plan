@@ -876,6 +876,114 @@ namespace Issue73.Native.Tests
             Assert.False(ClientSession.NativeContinueRestoring);
         }
 
+        /// <summary>
+        /// #1031: 期限前に GameManager が消え、期限切れ後に同じ null を再観測する逆順。
+        /// 早期 return（ReferenceEquals）で解除が妨げられず、後続の遠征で TrackRun が再開すること。
+        /// </summary>
+        [Fact]
+        public void An_abandoned_native_load_releases_when_the_game_vanished_before_the_deadline()
+        {
+            var session = HostSession();
+            var zone = new ZoneManager { currentZoneIndex = 0 };
+            NetworkedManagerBase<ZoneManager>.softInstance = zone;
+            Set(session, "_zone", zone);
+            Set(session, "_grantPendingKill", (Action<PendingRunKill>)(kill => Call(session, "GrantPendingKill", kill)));
+            Set(session, "_nativeContinueRestoring", true);
+            Set(session, "_nativeContinueRestoreDeadline", 130f); // Time.unscaledTime(100)+30秒
+            // 期限前にタイトルへ戻る。ObserveContinueGame(null) は _continueGame を null に変えるだけ。
+            NetworkedManagerBase<GameManager>.softInstance = null;
+            Time.unscaledTime = 105f;
+            Call(session, "ObserveContinueGame", (object)null);
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // 期限前の読み込み待ちを勝手に解かない
+
+            // 期限切れ。GameManager がないため、TickContinueRestore は期限を無限へして戻るだけ。
+            Time.unscaledTime = 131f;
+            Call(session, "TickContinueRestore");
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // タイムアウトだけで完了を偽装しない
+
+            // 次の Tick の Wire は同じ null をもう一度観測する。ここで待機を解除する。
+            Call(session, "ObserveContinueGame", (object)null);
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.False(ClientSession.NativeContinueRestoring);
+
+            // 新しい遠征が始まっても以前の待機を引き継がない。TrackRun の進行が再開する。
+            var game = new GameManager { runId = "next" };
+            NetworkedManagerBase<GameManager>.softInstance = game;
+            Call(session, "ObserveContinueGame", game);
+            Call(session, "TrackRun");
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.Equal("next", session.ActiveRunId);
+        }
+
+        /// <summary>
+        /// #1031: 消失と期限切れが同じ Tick に起きる順序（Wire の ObserveContinueGame(null) が先で、
+        /// TrackRun 内の TickContinueRestore が期限を無限へ変える）。次の Tick の再観測で解除されること。
+        /// </summary>
+        [Fact]
+        public void An_abandoned_native_load_releases_when_the_vanish_and_deadline_share_a_tick()
+        {
+            var session = HostSession();
+            Set(session, "_nativeContinueRestoring", true);
+            Set(session, "_nativeContinueRestoreDeadline", 130f);
+            NetworkedManagerBase<GameManager>.softInstance = null;
+            Time.unscaledTime = 131f;
+            // 同じ Tick: Wire が消失を先に記録する（この時点では期限はまだ有限）。
+            Call(session, "ObserveContinueGame", (object)null);
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // 期限切れ前の観測だけでは解かない
+            // TrackRun 内のタイムアウト処理が期限を無限へ変え、GameManager がないため戻る。
+            Call(session, "TickContinueRestore");
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // 完了を偽装しない
+
+            // 次の Tick の Wire が同じ null を再観測した時点で待機を解除する。
+            Call(session, "ObserveContinueGame", (object)null);
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.False(ClientSession.NativeContinueRestoring);
+        }
+
+        /// <summary>
+        /// #1031: 本体の「続きから」読み込み（完了通知なし）で保持したチェックポイント付きの待機が
+        /// 期限切れ後に解除され、保持したチェックポイントは別の遠征へ適用されず、遠征が再開すること。
+        /// </summary>
+        [Fact]
+        public void An_abandoned_native_load_releases_without_applying_the_retained_checkpoint_to_a_later_expedition()
+        {
+            var session = HostSession();
+            var zone = new ZoneManager { currentZoneIndex = 0 };
+            NetworkedManagerBase<ZoneManager>.softInstance = zone;
+            Set(session, "_zone", zone);
+            Set(session, "_grantPendingKill", (Action<PendingRunKill>)(kill => Call(session, "GrantPendingKill", kill)));
+            var save = new DewPersistence.GameData();
+            SaveContinue(save);
+            string checkpointId = HostCheckpointId(save);
+            // タイトルへ戻って「続きから」を選ぶ。読み込みは始まるが、完了通知は届かない。
+            NetworkedManagerBase<GameManager>.softInstance = null;
+            Call(session, "ObserveContinueGame", (object)null);
+            Time.unscaledTime = 100f;
+            LoadContinue(save);
+            Assert.True((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.NotNull(Get(session, "_nativeContinueCheckpoint")); // 本体の保存地点を保持したまま待機
+
+            // 期限前に GameManager は現れないまま期限が切れる（Wire の消失記録 → TrackRun のタイムアウト）。
+            Time.unscaledTime = 131f;
+            Call(session, "TrackRun");
+            Assert.Null(session.ActiveRunId);
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // タイムアウトだけで完了を偽装しない
+
+            // 次の Tick の Wire が同じ null を再観測した時点で待機を解除する。
+            Call(session, "ObserveContinueGame", (object)null);
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.False(ClientSession.NativeContinueRestoring);
+
+            // 新しい遠征。保持したチェックポイントは適用されず、進行が再開する。保存自体は捨てない。
+            var game = new GameManager { runId = "next" };
+            NetworkedManagerBase<GameManager>.softInstance = game;
+            Call(session, "ObserveContinueGame", game);
+            Call(session, "TrackRun");
+            Assert.Equal("next", session.ActiveRunId);
+            Assert.Null(Get(session, "_nativeContinueCheckpoint"));
+            Assert.Contains(session.Profile.ContinueCheckpoints, c => c.Id == checkpointId);
+        }
+
         private static ClientSession HostSession()
         {
             return HostSession(out _);
