@@ -1,0 +1,2 @@
+### 不具合の修正 / Bug fixes
+- 再開読み込みを30秒の期限前に放棄すると、同じセッションの後続の遠征でMODの進行・報酬とBuild反映が保留され続ける問題を修正しました。保持した再開チェックポイントは保存一覧に残し、別の遠征には適用しません。 / Fixed abandoned resume loads keeping MOD progression, rewards, and Build application paused in later expeditions of the same session when the game disappears before the 30-second timeout. Retained resume checkpoints remain saved and are not applied to another expedition.
