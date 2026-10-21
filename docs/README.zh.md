@@ -1,8 +1,9 @@
 # Dreamforge RPG（简体中文说明）
 
+[日本語](README.ja.md) | [English](README.en.md) | **中文**
+
 本页面是《Shape of Dreams》MOD「Dreamforge RPG」的简体中文说明。
-日文说明见 [Steam 创意工坊页面](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)。
-英文说明见 [docs/README.en.md](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md)。
+更新日志、问题反馈以及其他语言的说明，请从 [GitHub 页面](https://github.com/Kling0012/dreamforge-rpg) 查看。
 
 - 订阅：[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
 - 各版本更新内容：[更新日志](https://github.com/Kling0012/dreamforge-rpg/releases)
