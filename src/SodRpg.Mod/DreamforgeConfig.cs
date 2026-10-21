@@ -260,6 +260,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged transform writes on generic synced objects (guests) / 汎用同期オブジェクトの同じ位置・向きの毎フレーム再書き込みを省く（参加者）")]
         public bool nativeGenericTransformIdle = true;
 
+        [LabelText("Mirage Skin delusion: skip post-process volume rewrites whose values did not change (guests) / ミラージュスキンの「妄想」：値が変わったフレームだけポストプロセスのボリュームを書き直す（参加者）")]
+        public bool nativeMirageVolumeIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
