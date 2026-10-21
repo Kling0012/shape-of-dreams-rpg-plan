@@ -17,6 +17,7 @@ namespace Issue73.Native.Tests
     /// call Debug.Log(object) まで並べる11命令（実 DLL の IL と同じ形）を合成した
     /// CodeInstruction 列で Transpiler を直接呼ぶ。形がちょうど1箇所一致したときは
     /// その呼び出し先だけが MaybeLog に替わり他の命令は1つも変わらないこと、
+    /// 分岐が長い形（brtrue・br）で綴られていても同じく差し替わること、
     /// 形が1命令でも違うとき・照合が2か所のとき・差し替え済みの2回目は入力を
     /// そのまま返して警告を1回出すこと、MaybeLog が設定の真偽で本体の
     /// Debug.Log を呼ぶ・呼ばないこと（引数は同じもの）を確かめる。
@@ -81,8 +82,19 @@ namespace Issue73.Native.Tests
             };
         }
 
+        // 本体と同じ11命令の窓だが、2つの分岐を長い形（brtrue・br）で綴った見本。
+        // Harmony が Transpiler に渡す命令列では、読み込み方によって短い分岐が
+        // 長い形で現れることがある。実行はしない（Transpiler へ渡す IL の形だけが対象）。
+        private static List<CodeInstruction> LongBranchShape()
+        {
+            var code = NativeShape();
+            code[6] = new CodeInstruction(OpCodes.Brtrue);
+            code[9] = new CodeInstruction(OpCodes.Br);
+            return code;
+        }
+
         // 形を1か所だけ壊した見本。11命令の窓は ldstr が code[2]、get_victim が code[4]、
-        // brtrue.s が code[6]、Concat が code[11]、末尾の Log が code[12]。
+        // brtrue.s が code[6]、ToString が code[10]、Concat が code[11]、末尾の Log が code[12]。
         private static List<CodeInstruction> BrokenShape(string shape)
         {
             var code = NativeShape();
@@ -100,12 +112,21 @@ namespace Issue73.Native.Tests
                     code[4] = new CodeInstruction(OpCodes.Callvirt, code[4].operand);
                     return code;
                 case "branch":
-                    code[6] = new CodeInstruction(OpCodes.Brtrue);
+                    // 分岐は短い形でも長い形でも受け入れるが、種類が違えば外れる。
+                    code[6] = new CodeInstruction(OpCodes.Brfalse_S);
+                    return code;
+                case "tostring-opcode":
+                    // ToString は同じでも、callvirt でなければ照合から外れる。
+                    code[10] = new CodeInstruction(OpCodes.Call, code[10].operand);
                     return code;
                 case "concat":
                     var three = AccessTools.Method(typeof(string), nameof(string.Concat),
                         new[] { typeof(string), typeof(string), typeof(string) });
                     code[11] = new CodeInstruction(OpCodes.Call, three);
+                    return code;
+                case "concat-opcode":
+                    // Concat は同じでも、call でなければ照合から外れる。
+                    code[11] = new CodeInstruction(OpCodes.Callvirt, code[11].operand);
                     return code;
                 case "two-sites":
                     code.InsertRange(13, NativeShape().Skip(2).Take(11));
@@ -138,12 +159,37 @@ namespace Issue73.Native.Tests
             Assert.Equal(MaybeLogMethod(), patched[site].operand);
         }
 
+        [Fact]
+        public void TranspilerSwapsLongBranchFormsForMaybeLog()
+        {
+            ResetWarned();
+            var original = LongBranchShape();
+            int site = LogSite(original);
+            Assert.True(site >= 0);
+            var before = original.Select(i => (i.opcode, i.operand)).ToArray();
+
+            var patched = Transpile(original);
+
+            Assert.False(Warned()); // 分岐が長い形（brtrue・br）でも警告なしで適用される
+            Assert.Equal(original.Count, patched.Count);
+            for (int i = 0; i < original.Count; i++)
+            {
+                if (i == site) continue;
+                Assert.True(patched[i].opcode == before[i].opcode && Equals(patched[i].operand, before[i].Item2),
+                    "instruction changed outside the log call at " + i);
+            }
+            Assert.Equal(OpCodes.Call, patched[site].opcode);
+            Assert.Equal(MaybeLogMethod(), patched[site].operand);
+        }
+
         [Theory]
         [InlineData("literal")]
         [InlineData("literal-opcode")]
         [InlineData("getter-opcode")]
         [InlineData("branch")]
+        [InlineData("tostring-opcode")]
         [InlineData("concat")]
+        [InlineData("concat-opcode")]
         [InlineData("two-sites")]
         public void TranspilerLeavesBrokenShapesAloneAndWarns(string shape)
         {

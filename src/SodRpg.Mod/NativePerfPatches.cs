@@ -5665,8 +5665,10 @@ namespace SodRpg.Mod
         }
 
         // The block is anchored by the "HELLO" literal and the eleven-instruction shape the
-        // shipped compiler emitted; any other opcode, operand or argument count fails, and a
-        // failure only ever means this patch stays out.
+        // shipped compiler emitted. The two branches match in either spelling (brtrue.s or
+        // brtrue, br.s or br — whichever form the loaded assembly spells them in), ToString
+        // must arrive as a callvirt and Concat as a call; any other opcode, operand or
+        // argument count fails, and a failure only ever means this patch stays out.
         private static bool IsLeftoverLogBlock(List<CodeInstruction> code, int logIndex, MethodInfo victimGetter)
         {
             if (code[logIndex - 10].opcode != OpCodes.Ldstr
@@ -5675,13 +5677,17 @@ namespace SodRpg.Mod
             if (code[logIndex - 8].opcode != OpCodes.Call
                 || !(code[logIndex - 8].operand is MethodInfo victim) || victim != victimGetter) return false;
             if (code[logIndex - 7].opcode != OpCodes.Dup) return false;
-            if (code[logIndex - 6].opcode != OpCodes.Brtrue_S) return false;
+            if (code[logIndex - 6].opcode != OpCodes.Brtrue_S
+                && code[logIndex - 6].opcode != OpCodes.Brtrue) return false;
             if (code[logIndex - 5].opcode != OpCodes.Pop) return false;
             if (code[logIndex - 4].opcode != OpCodes.Ldnull) return false;
-            if (code[logIndex - 3].opcode != OpCodes.Br_S) return false;
-            if (!(code[logIndex - 2].operand is MethodInfo toString) || toString.Name != "ToString"
+            if (code[logIndex - 3].opcode != OpCodes.Br_S
+                && code[logIndex - 3].opcode != OpCodes.Br) return false;
+            if (code[logIndex - 2].opcode != OpCodes.Callvirt
+                || !(code[logIndex - 2].operand is MethodInfo toString) || toString.Name != "ToString"
                 || toString.DeclaringType != typeof(object) || toString.GetParameters().Length != 0) return false;
-            if (!(code[logIndex - 1].operand is MethodInfo concat) || concat.DeclaringType != typeof(string)
+            if (code[logIndex - 1].opcode != OpCodes.Call
+                || !(code[logIndex - 1].operand is MethodInfo concat) || concat.DeclaringType != typeof(string)
                 || concat.Name != "Concat" || concat.GetParameters().Length != 2) return false;
             return true;
         }
