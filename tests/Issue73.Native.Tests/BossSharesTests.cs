@@ -143,6 +143,20 @@ namespace Issue73.Native.Tests
             multiplier = (float)args[1];
         }
 
+        // 被弾ごとの入り口 TryBossShares を直接呼び、戻り値と out 引数（state・shares）を受け取る。
+        private static (bool Result, object State, object Shares) TryShares(HostAuthority host, Entity enemy)
+        {
+            var method = host.GetType().GetMethod("TryBossShares", Hidden);
+            var args = new object[] { enemy, null, null };
+            try
+            {
+                var result = (bool)method.Invoke(host, args);
+                return (result, args[1], args[2]);
+            }
+            catch (TargetInvocationException error) when (error.InnerException != null)
+            { System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException).Throw(); throw; }
+        }
+
         private static Type ObjectType(object target) => target is Type type ? type : target.GetType();
         private static object Instance(object target) => target is Type ? null : target;
         private static object Get(object target, string name) => ObjectType(target).GetField(name, Hidden).GetValue(Instance(target));
@@ -499,6 +513,53 @@ namespace Issue73.Native.Tests
             Assert.Equal(2f, multiplier, 3); // HP倍率は差し替えない（部屋の圧のまま）
             Assert.Equal(100f, Strike(host, boss, a.hero, 100f), 2); // 手伝い倍率も掛からない
             Assert.Equal(boss.Status.maxHealth - 200f, boss.Status.currentHealth, 1); // 1本のHPとして減る
+            Assert.Empty(Log.Warnings);
+        }
+
+        // ---- 被弾ごとの入り口（TryBossShares の同じ結果）----
+
+        // 稼働確認を1評価に整えた軽量化（perf-loop/20261021-1219）が、稼働中・未稼働の
+        // どちらでも従来と同じ結果を返すこと。偽のとき shares は null が契約。
+        [Fact]
+        public void TryBossShares_matches_the_previous_results_for_cached_cold_and_running_hits()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            var b = Player(9);
+            BuildFor(host, b, 8, 40);
+            PatchNativeShareHooks();
+            var boss = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f);
+            var enemy = Spawn(host, 101); // 通常敵: 冷経路のまま（Shares は null）
+            Assert.NotNull(SharesOf(host, boss));
+
+            // 稼働中: キャッシュ済みなら同じ持ち分を返し、冷経路の成立・不成立も従来どおり。
+            var running = TryShares(host, boss);
+            Assert.True(running.Result, "稼働中のキャッシュ済みは真");
+            Assert.Same(SharesOf(host, boss), running.Shares);
+
+            Set(State(host, boss), "Shares", null); // 冷経路に戻して成立を通す
+            var prepared = TryShares(host, boss);
+            Assert.True(prepared.Result, "稼働中の冷経路成立は真");
+            Assert.Same(SharesOf(host, boss), prepared.Shares);
+
+            var rejected = TryShares(host, enemy);
+            Assert.False(rejected.Result, "稼働中でも通常敵の冷経路は不成立");
+            Assert.Null(rejected.Shares);
+
+            // 未稼働 + キャッシュ済み: 偽で shares は null。キャッシュ自体は壊さない。
+            host.ConfigureEnemyOwnership(false);
+            var cached = TryShares(host, boss);
+            Assert.False(cached.Result, "未稼働ならキャッシュ済みでも偽");
+            Assert.Null(cached.Shares); // 偽のとき shares は null（契約）
+            Assert.NotNull(cached.State);
+            Assert.NotNull(SharesOf(host, boss));
+
+            // 未稼働 + 冷経路: 副作用なく偽（失敗印を作らない）。
+            var cold = TryShares(host, enemy);
+            Assert.False(cold.Result, "未稼働なら冷経路も偽");
+            Assert.Null(cold.Shares);
+            Assert.Null(SharesOf(host, enemy)); // 冷経路は null のまま
             Assert.Empty(Log.Warnings);
         }
 
