@@ -90,7 +90,12 @@ namespace SodRpg.Mod
                 if (matching && receipt.received) continue;
                 if (!expired) return false;
                 // Flush while the host still has its run; silent/older guests must not block return forever.
-                if (!host.PrepareBountyReturn(player.hero, choice.RunId)) return false;
+                if (!host.PrepareBountyReturn(player.hero, choice.RunId))
+                {
+                    Log.Warn("Infinity: bounty settlement unavailable for player " + player.guid
+                        + "; host return continues without remote confirmation.");
+                    continue;
+                }
                 if (!matching)
                 {
                     receipt = new DreamforgeBountyReturnMsg
@@ -217,6 +222,9 @@ namespace SodRpg.Mod
         private long _lastBountySequence;
         private DreamforgeBountyReturnMsg _bountyReturnReceipt;
         private float _nextBountyReturn;
+        private InfinityMode.InfinityChoice _bountySettlementChoice;
+        private float _bountySettlementStarted;
+        private bool _bountySettlementReleased;
 
         internal static void ReceiveLocalBountyCounts(Actor actor, DreamforgeBountyCountsMsg msg)
         {
@@ -225,21 +233,52 @@ namespace SodRpg.Mod
 
         private bool SettleInfinityBounties(InfinityMode.InfinityChoice choice)
         {
-            if (!RunActive || LocalHero == null || _clientRpcOn == null) return false;
-            if (NetworkServer.active)
-                return LocalBountyCountsReady(_clientRpcOn)
-                    && HostAuthority.NativeInstance?.PrepareBountyReturn(LocalHero, choice.RunId) == true
-                    && HostAuthority.InfinityBountiesSettled(choice);
-            if (HostAuthority.SameBountyReturn(_bountyReturnReceipt, choice)
-                && _bountyReturnReceipt.heroNetId == LocalHero.netId) return true;
-            if (Time.unscaledTime < _nextBountyReturn) return false;
-            _nextBountyReturn = Time.unscaledTime + 1f;
-            _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBountyReturnMsg
+            if (!ReferenceEquals(_bountySettlementChoice, choice))
             {
-                runId = choice.RunId, heroNetId = LocalHero.netId, revision = choice.Revision,
-                graphEpoch = choice.GraphEpoch, segmentEpoch = choice.SegmentEpoch,
-            });
-            return false;
+                _bountySettlementChoice = choice;
+                _bountySettlementStarted = Time.unscaledTime;
+                _bountySettlementReleased = false;
+                _nextBountyReturn = 0;
+            }
+            if (_bountySettlementReleased) return true;
+            if (!RunActive) return ReleaseInfinityBountyWait("no active run");
+            if (LocalHero == null) return ReleaseInfinityBountyWait("local hero unavailable");
+            if (_clientRpcOn == null) return ReleaseInfinityBountyWait("client transport unavailable");
+            if (!_bountyCountsReady) return ReleaseInfinityBountyWait("bounty handlers unavailable");
+            try
+            {
+                if (NetworkServer.active)
+                {
+                    if (!LocalBountyCountsReady(_clientRpcOn))
+                        return ReleaseInfinityBountyWait("local bounty receiver unavailable");
+                    var host = HostAuthority.NativeInstance;
+                    if (host == null) return ReleaseInfinityBountyWait("host authority unavailable");
+                    if (!host.PrepareBountyReturn(LocalHero, choice.RunId))
+                        return ReleaseInfinityBountyWait("host bounty settlement unavailable");
+                    return HostAuthority.InfinityBountiesSettled(choice);
+                }
+                if (HostAuthority.SameBountyReturn(_bountyReturnReceipt, choice)
+                    && _bountyReturnReceipt.heroNetId == LocalHero.netId) return true;
+                float grace = Math.Max(0f, Math.Min(30f, choice.PersonalAckGraceSeconds));
+                if (choice.PersonalTimedOut || Time.unscaledTime - _bountySettlementStarted >= grace)
+                    return ReleaseInfinityBountyWait("bounty response wait expired");
+                if (Time.unscaledTime < _nextBountyReturn) return false;
+                _nextBountyReturn = Time.unscaledTime + 1f;
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBountyReturnMsg
+                {
+                    runId = choice.RunId, heroNetId = LocalHero.netId, revision = choice.Revision,
+                    graphEpoch = choice.GraphEpoch, segmentEpoch = choice.SegmentEpoch,
+                });
+                return false;
+            }
+            catch (Exception ex) { return ReleaseInfinityBountyWait("bounty settlement failed: " + ex.Message); }
+        }
+
+        private bool ReleaseInfinityBountyWait(string reason)
+        {
+            _bountySettlementReleased = true;
+            Log.Warn("Infinity: " + reason + "; secured return continues without bounty confirmation.");
+            return true;
         }
 
         private void OnBountyReturn(DreamforgeBountyReturnMsg msg)
