@@ -62,6 +62,7 @@ namespace SodRpg.Mod
             NativePerfOptions.StealthRevealOverlapScan = config.nativeStealthRevealOverlapScan;
             NativePerfOptions.MerchantPropIdle = config.nativeMerchantPropIdle;
             NativePerfOptions.GenericTransformIdle = config.nativeGenericTransformIdle;
+            NativePerfOptions.ObliviaxKidnapLog = config.nativeObliviaxKidnapLog;
         }
     }
 
@@ -113,6 +114,7 @@ namespace SodRpg.Mod
         internal static bool StealthRevealOverlapScan = true;
         internal static bool MerchantPropIdle = true;
         internal static bool GenericTransformIdle = true;
+        internal static bool ObliviaxKidnapLog = true;
     }
 
     internal static class NativePerfPatch
@@ -5560,6 +5562,116 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "generic transform idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeObliviaxKidnapLogPerf
+    {
+        // Se_ObliviaxKidnap is the tentacle-abduction status the Obliviax travel event applies
+        // to every living player at once; OnCreate (host) answers with one RpcPlayAnimation
+        // broadcast, so every client — the host client and every guest — starts
+        // `<<RpcPlayAnimation>g__Routine|9_0>d.MoveNext`. The shipped Dew.Contents body of
+        // that coroutine still opens with a leftover development log, exactly:
+        //
+        //     ldstr "HELLO"; ldloc <this>; call StatusEffect.get_victim; dup; brtrue.s;
+        //     pop; ldnull; br.s; callvirt Object.ToString; call String.Concat(string,string);
+        //     call UnityEngine.Debug.Log(object)
+        //
+        // The message drives nothing: no state read or write depends on it, and the kidnap
+        // presentation is built by the statements after it. What it costs is the string build
+        // plus Unity's log pipeline (managed stack-trace capture and synchronous player-log
+        // I/O) once per kidnapped hero per client, all inside the same frame at the moment
+        // the abduction starts. The swap below re-points only that final call at MaybeLog,
+        // which drops the message while the option is enabled and replays the exact native
+        // Debug.Log call while it is not — so disabling the option restores the shipped
+        // behaviour line for line. The concat in front of the call stays: removing the whole
+        // block would mean re-threading the coroutine's internal branch targets
+        // (brtrue.s/br.s both land inside it), and one short-lived string per kidnap is not
+        // worth that fragility. Anything other than the exact block above (a shape change, or
+        // a second pass) leaves the body untouched with one warning.
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            Type machine = typeof(Se_ObliviaxKidnap).GetNestedType("<<RpcPlayAnimation>g__Routine|9_0>d",
+                BindingFlags.NonPublic);
+            if (machine == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "obliviax kidnap log", "native coroutine state machine unavailable");
+                return false;
+            }
+            _target = NativePerfPatch.Find(machine, "MoveNext", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var log = AccessTools.Method(typeof(UnityEngine.Debug), nameof(UnityEngine.Debug.Log), new[] { typeof(object) });
+            var victimGetter = AccessTools.Property(typeof(StatusEffect), "victim")?.GetGetMethod();
+            if (log == null || victimGetter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "obliviax kidnap log", "native Debug.Log or victim getter unavailable");
+                return code;
+            }
+            int sites = 0;
+            int site = -1;
+            for (int i = 10; i < code.Count; i++)
+            {
+                if (code[i].opcode != OpCodes.Call || !(code[i].operand is MethodInfo m) || m != log) continue;
+                if (IsLeftoverLogBlock(code, i, victimGetter))
+                {
+                    site = i;
+                    sites++;
+                }
+            }
+            if (sites != 1 || site < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "obliviax kidnap log", "native log callsite changed or already patched");
+                return code;
+            }
+            code[site].operand = AccessTools.Method(typeof(NativeObliviaxKidnapLogPerf), nameof(MaybeLog), new[] { typeof(object) });
+            return code;
+        }
+
+        // The block is anchored by the "HELLO" literal and the eleven-instruction shape the
+        // shipped compiler emitted; any other opcode, operand or argument count fails, and a
+        // failure only ever means this patch stays out.
+        private static bool IsLeftoverLogBlock(List<CodeInstruction> code, int logIndex, MethodInfo victimGetter)
+        {
+            if (!(code[logIndex - 10].operand is string message) || message != "HELLO") return false;
+            if (!IsThisCopyLoad(code[logIndex - 9])) return false;
+            if (!(code[logIndex - 8].operand is MethodInfo victim) || victim != victimGetter) return false;
+            if (code[logIndex - 7].opcode != OpCodes.Dup) return false;
+            if (code[logIndex - 6].opcode != OpCodes.Brtrue_S) return false;
+            if (code[logIndex - 5].opcode != OpCodes.Pop) return false;
+            if (code[logIndex - 4].opcode != OpCodes.Ldnull) return false;
+            if (code[logIndex - 3].opcode != OpCodes.Br_S) return false;
+            if (!(code[logIndex - 2].operand is MethodInfo toString) || toString.Name != "ToString"
+                || toString.DeclaringType != typeof(object) || toString.GetParameters().Length != 0) return false;
+            if (!(code[logIndex - 1].operand is MethodInfo concat) || concat.DeclaringType != typeof(string)
+                || concat.Name != "Concat" || concat.GetParameters().Length != 2) return false;
+            return true;
+        }
+
+        // The compiler keeps a local copy of `this` in the state machine (ldloc.0/1/2 here,
+        // ldloc.s/ldloc in other shapes); only the load form matters to the block.
+        private static bool IsThisCopyLoad(CodeInstruction instruction)
+        {
+            return instruction.opcode == OpCodes.Ldloc_0 || instruction.opcode == OpCodes.Ldloc_1
+                || instruction.opcode == OpCodes.Ldloc_2 || instruction.opcode == OpCodes.Ldloc_S
+                || instruction.opcode == OpCodes.Ldloc;
+        }
+
+        // Same one-object-argument shape as the native call, so the rewritten body stays
+        // stack-compatible: the option drops the message, otherwise the native call runs.
+        private static void MaybeLog(object message)
+        {
+            if (!NativePerfOptions.ObliviaxKidnapLog) UnityEngine.Debug.Log(message);
         }
     }
 }
