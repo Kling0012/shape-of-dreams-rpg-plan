@@ -17,7 +17,8 @@ MOD 設定の文言に中国語を足すかは、この項目だけでは決め�
 （2026-10-20 利用者の指示）。Issue #1009 の要件 FR-11（日本語 / English / 中文）だけがこの原則と食い違うため、
 FR-11 は「日本語 / English」と読み替える。#1009 の実装（PR #1013）はこのまま正しく、コードは変えない。
 gh-auto が管理する仕様の記録と Issue #1009 の本文はリポジトリの外にあり、この PR では触れない。
-この2か所の FR-11 の文言は、gh-auto 本体がこの読み替えに合わせて直す。
+2026-10-21 時点で両方とも「日本語 / English / 中文」のままのため、修正を追う Issue #1019 を切った。
+この2か所の FR-11 の文言は、Issue #1019 に沿って「日本語 / English」へ直す。
 
 ## PR 本文の印の表記（L3）
 
@@ -31,7 +32,8 @@ VariantDangerMark・NightmareDangerMark・DeadlyDangerMark）と更新履歴の�
 
 - 対象ファイルの確認: `DreamforgeConfig.cs` の設定の書式、`DreamforgeUi.cs` の印の定数、
   `changelog.d/1013-nameplates.md` と `changelog.d/README.md` の断片の書式、`docs/constitution.md` のVII。
-- `python3 tools/test_changed.py --base HEAD --list`: この変更から選択されるテストなし。
+- `python3 tools/test_changed.py --base HEAD~1 --list`: この変更から選択されるテストなし
+  （HEAD~1 = c8b2fb4b。gh-auto の Lab 実行の test_changed も同じ base で「nothing relevant changed」）。
 
 ## 保留と未実行
 
