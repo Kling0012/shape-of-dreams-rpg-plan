@@ -1,7 +1,7 @@
 [h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]Open on GitHub[/url][/h1]
 [h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]在 GitHub 上打开[/url][/h1]
 
-[b]地中から飛び出す攻撃が当たるときと、Last Starlight の黒穴が消えるまでの余分な処理を減らし、ホストのゲームを少し軽くしました。[/b]
+[b]敵の名札を名前・印だけ・表示しないから選べるようにし、Double Tap の効果がある間のホストの処理も軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
