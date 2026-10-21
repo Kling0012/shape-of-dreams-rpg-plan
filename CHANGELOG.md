@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.43 — Auto salvage by rarity and adjustable notice lines（2026-10-21）
+
+### 新機能 / New features
+- MOD設定に「自動分解するレア度」を追加しました。選んだレア度未満の遺物を拾った時点でドリームダストに分解します（固有品とセット装備は対象外）。画面左の通知の最大行数（0〜7）も選べるようになり、分解と鞄あふれの通知は画面に出なくなりました。 / Added an "auto salvage rarity" mod setting: relics below the chosen rarity are salvaged for Dream Dust on pickup (uniques and set gear excluded). The left-side notice length (0-7) is now configurable, and salvage and satchel-overflow notices no longer appear on screen.
+
+---
+
 ## v3.8.42 — Enemy nameplate display options and a lighter Double Tap for the host（2026-10-21）
 
 ### 新機能 / New features
