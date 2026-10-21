@@ -307,8 +307,8 @@ namespace SodRpg.Core.Game
         /// <param name="dust">そのプレイヤーの現在のドリームダスト（同上）。</param>
         /// <param name="goldCostScale">本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)。ホスト側の値）。</param>
         /// <param name="zoneIndex">現在の世界の番号（0始まり。-1 は不明）。世界が変わったら分解ダストの計数を 0 に戻す。</param>
-        /// <param name="zoneEpoch">世界の識別に使うホスト側の世代（インフィニティの潜行ごとに増える。通常モードでは 0）。本体の番号が同じままでも、この値が変われば計数を 0 に戻す。</param>
-        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1, int zoneIndex = -1, long zoneEpoch = 0)
+        /// <param name="zoneEpoch">世界の識別に使うホスト側の世代（通常モードでは 0）。本体の番号が同じままでも、この値が変われば計数を 0 に戻す。省略時は不明として現在の計数を保つ。</param>
+        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1, int zoneIndex = -1, long zoneEpoch = UnknownZoneEpoch)
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
@@ -444,8 +444,8 @@ namespace SodRpg.Core.Game
             ledger.ZoneDust = 0;
         }
 
-        /// <summary>そのプレイヤーが今の世界であとどれだけ分解ダストを受け取れるか（支払いの前に世界を反映する）。</summary>
-        public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale, long zoneEpoch = 0)
+        /// <summary>そのプレイヤーが今の世界であとどれだけ分解ダストを受け取れるか。世代が分かるときだけ支払いの前に世界を反映する。</summary>
+        public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale, long zoneEpoch = UnknownZoneEpoch)
         {
             var ledger = Ledger(playerKey, runId);
             ApplyZone(ledger, zoneIndex, zoneEpoch);

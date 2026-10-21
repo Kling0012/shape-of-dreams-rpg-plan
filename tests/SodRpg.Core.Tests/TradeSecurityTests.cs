@@ -415,7 +415,7 @@ namespace SodRpg.Core.Tests
             {
                 var req = new TradeRequest { Token = i, Kind = TradeKind.SalvageForDust, Rarity = (int)Rarity.Common, Enhance = 0, SalvageUid = (ulong)i };
                 // 世界のダスト上限（この試験の対象外）が途中で発動しないよう、十分先の世界として扱う。
-                Assert.True(a.Evaluate("p", "run", req, 0, 0, zoneIndex: int.MaxValue).Ok);
+                Assert.True(a.Evaluate("p", "run", req, 0, 0, zoneIndex: int.MaxValue, zoneEpoch: 0).Ok);
             }
             Assert.Equal(TradeAuthority.MaxTokensPerPlayer, a.TrackedTokenCount("p"));
             Assert.Equal(TradeAuthority.MaxSalvagedUidsPerRun, a.TrackedSalvagedUidCount("p", "run"));

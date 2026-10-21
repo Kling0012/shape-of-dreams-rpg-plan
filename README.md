@@ -4,6 +4,8 @@ Shape of Dreams を、持ち帰る装備と長く育てる星図を軸にしたR
 
 A mod that turns Shape of Dreams into a long-term RPG built around gear you bring home and a star map you grow over many runs. Co-op is supported.
 
+[日本語の説明](docs/README.ja.md) | [English guide](docs/README.en.md) | [中文说明](docs/README.zh.md)
+
 - 最新版と導入用 zip：[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
 - 版ごとの変更：[更新履歴（CHANGELOG）](CHANGELOG.md)
 
