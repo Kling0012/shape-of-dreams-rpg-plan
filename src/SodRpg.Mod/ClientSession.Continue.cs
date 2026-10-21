@@ -364,6 +364,20 @@ namespace SodRpg.Mod
 
         private void ObserveContinueGame(GameManager gm)
         {
+            if (_nativeContinueRestoring && float.IsPositiveInfinity(_nativeContinueRestoreDeadline)
+                && (gm == null || _continueGame == null))
+            {
+                // Recheck even an unchanged null after the timeout, or a new game arriving after it.
+                // Keep the abandoned save, but detach it so a later expedition cannot inherit it.
+                if (_nativeContinueCheckpoint != null) RememberContinueCheckpoint(_nativeContinueCheckpoint);
+                _nativeContinueCheckpoint = null;
+                _continueCheckpointId = _continueResumeSession = null;
+                if (NetworkServer.active) HostAuthority.GemContinueSources.Reset();
+                _nativeContinueRestoring = false;
+                _continueWarning = null;
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             if (ReferenceEquals(gm, _continueGame))
             {
                 if (gm == null) CaptureContinueLobbyBaseline();
@@ -374,14 +388,6 @@ namespace SodRpg.Mod
             _continueWarning = null;
             _blockedContinueRunId = null;
             if (gm != null) return;
-            if (_nativeContinueRestoring && float.IsPositiveInfinity(_nativeContinueRestoreDeadline))
-            {
-                // The 30s wait already expired without the native load ever finishing, and that game
-                // is gone now: release the pause so later expeditions in this process get rewards again.
-                _nativeContinueRestoring = false;
-                _buildDirty = true;
-                _buildCacheFrame = -1;
-            }
             CaptureContinueLobbyBaseline();
             _continueCheckpointId = _continueResumeSession = null;
             if (NetworkServer.active) HostAuthority.GemContinueSources.Reset();
