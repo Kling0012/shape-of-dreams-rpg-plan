@@ -5199,12 +5199,15 @@ namespace SodRpg.Mod
         // at every frame is exactly what vanilla shows, including the damage window and the
         // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
         // alike). While the option is off the helper formats unconditionally, which is
-        // vanilla; a null dpsText still throws exactly where vanilla throws.
-        // LastText is the per-TMP_Text record of the last formatted triple. It starts
-        // as NaN (never equal to the spawn-frame 0/0/0), so the very first call always
-        // formats and assigns — vanilla writes on every frame including the first, and
-        // the prefab's placeholder TMP string must not survive until the first non-zero
-        // value.
+        // vanilla, and still records the written triple (#1025): the off window writes
+        // the display directly, so the first re-enabled frame must not match the stale
+        // pre-off triple, skip and leave the off window's text on screen. A null dpsText
+        // still throws exactly where vanilla throws.
+        // LastText is the per-TMP_Text record of the last written triple, option on or
+        // off alike. It starts as NaN (never equal to the spawn-frame 0/0/0), so the very
+        // first call always formats and assigns — vanilla writes on every frame including
+        // the first, and the prefab's placeholder TMP string must not survive until the
+        // first non-zero value.
         private sealed class LastText
         {
             internal float Total = float.NaN;
@@ -5322,12 +5325,18 @@ namespace SodRpg.Mod
         // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
         private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
         {
-            if (!_disabled && NativePerfOptions.RedGiantDamageText && text != null)
+            var skip = false;
+            if (text != null)
             {
                 try
                 {
                     var last = LastTexts.GetValue(text, CreateLastText);
-                    if (SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max)) return;
+                    // The record follows every write, the option-off ones included: the
+                    // off window writes text.text directly, so its values must land in
+                    // the record too, or the first re-enabled frame matches the stale
+                    // pre-off triple and skips with the off window's text still shown.
+                    skip = !_disabled && NativePerfOptions.RedGiantDamageText
+                        && SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max);
                     last.Total = total;
                     last.Dps = dps;
                     last.Max = max;
@@ -5335,9 +5344,11 @@ namespace SodRpg.Mod
                 catch (Exception ex)
                 {
                     _disabled = true;
+                    skip = false;
                     NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
                 }
             }
+            if (skip) return;
             text.text = string.Format(format, total, dps, max);
         }
     }
