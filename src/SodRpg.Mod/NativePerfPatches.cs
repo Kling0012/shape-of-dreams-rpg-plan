@@ -5644,26 +5644,30 @@ namespace SodRpg.Mod
                 volume.UpdateVolume();
                 return;
             }
+            Applied applied;
+            float current, strength, context;
             try
             {
-                var applied = AppliedStates.GetValue(volume, CreateApplied);
-                float current = volume.currentValue;
-                float strength = volume.targetStrength;
-                float context = _contextMultiplier(volume);
+                applied = AppliedStates.GetValue(volume, CreateApplied);
+                current = volume.currentValue;
+                strength = volume.targetStrength;
+                context = _contextMultiplier(volume);
                 // An uninitialized Volume would throw in the native call too; call through for it.
                 if (_volume(volume) != null && applied.CurrentValue == current
                     && applied.TargetStrength == strength && applied.ContextMultiplier == context)
                     return;
-                applied.CurrentValue = current;
-                applied.TargetStrength = strength;
-                applied.ContextMultiplier = context;
             }
             catch (Exception ex)
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "mirage volume", ex.Message);
+                volume.UpdateVolume();
+                return;
             }
             volume.UpdateVolume();
+            applied.CurrentValue = current;
+            applied.TargetStrength = strength;
+            applied.ContextMultiplier = context;
         }
     }
 }
