@@ -72,8 +72,10 @@ namespace SodRpg.Mod
         internal float StrongestExposePercent(HeroRuntime rt, Entity victim, float additionalExposePercent = 0f)
         {
             float now = Time.time;
-            CollectPairMemories(rt);
-            rt.PairCombos.RefreshEquipment(rt.PairMemories);
+            // 被弾ごとの経路。RefreshEquipment は装備依存の全状態走査なので、装備が変わって収集し
+            // 直したときだけ行う。装備集合が不変の間は結果が変わらない（装備していない組の印と窓は
+            // 前回の再判定で消去済みで、以後の呼び出しは何も変えない）。
+            if (CollectPairMemories(rt)) rt.PairCombos.RefreshEquipment(rt.PairMemories);
             int id = victim.GetInstanceID();
             return Math.Max(Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
                 rt.PairCombos.ExposePercent(id, now)), additionalExposePercent);
@@ -167,15 +169,17 @@ namespace SodRpg.Mod
             return null;
         }
 
-        /// <summary>装備エポックが変わらない限り、前回集めた記憶名とスロット辞書をそのまま使う（#161）。中身は旧実装と同一。</summary>
-        private void CollectPairMemories(HeroRuntime rt)
+        /// <summary>装備エポックが変わらない限り、前回集めた記憶名とスロット辞書をそのまま使う（#161）。中身は旧実装と同一。
+        /// 戻り値は装備の変化で収集し直したか。装備集合が不変の間は装備依存の再判定（RefreshEquipment）を
+        /// 省けるため、被弾ごとの経路では変化時だけ呼び出し元に再判定させる。</summary>
+        private bool CollectPairMemories(HeroRuntime rt)
         {
             long epoch = EnsureMemoryAttributionEquipment(rt.Hero);
-            if (rt.MemoryEquipmentEpoch == epoch) return;
+            if (rt.MemoryEquipmentEpoch == epoch) return false;
             rt.MemoryEquipmentEpoch = epoch;
             rt.PairMemories.Clear();
             rt.MemoryByName.Clear();
-            if (rt.Hero.Skill == null) return;
+            if (rt.Hero.Skill == null) return true;
             foreach (var slot in LinkSkills)
             {
                 var skill = rt.Hero.Skill.GetSkill(slot);
@@ -185,6 +189,7 @@ namespace SodRpg.Mod
                 // 同じ記憶を複数枠に装備した場合は最初の枠が勝つ（旧実装の最初一致と同じ）。
                 if (!rt.MemoryByName.ContainsKey(name)) rt.MemoryByName.Add(name, skill);
             }
+            return true;
         }
 
         private static bool HasOwnSummons(HeroRuntime rt)
