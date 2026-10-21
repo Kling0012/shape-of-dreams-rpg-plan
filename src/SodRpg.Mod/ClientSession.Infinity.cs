@@ -376,6 +376,7 @@ namespace SodRpg.Mod
                 FlushPendingRunRewards();
                 if (_pendingRunRewards.Count != 0 || _pendingPressureDividends.Count != 0) return;
                 if (!choice.Boundary && (!Profile.Run.AwaitingChoice || state.Phase != InfinityPhase.AwaitingChoice)) return;
+                if (choice.Secure && !SettleInfinityBounties(choice)) return;
                 state.SettledGraphEpoch = choice.GraphEpoch;
                 state.SettledSegmentEpoch = choice.SegmentEpoch;
                 if (!choice.Boundary)
