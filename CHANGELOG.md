@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.41 — Lighter host performance for burrow attacks and Last Starlight（2026-10-21）
+
+地中から飛び出す攻撃が敵に当たるときと、黒穴が消えるまでの間に行っていた余分な処理を減らし、ホストのゲームが少し軽くなるようにしました。 / This version cuts extra work when burrow emerge attacks hit enemies and while a black hole is fading out, making the game a little lighter for the host.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 地中から飛び出す攻撃でスタンを与える効果は、ボスや行動妨害の効かない敵にも効きません。ところが、そうした敵に当たったときも、効果の判定に必要な重い確認を毎回すべて行ってから取りやめていました。効かない相手だと先に分かったときは、重い確認を省くように直しました。その分ホストのゲームが少し軽くなる見込みですが、攻撃が当たるたびの処理なので、効果は小さめです。スタンの長さや効く相手は、これまでと変わりません。 / The stun from burrow emerge attacks never applies to bosses or enemies immune to crowd control. Even so, the host ran the full set of expensive checks on every hit against those enemies before skipping the stun. Fixed the host so these checks are skipped once it's clear the stun can't apply. This should make the game a little lighter for the host, though the gain is small since it only happens on hits. Stun duration and which enemies are affected are unchanged.
+- Last Starlight の効果が戦闘不能・装備の変更や解除・部屋の移動で外れたあとも、黒穴が消えるまでの数秒間、ホストのゲームで効果の再計算を毎フレーム続けていました。外れた効果の後片付けが済んだら再計算しないように直したため、その間のホストのゲームが少し軽くなる見込みです。黒穴の動きと演出は、これまでと変わりません。 / Fixed the host recalculating the Last Starlight effect every frame for the few seconds until its black hole disappeared, even after the effect had ended due to being downed, changing or removing equipment, or moving to another room. Once the ended effect has been cleaned up, the host no longer recalculates it, which should make the game a little lighter for the host during that time. The black hole's behavior and visuals are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.40 — Lighter performance for enemy hits and food pickups（2026-10-21）
 
 敵が攻撃を受けるときと食材が出てくるときの余分な処理を減らし、ホストと参加者のゲームが少し軽くなるようにしました。 / This version cuts extra work when enemies take hits and when food pickups spawn, making the game a little lighter for the host and guests.
