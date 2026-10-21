@@ -844,7 +844,10 @@ namespace SodRpg.Mod
     internal sealed class RootEffect : BasicEffect { }
     internal class StatusEffect : Actor
     {
-        public Entity victim;
+        // 実機の StatusEffect.victim はプロパティ（実 DLL の IL は get_victim を呼ぶ）。
+        // NativeObliviaxKidnapLogPerf が AccessTools.Property で getter を掴むため、模倣も
+        // プロパティに揃えてある。インスタンスからの読み書きはこれまでと同じ意味。
+        public Entity victim { get; set; }
         public bool isActive = true;
         public float creationTime;
         public float? maxDuration, remainingDuration;

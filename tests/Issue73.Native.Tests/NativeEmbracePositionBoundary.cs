@@ -33,11 +33,16 @@ namespace UnityEngine
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
+    // Log は NativeObliviaxKidnapLogPerf の差し替え先 MaybeLog が設定無効時に呼ぶ本体の呼び出し。
+    // 検証では渡された引数をそのままため込み、ObliviaxKidnapLogPerfTests が読む。
     internal static class Debug
     {
         internal static readonly System.Collections.Generic.List<System.Exception> Logged
             = new System.Collections.Generic.List<System.Exception>();
+        internal static readonly System.Collections.Generic.List<object> LoggedMessages
+            = new System.Collections.Generic.List<object>();
         public static void LogException(System.Exception exception) => Logged.Add(exception);
+        public static void Log(object message) => LoggedMessages.Add(message);
     }
 }
 namespace SodRpg.Mod
@@ -99,6 +104,7 @@ namespace SodRpg.Mod
             nativeStealthRevealOverlapScan = true,
             nativeMerchantPropIdle = true,
             nativeGenericTransformIdle = true,
+            nativeObliviaxKidnapLog = true,
             nativeMirageVolumeIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
@@ -113,6 +119,11 @@ namespace SodRpg.Mod
         internal DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyNativePerfConfig();
     }
+
+    // NativeObliviaxKidnapLogPerf が typeof で参照するだけの本体 Se_ObliviaxKidnap の境界。
+    // 実機はグローバル名前空間の StatusEffect 派生で、Prepare が RPC コルーチンの状態機械
+    // <<RpcPlayAnimation>g__Routine|9_0>d（実 DLL の IL で確認）を探す。ここでは型の存在だけ。
+    internal class Se_ObliviaxKidnap : StatusEffect { }
 
     // NativeProjectileIdleRpcPerf が typeof と Prefix で参照する本体 Projectile の境界。
     // 実機ではグローバル名前空間の Mirror.NetworkBehaviour 派生。ここには送る・省くの判定が
