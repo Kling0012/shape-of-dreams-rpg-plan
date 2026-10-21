@@ -3,15 +3,126 @@ using System.Collections.Generic;
 using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
+using UnityEngine;
 
 namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
+        private static long _bountySequence;
+        private string _localBountyReturnRun;
+        private uint _localBountyReturnHero;
+        private InfinityMode.InfinityChoice _bountyWaitingChoice;
+        private float _bountyReturnWaitStarted;
+        private readonly Dictionary<DewPlayer, DreamforgeBountyReturnMsg> _bountyReturns =
+            new Dictionary<DewPlayer, DreamforgeBountyReturnMsg>();
+
+        internal static bool SameBountyReturn(DreamforgeBountyReturnMsg msg, InfinityMode.InfinityChoice choice) =>
+            msg != null && msg.version == 1 && choice != null && choice.Secure && !choice.Boundary
+            && msg.runId == choice.RunId && msg.revision == choice.Revision
+            && msg.graphEpoch == choice.GraphEpoch && msg.segmentEpoch == choice.SegmentEpoch;
+
+        private void OnBountyReturn(DreamforgeBountyReturnMsg msg, DewPlayer caller)
+        {
+            if (!NetworkServer.active || caller == null || !caller.isHumanPlayer
+                || !DewPlayer.gamePlayers.Contains(caller) || caller.hero == null
+                || msg == null || msg.heroNetId != caller.hero.netId
+                || msg.runId != NetworkedManagerBase<GameManager>.softInstance?.runId
+                || !SameBountyReturn(msg, InfinityMode.CurrentChoice)) return;
+            if (msg.received)
+            {
+                if (_bountyReturns.TryGetValue(caller, out var sent) && sent.heroNetId == msg.heroNetId
+                    && SameBountyReturn(sent, InfinityMode.CurrentChoice)) sent.received = true;
+                return;
+            }
+            if (_bountyReturns.TryGetValue(caller, out var previous) && previous.heroNetId == msg.heroNetId
+                && SameBountyReturn(previous, InfinityMode.CurrentChoice))
+            {
+                if (!previous.received) _registeredOn?.CustomRpc_SendMessageToClient(caller, previous);
+                return;
+            }
+            if (!PrepareBountyReturn(caller.hero, msg.runId)) return;
+            var response = new DreamforgeBountyReturnMsg
+            {
+                runId = msg.runId, heroNetId = msg.heroNetId, revision = msg.revision,
+                graphEpoch = msg.graphEpoch, segmentEpoch = msg.segmentEpoch,
+            };
+            // Both reports and this marker use Actor's reliable ordered TargetRpc channel.
+            _bountyReturns[caller] = response;
+            _registeredOn.CustomRpc_SendMessageToClient(caller, response);
+        }
+
+        internal bool PrepareBountyReturn(Hero hero, string runId)
+        {
+            if (!NetworkServer.active || _registeredOn == null || hero == null
+                || hero.owner == null || !hero.owner.isHumanPlayer || hero.owner.hero != hero
+                || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
+            if (_runtimes.TryGetValue(hero, out var rt)) FlushBountyReports(rt);
+            if (hero.owner == DewPlayer.local)
+            {
+                _localBountyReturnRun = runId;
+                _localBountyReturnHero = hero.netId;
+            }
+            return true;
+        }
+
+        internal static bool InfinityBountiesSettled(InfinityMode.InfinityChoice choice)
+        {
+            var host = NativeInstance;
+            if (host == null || choice == null || !choice.Secure || choice.Boundary) return false;
+            if (!ReferenceEquals(host._bountyWaitingChoice, choice))
+            {
+                host._bountyWaitingChoice = choice;
+                host._bountyReturnWaitStarted = Time.unscaledTime;
+            }
+            float grace = Math.Max(0f, Math.Min(30f, choice.PersonalAckGraceSeconds));
+            bool expired = choice.PersonalTimedOut || Time.unscaledTime - host._bountyReturnWaitStarted >= grace;
+            foreach (var player in DewPlayer.gamePlayers)
+            {
+                if (player == null || !player.isHumanPlayer || player == DewPlayer.local || player.hero == null) continue;
+                bool participated = false;
+                if (choice.PersonalChoices != null)
+                    foreach (var selection in choice.PersonalChoices)
+                        if (selection != null && selection.PlayerId == player.guid) { participated = true; break; }
+                if (!participated) continue;
+                bool matching = host._bountyReturns.TryGetValue(player, out var receipt)
+                    && receipt.heroNetId == player.hero.netId && SameBountyReturn(receipt, choice);
+                if (matching && receipt.received) continue;
+                if (!expired) return false;
+                // Flush while the host still has its run; silent/older guests must not block return forever.
+                if (!host.PrepareBountyReturn(player.hero, choice.RunId))
+                {
+                    Log.Warn("Infinity: bounty settlement unavailable for player " + player.guid
+                        + "; host return continues without remote confirmation.");
+                    continue;
+                }
+                if (!matching)
+                {
+                    receipt = new DreamforgeBountyReturnMsg
+                    {
+                        runId = choice.RunId, heroNetId = player.hero.netId, revision = choice.Revision,
+                        graphEpoch = choice.GraphEpoch, segmentEpoch = choice.SegmentEpoch,
+                    };
+                    host._bountyReturns[player] = receipt;
+                }
+                host._registeredOn.CustomRpc_SendMessageToClient(player, receipt);
+                Log.Warn("Infinity: bounty receipt wait expired for player " + player.guid
+                    + "; pending reports flushed before host return without remote confirmation.");
+            }
+            return true;
+        }
+
         private void QueueBountyReport(HeroRuntime rt, BountyReportKind kind, int value)
         {
             string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(runId)) return;
+            var hero = rt.Hero;
+            var player = hero != null ? hero.owner : null;
+            // A terminal receipt survives loadout/runtime replacement until the expedition ends.
+            if (hero != null && (player == DewPlayer.local && _localBountyReturnRun == runId
+                && _localBountyReturnHero == hero.netId
+                || player != null && _bountyReturns.TryGetValue(player, out var terminal)
+                    && terminal.runId == runId && terminal.heroNetId == hero.netId)) return;
             if (rt.PendingBountyRun != runId)
             {
                 rt.PendingBountyShields = rt.PendingBountyHeals = 0;
@@ -52,54 +163,150 @@ namespace SodRpg.Mod
             if (!pending) return;
             var hero = rt.Hero;
             var player = hero != null ? hero.owner : null;
-            try
+            if (player == null || !player.isHumanPlayer || player.hero != hero
+                || rt.PendingBountyRun != NetworkedManagerBase<GameManager>.softInstance?.runId)
             {
-                if (player == null || !player.isHumanPlayer || player.hero != hero || _registeredOn == null
-                    || rt.PendingBountyRun != NetworkedManagerBase<GameManager>.softInstance?.runId)
+                Log.Info("Host: discarded pending bounty reports: " + (player == null ? "missing player"
+                    : !player.isHumanPlayer ? "non-human player" : player.hero != hero ? "hero changed" : "run changed"));
+                ClearBountyReports(rt);
+                return;
+            }
+            if (_registeredOn == null) return;
+            if (_bountyCountPeers.Contains(player)
+                || player == DewPlayer.local && ClientSession.LocalBountyCountsReady(_registeredOn))
+            {
+                var message = new DreamforgeBountyCountsMsg
                 {
-                    Log.Info("Host: discarded pending bounty reports: " + (player == null ? "missing player"
-                        : !player.isHumanPlayer ? "non-human player" : player.hero != hero ? "hero changed"
-                        : _registeredOn == null ? "missing transport" : "run changed"));
-                    return;
+                    heroNetId = hero.netId, runId = rt.PendingBountyRun, sequence = ++_bountySequence,
+                    shields = rt.PendingBountyShields, allyHeals = rt.PendingBountyHeals,
+                    // The local transport may retain this message after the counters are cleared.
+                    elementalKills = (int[])rt.PendingElementalKills.Clone(),
+                };
+                _registeredOn.CustomRpc_SendMessageToClient(player, message);
+                if (player == DewPlayer.local) ClientSession.ReceiveLocalBountyCounts(_registeredOn, message);
+            }
+            else
+            {
+                while (rt.PendingBountyShields > 0)
+                {
+                    SendBountyReport(rt, BountyReportKind.ShieldGranted, 1);
+                    rt.PendingBountyShields--;
                 }
-                if (_bountyCountPeers.Contains(player)
-                    || player == DewPlayer.local && ClientSession.LocalBountyCountsReady(_registeredOn))
+                while (rt.PendingBountyHeals > 0)
                 {
-                    _registeredOn.CustomRpc_SendMessageToClient(player, new DreamforgeBountyCountsMsg
+                    SendBountyReport(rt, BountyReportKind.AllyHealed, 1);
+                    rt.PendingBountyHeals--;
+                }
+                for (int mask = 1; mask < 16; mask++)
+                    while (rt.PendingElementalKills[mask] > 0)
                     {
-                        heroNetId = hero.netId, runId = rt.PendingBountyRun,
-                        shields = rt.PendingBountyShields, allyHeals = rt.PendingBountyHeals,
-                        // The local transport may retain this message after the counters are cleared.
-                        elementalKills = (int[])rt.PendingElementalKills.Clone(),
-                    });
-                }
-                else
-                {
-                    for (int n = 0; n < rt.PendingBountyShields; n++) SendBountyReport(rt, BountyReportKind.ShieldGranted, 1);
-                    for (int n = 0; n < rt.PendingBountyHeals; n++) SendBountyReport(rt, BountyReportKind.AllyHealed, 1);
-                    for (int mask = 1; mask < 16; mask++)
-                        for (int n = 0; n < rt.PendingElementalKills[mask]; n++) SendBountyReport(rt, BountyReportKind.ElementalKill, mask);
-                }
+                        SendBountyReport(rt, BountyReportKind.ElementalKill, mask);
+                        rt.PendingElementalKills[mask]--;
+                    }
             }
-            finally
-            {
-                rt.PendingBountyShields = rt.PendingBountyHeals = 0;
-                Array.Clear(rt.PendingElementalKills, 0, rt.PendingElementalKills.Length);
-            }
+            ClearBountyReports(rt);
+        }
+
+        private static void ClearBountyReports(HeroRuntime rt)
+        {
+            rt.PendingBountyShields = rt.PendingBountyHeals = 0;
+            Array.Clear(rt.PendingElementalKills, 0, rt.PendingElementalKills.Length);
         }
     }
 
     internal sealed partial class ClientSession
     {
         private readonly Action<DreamforgeBountyCountsMsg> _onBountyCounts;
+        private string _bountySequenceRun;
+        private uint _bountySequenceHero;
+        private long _lastBountySequence;
+        private DreamforgeBountyReturnMsg _bountyReturnReceipt;
+        private float _nextBountyReturn;
+        private InfinityMode.InfinityChoice _bountySettlementChoice;
+        private float _bountySettlementStarted;
+        private bool _bountySettlementReleased;
+
+        internal static void ReceiveLocalBountyCounts(Actor actor, DreamforgeBountyCountsMsg msg)
+        {
+            if (LocalBountyCountsReady(actor)) _hostSession.OnBountyCounts(msg);
+        }
+
+        private bool SettleInfinityBounties(InfinityMode.InfinityChoice choice)
+        {
+            if (!ReferenceEquals(_bountySettlementChoice, choice))
+            {
+                _bountySettlementChoice = choice;
+                _bountySettlementStarted = Time.unscaledTime;
+                _bountySettlementReleased = false;
+                _nextBountyReturn = 0;
+            }
+            if (_bountySettlementReleased) return true;
+            if (!RunActive) return ReleaseInfinityBountyWait("no active run");
+            if (LocalHero == null) return ReleaseInfinityBountyWait("local hero unavailable");
+            if (_clientRpcOn == null) return ReleaseInfinityBountyWait("client transport unavailable");
+            if (!_bountyCountsReady) return ReleaseInfinityBountyWait("bounty handlers unavailable");
+            try
+            {
+                if (NetworkServer.active)
+                {
+                    if (!LocalBountyCountsReady(_clientRpcOn))
+                        return ReleaseInfinityBountyWait("local bounty receiver unavailable");
+                    var host = HostAuthority.NativeInstance;
+                    if (host == null) return ReleaseInfinityBountyWait("host authority unavailable");
+                    if (!host.PrepareBountyReturn(LocalHero, choice.RunId))
+                        return ReleaseInfinityBountyWait("host bounty settlement unavailable");
+                    return HostAuthority.InfinityBountiesSettled(choice);
+                }
+                if (HostAuthority.SameBountyReturn(_bountyReturnReceipt, choice)
+                    && _bountyReturnReceipt.heroNetId == LocalHero.netId) return true;
+                float grace = Math.Max(0f, Math.Min(30f, choice.PersonalAckGraceSeconds));
+                if (choice.PersonalTimedOut || Time.unscaledTime - _bountySettlementStarted >= grace)
+                    return ReleaseInfinityBountyWait("bounty response wait expired");
+                if (Time.unscaledTime < _nextBountyReturn) return false;
+                _nextBountyReturn = Time.unscaledTime + 1f;
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBountyReturnMsg
+                {
+                    runId = choice.RunId, heroNetId = LocalHero.netId, revision = choice.Revision,
+                    graphEpoch = choice.GraphEpoch, segmentEpoch = choice.SegmentEpoch,
+                });
+                return false;
+            }
+            catch (Exception ex) { return ReleaseInfinityBountyWait("bounty settlement failed: " + ex.Message); }
+        }
+
+        private bool ReleaseInfinityBountyWait(string reason)
+        {
+            _bountySettlementReleased = true;
+            Log.Warn("Infinity: " + reason + "; secured return continues without bounty confirmation.");
+            return true;
+        }
+
+        private void OnBountyReturn(DreamforgeBountyReturnMsg msg)
+        {
+            if (NetworkServer.active || !RunActive || msg == null || msg.received
+                || msg.runId != ActiveRunId || LocalHero == null || msg.heroNetId != LocalHero.netId
+                || !HostAuthority.SameBountyReturn(msg, InfinityMode.CurrentChoice)) return;
+            _bountyReturnReceipt = msg;
+            _clientRpcOn?.CustomRpc_SendMessageToServer(new DreamforgeBountyReturnMsg
+            {
+                runId = msg.runId, heroNetId = msg.heroNetId, revision = msg.revision,
+                graphEpoch = msg.graphEpoch, segmentEpoch = msg.segmentEpoch, received = true,
+            });
+        }
+
         internal static bool LocalBountyCountsReady(Actor actor) => _hostSession != null
             && ReferenceEquals(_hostSession._clientRpcOn, actor) && _hostSession._bountyCountsReady;
 
         private void RegisterBountyCounts(Actor actor)
         {
             _bountyCountsReady = false;
+            _bountySequenceRun = null;
+            _lastBountySequence = 0;
+            _bountyReturnReceipt = null;
+            _nextBountyReturn = 0;
             try
             {
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReturnMsg>(OnBountyReturn);
                 actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyCountsMsg>(_onBountyCounts);
                 _bountyCountsReady = true;
             }
@@ -111,6 +318,7 @@ namespace SodRpg.Mod
             bool wasReady = _bountyCountsReady;
             _bountyCountsReady = false;
             if (actor == null) return;
+            try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReturnMsg>(OnBountyReturn); } catch (Exception) { }
             if (wasReady && NetworkClient.active)
             {
                 try
@@ -133,6 +341,15 @@ namespace SodRpg.Mod
             if (hero == null || msg.heroNetId != hero.netId || msg.shields < 0 || msg.allyHeals < 0
                 || msg.elementalKills == null || msg.elementalKills.Length != 16) return;
             for (int mask = 0; mask < 16; mask++) if (msg.elementalKills[mask] < 0) return;
+            if (_bountySequenceRun != msg.runId || _bountySequenceHero != msg.heroNetId)
+            {
+                _bountySequenceRun = msg.runId;
+                _bountySequenceHero = msg.heroNetId;
+                _lastBountySequence = 0;
+            }
+            if (msg.sequence > 0 && msg.sequence <= _lastBountySequence) return;
+            // Local direct delivery and its later loopback are the same report.
+            if (msg.sequence > 0) _lastBountySequence = msg.sequence;
             // A zero count would only allocate an empty event list inside Rules, so skip it here.
             if (msg.shields > 0) Emit(Rules.OnSupportApplied(Profile, true, false, 1f, msg.shields));
             if (msg.allyHeals > 0) Emit(Rules.OnSupportApplied(Profile, false, true, 1f, msg.allyHeals));

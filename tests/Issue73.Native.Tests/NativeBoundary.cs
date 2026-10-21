@@ -844,7 +844,10 @@ namespace SodRpg.Mod
     internal sealed class RootEffect : BasicEffect { }
     internal class StatusEffect : Actor
     {
-        public Entity victim;
+        // 実機の StatusEffect.victim はプロパティ（実 DLL の IL は get_victim を呼ぶ）。
+        // NativeObliviaxKidnapLogPerf が AccessTools.Property で getter を掴むため、模倣も
+        // プロパティに揃えてある。インスタンスからの読み書きはこれまでと同じ意味。
+        public Entity victim { get; set; }
         public bool isActive = true;
         public float creationTime;
         public float? maxDuration, remainingDuration;
@@ -1401,7 +1404,11 @@ namespace SodRpg.Mod
         internal static bool CanAdvance => throw new NotSupportedException();
         internal static void Tick() { }
         internal static void DisableFeature(string reason) => throw new NotSupportedException(reason);
-        internal static void CompleteReturn(InfinityRunState state) => throw new NotSupportedException();
+        // #1026: ホストの TickInfinity が確保帰還で CompleteReturn を呼んだ回数を数える観測点。
+        // 本体では帰還完了の後処理（envelope の更新など）を行うが、境界では呼び出しの記録だけを残す。
+        internal static int CompleteReturnCalls;
+        internal static InfinityRunState LastCompletedReturn;
+        internal static void CompleteReturn(InfinityRunState state) { CompleteReturnCalls++; LastCompletedReturn = state; }
         // #528: ゲストの TickInfinity が AcknowledgeLocal を呼んだ回数を数える観測点。
         // 本体では DreamforgeInfinityAckMsg をサーバーへ送るが、境界では送信そのものを再現しない。
         internal static int AcknowledgeCalls;
