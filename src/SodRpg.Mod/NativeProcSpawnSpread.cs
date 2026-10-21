@@ -151,6 +151,9 @@ namespace SodRpg.Mod
                 float now2 = Time.unscaledTime;
                 if (Queue.Count > 0)
                 {
+                    // #1029: 持ち越しを観測した時点で空だった時刻の記録を解除し、
+                    // 次に捌き切った時刻から 3 秒を数え直す（直後の縮小を防ぐ）。
+                    _drainedSince = -1f;
                     if (_backlogSince < 0f) _backlogSince = now2;
                     else if (now2 - _backlogSince >= WidenAfterSeconds && _level < MaxLevel)
                     {
