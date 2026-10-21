@@ -13,6 +13,7 @@ namespace SodRpg.Mod
         private string _overflowBonusReplyRun;
         private long _overflowBonusReplyLedger, _overflowBonusPaid;
         private int _overflowBonusBlockedWorld = -1, _overflowBonusSentWorld = -1;
+        private long _overflowBonusBlockedEpoch = -1, _overflowBonusSentEpoch = -1;
         private string _overflowBonusBlockedRun;
         private long _overflowBonusBlockedLedger;
         private readonly DreamforgeOverflowBonusMsg _overflowBonusMessage = new DreamforgeOverflowBonusMsg();
@@ -50,6 +51,7 @@ namespace SodRpg.Mod
             _overflowBonusReplyRun = null;
             _overflowBonusReplyLedger = _overflowBonusPaid = 0;
             _overflowBonusBlockedWorld = _overflowBonusSentWorld = -1;
+            _overflowBonusBlockedEpoch = _overflowBonusSentEpoch = -1;
             _overflowBonusBlockedRun = null;
             _overflowBonusBlockedLedger = 0;
             _nextOverflowBonusSend = 0;
@@ -68,7 +70,9 @@ namespace SodRpg.Mod
             _overflowBonusReplyRun = msg.runId;
             _overflowBonusReplyLedger = msg.ledgerId;
             _overflowBonusPaid = msg.paid;
+            // 上限で止まっている世界の印は番号に加えて世代（インフィニティの潜行）でも見分ける。
             _overflowBonusBlockedWorld = msg.available && msg.worldBlocked ? msg.blockedWorld : -1;
+            _overflowBonusBlockedEpoch = _overflowBonusBlockedWorld >= 0 ? SalvageDustWorldEpoch : -1;
             _overflowBonusBlockedRun = msg.runId;
             _overflowBonusBlockedLedger = msg.ledgerId;
             if (ledgerChanged) _nextOverflowBonusSend = 0;
@@ -152,11 +156,12 @@ namespace SodRpg.Mod
             long ledger = Profile.OverflowBonusPendingRunId != null ? Profile.OverflowBonusPendingLedgerId : run?.OverflowDreamDustLedgerId ?? 0;
             bool unpaid = total > 0 && (_overflowBonusReplyRun != runId || _overflowBonusReplyLedger != ledger || _overflowBonusPaid < total);
             int world = NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1;
-            bool blocked = world >= 0 && world == _overflowBonusBlockedWorld
+            long epoch = SalvageDustWorldEpoch;
+            bool blocked = world >= 0 && world == _overflowBonusBlockedWorld && epoch == _overflowBonusBlockedEpoch
                 && runId == _overflowBonusBlockedRun && ledger == _overflowBonusBlockedLedger;
             bool changed = _overflowBonusMessage.runId != runId || _overflowBonusMessage.total != total
                 || _overflowBonusMessage.ledgerId != ledger || _overflowBonusMessage.enabled != _overflowBonusChosen
-                || _overflowBonusSentWorld != world;
+                || _overflowBonusSentWorld != world || _overflowBonusSentEpoch != epoch;
             if (!changed && now < _nextOverflowBonusSend) return;
             if (!_overflowBonusAvailable && _overflowBonusFirstSend >= 0 && now - _overflowBonusFirstSend >= 20f)
                 WarnOverflowBonus("host has not advertised the optional capability (older MOD or missing setting)");
@@ -170,6 +175,7 @@ namespace SodRpg.Mod
             msg.total = total;
             msg.blockedWorldAck = 1;
             _overflowBonusSentWorld = world;
+            _overflowBonusSentEpoch = epoch;
             try
             {
                 _overflowBonusSendFrame = Time.frameCount;
