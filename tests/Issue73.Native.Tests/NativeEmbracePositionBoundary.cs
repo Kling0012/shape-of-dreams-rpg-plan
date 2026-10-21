@@ -99,6 +99,7 @@ namespace SodRpg.Mod
             nativeStealthRevealOverlapScan = true,
             nativeMerchantPropIdle = true,
             nativeGenericTransformIdle = true,
+            nativeMirageVolumeIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,

@@ -220,6 +220,16 @@ namespace UnityEngine.SceneManagement
 {
     internal struct Scene { }
 }
+// FxVolume が GetComponent で掴む URP のポストプロセス Volume（2026-10-21 確認）。
+// NativeMirageVolumeIdle は _volume の null 判定だけに使う。
+namespace UnityEngine.Rendering
+{
+    internal class Volume
+    {
+        public float weight;
+        public bool enabled;
+    }
+}
 namespace SodRpg.Mod
 {
     internal class Actor
@@ -848,6 +858,27 @@ namespace SodRpg.Mod
         public void SetSyncVarDirtyBit(ulong dirtyBit) { }
     }
     internal sealed class Se_GenericEffectContainer : StatusEffect { public string id; }
+    // NativeMirageVolumeIdle の受け口。本体 Dew.Core Se_MirageSkin_Delusion_Delusional（2026-10-21
+    // 逆コンパイル確認）の、パッチが触る範囲の模倣: ActiveLogicUpdate の宣言だけ（Prepare の
+    // DeclaredMethod 探索用。中身は呼ばれないので空）。
+    internal sealed class Se_MirageSkin_Delusion_Delusional : StatusEffect
+    {
+        internal void ActiveLogicUpdate(float dt) { }
+    }
+    // 本体 Dew.Core FxVolume／FxInterpolatedEffectBase（2026-10-21 逆コンパイル確認）の、
+    // パッチが読む範囲の模倣: currentValue・targetStrength・UpdateVolume の宣言と、
+    // Prepare が FieldRef で掴む _volume／_contextMultiplier。Volume は下の UnityEngine.Rendering 側。
+    // updateVolumeCalls は本体にはない記録で、ApplyVolume が呼び出しを省いたかどうかを
+    // テスト（MirageVolumeIdlePerfTests）が数えるためのもの。
+    internal class FxVolume
+    {
+        public float currentValue;
+        public float targetStrength = 1f;
+        private UnityEngine.Rendering.Volume _volume;
+        private float _contextMultiplier = 1f;
+        public int updateVolumeCalls;
+        public void UpdateVolume() { updateVolumeCalls++; }
+    }
     internal static class ManagerBase<T> { public static T softInstance; }
     // （#763）本体と同じ意味のカメラ角度。実物は get が public のプロパティで、セッターが
     // entityCamAngleRotation へ Euler(0, 角度, 0) を同じ式で保持する（CameraManager.cs:122-132）。

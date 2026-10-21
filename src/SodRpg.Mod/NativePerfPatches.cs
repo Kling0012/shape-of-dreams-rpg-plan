@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Rendering;
 
 namespace SodRpg.Mod
 {
@@ -62,6 +63,7 @@ namespace SodRpg.Mod
             NativePerfOptions.StealthRevealOverlapScan = config.nativeStealthRevealOverlapScan;
             NativePerfOptions.MerchantPropIdle = config.nativeMerchantPropIdle;
             NativePerfOptions.GenericTransformIdle = config.nativeGenericTransformIdle;
+            NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
         }
     }
 
@@ -113,6 +115,7 @@ namespace SodRpg.Mod
         internal static bool StealthRevealOverlapScan = true;
         internal static bool MerchantPropIdle = true;
         internal static bool GenericTransformIdle = true;
+        internal static bool MirageVolumeIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -3007,11 +3010,17 @@ namespace SodRpg.Mod
 
         private static bool Prefix(AbilityTrigger __instance, int configIndex, int charge)
         {
-            if (_disabled || !NativePerfOptions.ChargeRpcIdle) return true;
+            if (_disabled) return true;
             try
             {
                 // Only the authority knows what it last sent; other paths keep vanilla behavior.
                 if (!Mirror.NetworkServer.active) return true;
+                if (!NativePerfOptions.ChargeRpcIdle)
+                {
+                    // Vanilla sends while OFF must not leave stale values for the next ON send.
+                    LastSent.Remove(__instance);
+                    return true;
+                }
                 var charges = __instance.currentCharges;
                 if (charges == null || (uint)configIndex >= (uint)charges.Length) return true;
                 var slots = LastSent.GetValue(__instance, CreateSlotsCallback);
@@ -5199,8 +5208,13 @@ namespace SodRpg.Mod
         // at every frame is exactly what vanilla shows, including the damage window and the
         // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
         // alike). While the option is off the helper formats unconditionally, which is
-        // vanilla; a null dpsText still throws exactly where vanilla throws.
-        // LastText is the per-TMP_Text record of the last formatted triple. It starts
+        // vanilla, and still records the written triple (#1025): the off window writes
+        // the display directly, so the first re-enabled frame must not match the stale
+        // pre-off triple, skip and leave the off window's text on screen. A null dpsText
+        // still throws exactly where vanilla throws.
+        // LastText is the per-TMP_Text record of the last written triple, option on or
+        // off alike; a fail-soft stop is the one exception — the stopped helper never
+        // touches the record again and just writes like vanilla. It starts
         // as NaN (never equal to the spawn-frame 0/0/0), so the very first call always
         // formats and assigns — vanilla writes on every frame including the first, and
         // the prefab's placeholder TMP string must not survive until the first non-zero
@@ -5322,12 +5336,22 @@ namespace SodRpg.Mod
         // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
         private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
         {
-            if (!_disabled && NativePerfOptions.RedGiantDamageText && text != null)
+            var skip = false;
+            // _disabled gates the whole block, not just the skip: the stop-triggering
+            // exception may come from the table itself, so a stopped helper must not
+            // touch the record again (it only writes, like vanilla) — re-throwing into
+            // the catch every frame would keep allocating exceptions per frame.
+            if (!_disabled && text != null)
             {
                 try
                 {
                     var last = LastTexts.GetValue(text, CreateLastText);
-                    if (SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max)) return;
+                    // The record follows every write, the option-off ones included: the
+                    // off window writes text.text directly, so its values must land in
+                    // the record too, or the first re-enabled frame matches the stale
+                    // pre-off triple and skips with the off window's text still shown.
+                    skip = NativePerfOptions.RedGiantDamageText
+                        && SameFloat(last.Total, total) && SameFloat(last.Dps, dps) && SameFloat(last.Max, max);
                     last.Total = total;
                     last.Dps = dps;
                     last.Max = max;
@@ -5335,9 +5359,11 @@ namespace SodRpg.Mod
                 catch (Exception ex)
                 {
                     _disabled = true;
+                    skip = false;
                     NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
                 }
             }
+            if (skip) return;
             text.text = string.Format(format, total, dps, max);
         }
     }
@@ -5560,6 +5586,111 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "generic transform idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeMirageVolumeIdle
+    {
+        // Se_MirageSkin_Delusion_Delusional.ActiveLogicUpdate smooths delusionalVolume.targetStrength
+        // with MoveTowards and then calls FxVolume.UpdateVolume() unconditionally every frame, on the
+        // host and on every guest, long after the smoothing has converged. UpdateVolume writes
+        // Volume.weight/enabled as a pure function of (currentValue, targetStrength, _contextMultiplier)
+        // and every native mutation of those inputs is followed by a real write: the base class writes
+        // on each currentValue change (ValueSetter), Play() writes after setting the context multiplier,
+        // and the transpiled callsite itself writes whenever targetStrength moves. Skipping a call whose
+        // inputs equal the last state this callsite wrote therefore leaves the same weight and enabled
+        // flag on screen. External targetStrength writers (FlavourManager) self-correct on the next
+        // frame because a changed value no longer matches the recorded state.
+        private sealed class Applied
+        {
+            internal float CurrentValue;
+            internal float TargetStrength;
+            internal float ContextMultiplier;
+        }
+
+        private static readonly ConditionalWeakTable<FxVolume, Applied> AppliedStates =
+            new ConditionalWeakTable<FxVolume, Applied>();
+        private static readonly ConditionalWeakTable<FxVolume, Applied>.CreateValueCallback CreateApplied =
+            _ => new Applied();
+        private static AccessTools.FieldRef<FxVolume, Volume> _volume;
+        private static AccessTools.FieldRef<FxVolume, float> _contextMultiplier;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Se_MirageSkin_Delusion_Delusional), "ActiveLogicUpdate",
+                new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _volume = AccessTools.FieldRefAccess<FxVolume, Volume>("_volume");
+                _contextMultiplier = AccessTools.FieldRefAccess<FxVolume, float>("_contextMultiplier");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "mirage volume", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var update = AccessTools.Method(typeof(FxVolume), nameof(FxVolume.UpdateVolume));
+            int sites = 0, site = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!code[i].Calls(update)) continue;
+                sites++;
+                site = i;
+            }
+            if (sites != 1 || site < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "mirage volume", "native volume callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeMirageVolumeIdle), nameof(ApplyVolume));
+            return code;
+        }
+
+        internal static void ApplyVolume(FxVolume volume)
+        {
+            if (_disabled || !NativePerfOptions.MirageVolumeIdle)
+            {
+                volume.UpdateVolume();
+                return;
+            }
+            Applied applied;
+            float current, strength, context;
+            try
+            {
+                applied = AppliedStates.GetValue(volume, CreateApplied);
+                current = volume.currentValue;
+                strength = volume.targetStrength;
+                context = _contextMultiplier(volume);
+                // An uninitialized Volume would throw in the native call too; call through for it.
+                if (_volume(volume) != null && applied.CurrentValue == current
+                    && applied.TargetStrength == strength && applied.ContextMultiplier == context)
+                    return;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "mirage volume", ex.Message);
+                volume.UpdateVolume();
+                return;
+            }
+            volume.UpdateVolume();
+            applied.CurrentValue = current;
+            applied.TargetStrength = strength;
+            applied.ContextMultiplier = context;
         }
     }
 }
