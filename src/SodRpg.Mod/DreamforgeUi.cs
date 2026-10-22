@@ -3944,13 +3944,13 @@ namespace SodRpg.Mod
         }
 
         // #1010: 自動分解のレア度と、画面左の通知の行数。自分の戦利品にだけ効く個人の設定。
-        // 文言は表示言語が変わったときに組み立て直す（他のラベルのキャッシュと同じ）。
+        // 文言は初回と表示言語が変わったときに組み立てる（他のラベルのキャッシュと同じ）。
         private LocLanguage _autoSalvageLabelLanguage;
         private readonly string[] _autoSalvageChoiceLabels = new string[5];
 
         private string[] AutoSalvageChoices()
         {
-            if (_autoSalvageLabelLanguage != Loc.Language)
+            if (_autoSalvageChoiceLabels[0] == null || _autoSalvageLabelLanguage != Loc.Language)
             {
                 _autoSalvageLabelLanguage = Loc.Language;
                 _autoSalvageChoiceLabels[0] = Loc.T("しない", "Off", "不分解");
