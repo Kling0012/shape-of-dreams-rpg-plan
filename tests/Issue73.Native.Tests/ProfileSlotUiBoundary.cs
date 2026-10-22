@@ -11,6 +11,8 @@ namespace UnityEngine
         internal static void BeginHorizontal() { }
         internal static void EndHorizontal() { }
         internal static void FlexibleSpace() { }
+        // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が使う縦余白。
+        internal static void Space(float pixels) { }
         internal static void Label(string text, object style, params GUILayoutOption[] options) => Labels.Add(text);
         internal static bool Button(string text, object style, params GUILayoutOption[] options)
         {

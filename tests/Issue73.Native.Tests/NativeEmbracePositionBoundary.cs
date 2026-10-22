@@ -111,6 +111,9 @@ namespace SodRpg.Mod
             nativeChaosShrineChoiceCache = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
+        // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が読む設定。既定値は本物と同じ。
+        public AutoSalvageRarity autoSalvageRarity = AutoSalvageRarity.None;
+        public int toastMaxLines = 7;
     }
     // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
     internal static class NativeSkillLockRecovery { internal static bool Enabled = true; }
