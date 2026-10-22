@@ -166,7 +166,12 @@ namespace SodRpg.Mod
             try { _session?.ConfigureAutoSalvage(config.autoSalvageRarity); }
             catch (Exception ex)
             {
-                Log.Warn("Auto salvage settings apply failed: " + ex.Message);
+                Log.Warn("Auto salvage settings apply failed: " + ex.ToString());
+                try { _session?.ConfigureAutoSalvage(AutoSalvageRarity.None); }
+                catch (Exception resetError)
+                {
+                    Log.Warn("Auto salvage settings reset failed: " + resetError.ToString());
+                }
             }
             try { SaveConfigsToDisk(); }
             catch (Exception ex)
