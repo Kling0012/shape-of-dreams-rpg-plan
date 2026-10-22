@@ -557,3 +557,43 @@ Nは、同frame・同じ鍵で、適用条件を満たした1型の生成数と�
 ### 12.5 検証と未確認
 
 `python3 tools/balance/gen_cs.py --check` 合格。`dotnet build src/SodRpg.Mod -c Release` はエラー0・警告6件（既存）。`dotnet test tests/Issue73.Native.Tests -c Release` は536件合格。`dotnet test tests/SodRpg.Mod.Startup.Tests -c Release` は225件合格・1件スキップ（既存の環境依存。この2つには DOTNET_ROLL_FORWARD=LatestMajor を指定）。`python3 tools/test_changed.py --base HEAD` は3650件合格・0失敗（DOTNET にシステムの dotnet を指定。作業ツリーの変更だけを対象。既定の比較元では dev 取り込み分の balance 入力も含まれ全走査になるため、全体はパイプラインに残す）。実機・協力プレイ・専用サーバ・途中参加の確認と、生成数・通信量の実測は未実行。changelog は、登録0件で挙動が変わらないため書いていない。
+
+## 13. 束1の判定
+
+2026-10-22、`Ai_D_SalamanderPowder_Projectile` は登録しないと判定した。12.4の参照審査と、8.3のゲストイベントの条件をすべて確認できなかったためである。コードと登録表は変更せず、削減は0のままとする。同frame・同鍵で6個以上生成されても全個体を通常公開する。
+
+### 13.1 確認した条件と根拠
+
+ゲーム資料の `decompiled/sod-decomp` と `reflection-dump` に加え、現行の `Dew.Core.dll` と `Dew.Contents.dll` から関係型を `ilspycmd -t` で個別に取り出して読んだ。個別抽出はすべて終了コード0。抽出先は `/tmp/sod-memco-b1-evidence` であり、逆コンパイルしたコードはリポジトリに含めない。
+
+| 登録条件 | 判定と根拠 |
+|---|---|
+| AbilityInstanceの具象型で、Summonを継承しない | 確認済み。対象型 → StandardProjectile → Projectile → AbilityInstance → Actorの継承で、対象型はabstractではない |
+| 宣言しているClientRpc・Command・TargetRpcが表示だけ | 対象型の固有宣言は0件。継承したProjectileの4つのClientRpc実体もFXの再生・停止処理。ただしFXプレハブ自体の内容は未確認 |
+| 公開ActorのparentActor・CastInfo・SyncVarから参照されない | 審査未完了。CastInfoのcasterとtargetはEntity型で、対象弾を直接保持しない。一方、Actor.parentActorは同期されるActor参照であり、通知の購読先と追加コンポーネントを含む参照の不存在は確認できていない |
+| 子StatusEffectなどが対象弾を親にしない | 審査未完了。通常のFire付与は祖先Entity（見つからなければserverActor）を親にするが、ダメージ通知から別の子を作る経路は排除できていない。詳細は13.2に記す |
+| ゲストの生成・破棄と祖先への通知が表示以外を変えない | 審査未完了。対象型の固有OnCreateは偏差抽選と基底呼び出しで、固有の破棄処理はない。ただし基底ActorのOnCreateは祖先のClientActorEvent_OnCreateまで通知し、OnDestroyActorはClientActorEvent_OnDestroyed、親のchildren、ActorManagerを更新する。全購読先とプレハブの配線を含めて表示以外への影響がないとは確認できない |
+| 偏差とfireStackの評価がサーバの各個体で行われる | 確認済み。OnCreateで個体ごとにRandom.insideUnitSphereを抽選し、PositionSolverがその個体の偏差を加える。Projectile.LogicUpdateはサーバ側だけで衝突判定を進め、対象型のOnEntityが命中時のfireStackを読み、会心・増幅を判定してDispatchする。初回の値を使い回していない |
+
+偏差抽選はサーバ限定ではなく、ゲスト側のOnCreateでも行われる。束0はローカルホストの公開と初期化を残す設計だが、これだけでリモートゲストの初期化や通知を省略してよいとは判断しない。サーバ個体の生成・軌道・命中・ダメージ・Fire・通知・乱数順序と、既存のNativeProcCoalesce（エッセンス4型）には変更を加えていない。
+
+### 13.2 未確認の参照と資料の不足
+
+対象弾のDamageData.actorはAbilityInstance.CreateDamageのSetActor(this)により弾自身になる。DispatchからActor.DealDamageを経て、InvokeOnDealDamageがparentActorを辿って購読先へ通知する。St_D_SalamanderPowderからのCreateAbilityInstanceでは、この記憶が生成親になる。
+
+GemのOnEquipSkillはサーバ側で装備先SkillTriggerのActorEvent_OnDealDamageを購読する。Gem_E_FeverとGem_R_WoundのOnDealDamageには、条件を満たしたときにCreateStatusEffectWithSource(info.actor, ...)を呼ぶ処理がある。この呼び出しはsource.CreateStatusEffectを通り、Dew.PrepareAndSpawnStatusEffect_Impが生成するStatusEffectのparentActorにsourceを設定する。したがって、その購読が対象弾の祖先に成立する場合は、公開される子が弾を親として参照する経路になる。
+
+ただし、今回確認したHeroSkill.GetSkillとTryGetSkillの装備先はQ・W・E・R・Identity・Movementである。これらのGemの購読がSt_D_SalamanderPowderまたはその祖先で成立する経路までは確認できず、対象弾からこの子が実際に生成されるとは断定しない。通常のFire付与だけを調べて「子の親参照なし」と申し立てることもできない。
+
+提供資料には対象プレハブ・asset bundleがなく、追加NetworkBehaviour、Collider、軌道設定、onEntityなどのイベント配線、FXプレハブの処理を確認できない。reflection-dumpの型・メンバー一覧では、これらの実値を代わりに確認できない。12.2の「非公開候補を親に持つ子は通常公開する」という防御も、ゲストが非公開親のnetIdを解決できない問題を解消しない。親の付け替えや通知の省略で条件を成立させる変更は行わない。
+
+### 13.3 束1で実行した検証と未実行
+
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。
+- `dotnet build src/SodRpg.Mod -c Release`：エラー0・警告6件。GameDirに `/home/wang/dev/sod-gamedata/Shape of Dreams`、ModDeployDirに `/tmp/sod-memco-b1-build-deploy` を指定した。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests -c Release`：696件合格・失敗0・スキップ0。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Mod.Startup.Tests -c Release`：233件合格・失敗0・1件スキップ。既存のModReloadTests.SecondLoadOfRenamedModAssemblyStillVerifiesItsOwnPatchが、Release時のJITインライン化を理由にSkip指定されている。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python3 tools/test_changed.py --base HEAD`：終了コード0。今回の仕様書1ファイルだけを対象にし、関連テストの選択は0件だった。12.5の3650件という過去の結果とは別である。
+- `yomiyasu_lint.py docs/specs/memory-projectile-coalesce.md`：error 0・warn 0。今回の否定表現は、偏差抽選をサーバ限定と誤読しないために残した。`git diff --check`も指摘なし。
+
+プレハブ・asset bundleの検査は、提供資料にないため未実行。実機・協力プレイ・専用サーバ・途中参加での確認、同frame・同鍵で6個以上生成する場面の再現、生成数・通信量・粒子の実測は、ゲームを起動できないため未実行。全体の遅いテストスイートも今回の指定範囲外として未実行とし、パイプラインに残す。実機確認だけのIssue、新しいテスト、changelog.dの断片は作成していない。
