@@ -11,10 +11,8 @@ namespace SodRpg.Mod.Startup.Tests
     // _autoSalvageBelow を更新し、QueueAutoSalvage / TickAutoSalvage はこの値を使う）と、
     // 設定が保存されること（SaveConfigsToDisk）を、本物の DreamforgeMod に対して確かめる。
     // 記録タブ（DreamforgeUi.cs の DrawAutoSalvageSettings）は cfg.autoSalvageRarity を書き換えてから
-    // 保存コールバック（現状は SaveLevelEssenceConfig。Start が DreamforgeUi へ渡す）を呼ぶので、
-    // ここでは同じ流れを再現する。修正で個人設定の保存コールバックを別のメソッドへ分ける場合は、
-    // ChangeRecordsTabSetting の Invoke 先をそのメソッドへ切り替えてよい。この試験が固定するのは
-    // 挙動（実効設定への反映と保存）であって、コールバックの名前ではない。
+    // 個人設定の保存コールバック（SaveAutoSalvageConfig。Awake が DreamforgeUi へ渡す）を呼ぶので、
+    // ここでは同じ流れを再現する。
     public sealed class AutoSalvageGuestSettingTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -49,7 +47,7 @@ namespace SodRpg.Mod.Startup.Tests
         private void ChangeRecordsTabSetting(AutoSalvageRarity choice)
         {
             _mod.config.autoSalvageRarity = choice;
-            try { typeof(DreamforgeMod).GetMethod("SaveLevelEssenceConfig", Hidden).Invoke(_mod, null); }
+            try { typeof(DreamforgeMod).GetMethod("SaveAutoSalvageConfig", Hidden).Invoke(_mod, null); }
             catch (TargetInvocationException error) when (error.InnerException != null)
             { System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException).Throw(); throw; }
         }

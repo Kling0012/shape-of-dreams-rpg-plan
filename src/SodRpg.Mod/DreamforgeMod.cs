@@ -85,7 +85,7 @@ namespace SodRpg.Mod
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
-                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig, SaveLanguageConfig, SaveNameplateConfig);
+                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig, SaveLanguageConfig, SaveNameplateConfig, SaveAutoSalvageConfig);
                 BindEnemyOwnershipSettings();
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
@@ -156,6 +156,18 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Warn("Nameplate setting save failed: " + ex.Message);
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
+            }
+        }
+
+        // 自動分解と通知は各自の設定。ホスト専用設定を適用せず、ゲストでも即時反映して保存する。
+        private void SaveAutoSalvageConfig()
+        {
+            _session?.ConfigureAutoSalvage(config.autoSalvageRarity);
+            try { SaveConfigsToDisk(); }
+            catch (Exception ex)
+            {
+                Log.Warn("Auto salvage settings save failed: " + ex.Message);
                 _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings.", "无法保存设置。"));
             }
         }

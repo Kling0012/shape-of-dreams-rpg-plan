@@ -81,6 +81,7 @@ namespace SodRpg.Mod
         private readonly Action _saveLanguageConfig;
         // 名札の表示方法（#1009）も言語と同じく、各自の見た目だけの設定として保存する。
         private readonly Action _saveNameplateConfig;
+        private readonly Action _saveAutoSalvageConfig;
         private readonly UiStyles _st = new UiStyles();
         private readonly ImeInput _ime = new ImeInput();
 
@@ -136,7 +137,7 @@ namespace SodRpg.Mod
         public bool MouseOverPanel { get; private set; }
 
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null,
-            Action saveLanguageConfig = null, Action saveNameplateConfig = null)
+            Action saveLanguageConfig = null, Action saveNameplateConfig = null, Action saveAutoSalvageConfig = null)
         {
             _s = session;
             _cfg = cfg;
@@ -144,6 +145,7 @@ namespace SodRpg.Mod
             _saveLevelEssenceConfig = saveLevelEssenceConfig;
             _saveLanguageConfig = saveLanguageConfig;
             _saveNameplateConfig = saveNameplateConfig;
+            _saveAutoSalvageConfig = saveAutoSalvageConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
@@ -3988,7 +3990,7 @@ namespace SodRpg.Mod
             {
                 cfg.autoSalvageRarity = (AutoSalvageRarity)Mathf.Clamp(salvageChoice, 0, choices.Length - 1);
                 cfg.toastMaxLines = Mathf.Clamp(toastLines, 0, 7);
-                _saveLevelEssenceConfig?.Invoke();
+                _saveAutoSalvageConfig?.Invoke();
             }
             GUILayout.Label(Loc.T("選んだレア度未満の遺物を、拾った時点でドリームダストに分解します。固有品とセット装備は対象外です。分解の通知は画面に出ません。",
                 "Relics below the chosen rarity are salvaged for Dream Dust as you pick them up. Uniques and set gear are excluded. Salvage notices stay out of the screen.",
