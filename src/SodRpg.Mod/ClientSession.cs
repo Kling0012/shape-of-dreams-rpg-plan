@@ -373,7 +373,7 @@ namespace SodRpg.Mod
 
         private bool _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
-        private LocLanguage _writeFailureLanguage;
+        private int _writeFailureLanguage;
         // SaveNow の catch で拾った例外と、それ以外の経路（固定文・書き込み失敗・プロフィール切替）の表示文。
         // 例外は Message を読むたびに言語が変わるので、文字列には固定しない（#551）。
         private Exception _saveErrorCause;
@@ -429,14 +429,13 @@ namespace SodRpg.Mod
                 if (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(writer, failureSerial))
                 {
                     string source = state.LastError;
-                    LocLanguage language = Loc.Language; // 3値（#877）。真偽値だと英語⇔中国語で古い表示が残る。
+                    int language = Loc.CacheKey;
                     if (_writeFailureText == null || _writeFailureSource != source || _writeFailureLanguage != language)
                     {
                         _writeFailureSource = source;
                         _writeFailureLanguage = language;
-                        _writeFailureText = (language == LocLanguage.Japanese ? "保存に失敗しました。自動で再試行します: "
-                            : language == LocLanguage.Chinese ? "保存失败。将自动重试：" // #992
-                            : "Saving failed; retrying automatically: ") + source;
+                        _writeFailureText = Loc.T("保存に失敗しました。自動で再試行します: ",
+                            "Saving failed; retrying automatically: ", "保存失败。将自动重试：") + source;
                     }
                     SetSaveErrorText(_writeFailureText);
                     _saveErrorFromWriteFailure = true;
