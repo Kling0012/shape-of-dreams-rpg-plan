@@ -1,3 +1,4 @@
+using System;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
 
@@ -40,8 +41,8 @@ namespace SodRpg.Mod
         public bool translationDump = false;
 
         /// <summary>読み込めた外部言語を優先し、見つからなければ従来の設定を使う。</summary>
-        public LocLanguage ResolveLanguage() =>
-            ExternalLanguages.Select(language) ? LocLanguage.External
+        public LocLanguage ResolveLanguage(Func<string, bool> selectExternal = null) =>
+            selectExternal?.Invoke(language) == true ? LocLanguage.External
                 : chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
 
         /// <summary>自動分解の設定から分解してよいレア度の境界（この値未満）を返す。

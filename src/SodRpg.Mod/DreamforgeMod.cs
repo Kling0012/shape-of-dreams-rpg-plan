@@ -64,7 +64,7 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
                 ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
-                Loc.Language = config.ResolveLanguage();
+                Loc.Language = config.ResolveLanguage(ExternalLanguages.Select);
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
@@ -126,7 +126,7 @@ namespace SodRpg.Mod
         {
             if (!_running) return;
             ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
-            Loc.Language = config.ResolveLanguage();
+            Loc.Language = config.ResolveLanguage(ExternalLanguages.Select);
             NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);

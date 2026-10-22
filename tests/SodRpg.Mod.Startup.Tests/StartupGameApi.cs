@@ -105,8 +105,8 @@ namespace SodRpg.Mod
         public bool chinese;
         public string language = "";
         public bool translationDump;
-        public LocLanguage ResolveLanguage() =>
-            ExternalLanguages.Select(language) ? LocLanguage.External
+        public LocLanguage ResolveLanguage(Func<string, bool> selectExternal = null) =>
+            selectExternal?.Invoke(language) == true ? LocLanguage.External
                 : chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
         public bool overflowDreamDust;
         public AutoSalvageRarity autoSalvageRarity;
