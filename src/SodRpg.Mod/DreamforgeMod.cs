@@ -163,7 +163,11 @@ namespace SodRpg.Mod
         // 自動分解と通知は各自の設定。ホスト専用設定を適用せず、ゲストでも即時反映して保存する。
         private void SaveAutoSalvageConfig()
         {
-            _session?.ConfigureAutoSalvage(config.autoSalvageRarity);
+            try { _session?.ConfigureAutoSalvage(config.autoSalvageRarity); }
+            catch (Exception ex)
+            {
+                Log.Warn("Auto salvage settings apply failed: " + ex.Message);
+            }
             try { SaveConfigsToDisk(); }
             catch (Exception ex)
             {
