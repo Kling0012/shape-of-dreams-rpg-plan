@@ -187,7 +187,7 @@
 
   <!-- 自動分解（#1010）。ClientSession.AutoSalvage.cs は未リンクのため、Emit・OnTradeResult・Tick の
        抽出が参照する候補の登録・送信・成功案内の抑制とその状態を実ソースから抽出する。
-       ConfigureAutoSalvage は DreamforgeConfig の型を取るため抽出しない
+       ConfigureAutoSalvage は DreamforgeConfig（未リンク）の型を取るため抽出しない
        （境界では _autoSalvageBelow が null のまま=既定の「しない」）。 -->
   <Target Name="CompileAutoSalvage" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.AutoSalvage.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AutoSalvage.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="QueueAutoSalvage;TickAutoSalvage;EmitLogOnly" Fields="_autoSalvageBelow;_autoSalvageQueue;_autoSalvagePrepared;_autoSalvageTokens;AutoSalvageGraceSeconds;_autoSalvageSendAt" />
@@ -199,7 +199,8 @@
   <!-- 自動分解の選択肢ラベル（#1050）。日本語で起動した初回の記録タブで、言語キャッシュの既定値0と
        LocLanguage.Japanese=0 が一致して生成分岐が走らず、「自動分解：」の後ろが空欄になる。
        選択肢ラベルの生成（AutoSalvageChoices）と記録タブの描画（DrawAutoSalvageSettings）を
-       実ソースから抽出して確かめる。境界は Issue1050AutoSalvageUiBoundary.cs（DreamforgeConfig.cs をリンク）。 -->
+       実ソースから抽出して確かめる。DreamforgeConfig は NativeEmbracePositionBoundary.cs の模倣、
+       AutoSalvageRarity は Issue1050AutoSalvageUiBoundary.cs で定義する。 -->
   <Target Name="CompileIssue1050AutoSalvageUi" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue1050AutoSalvageUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="AutoSalvageChoices;DrawAutoSalvageSettings" Fields="_autoSalvageLabelLanguage;_autoSalvageChoiceLabels" />
     <ItemGroup>
