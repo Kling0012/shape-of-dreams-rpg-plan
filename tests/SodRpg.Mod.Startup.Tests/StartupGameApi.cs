@@ -81,7 +81,9 @@ namespace SodRpg.Mod
         public virtual void OnConfigChanged() { }
         public virtual void LoadConfigsToDisk() { }
         public string GetModConfigFilePath(FieldInfo field) => configFilePath(field);
-        public void SaveConfigsToDisk() { }
+        // #1049 再現: 記録タブの変更で保存が走ったかをテストから見えるようにする（中身は書き込まない）。
+        public int SaveConfigsToDiskCalls;
+        public void SaveConfigsToDisk() { SaveConfigsToDiskCalls++; }
         public bool MakeSureServer() => false;
     }
     public sealed class GameMod
