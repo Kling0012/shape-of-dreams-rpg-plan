@@ -18,9 +18,9 @@ namespace SodRpg.Mod
 
     internal sealed partial class DreamforgeUi
     {
-        // 本体は ctor の引数で受け取る保存コールバック（DreamforgeUi.cs の _saveLevelEssenceConfig）。
+        // 本体は ctor の引数で受け取る保存コールバック（DreamforgeUi.cs の _saveAutoSalvageConfig）。
         // この境界では未設定のままにする（描画に影響しない）。
-        private readonly Action _saveLevelEssenceConfig;
+        private readonly Action _saveAutoSalvageConfig;
         internal void Issue1050DrawAutoSalvageSettings(DreamforgeConfig cfg) => DrawAutoSalvageSettings(cfg);
         internal string[] Issue1050AutoSalvageChoices() => AutoSalvageChoices();
     }
