@@ -106,6 +106,7 @@ namespace SodRpg.Mod
             nativeGenericTransformIdle = true,
             nativeObliviaxKidnapLog = true,
             nativeMirageVolumeIdle = true,
+            nativeDamageShakeIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,

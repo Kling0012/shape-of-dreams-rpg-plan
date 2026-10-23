@@ -294,6 +294,9 @@ namespace SodRpg.Mod
         [LabelText("Mirage Skin delusion: skip post-process volume rewrites whose values did not change (host and guests) /\nミラージュスキンの「妄想」：値が変わったフレームだけポストプロセスのボリュームを書き直す（ホストと参加者） /\n幻象皮肤的“妄想”：仅在数值变化的帧更新后处理体积（主机和其他玩家）")]
         public bool nativeMirageVolumeIdle = true;
 
+        [LabelText("Skip hit-shake preparation for hits the game discards immediately anyway (host and guests) /\n被弾シェイク：本体が即時破棄する弱い被弾のシェイク準備を省く（ホストと参加者）")]
+        public bool nativeDamageShakeIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
