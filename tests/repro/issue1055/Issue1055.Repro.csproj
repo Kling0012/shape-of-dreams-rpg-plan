@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/SodRpg.Core/SodRpg.Core.csproj" />
+    <Compile Include="Program.cs" />
+    <Compile Include="NativeApi.cs" />
+    <Compile Include="$(IntermediateOutputPath)Production.cs" />
+  </ItemGroup>
+  <Target Name="ExtractReproductionMethods" BeforeTargets="CoreCompile">
+    <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/extract.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Production.cs&quot;" />
+  </Target>
+</Project>
