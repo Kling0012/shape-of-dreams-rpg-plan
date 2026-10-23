@@ -45,10 +45,14 @@ namespace SodRpg.Mod
             if (!_primusCombat.TryGetValue(rt, out var state))
             {
                 if(_primusCombat.Count>=64 || (state=_primusPool.Rent())==null) return null;
-                state.Epoch=rt.ShieldEquipmentEpoch; _primusCombat.Add(rt,state);
+                state.Epoch=rt.ShieldEquipmentEpoch;
                 for (int i = 0; i < PrimusProfiles.Length; i++)
                     if (BossFind(rt, PrimusProfiles[i], out var entry, out var profile))
                     { state.EquippedMask |= 1 << i; PrimusKeep(state, i, entry, profile); }
+                // PrimusSetId の move を1つも持たない Build には状態を作らない。PolarisState と同じく
+                // 所有がなければ登録せずプールへ返すので、非 Primus のヒーローが64枠を占めない。
+                if (state.EquippedMask==0) { _primusPool.Return(state); return null; }
+                _primusCombat.Add(rt,state);
             }
             return state;
         }
@@ -79,8 +83,7 @@ namespace SodRpg.Mod
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;
             var state=PrimusState(rt); if(state==null) return;
             // 所有判定は PrimusState の装備走査で確定済み。PrimusSetId の move は PrimusProfiles の
-            // 9種だけで、どれか1つでも在れば EquippedMask は非0になるので、全走査のやり直しは不要。
-            if (state.EquippedMask==0) return;
+            // 9種だけで、どれか1つでも在れば状態が登録されるので、全走査のやり直しは不要。
             bool admitted = kind == BossEvent.MainHit ? state.MainInputs.Add(activation)
                 : kind == BossEvent.MemoryUse ? state.MemoryInputs.Add(activation)
                 : kind == BossEvent.MovementCompleted ? state.MovementInputs.Add(activation)
