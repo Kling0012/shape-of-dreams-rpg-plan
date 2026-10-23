@@ -173,6 +173,9 @@ namespace Mirror
             => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
         // NativePositionSyncIdlePerf（位置同期のゲート置き換え）が参照する本体 API。本体と同じ式。
         public static float Abs(float value) => Math.Abs(value);
+        // NativeChaosPetalIdlePerf（堕落した混沌の神殿の花びらアニメ）の転写が使う本体 API。
+        // 実 Unity Mathf.Sin と同じ式（float → double で Math.Sin へ）。
+        public static float Sin(float f) => (float)Math.Sin(f);
         // BossSegmentPlacement（リンク。#890 のボス予告線分の矩形・回転）が参照する本体 API。
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public const float Rad2Deg = (float)(180.0 / Math.PI);
@@ -1681,4 +1684,32 @@ namespace TMPro
         public string text { get => _text; set { _text = value; TextWrites++; } }
         internal int TextWrites;
     }
+}
+
+// NativeChaosPetalIdlePerf（NativePerfPatches.cs、堕落した混沌の神殿の花びらアニメ）が
+// 読む Transform の子の数と子Transform。実機では神殿の花びらの固定階層を読むだけだが、
+// この境界では値を持たせるだけ（テストはこのパッチを直接動かさない。NativePerfPatches.cs
+// をこのプロジェクトでコンパイルするために必要な形だけ）。
+namespace UnityEngine
+{
+    internal sealed partial class Transform
+    {
+        internal int childCount { get; set; }
+        internal Transform GetChild(int index) => this;
+    }
+}
+
+// 本体 Dew.Contents Shrine_CorruptedChaos_PetalAnimator（堕落した混沌の神殿の花びら
+// アニメ、LogicBehaviour の子孫）のうち NativeChaosPetalIdlePerf が触る範囲の模倣:
+// FrameUpdate の宣言（Prepare の DeclaredMethod 探索用。中身は呼ばれないので空）と、
+// Prefix が読む公開フィールド群と Start が一度だけ書く _originalLocalScales。
+// 実物と同じグローバル名前空間に置く。基底は境界の UnityEngine.Component（transform を
+// 持つ最小のもの。実機の LogicBehaviour に相当する境界型は無い）。テストはこのパッチを
+// 直接動かさない。NativePerfPatches.cs がこの型を typeof で参照するための、コンパイル用の形。
+internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Component
+{
+    public float sin0Time, sin0Offset, sin0Mag;
+    public float sin1Time, sin1Offset, sin1Mag;
+    private Vector3[] _originalLocalScales;
+    public void FrameUpdate() { }
 }
