@@ -44,6 +44,14 @@ namespace SodRpg.Mod
         {
             if (!_primusCombat.TryGetValue(rt, out var state))
             {
+                // 旧来の所有判定と同じ SetId の1走査。SetMask は BossRewards の SetId でも立つので、
+                // ゲートを通った Build が PrimusSetId の move を1つも持たないことがある。そのときは
+                // Rent も9種の BossFind もせず1走査だけで null を返し、受理されないイベントのたびに
+                // 全走査が9回繰り返される経路を旧コードと同じ費用に戻す。
+                bool owned=false;
+                for(int i=0;i<rt.Boss.Build.BossMoves.Count;i++)
+                    if(rt.Boss.Build.BossMoves[i].SetId==BossProfiles.PrimusSetId) { owned=true; break; }
+                if(!owned) return null;
                 if(_primusCombat.Count>=64 || (state=_primusPool.Rent())==null) return null;
                 state.Epoch=rt.ShieldEquipmentEpoch;
                 for (int i = 0; i < PrimusProfiles.Length; i++)
@@ -82,8 +90,9 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;
             var state=PrimusState(rt); if(state==null) return;
-            // 所有判定は PrimusState の装備走査で確定済み。PrimusSetId の move は PrimusProfiles の
-            // 9種だけで、どれか1つでも在れば状態が登録されるので、全走査のやり直しは不要。
+            // 所有判定は PrimusState に集約している（先頭の SetId 1走査＋装備走査）。PrimusSetId の
+            // move は PrimusProfiles の9種だけで、どれか1つでも在れば状態が登録されるので、
+            // ここでの全走査のやり直しは不要。
             bool admitted = kind == BossEvent.MainHit ? state.MainInputs.Add(activation)
                 : kind == BossEvent.MemoryUse ? state.MemoryInputs.Add(activation)
                 : kind == BossEvent.MovementCompleted ? state.MovementInputs.Add(activation)

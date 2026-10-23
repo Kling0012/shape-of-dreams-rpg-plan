@@ -175,7 +175,11 @@ namespace SodRpg.Core.Tests
             var state = Invoke(rig.Host, "PrimusState", rig.Rt);
             Assert.NotNull(state);
             var phaseProfile = Field(state, "PhaseProfile");
-            // A rebuild that dropped the stage3/stage6 moves between two epochs.
+            // In-game, equipment changes always swap in a different Build instance and BossEnsure
+            // discards the state (the EquipmentChangedForTest path covered by
+            // Primus_stage236_cycles_repeat_identically_across_an_equipment_epoch_change). Mutating
+            // BossMoves in place keeps the same Build, so this exercises TickPrimusBoss's epoch
+            // rescan branch as a defensive fallback.
             var moves = rig.Rt.Powers.Build.BossMoves;
             moves.RemoveAll(m => m.ProfileId == "boss_primus_aeron.stage3" || m.ProfileId == "boss_primus_aeron.stage6");
             rig.Rt.ShieldEquipmentEpoch++;
