@@ -20,6 +20,14 @@
 
 本来の生成数が正なら、性能負荷を掛けて丸めた数を最低1にする。コルーチンの `MoveNext` にある唯一の `Mathf.RoundToInt` だけを置き換える。負荷による生成削減、協力人数の上限、強度の再配分、発射間隔、終了処理は本体に任せる。型や呼び出し位置が変わった場合は警告を出し、このパッチだけを適用しない。
 
+生成数の補正だけでは飛翔の表示が残るとは限らない。本体 `StandardProjectile.PositionSolver` は `Adaptive_ShouldPlayEffects` が偽になると弾を標的へ移し、軌道の進行度を1にする。`Projectile.OnCreate` はこの計算を初期配置にも使い、飛翔演出にも同じ抽選を使う。性能負荷1では抽選が必ず偽となり、生成したPure Soulが初期配置から標的へ移って飛翔演出も省かれる。
+
+`NativePureSoulFlight` は `Projectile.OnCreate` の最初でPure Soulと旅人の組を確認し、旅人ごとに1発だけ、最大0.4秒の表示枠を予約する。その弾の `Adaptive_ShouldPlayEffects` だけを真にし、本体の軌道計算と飛翔演出を実行する。期限後と予約外の弾は本体の負荷調整に戻す。ダメージや衝突処理、発射数、詠唱間隔は変更しない。弾の作成時刻も照合してプールの再利用を区別する。旅人ごとの状態は初回予約時だけ、作成用コールバックは静的初期化時だけ確保し、毎フレームは確保しない。失敗した場合はこの表示保護だけを無効にする。
+
+この追加修正は高負荷で飛翔が省略される経路への理論修正であり、報告の2〜3秒という長さやLimbo開始時の性能負荷を観測した結果ではない。
+
+追加修正の工程では、ゲームDLL付きの製品ビルド、既存のCore関連60件、自動詠唱19件、演出予算12件、起動処理16件、再現ハーネス6件の成功を確認した。参照用ゲームディレクトリに `Mods` がないことを確認し、ゲームへは配置していない。これらの既存テストは今回追加した飛翔保護を実行しない。新規テストは依頼に従い作成していない。飛翔保護のゲーム内でのパッチ適用、描画、当たり判定、実通信、FPSは実行環境がないため未実行。全テストと遅いテストも依頼に従い未実行。
+
 既存再現ハーネスの6ケースと期待値は増減していない。製品のパッチクラスを直接コンパイルし、本体から抽出したコルーチンへ適用する接続を追加した。.NET 10ではHarmony 2.3.6がコルーチンのfault節のラッパー生成に失敗したため、ハーネスには2.4.2を使う。製品はゲーム付属の2.3.6を参照してビルドする。ゲーム内でのパッチ適用は未実行。
 
 ## エッセンスHUD
@@ -46,10 +54,10 @@
 | --- | --- | --- |
 | FR-1 | `src/SodRpg.Mod/HostAuthority.cs`: `ApplyPressure`、`OnMonsterDamageTaken`。`src/SodRpg.Mod/HostAuthority.EnemyOwnership.cs`: 敵担当別のダメージ補正。 | 反射を圧の与ダメージ補正から除外し、旅人ごとの共有間隔で複数敵の反射集中を抑える。 |
 | FR-2 | `src/SodRpg.Core/Game/Ids.cs`、`Content.cs`、`Nightmare.cs`。`src/SodRpg.Mod/HostAuthority.cs`: `OnMonsterDamageTaken`。`tools/balance/equipment/affixes.json`、`caps.json` と生成コード。`src/SodRpg.Mod/DreamforgeUi.cs`: `DrawRelicSearch`、`Sorted`、`HasThornsResistance`。 | 専用の棘耐性を装備の抽選・上限・説明・集計・反射軽減・絞り込みに接続する。 |
-| FR-3 | `src/SodRpg.Mod/NativePureSoulCount.cs`: `Prepare`、`Transpiler`、`RoundCount`。 | 本来の生成数が正なら、高負荷で丸めて0になる場合にも最低1発を生成する。 |
+| FR-3 | `src/SodRpg.Mod/NativePureSoulCount.cs`: `Prepare`、`Transpiler`、`RoundCount`。`src/SodRpg.Mod/NativePureSoulFlight.cs`: 作成時の予約と演出判定。 | 本来の生成数が正なら最低1発を生成し、旅人ごとに同時1発・最大0.4秒の範囲で飛翔の省略を防ぐ。 |
 | FR-4 | `src/SodRpg.Mod/LevelEssenceRuntime.cs`: `EnsureHud`、`ValidateGroup`。 | 5〜8枠を本体の4列から複製し、子の矩形を含む高さと余白で上段へ配置する。 |
 | FR-5 | `src/SodRpg.Mod/NativeGuidanceBreakFx.cs`: `Track`、`CleanupRoll`、再生・回収のパッチ。 | 聖堂の破壊演出に限り、固定長4件・2秒の範囲で負荷による確率回収を避ける。 |
-| FR-6 | FR-3と同じ。 | Pure Soulの生成欠落に対応する。 |
+| FR-6 | FR-3と同じ。 | Pure Soulの生成欠落と飛翔の省略に対応する。 |
 | FR-7 | FR-4と同じ。 | 5枠以上のHUDの重なりに対応する。 |
 | FR-8 | FR-5と同じ。 | 聖堂の破壊演出の欠落に対応する。 |
 | FR-9 | FR-1・FR-2と同じ。 | 棘の見直しと装備による専用耐性の両方に対応する。 |
