@@ -25,10 +25,13 @@ namespace SodRpg.Core.Tests
     /// Create() がプロセス全体で共有する静的状態（NetworkServer.active・Time.time・
     /// HostAuthority.NativeInstance・EntityStatus.LiveStatusEffects・DewPhysics.Entities・
     /// ZoneManager/GameManager の softInstance）を書き換えるため、他のテストと並列に動かさない
-    /// Collection（DisableParallelization）に入れる。
+    /// Collection（DisableParallelization）に入れる。あわせて IDisposable にし、Dispose で
+    /// これらの静的状態を実行前の既定値へ戻す（#1077 レビュー F1。このテストより後に走る
+    /// テストが NativeInstance==null・NetworkServer.active==false を前提に自分で初期化
+    /// しない場合にも、このテストの実行有無で結果が変わらないようにする）。
     /// </summary>
     [Collection("Boss EternalFlame native statics")]
-    public class BossEternalFlameNativeTests
+    public class BossEternalFlameNativeTests : IDisposable
     {
         private const string HeroKey = "Hero_A";
 
@@ -108,6 +111,24 @@ namespace SodRpg.Core.Tests
             var curse = new Se_U_EternalFlame_Curse { victim = victim, parentActor = gem,
                 info = new CastInfo(hero), creationTime = 5f, maxDuration = 6f, remainingDuration = 4f };
             return new Rig { Host = host, Rt = rt, Hero = hero, Skill = skill, Gem = gem, Curse = curse, Victim = victim };
+        }
+
+        // Create() が書き換えたプロセス共有の静的状態をテスト後に戻す（#1077 レビュー F1）。
+        // xUnit はテストメソッドごとにインスタンスを作り直すため、Dispose は各テストの直後に走る。
+        // これで、後に順番に走るテストが NativeInstance==null・NetworkServer.active==false を前提に
+        // 自分で初期化しない場合にも、このテストの実行有無で結果が変わらない。
+        // runId の "native-run" は AuthoredMechanismNativeApi.cs の GameManager の初期値。
+        public void Dispose()
+        {
+            HostAuthority.NativeInstance = null;
+            Mirror.NetworkServer.active = false;
+            Time.time = 0f;
+            NetworkedManagerBase<ZoneManager>.softInstance.currentRoom = new Room();
+            NetworkedManagerBase<ZoneManager>.softInstance.isInAnyTransition = false;
+            NetworkedManagerBase<GameManager>.softInstance.runId = "native-run";
+            EntityStatus.LiveStatusEffects.Clear();
+            DewPhysics.Entities.Clear();
+            NativeAttributedDamagePacket.Current = null;
         }
 
         private static object Invoke(object target, string name, params object[] args)
