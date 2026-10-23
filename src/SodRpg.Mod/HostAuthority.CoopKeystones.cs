@@ -111,6 +111,7 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, CoopKeyState> _coopKeys = new Dictionary<Hero, CoopKeyState>();
         private Room _coopKeyRoom;
         private int _coopSplashDepth;
+        private readonly List<Entity> _coopGuardCandidates = new List<Entity>();
 
         partial void ConfigureCoopKeystones(Hero hero, Build build)
         {
@@ -611,13 +612,17 @@ namespace SodRpg.Mod
                 if (CoopPair(state.Hero, ally) > 0f && ally.maxHealth > 0f && ally.currentHealth / ally.maxHealth < health)
                 { weakest = ally; health = ally.currentHealth / ally.maxHealth; }
             if (weakest == null) return;
+            // 「最弱の味方を狙っている敵」の候補は召喚物ごとに変わらないので、走査は1回だけにする。
+            _coopGuardCandidates.Clear();
+            foreach (var enemy in _am.allEntities)
+                if (CoopEnemy(state.Hero, enemy) && enemy.currentHealth > 0f && enemy.AI?.context.targetEnemy == weakest)
+                    _coopGuardCandidates.Add(enemy);
             foreach (var summon in rt.Summons.Keys)
             {
                 if (summon == null || !summon.isActive || summon.currentHealth <= 0f || summon.AI == null) continue;
                 Entity selected = null; float nearest = float.MaxValue;
-                foreach (var enemy in _am.allEntities)
+                foreach (var enemy in _coopGuardCandidates)
                 {
-                    if (!CoopEnemy(state.Hero, enemy) || enemy.currentHealth <= 0f || enemy.AI?.context.targetEnemy != weakest) continue;
                     float distance = (enemy.agentPosition - summon.agentPosition).sqrMagnitude;
                     if (distance < nearest && summon.CanAggroTo(enemy)) { selected = enemy; nearest = distance; }
                 }
