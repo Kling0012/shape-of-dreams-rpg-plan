@@ -12,6 +12,12 @@ namespace SodRpg.Mod
         {
             internal readonly long[] Seen = new long[256];
             internal readonly int[] SeenNext = new int[4];
+            // BossMoves は Build の生成後にどこからも変更されず、状態は Build の差し替え・装備
+            // エポックの変更で ClearBossEffects 経由で一度捨てられる。9区分の在確認と判定は
+            // 装備エポックの変更時にだけ付け直し、毎ヒット・毎ティックの BossFind 全走査は行わない。
+            internal readonly BossMoveEntry[] Entries = new BossMoveEntry[9];
+            internal readonly BossMoveProfile[] Profiles = new BossMoveProfile[9];
+            internal long Epoch;
             internal int Mask, Mode, Cycle;
             internal float CounterUntil, SealUntil, CycleUntil, ModeRefresh;
             internal bool GuardLive;
@@ -27,6 +33,8 @@ namespace SodRpg.Mod
             internal void Reset()
             {
                 Array.Clear(Seen, 0, Seen.Length); Array.Clear(SeenNext, 0, SeenNext.Length);
+                Array.Clear(Entries, 0, Entries.Length); Array.Clear(Profiles, 0, Profiles.Length);
+                Epoch = 0;
                 Mask = Mode = Cycle = 0; CounterUntil = SealUntil = CycleUntil = ModeRefresh = 0;
                 GuardLive = false; Seal = Vector3.zero; ModeVisual = SealVisual = CycleVisual = 0;
             }
@@ -59,22 +67,37 @@ namespace SodRpg.Mod
             direction.y = 0;
             return BossFinite(direction) && direction.sqrMagnitude > .0001f ? direction.normalized : Vector3.forward;
         }
-        private int PolarisMask(HeroRuntime rt)
+        // 9区分の在確認をまとめて行い、(entry, profile) を state に覚える。呼ぶのは状態の作成時と
+        // 装備エポックが変わった最初の1回だけ。BossFind の結果は rt.Powers.Build.BossMoves と
+        // 静的な BossProfiles だけで決まり、BossMoves は Build の生成後に変わらない。
+        private int PolarisScan(HeroRuntime rt, PolarisCombat state)
         {
             int mask = 0;
-            for (int i = 0; i < PolarisProfiles.Length; i++) if (BossFind(rt, PolarisProfiles[i], out _, out _)) mask |= 1 << i;
+            for (int i = 0; i < PolarisProfiles.Length; i++)
+            {
+                if (BossFind(rt, PolarisProfiles[i], out var entry, out var profile))
+                { mask |= 1 << i; state.Entries[i] = entry; state.Profiles[i] = profile; }
+                else { state.Entries[i] = null; state.Profiles[i] = null; }
+            }
             return mask;
         }
         private PolarisCombat PolarisState(HeroRuntime rt)
         {
-            int mask = PolarisMask(rt);
             if (_polarisCombat.TryGetValue(rt, out var state))
             {
+                // 装備エポックが同じなら在確認は作成時のままでよい。イベントごとの9区分全走査は行わない。
+                if (state.Epoch == rt.ShieldEquipmentEpoch) return state;
+                int mask = PolarisScan(rt, state);
+                state.Epoch = rt.ShieldEquipmentEpoch;
                 if ((state.Mask & ~mask) != 0) { ClearPolarisBoss(rt); state = null; }
                 else { state.Mask = mask; return state; }
             }
-            if (mask == 0 || _polarisCombat.Count >= 64 || (state = _polarisPool.Rent()) == null) return null;
-            state.Reset(); state.Mask = mask; _polarisCombat.Add(rt, state);
+            if (_polarisCombat.Count >= 64 || (state = _polarisPool.Rent()) == null) return null;
+            state.Reset();
+            int newMask = PolarisScan(rt, state);
+            state.Epoch = rt.ShieldEquipmentEpoch;
+            if (newMask == 0) { _polarisPool.Return(state); return null; }
+            state.Mask = newMask; _polarisCombat.Add(rt, state);
             return state;
         }
         private void DispatchPolarisBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
@@ -89,9 +112,11 @@ namespace SodRpg.Mod
             if (kind == BossEvent.NativeDamageTaken && state.CounterUntil > now)
             {
                 state.CounterUntil = 0;
-                if (BossFind(rt, PolarisProfiles[3], out var counterEntry, out var counterProfile)
+                // head の在確認は PolarisScan で確定済み。被弾ごとの BossFind 全走査の代わりに判定を流用する。
+                if (state.Profiles[3] != null
                     && BossAlive(victim) && (victim.position - rt.Hero.agentPosition).sqrMagnitude <= 64f)
                 {
+                    var counterEntry = state.Entries[3]; var counterProfile = state.Profiles[3];
                     var reply = counterProfile.Actions[1];
                     var origin = rt.Hero.agentPosition;
                     rt.Boss.Projectiles.Execute(this, rt, BossProfiles.PolarisSetId, reply, origin, victim.position,
@@ -101,8 +126,9 @@ namespace SodRpg.Mod
             PolarisPhase(rt, state, kind, point, now);
             for (int i = 0; i < 6; i++)
             {
-                if ((state.Mask & (1 << i)) == 0
-                    || !BossFind(rt, PolarisProfiles[i], out var entry, out var profile)) continue;
+                if ((state.Mask & (1 << i)) == 0) continue;
+                var entry = state.Entries[i]; var profile = state.Profiles[i];
+                if (profile == null) continue;
                 var action = profile.Actions[0];
                 if (action.Event != kind || !PolarisAvailable(rt, action, now)) continue;
                 var center = kind == BossEvent.MovementCompleted ? point : rt.Hero.agentPosition;
@@ -142,7 +168,8 @@ namespace SodRpg.Mod
         }
         private void PolarisPhase(HeroRuntime rt, PolarisCombat state, BossEvent kind, Vector3 point, float now)
         {
-            if ((state.Mask & 64) == 0 || !BossFind(rt, PolarisProfiles[6], out var entry, out var profile)) return;
+            if ((state.Mask & 64) == 0 || state.Profiles[6] == null) return;
+            var entry = state.Entries[6]; var profile = state.Profiles[6];
             if (kind == BossEvent.MainHit)
             {
                 if (state.Mode == 1 && state.SealUntil > now) PolarisStomp(rt, state, entry, profile, rt.Hero.agentPosition, now);
@@ -208,8 +235,8 @@ namespace SodRpg.Mod
         }
         private bool PolarisFinish(HeroRuntime rt, PolarisCombat state, float now)
         {
-            if (!BossFind(rt, PolarisProfiles[8], out var entry, out var profile)
-                || !PolarisAvailable(rt, profile.Actions[0], now)) return false;
+            var entry = state.Entries[8]; var profile = state.Profiles[8];
+            if (profile == null || !PolarisAvailable(rt, profile.Actions[0], now)) return false;
             if (!rt.Boss.MemoryDirectionValid || !BossFinite(rt.Boss.MemoryDirection) || rt.Boss.MemoryDirection.Flattened().sqrMagnitude <= .0001f) return false;
             PolarisSealOrigin(rt, state, now, out var origin);
             var direction = PolarisForward(rt, true); var spear = profile.Actions[1]; var stomp = profile.Actions[2];
@@ -263,10 +290,16 @@ namespace SodRpg.Mod
         {
             if (!_polarisCombat.TryGetValue(rt, out var state)) return;
             if (rt.Boss.Build == null || !BossAlive(rt.Hero)) { ClearPolarisBoss(rt); return; }
-            int mask = PolarisMask(rt);
-            if ((state.Mask & ~mask) != 0) { ClearPolarisBoss(rt); return; }
-            state.Mask = mask; PolarisObserve(rt, state, now);
-            if ((mask & 64) != 0 && state.ModeRefresh <= now) PolarisModeVisual(rt, state, now);
+            // 毎ティックの9区分全走査は行わない。装備エポックが変わった最初の1回だけ付け直す。
+            if (state.Epoch != rt.ShieldEquipmentEpoch)
+            {
+                int mask = PolarisScan(rt, state);
+                state.Epoch = rt.ShieldEquipmentEpoch;
+                if ((state.Mask & ~mask) != 0) { ClearPolarisBoss(rt); return; }
+                state.Mask = mask;
+            }
+            PolarisObserve(rt, state, now);
+            if ((state.Mask & 64) != 0 && state.ModeRefresh <= now) PolarisModeVisual(rt, state, now);
         }
         private void ClearPolarisBoss(HeroRuntime rt, bool preserveRewards = false)
         {
