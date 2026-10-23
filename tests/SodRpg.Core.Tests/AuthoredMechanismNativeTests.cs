@@ -241,6 +241,49 @@ namespace SodRpg.Core.Tests
             Assert.Equal(9.025f, movement.currentConfigUnscaledCooldownTime, 5);
         }
 
+        [Fact]
+        public void Cached_every_n_matches_the_uncached_transform_and_recomputes_when_the_keystone_epoch_moves()
+        {
+            // 原則 II: 軽量化した EveryN キャッシュ（AuthoredChannelEveryN）が毎回の TransformAuthoredEveryN と
+            // 同じ値を返すこと。基本 EveryN=4 の回復チャンネルを、刻印が NativeMemory 発動の Gimmick
+            // ペイロードにだけ 2 まで縮める。発動回数は回復量（最大HP1000の1%＝10）で数える。
+            var spec = Gimmick("native.everyn.cache", GimmickEffect.Heal, 1); spec.EveryN = 4;
+            var key = new KeystoneDefinition("test.everyn.key", new[] { Q },
+                new[] { KeystoneTransform.SetEveryN(2, new KeystoneScope(payloadKind: KeystonePayloadKind.Gimmick,
+                    sourceKind: KeystoneSourceKind.NativeMemory)) });
+            var build = Decoded(spec); build.SelectedKeystone = key;
+            var (host, runtime) = Setup(Build.Decode(build.Encode()));
+            var hero = runtime.Hero; hero.currentHealth = 100;
+            int Uncached() => host.TransformAuthoredEveryN(hero, Identity, spec, KeystoneSourceKind.NativeMemory);
+            void Hits(int count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    host.NotifyAuthored(runtime, Event(host, host.Activation(hero, Identity), MemoryEventKind.Hit, Enemy()));
+                    host.FlushAuthored(runtime);
+                }
+            }
+
+            // 1) 同じ世代: キャッシュした値は毎回の計算と一致し、4回の発動で2回だけ回復する。
+            Assert.Equal(2, Uncached());
+            Hits(4); Assert.Equal(120, hero.currentHealth, 3);
+            // 2) 世代を進めない Build の差し替え（星の数だけ変える）でも同じ値を返し続ける。
+            build.SpentStarPoints = 40;
+            host.BindAuthored(runtime, Build.Decode(build.Encode()));
+            Assert.Equal(2, Uncached());
+            Hits(4); Assert.Equal(140, hero.currentHealth, 3);
+            // 3) 刻印を外すと世代が進み、基本の 4 を計算し直す（古い 2 のままなら回復は2回で +20 になる）。
+            build.SelectedKeystone = null;
+            host.BindAuthored(runtime, Build.Decode(build.Encode()));
+            Assert.Equal(4, Uncached());
+            Hits(4); Assert.Equal(150, hero.currentHealth, 3);
+            // 4) 刻印を戻すと再度計算し直して 2 に戻る。
+            build.SelectedKeystone = key;
+            host.BindAuthored(runtime, Build.Decode(build.Encode()));
+            Assert.Equal(2, Uncached());
+            Hits(4); Assert.Equal(170, hero.currentHealth, 3);
+        }
+
         [Theory]
         [InlineData(AuthoredMechanismCondition.BridgeSuccess, BridgeGateKind.Mark)]
         [InlineData(AuthoredMechanismCondition.BridgeMark, BridgeGateKind.Mark)]
