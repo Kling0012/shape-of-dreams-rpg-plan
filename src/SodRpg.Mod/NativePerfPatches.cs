@@ -825,7 +825,18 @@ namespace SodRpg.Mod
             internal readonly List<Vector3> Vertices = new List<Vector3>();
         }
 
+        private sealed class InvalidSkinWarning
+        {
+            internal int Warned;
+        }
+
         private static readonly Dictionary<int, SharedVerts> Shared = new Dictionary<int, SharedVerts>();
+        // Keep warnings once per renderer even if its shared vertices are swept, without
+        // retaining destroyed skins or allocating on healthy/repeated fallback calls.
+        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning> WarnedInvalidSkins =
+            new ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning>();
+        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning>.CreateValueCallback CreateInvalidSkinWarning =
+            _ => new InvalidSkinWarning();
         // Reused sweep scratch: fills fire once per bake (up to ten per second per skin),
         // so the sweep must not allocate, like NativeAttachFaceIdlePerf.PruneStale.
         private static readonly List<int> StaleScratch = new List<int>();
@@ -939,6 +950,22 @@ namespace SodRpg.Mod
                 {
                     if (!isNew) return true; // tracker and bake clock disagree; the native path decides
                     List<Vector3> vertices = SharedVertices(skin.GetInstanceID(), now, mesh);
+                    // Invalid attachment indices fall back per call without disabling sharing
+                    // for healthy attachments, including after a mesh shrinks.
+                    if (__instance.vertexIndex0 >= vertices.Count
+                        || __instance.vertexIndex1 < 0 || __instance.vertexIndex1 >= vertices.Count
+                        || __instance.vertexIndex2 < 0 || __instance.vertexIndex2 >= vertices.Count)
+                    {
+                        InvalidSkinWarning warning = WarnedInvalidSkins.GetValue(skin, CreateInvalidSkinWarning);
+                        if (System.Threading.Interlocked.Exchange(ref warning.Warned, 1) == 0)
+                        {
+                            Log.Warn(Feature + ": vertex index out of range; falling back to native path (skin="
+                                + skin.GetInstanceID() + ", indices=(" + __instance.vertexIndex0 + ","
+                                + __instance.vertexIndex1 + "," + __instance.vertexIndex2
+                                + "), vertices.Count=" + vertices.Count + ")");
+                        }
+                        return true;
+                    }
                     // Native arithmetic verbatim (TryGetWorldPositionAndRotation after a
                     // successful populate): center of the three baked vertices, face
                     // rotation from the face plane, offset by the stored relative pose.
