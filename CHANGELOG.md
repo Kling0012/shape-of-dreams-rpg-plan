@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.44 — Infinity bounty and dust cap fixes, co-op trade and auto salvage fixes, Chinese codex search（2026-10-23）
+
+### 不具合の修正 / Bug fixes
+- チャージ同期の送信省略設定を ON→OFF→ON と切り替えたとき、参加者へ送るべきチャージ数が古い記録によって送信されない問題を直しました。 / Fixed stale records suppressing necessary charge updates to participants after toggling charge RPC suppression ON, OFF, then ON.
+- 図鑑の検索対象に中国語の名前を加え、中国語表示で画面に出ている名前をそのまま検索できるようにしました（土台・固有品・銘品の土台名と組の名前も対象。日本語・英語の検索と、未発見項目の秘匿は今までどおり）。 / Codex search now also matches Chinese names, so the name shown in Chinese display can be typed as-is (base names, unique and named item bases, and mini-set names included; Japanese/English search and undiscovered-item hiding are unchanged).
+- レッドジャイアントのダメージ計測テキストの最適化を OFF にしてから ON に戻すと、OFF 中に書いた表示が残る問題を直しました。 / Fixed the red giant damage meter keeping the text written while the optimization was off after toggling it back on.
+- インフィニティで「確保して帰還」を選ぶと、未送信の依頼進捗と、その進捗で達成する依頼の記録・報酬が失われる問題を修正しました。帰還前に各参加者の進捗の適用を待ち、後のフラッシュによる二重加算を防ぎます。通信などの異常時や待機の期限切れでは、警告を残して帰還を続けます。協力プレイでは全員が同じ版に更新してください。 / Fixed Infinity secured returns losing unsent bounty progress and the completion records and rewards earned by that progress. Each participant now waits for progress to be applied before returning, without counting it again on later flushes. If settlement is unavailable or the wait expires, a warning is logged and the return continues. All co-op players must update to the same version.
+- 協力取引で、保管庫が大きくて確認データの送信が数フレームに分かれるとき、その送信の途中に相手の確認が届くと、提示が変わっていないのに取引が取り消されていた問題を直しました。 / Fixed co-op trades being cancelled even though the offer had not changed, when the partner's confirmation arrived while the player's own confirmation data was still being sent over several frames.
+- 形式7の協力取引履歴が残っていると、更新後に取引の受付や中断した取引の回復ができなくなる問題を修正しました。 / Fixed saved version 7 co-op trade history preventing new trades and recovery of interrupted trades after upgrading.
+- インフィニティで次の世界へ潜行しても、世界ごとの分解ダストの上限が回復しない問題を直しました。 / Fixed the per-world salvage Dream Dust cap not recovering when delving to the next world in Infinity.
+- 再開読み込みを30秒の期限前に放棄すると、同じセッションの後続の遠征でMODの進行・報酬とBuild反映が保留され続ける問題を修正しました。保持した再開チェックポイントは保存一覧に残し、別の遠征には適用しません。 / Fixed abandoned resume loads keeping MOD progression, rewards, and Build application paused in later expeditions of the same session when the game disappears before the 30-second timeout. Retained resume checkpoints remain saved and are not applied to another expedition.
+- 追加効果と飛び道具の生成キューで、持ち越しが続いて処理予算を広げた直後にキューを捌き切ると、空の状態が3秒続いていないのに予算がすぐ一段戻る問題を直しました。持ち越しの間は空になった時刻の記録を解除し、次に捌き切った時刻から3秒を数え直します。予算の広げ方と、飛び道具を必ず生成する最大待ち時間の保護は変わりません。 / Fixed the widened processing budget of the bonus-effect and projectile-spawn queues stepping back down right after the queue was fully drained, even though the queue had not been empty for three seconds. While a carryover lasts, the drain timestamp is now cleared, and the three-second idle count restarts from the next full drain. How the budget widens and the maximum-wait protection that force-spawns projectiles are unchanged.
+- インフィニティの潜行直後に分解したとき、前の世界の計数が残って受け取ったダストが0と表示される場合がある問題を直しました。 / Fixed salvage immediately after an Infinity delve sometimes displaying zero Dream Dust received because the previous world's count was still in use.
+- ミラージュスキンの軽量化設定のラベルを、言語ごとに改行しました。 / Added a line break between languages in the Mirage Skin optimization setting label.
+- 記録タブで自動分解を変更しても実際の動作に反映されない問題と、協力プレイのゲストでは変更が保存されない問題を直しました。 / Fixed auto salvage changes in the Records tab not taking effect and co-op guests being unable to save those changes.
+- 日本語で起動したとき、記録タブの自動分解設定で現在の値が空欄になる問題を直しました。 / Fixed the current auto-salvage setting appearing blank in the Records tab when starting in Japanese.
+
+---
+
 ## v3.8.43 — Auto salvage by rarity and adjustable notice lines（2026-10-21）
 
 ### 新機能 / New features
