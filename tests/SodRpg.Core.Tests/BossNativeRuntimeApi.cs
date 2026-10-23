@@ -234,7 +234,9 @@ namespace SodRpg.Mod
         public void OnDealDamage(Actor actor, Entity target, ref DamageData damage, ReactionChain chain) { }
         public void OnUnequipSkill() { }
     }
-    internal sealed class Se_U_EternalFlame_Curse : StatusEffect { public new float? maxDuration, remainingDuration; }
+    // maxDuration/remainingDuration は基底 StatusEffect の宣言（CoopKeystonesNativeApi/NativeEntityProtectionRecoveryTests）
+    // をそのまま使う。new で隠すと SetTimer の書き込み（基底）と本物API相当の読み取りが別スロットに分かれる。
+    internal sealed class Se_U_EternalFlame_Curse : StatusEffect { }
     internal sealed class Gem_U_GlacialCore : Gem
     {
         public readonly Dictionary<ReactionChain, float> _remainingDamages = new Dictionary<ReactionChain, float>();

@@ -356,9 +356,12 @@ namespace SodRpg.Mod
                 var curse=state.Curses[i]; var capture=_eternalFlameCurses[curse];
                 if(!EternalFlameCurseCurrent(capture))
                 { RestoreEternalFlameTimer(capture); ReleaseEternalFlameCurse(curse); continue; }
-                // 直前の EternalFlameCurseCurrent が親・キャスター・装備の所在まで検査済みで、
-                // curse はこの rt の状態にしか入らない（CaptureEternalFlameCurse は所有者の
-                // 状態にだけ追加する）。毎フレームの再検査は行わず、stage だけを見る。
+                // 毎フレームの再検査はやめた分の前提は、直前の EternalFlameCurseCurrent が確認済み:
+                // 親は Curse.parentActor==Gem、キャスターは Curse.info.caster==Runtime.Hero、装備と所有者は
+                // EternalFlameEquipped(Gem,out rt)&&rt==Runtime（gem.owner は EternalFlameEquipped の
+                // gem.owner/_runtimes 検査と同じ）。CaptureEternalFlameCurse が所有者自身の状態にしか
+                // 追加しないため state.Curses の呪いはすべて capture.Runtime==rt になる。
+                // 前提は BossEternalFlameNativeTests（SodRpg.Core.Tests）で固定する。
                 if(stage==0) RestoreEternalFlameTimer(capture);
                 else if(capture.AddedMaximum==0) CaptureEternalFlameCurse(capture.Curse);
             }
