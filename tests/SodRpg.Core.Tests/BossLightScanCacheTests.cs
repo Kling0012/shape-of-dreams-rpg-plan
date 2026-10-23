@@ -10,8 +10,10 @@ using Xunit;
 
 // #1075 原則 C-II: Light の軽量化（LightScan キャッシュ）が結果を変えないことの検証。
 // キャッシュされた mask/Entries/Profiles が従来のイベントごとの BossFind 9 回の結果と一致すること、
-// 装備エポックが変わった最初のティックだけ再走査して消えた区分を LightCancelProfile で撤去すること、
-// 区分を1つも持たない rt では状態を作らないことを、実API相当の double（BossNativeRuntimeApi.cs）経由で確かめる。
+// 最初に在ありと分かった添字より前の区分が不在として埋まること、装備エポックが変わった最初のティック
+// だけ再走査して消えた区分を LightCancelProfile で撤去すること、装備エポックがティック内に進んだ
+// 直後のイベントでもキャッシュが現在の Build に揃うこと、区分を1つも持たない rt では状態を
+// 作らないことを、実API相当の double（BossNativeRuntimeApi.cs）経由で確かめる。
 namespace SodRpg.Core.Tests
 {
     public class BossLightScanCacheTests
@@ -37,6 +39,13 @@ namespace SodRpg.Core.Tests
             var method = target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             Assert.NotNull(method);
             return method.Invoke(target, args);
+        }
+
+        private static object InvokeStatic(string name, params object[] args)
+        {
+            var method = typeof(HostAuthority).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.NotNull(method);
+            return method.Invoke(null, args);
         }
 
         private static object Field(object instance, string name)
@@ -100,19 +109,10 @@ namespace SodRpg.Core.Tests
             return new Rig { Host = host, Rt = rt };
         }
 
-        [Theory]
-        [InlineData(2)]
-        [InlineData(3)]
-        [InlineData(6)]
-        public void LightScan_cache_matches_nine_BossFind_results_on_the_live_build(int pieces)
+        // キャッシュされた mask/Entries/Profiles の全9区分が、従来のイベントごとの BossFind
+        // （現在の Build に対する判定）と一致すること。
+        private static void AssertCacheMatchesBossFind(Rig rig, object state)
         {
-            var rig = Create(pieces);
-            var state = Invoke(rig.Host, "LightState", rig.Rt);
-            Assert.NotNull(state);
-            // 検証に使う2つのカウンタを別々に記録していること（Epoch=Boss.Epoch、EquipEpoch=装備エポック）。
-            Assert.Equal(rig.Rt.Boss.Epoch, (long)Field(state, "Epoch"));
-            Assert.Equal(rig.Rt.ShieldEquipmentEpoch, (long)Field(state, "EquipEpoch"));
-            var mask = (int)Field(state, "Mask");
             var entries = (BossMoveEntry[])Field(state, "Entries");
             var profiles = (BossMoveProfile[])Field(state, "Profiles");
             int expected = 0;
@@ -131,9 +131,66 @@ namespace SodRpg.Core.Tests
                     Assert.Null(profiles[i]);
                 }
             }
-            Assert.Equal(expected, mask);
+            Assert.Equal(expected, (int)Field(state, "Mask"));
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(6)]
+        public void LightScan_cache_matches_nine_BossFind_results_on_the_live_build(int pieces)
+        {
+            var rig = Create(pieces);
+            var state = Invoke(rig.Host, "LightState", rig.Rt);
+            Assert.NotNull(state);
+            // 検証に使う2つのカウンタを別々に記録していること（Epoch=Boss.Epoch、EquipEpoch=装備エポック）。
+            Assert.Equal(rig.Rt.Boss.Epoch, (long)Field(state, "Epoch"));
+            Assert.Equal(rig.Rt.ShieldEquipmentEpoch, (long)Field(state, "EquipEpoch"));
+            AssertCacheMatchesBossFind(rig, state);
             // 6ピースでは stage2→3→6 のチャージ連鎖も含めて9区分すべてがキャッシュに入っている。
-            if (pieces == 6) Assert.Equal(511, mask);
+            if (pieces == 6) Assert.Equal(511, (int)Field(state, "Mask"));
+        }
+
+        [Fact]
+        public void LightState_keeps_slots_before_the_first_found_division_absent()
+        {
+            // weapon・armor・charm を持たない構成では、在確認は head（添字3）で初めて在ありになる。
+            // 最初に見つかった添字より前の区分は LightState が不在として null に揃え、LightScan は
+            // その次からだけ走査する（作成時に在確認と LightScan で同じ区分を二重に走査しない）。
+            var rig = Create(2, "head", "hands");
+            var state = Invoke(rig.Host, "LightState", rig.Rt);
+            Assert.NotNull(state);
+            AssertCacheMatchesBossFind(rig, state);
+            Assert.Equal((1 << 3) | (1 << 4) | (1 << 6), (int)Field(state, "Mask"));
+        }
+
+        [Fact]
+        public void DispatchLightBoss_refreshes_cache_when_equipment_epoch_advances_mid_tick()
+        {
+            var rig = Create(2, "weapon", "armor");
+            var state = Invoke(rig.Host, "LightState", rig.Rt);
+            Assert.NotNull(state);
+            Assert.Equal((1 << 0) | (1 << 1) | (1 << 6), (int)Field(state, "Mask"));
+            // BossEnsure が済んだあとのティック内での装備変化: Build から weapon が消え、装備エポック
+            // だけが進む（Boss.Epoch は次の BossEnsure まで古いまま）。この窓で被弾イベントが来る。
+            var moves = rig.Rt.Powers.Build.BossMoves;
+            var weapon = moves.Single(m => m.ProfileId == Profiles[0]);
+            moves.Remove(weapon);
+            rig.Rt.ShieldEquipmentEpoch++;
+            Invoke(rig.Host, "DispatchLightBoss", rig.Rt, BossEvent.MainHit, 7301L, null, Vector3.zero, 11f);
+            // 旧実装のイベントごとの BossFind と同じ結果: 消えた区分（weapon は MainHit で発火する）は
+            // ビームを立たせず、キャッシュは現在の Build に揃う。撤去は次のティックの BossEnsure が担う。
+            Assert.Equal((1 << 1) | (1 << 6), (int)Field(state, "Mask"));
+            Assert.Null(((BossMoveEntry[])Field(state, "Entries"))[0]);
+            Assert.Equal(rig.Rt.ShieldEquipmentEpoch, (long)Field(state, "EquipEpoch"));
+            Assert.Equal(12, (int)InvokeStatic("LightFreeBeams", state));
+            // 逆に増えた区分も、次のティックを待たずに同じティックのイベントで拾う。
+            moves.Add(weapon);
+            rig.Rt.ShieldEquipmentEpoch++;
+            Invoke(rig.Host, "DispatchLightBoss", rig.Rt, BossEvent.MainHit, 7302L, null, Vector3.zero, 11.1f);
+            Assert.Equal((1 << 0) | (1 << 1) | (1 << 6), (int)Field(state, "Mask"));
+            Assert.Same(weapon, ((BossMoveEntry[])Field(state, "Entries"))[0]);
+            Assert.Equal(11, (int)InvokeStatic("LightFreeBeams", state));
         }
 
         [Fact]
