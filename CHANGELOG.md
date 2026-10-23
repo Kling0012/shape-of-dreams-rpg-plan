@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.51 — Lighter combat sound playback（2026-10-24）
+
+この版では、戦闘中に効果音を鳴らすたびに繰り返していた無駄な処理を省き、激しい戦闘での負荷を減らしました。 / This version removes wasted work repeated every time a combat sound plays, reducing load in intense fights.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 戦闘中に効果音を鳴らすときは、前回と同じ鳴らし方でも、ゲームが音の聞こえ方の設定（距離による音の小さくなり方など）を1音ごとに最初から設定し直していました。被弾、撃破、スキルの使用のたびに起き、ホストと参加者の両方が対象でした。今は鳴らし方が前回と同じなら設定し直しを省きます。効果音が1フレームに重なる激しい戦闘ほど、ホストと参加者の処理が軽くなる見込みです。音量、音の高さ、鳴るタイミング、効果音が重なりすぎたときにどの音を省くかは変わりません。 / When a combat sound played, the game set up how it should sound (such as how it fades with distance) from scratch for every sound, even when nothing had changed since last time. This happened on every hit taken, kill and skill use, on both the host and co-op players. It now skips the setup when it matches the previous one. Fights where many sounds land in the same frame should run lighter for both host and players. Volume, pitch, timing and which sounds get dropped when too many overlap are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.50 — Lighter accessories, arrow aiming, cooking pot and PackGuard summons（2026-10-24）
 
 この版では、キャラクターに付く装飾品、矢印の照準、料理ポット、PackGuard の召喚物による護衛のまわりで続いていた無駄な処理を省き、プレイ中の負荷を減らしました。 / This version removes wasted work around accessories attached to characters, the arrow aiming indicator, the cooking pot and PackGuard summon guarding, reducing load during play.
