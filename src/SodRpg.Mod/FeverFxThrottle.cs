@@ -51,6 +51,7 @@ namespace SodRpg.Mod
         {
             // OnCreate plays the effects itself. Restore only what we suppressed on the last use
             // before native playback, including after this optimization has failed soft.
+            FeverCameraShakePatch.RegisterShake(__instance);
             try
             {
                 if (!States.TryGetValue(__instance, out var state) || !state.Suppressed) return;
@@ -134,6 +135,11 @@ namespace SodRpg.Mod
             internal AccessTools.FieldRef<Ai_Gem_E_Fever_Explosion, float> Amplitude;
         }
 
+        // Fever explosions register their captured shake in OnCreate, so Play can look the
+        // owner up here instead of walking the transform hierarchy on every camera shake.
+        private static readonly ConditionalWeakTable<FxCameraShake, Ai_Gem_E_Fever_Explosion> ShakeOwners =
+            new ConditionalWeakTable<FxCameraShake, Ai_Gem_E_Fever_Explosion>();
+
         private static bool _disabled;
         private static readonly ShakeFields Fields = CreateFields();
 
@@ -154,6 +160,22 @@ namespace SodRpg.Mod
             }
         }
 
+        // Runs in the explosion's OnCreate Prefix, before the native OnCreate captures
+        // _cameraShake and plays the effect. First use mirrors the native capture
+        // (GetComponentInChildren); later pooled uses read the already-captured field.
+        internal static void RegisterShake(Ai_Gem_E_Fever_Explosion explosion)
+        {
+            if (_disabled || Fields == null) return;
+            try
+            {
+                var shake = Fields.Shake(explosion) ?? explosion.GetComponentInChildren<FxCameraShake>();
+                if (shake == null) return;
+                ShakeOwners.Remove(shake);
+                ShakeOwners.Add(shake, explosion);
+            }
+            catch (Exception ex) { Disable(ex); }
+        }
+
         // The native OnCreate calls base.OnCreate, which plays the shake before its Postfix.
         // Run before DeathFxThrottle's playback gate; that gate still controls whether it plays.
         [HarmonyPriority(Priority.First)]
@@ -162,8 +184,8 @@ namespace SodRpg.Mod
             if (_disabled || Fields == null) return;
             try
             {
-                var explosion = __instance.GetComponentInParent<Ai_Gem_E_Fever_Explosion>();
-                if (explosion != null && Fields.Shake(explosion) == __instance)
+                if (!ShakeOwners.TryGetValue(__instance, out var explosion)) return;
+                if (Fields.Shake(explosion) == __instance)
                     Cap(__instance, Fields.Amplitude(explosion), explosion.explosionRadius);
             }
             catch (Exception ex) { Disable(ex); }
