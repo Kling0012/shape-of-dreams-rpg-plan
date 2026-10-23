@@ -253,7 +253,9 @@ namespace Issue73.Native.Tests
             var calls = new List<string>();
             actor.CustomRpc_RegisterClientMessageHandler<SampleMessage>(m => calls.Add("v" + m.Value));
             var handlerType = typeof(Actor).GetNestedType("RpcHandler", Hidden);
-            Patch.GetField("_wrappedActionField", Hidden).SetValue(null, AccessTools.Field(handlerType, "originalAction"));
+            var originalAction = AccessTools.Field(handlerType, "originalAction");
+            Patch.GetField("_wrappedAction", Hidden).SetValue(null,
+                new Func<object, object>(handler => originalAction.GetValue(handler)));
             Assert.True(Prefix(actor, "SampleMessage", Json(7), null));
             Assert.Empty(calls);
             Assert.True((bool)Patch.GetField("_disabled", Hidden).GetValue(null));

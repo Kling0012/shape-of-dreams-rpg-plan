@@ -3461,9 +3461,9 @@ namespace SodRpg.Mod
 
         private static MethodBase _target;
         private static AccessTools.FieldRef<Actor, DewPlayer> _rpcCaller;
-        private static FieldInfo _clientDictField;
-        private static FieldInfo _serverDictField;
-        private static FieldInfo _wrappedActionField;
+        private static Func<Actor, IDictionary> _clientHandlers;
+        private static Func<Actor, IDictionary> _serverHandlers;
+        private static Func<object, object> _wrappedAction;
         private static bool _disabled;
         private static bool _warned;
 
@@ -3499,17 +3499,28 @@ namespace SodRpg.Mod
             try
             {
                 _rpcCaller = AccessTools.FieldRefAccess<Actor, DewPlayer>("_serverRpcCaller");
-                _clientDictField = AccessTools.Field(typeof(Actor), "_clientRpcHandlers")
+                var clientField = AccessTools.Field(typeof(Actor), "_clientRpcHandlers")
                     ?? throw new MissingMethodException(typeof(Actor).FullName, "_clientRpcHandlers");
-                _serverDictField = AccessTools.Field(typeof(Actor), "_serverRpcHandlers")
+                var serverField = AccessTools.Field(typeof(Actor), "_serverRpcHandlers")
                     ?? throw new MissingMethodException(typeof(Actor).FullName, "_serverRpcHandlers");
                 var handlerType = typeof(Actor).GetNestedType("RpcHandler", BindingFlags.NonPublic)
                     ?? throw new MissingMethodException(typeof(Actor).FullName, "RpcHandler");
-                _wrappedActionField = AccessTools.Field(handlerType, "wrappedAction")
+                var actionField = AccessTools.Field(handlerType, "wrappedAction")
                     ?? throw new MissingMethodException(handlerType.FullName, "wrappedAction");
-                if (_wrappedActionField.FieldType != typeof(Action<object>))
+                if (actionField.FieldType != typeof(Action<object>))
                     throw new MissingMethodException(handlerType.FullName,
-                        "wrappedAction:" + _wrappedActionField.FieldType.FullName);
+                        "wrappedAction:" + actionField.FieldType.FullName);
+                // Resolve metadata once. Receives still read the current dictionaries and
+                // delegates, including replacements made by a handler during dispatch.
+                var actor = Expression.Parameter(typeof(Actor));
+                var handler = Expression.Parameter(typeof(object));
+                _clientHandlers = Expression.Lambda<Func<Actor, IDictionary>>(
+                    Expression.Convert(Expression.Field(actor, clientField), typeof(IDictionary)), actor).Compile();
+                _serverHandlers = Expression.Lambda<Func<Actor, IDictionary>>(
+                    Expression.Convert(Expression.Field(actor, serverField), typeof(IDictionary)), actor).Compile();
+                _wrappedAction = Expression.Lambda<Func<object, object>>(
+                    Expression.Convert(Expression.Field(Expression.Convert(handler, handlerType), actionField),
+                        typeof(object)), handler).Compile();
                 return true;
             }
             catch (Exception ex)
@@ -3530,7 +3541,7 @@ namespace SodRpg.Mod
             {
                 _rpcCaller(__instance) = caller;
                 if (type == null) return true; // a null name never matches; the cache would throw
-                var dict = (IDictionary)(caller != null ? _serverDictField : _clientDictField).GetValue(__instance);
+                var dict = (caller != null ? _serverHandlers : _clientHandlers)(__instance);
                 var cache = Caches.GetValue(__instance, CreateCacheCallback);
                 var names = caller != null ? cache.Server : cache.Client;
                 if (names.Ambiguous.Contains(type)) return true;
@@ -3563,7 +3574,7 @@ namespace SodRpg.Mod
                 // called twice.
                 foreach (var handler in handlers)
                 {
-                    if (_wrappedActionField.GetValue(handler) is Action<object>) continue;
+                    if (_wrappedAction(handler) is Action<object>) continue;
                     _disabled = true;
                     NativePerfPatch.Warn(ref _warned, "custom rpc dispatch", "wrappedAction is not Action<object>");
                     return true;
@@ -3585,7 +3596,7 @@ namespace SodRpg.Mod
             // time through vanilla.
             foreach (var handler in handlers)
             {
-                var action = (Action<object>)_wrappedActionField.GetValue(handler); // shape checked above
+                var action = (Action<object>)_wrappedAction(handler); // shape checked above
                 try { action(message); }
                 catch (Exception ex) { UnityEngine.Debug.LogException(ex); }
             }
