@@ -65,6 +65,7 @@ namespace SodRpg.Mod
             NativePerfOptions.GenericTransformIdle = config.nativeGenericTransformIdle;
             NativePerfOptions.ObliviaxKidnapLog = config.nativeObliviaxKidnapLog;
             NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
+            NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
         }
     }
 
@@ -118,6 +119,7 @@ namespace SodRpg.Mod
         internal static bool GenericTransformIdle = true;
         internal static bool ObliviaxKidnapLog = true;
         internal static bool MirageVolumeIdle = true;
+        internal static bool DamageShakeIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -5822,6 +5824,83 @@ namespace SodRpg.Mod
             applied.CurrentValue = current;
             applied.TargetStrength = strength;
             applied.ContextMultiplier = context;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeDamageShakeIdlePerf
+    {
+        // FlavourManager.OnClientTakeDamage runs on every machine for every damage event the
+        // host relays through ClientEventManager — guests included, for every hit on every
+        // entity in the fight, not just hits on their own hero. When the shake-duration curve
+        // yields nothing and the victim has no shake running, the native body builds a shake
+        // only to discard it on the spot: GetNewTransformModifier + AddData followed
+        // immediately by RemoveData + modifier.Stop + ReturnShake. That is several
+        // list/dictionary operations (two of them linear scans) plus one redundant
+        // transform-modifier dirty recompute, all with no visible effect — the modifier is
+        // created all-zero and never applied. The prefix recomputes the same duration float
+        // the native body derives and skips exactly that dead case. DoT ticks and victims
+        // with an active shake go to the native body untouched: a new hit must still be able
+        // to cut an old shake short, and hits whose duration is positive play exactly as
+        // before.
+        private static MethodBase _target;
+        private static AccessTools.FieldRef<Actor, Dictionary<Type, object>> _dataByType;
+        private static Type _shakeDataType;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FlavourManager), "OnClientTakeDamage",
+                new[] { typeof(EventInfoDamage) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _shakeDataType = AccessTools.Inner(typeof(FlavourManager), "Ad_DamageShake");
+                if (_shakeDataType == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "damage shake idle", "Ad_DamageShake type unavailable");
+                    return false;
+                }
+                _dataByType = AccessTools.FieldRefAccess<Actor, Dictionary<Type, object>>("_dataByType");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "damage shake idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(FlavourManager __instance, EventInfoDamage info)
+        {
+            if (_disabled || !NativePerfOptions.DamageShakeIdle) return true;
+            try
+            {
+                // DoT ticks are the native body's own first early-out; keep that path free of
+                // added work by mirroring the check before anything else.
+                if (info.actor is ElementalStatusEffect) return true;
+                Entity victim = info.victim;
+                if (victim == null) return true;
+                // An existing shake must reach the native body: a stronger hit cuts it short there.
+                if (_dataByType(victim).ContainsKey(_shakeDataType)) return true;
+                Vector2 range = __instance.shakeDamageRatioRange;
+                float num = (info.damage.amount + info.damage.discardedAmount)
+                    / (victim.maxHealth + victim.Status.currentShield);
+                num = (num - range.x) / (range.y - range.x);
+                // Same float, same comparison as the native body's remaining<=0 discard: the
+                // native path would pop a pooled shake, attach a fresh all-zero modifier and
+                // throw both away before anything renders.
+                if (__instance.shakeDuration.Evaluate(num) <= 0f) return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "damage shake idle", ex.Message);
+            }
+            return true;
         }
     }
 }

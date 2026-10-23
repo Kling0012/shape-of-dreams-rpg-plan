@@ -214,6 +214,13 @@ namespace Mirror
         public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight,
             params GUILayoutOption[] options) => ClusterListArea;
     }
+    // FlavourManager の被弾シェイク曲線。NativeDamageShakeIdlePerf は Evaluate の結果だけを見る。
+    // 既定は常に 0（シェイク無し＝本体も即時破棄する）で、テストは evaluator を差し替えられる。
+    internal sealed class AnimationCurve
+    {
+        public Func<float, float> evaluator = _ => 0f;
+        public float Evaluate(float t) => evaluator(t);
+    }
  }
 // The extractor preserves ClientSession.cs imports; scene event wiring is outside this harness.
 namespace UnityEngine.SceneManagement
@@ -236,6 +243,11 @@ namespace SodRpg.Mod
     {
         private static int _nextId;
         private readonly int _id = ++_nextId;
+        // 本体 Actor.cs（r1.4.1.2 逆コンパイル）と同じ非公開のデータ辞書。本体の
+        // TryGetData/AddData/RemoveData はこの辞書を typeof(T) で読み書きする。
+        // NativeDamageShakeIdlePerf（#1063）の Prepare が FieldRefAccess で解決し、
+        // Prefix が既存シェイクの有無（Ad_DamageShake の型キー）を読む。
+        private Dictionary<Type, object> _dataByType = new Dictionary<Type, object>();
         public int GetInstanceID() => _id;
         // 本体では Actor のプロパティ。NativeSleepPositionPerf（#751）の IL 照合が
         // typeof(Actor) の getter を探すため、フィールドではなくプロパティにする。
@@ -919,6 +931,9 @@ namespace SodRpg.Mod
         public SourceType source;
         public float damageToShieldMultiplier;
         public bool isBlockedByImmunity;
+        // シールドあふれ分。FlavourManager の被弾シェイク（NativeDamageShakeIdlePerf）が
+        // amount と合算して参照する。本体どおり既定 0。
+        public float discardedAmount;
         private HashSet<Type> _modifyFlags;
         public float currentAmount => Math.Max(0f, amount);
         public bool HasAttr(DamageAttribute attr) => attr != 0 && (attributes & attr) == attr;
@@ -947,6 +962,7 @@ namespace SodRpg.Mod
             source = SourceType.Normal;
             damageToShieldMultiplier = 0f;
             isBlockedByImmunity = false;
+            discardedAmount = 0f;
             _modifyFlags = null;
         }
     }
@@ -1072,6 +1088,20 @@ namespace SodRpg.Mod
         public string skillKey;
         public Func<float> valueGetter;
         internal int _id;
+    }
+    // 被弾シェイク本体（実機ではグローバル名前空間 Dew.Core）。NativeDamageShakeIdlePerf の
+    // Prepare が探す部位（OnClientTakeDamage・入れ子の Ad_DamageShake）と Prefix が読む公開
+    // 字段を実機の形どおりに置く。メソッドは対象の解決だけに使い中身は空、入れ子型は
+    // _dataByType の型キーとしてだけ使う（本体の Ad_DamageShake の字段は誰も参照しない）。
+    // これでハーネスでも Prepare は実機と同じ経路（Find・Inner・FieldRefAccess）を通る。
+    internal class FlavourManager
+    {
+        private class Ad_DamageShake { }
+
+        public Vector2 shakeDamageRatioRange;
+        public AnimationCurve shakeDuration;
+
+        private void OnClientTakeDamage(EventInfoDamage info) { }
     }
     internal static class NetworkedManagerBase<T>
     {
