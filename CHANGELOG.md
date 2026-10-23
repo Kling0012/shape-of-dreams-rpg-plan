@@ -10,6 +10,20 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.45 — Thorns resistance, safer Thorned reflections, and Pure Soul, essence HUD and shrine effect fixes（2026-10-23）
+
+### 新機能 / New features
+- 防具・装飾品・足に専用の「棘耐性」の特性を追加し、装備・鍛冶の一覧で絞り込めるようにしました。協力プレイでは全員を同じ版へ更新してください。 / Added a dedicated Thorns resistance affix to armor, charms and footwear, with filtering in gear and forge lists. All co-op players must update to the same version.
+- 棘皮の反射による難易度を緩和しました。反射には夢の圧・潜行・Infinityと協力プレイの敵担当別の与ダメージ倍率を掛けず、旅人ごとに全ての棘皮で反射間隔を共有することで、複数の敵からの反射が同時に集中するのを抑えます。棘皮の反射効果は残ります。 / Reduced the difficulty of Thorned reflections. Reflected damage no longer receives damage multipliers from dream pressure, delve, Infinity or co-op enemy ownership. Each traveler now shares a reflection interval across all Thorned enemies, limiting simultaneous reflections from multiple enemies. Thorned enemies still reflect damage.
+- 外部の翻訳ファイルで表示言語を追加できるようになりました。翻訳は公開リポジトリ Kling0012/dreamforge-rpg の `translations/` へ PR で送れます。 / Added support for external language files. Submit translations through a PR to `translations/` in the public Kling0012/dreamforge-rpg repository. / 现可通过外部翻译文件添加显示语言。翻译可通过 PR 提交至公开仓库 Kling0012/dreamforge-rpg 的 `translations/`。
+
+### 不具合の修正 / Bug fixes
+- 高負荷時に Pure Soul の生成数が0になる問題を直しました。 / Fixed Pure Soul producing no projectiles under high performance pressure.
+- 5枠以上のエッセンスHUDで追加枠がスキル側へ重なる配置を直しました。 / Fixed extra essence HUD sockets extending into skill buttons with five or more sockets.
+- 導きの聖堂の破壊演出が負荷調整で再生直後に回収される経路を修正しました。 / Protected Shrine of Guidance break effects from immediate performance-based cleanup.
+
+---
+
 ## v3.8.44 — Infinity bounty and dust cap fixes, co-op trade and auto salvage fixes, Chinese codex search（2026-10-23）
 
 ### 不具合の修正 / Bug fixes
