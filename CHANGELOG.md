@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.48 — Lighter combat around Polaris gear, Nyx marks and projectiles（2026-10-24）
+
+この版では、Polaris の装備、Nyx の印、飛んでいる弾のまわりで続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Polaris gear, Nyx's marks and projectiles in flight, reducing load during combat.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Polaris の装備を付けている間、ホストのゲームが装備の内容を確かめ直していました。1秒に最大540回、さらに攻撃が当たるたびに最大16回です。今は装備を付け替えたときだけ確かめます。戦闘中のホストの処理が少し軽くなります。Polaris の段階の進み方、反撃、締めの攻撃、装備を外したときの戻り方は変わりません。 / While Polaris gear was equipped, the host's game kept rechecking the gear, up to 540 times per second plus up to 16 times on every hit. It now checks only when gear is changed, making the host run a little lighter in combat. Polaris stage progress, counterattacks, finishing attacks, and the reset when the gear is removed are unchanged.
+- Nyx の印が付いている間は、印の位置も数も変わっていなくても、協力プレイの参加者全員へ同じ表示の通信を1秒に4回送り直していました。今は印が増えたり減ったり、動いたり、続く時間が延びたりしたときだけ送ります。印が付いている時間が長いほど、通信と処理が少し軽くなります。印の見た目、動きへの追従、消えるタイミング、効果は変わりません。 / While Nyx's marks were active, the same mark display was sent to everyone in co-op 4 times per second, even when the marks had not moved or changed in number. Updates are now sent only when marks are added, removed, moved or extended. The longer marks stay active, the lighter network traffic and processing get. Mark visuals, how they follow movement, when they disappear, and their effects are unchanged.
+- 飛んでいる弾が何にも当たっていないときも、ホストのゲームが敵に当たったかどうかを同じ形で2回調べていました。今は1回だけ調べます。弾が多く飛ぶ場面ほど、ホストの処理が少し軽くなります。弾の当たり方、ダメージ、飛ぶ距離、爆発は変わりません。 / Even when a projectile in flight had not hit anything, the host's game checked for enemy hits twice in the same way. It now checks once. Scenes with many projectiles now run a little lighter on the host. How projectiles hit, their damage, travel distance and explosions are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.47 — Lighter Skoll marks and Seeker gear（2026-10-24）
 
 この版では、Skoll の印と Seeker の装備で続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Skoll's marks and Seeker gear, reducing load during combat.
