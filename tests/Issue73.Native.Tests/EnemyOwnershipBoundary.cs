@@ -21,6 +21,9 @@ namespace UnityEngine
         public static Vector3 operator +(Vector3 a, Vector3 b) => new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
         public static Vector3 operator *(Vector3 a, float d) => new Vector3(a.x * d, a.y * d, a.z * d);
         public static Vector3 up => new Vector3(0f, 1f, 0f);
+        // 本体 UnityEngine.Vector3.forward と同じ値（Skoll の印の経路の抽出が SkollRain の配置と
+        // SkollFacing の基準向きに使う分）。
+        public static Vector3 forward => new Vector3(0f, 0f, 1f);
         public static bool operator ==(Vector3 a, Vector3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
         public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
         public static Vector3 LerpUnclamped(Vector3 a, Vector3 b, float t) => a + (b - a) * t;
@@ -32,6 +35,10 @@ namespace UnityEngine
         public Vector3 normalized => magnitude > 1E-05f ? this / magnitude : zero;
         public static Vector3 operator /(Vector3 a, float d) => new Vector3(a.x / d, a.y / d, a.z / d);
         public static float Distance(Vector3 a, Vector3 b) => (a - b).magnitude;
+        // 本体 UnityEngine.Vector3.Cross と同じ式（Skoll の印の経路の抽出が boss_skoll.head の
+        // 横一列の左右向きに使う分）。
+        public static Vector3 Cross(Vector3 a, Vector3 b)
+            => new Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
         // 本体 UnityEngine.Vector3.Lerp と同じ式（t を Clamp01 して各軸を補間する）。
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
         {
@@ -98,6 +105,9 @@ namespace SodRpg.Mod
     internal static class Vector3Extensions
     {
         internal static Vector2 ToXY(this Vector3 value) => new Vector2(value.x, value.z);
+        // 本体 Dew.Core の Vector3FlattenExtension.Flattened と同じ式（Y を 0 にする）。
+        // Skoll の印の経路の抽出（SkollFacing）が使う分。
+        internal static Vector3 Flattened(this Vector3 value) => new Vector3(value.x, 0f, value.z);
     }
 
     // 本体のステータス再計算の形。最終最大HPは処理器の積み重ねで作り直される。

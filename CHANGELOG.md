@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.46 — Lighter combat processing for weak hits（2026-10-24）
+
+この版では、敵やプレイヤーが弱い攻撃を受けたときに、揺れの演出が出ないにもかかわらず演出の準備と片付けをしていた処理を省き、戦闘中の負荷を減らしました。 / This version cuts work done on weak hits, where the hit shake was being set up and removed again even though no shake was shown, reducing load during combat.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 揺れの演出が出ないほど弱い攻撃が当たったときも、演出をいったん用意してすぐに片付けていた無駄な処理をやめました。協力プレイでは、ほかのプレイヤーが敵に与える攻撃も含め、戦闘中のすべての被弾でこの処理が動いていました。攻撃が多く当たる場面ほど、処理が少し軽くなります。揺れの演出の見た目、ダメージ、ヒットストップや撃破時の演出は変わりません。 / Removed wasted work on hits too weak to cause a hit shake, where the shake was set up and then removed right away. In co-op this ran for every hit in combat, including attacks other players land on enemies. Scenes with many hits now run a little lighter. Hit shake visuals, damage, hit stop and kill effects are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.45 — Thorns resistance, safer Thorned reflections, and Pure Soul, essence HUD and shrine effect fixes（2026-10-23）
 
 ### 新機能 / New features

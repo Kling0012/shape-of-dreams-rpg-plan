@@ -12,6 +12,7 @@ namespace SodRpg.Mod
         {
             internal int Marks;
             internal float MarksUntil;
+            internal float MarkDue;
             internal long MarkVisual;
             internal readonly Dictionary<Gem_U_GlacialCore, SkollCoreState> Cores = new Dictionary<Gem_U_GlacialCore, SkollCoreState>(BossProfiles.MaxEntries);
             internal readonly List<Gem_U_GlacialCore> ExpiredCores = new List<Gem_U_GlacialCore>(BossProfiles.MaxEntries);
@@ -90,10 +91,13 @@ namespace SodRpg.Mod
             if (!pulses.Add(new BossScheduledPulse(shield,rt.Hero.agentPosition,rt.Hero.agentPosition,BossAmount(rt,entry,profile,shield.ChannelId),magic,shield.DelayMillis))) return;
             SkollReserve(rt,profile,rain,pulses,now);
         }
-        private void SkollPublishMarks(HeroRuntime rt, SkollState state, float now)
+        // due は印の蓄積開始時刻に固定する（SkollPublishBurst と同じ規約）。毎ティック現在時刻を渡すと
+        // PublishBossVisual の同一性判定が必ず失敗し、印の数も位置も変わらない間も最大10Hzの差分を
+        // 全員へ再送していた。増減・移動・削除の送信経路は従来どおり。
+        private void SkollPublishMarks(HeroRuntime rt, SkollState state)
         {
             if (state.MarkVisual == 0) state.MarkVisual = ++rt.Boss.NextId;
-            PublishBossVisual(rt,state.MarkVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Marks,now,state.MarksUntil,state.Marks == 0,
+            PublishBossVisual(rt,state.MarkVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Marks,state.MarkDue,state.MarksUntil,state.Marks == 0,
                 element:BossElement.Cold,count:state.Marks);
         }
         private void DispatchSkollBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
@@ -118,10 +122,11 @@ namespace SodRpg.Mod
                 }
                 else
                 {
+                    if (state.Marks == 0) state.MarkDue = now;
                     state.Marks = Math.Min(mark.Count,state.Marks + 1);
                     state.MarksUntil = now + mark.LifetimeMillis / 1000f;
                 }
-                SkollPublishMarks(rt,state,now);
+                SkollPublishMarks(rt,state);
             }
             var moves = rt.Powers.Build.BossMoves;
             for (int moveIndex = 0; moveIndex < moves.Count && moveIndex < BossProfiles.MaxEntries; moveIndex++)
@@ -174,7 +179,7 @@ namespace SodRpg.Mod
             if (state.Marks > 0)
             {
                 if (now >= state.MarksUntil) state.Marks = 0;
-                SkollPublishMarks(rt,state,now);
+                SkollPublishMarks(rt,state);
             }
             TickSkollCores(rt,state,now);
         }
@@ -186,7 +191,7 @@ namespace SodRpg.Mod
                 rt.Boss.Ready.Remove("boss_skoll.glacial_core.burst");
             }
             if (!_skollStates.TryGetValue(rt,out var state)) return;
-            state.Marks = 0; state.MarksUntil = 0; state.MarkVisual = 0;
+            state.Marks = 0; state.MarksUntil = 0; state.MarkDue = 0; state.MarkVisual = 0;
             if (preserveRewards) return;
             ClearSkollCores(rt,state);
             _skollStates.Remove(rt);

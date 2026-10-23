@@ -16,8 +16,11 @@ namespace SodRpg.Mod
             internal Vector3 DoublePoint;
             internal bool Echo;
             internal string DoubleProfile;
+            // BossMoves は Build の生成時に確定し、以後は変わらない。BossFind の全走査は
+            // Build が差し替わった最初の1回だけ行い、同じ Build では結果を流用する。
+            internal Build Stage2Build, DoubleBuild;
             internal void Reset()
-            { Phase=0; MainActivation=DoubleVisual=PhaseVisual=0; DoubleUntil=0; DoublePoint=default; Echo=false; DoubleProfile=null; }
+            { Phase=0; MainActivation=DoubleVisual=PhaseVisual=0; DoubleUntil=0; DoublePoint=default; Echo=false; DoubleProfile=null; Stage2Build=null; DoubleBuild=null; }
         }
         private readonly Dictionary<HeroRuntime,SeekerState> _seekerStates = new Dictionary<HeroRuntime,SeekerState>(64);
         private readonly BossObjectPool<SeekerState> _seekerPool = new BossObjectPool<SeekerState>(64,()=>new SeekerState());
@@ -58,6 +61,8 @@ namespace SodRpg.Mod
         {
             SeekerRemoveDouble(rt,state,now);
             state.DoublePoint=point; state.DoubleUntil=now+life/1000f; state.Echo=echo; state.DoubleProfile=profile; state.DoubleVisual=++rt.Boss.NextId;
+            // 呼び出し元は現行 Build の BossMoves から profile を見つけているので、存在判定はこの Build について確定済み。
+            state.DoubleBuild=rt.Powers.Build;
             PublishBossVisual(rt,state.DoubleVisual,8,point,point,.6f,now,state.DoubleUntil,count:echo?1:0);
         }
         private bool SeekerPhaseAttack(HeroRuntime rt,BossMoveProfile phase,int index,Vector3 origin,Vector3 point,float amount,float now,string source)
@@ -161,10 +166,31 @@ namespace SodRpg.Mod
         {
             if(_seekerStates.TryGetValue(rt,out var state))
             {
-                if(state.DoubleUntil>0 && (now>=state.DoubleUntil || !BossFind(rt,state.DoubleProfile,out _,out _))) SeekerRemoveDouble(rt,state,now);
-                if(!BossFind(rt,"boss_seeker.stage2",out _,out _)) state.Phase=0;
+                var build=rt.Powers.Build;
+                if(build==null)
+                {
+                    // PowerRuntime は Build を必ず持たせるので通常は来ない。Build が無ければ
+                    // stage2 も分身のプロファイルも探しようがないので、キャッシュごと初期状態へ戻す。
+                    SeekerRemoveDouble(rt,state,now); state.Phase=0; state.Stage2Build=null; state.DoubleBuild=null;
+                }
+                else
+                {
+                    if(state.DoubleUntil>0 && (now>=state.DoubleUntil || !SeekerDoubleProfileValid(rt,state,build))) SeekerRemoveDouble(rt,state,now);
+                    if(!ReferenceEquals(state.Stage2Build,build))
+                    {
+                        state.Stage2Build=build;
+                        if(!BossFind(rt,"boss_seeker.stage2",out _,out _)) state.Phase=0;
+                    }
+                }
             }
             TickSeekerSoulPrison(rt,now);
+        }
+        // state.DoubleProfile が現行 Build にまだ在るか。同じ Build なら作成時の判定を流用する。
+        private bool SeekerDoubleProfileValid(HeroRuntime rt,SeekerState state,Build build)
+        {
+            if(ReferenceEquals(state.DoubleBuild,build)) return true;
+            state.DoubleBuild=build;
+            return BossFind(rt,state.DoubleProfile,out _,out _);
         }
         private void ClearSeekerBoss(HeroRuntime rt,bool preserveRewards=false)
         {

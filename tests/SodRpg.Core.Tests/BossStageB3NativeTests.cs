@@ -31,6 +31,14 @@ namespace SodRpg.Core.Tests
                 Time.time = now;
                 Invoke(Host, "TickBossEffects", Rt, now);
             }
+            internal void SeekerTick(float now)
+            {
+                // Calls TickSeekerBoss alone: the full TickBossEffects path runs BossEnsure
+                // first, which wipes the whole Seeker state on a Build swap, so the tick's
+                // own re-evaluation of a swapped Build is only observable through this call.
+                Time.time = now;
+                Invoke(Host, "TickSeekerBoss", Rt, now);
+            }
             internal void Input(string boss, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
             {
                 Time.time = now;
@@ -500,6 +508,36 @@ namespace SodRpg.Core.Tests
             Assert.Equal(.6f, duration);
         }
 
+        // --- Seeker: TickSeekerBoss caches the stage2/double profile scans per Build instance ---
+
+        private static object SeekerStateOf(Rig rig)
+        {
+            var states = (System.Collections.IDictionary)typeof(HostAuthority)
+                .GetField("_seekerStates", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(rig.Host);
+            Assert.NotNull(states);
+            var state = states[rig.Rt];
+            Assert.NotNull(state);
+            return state;
+        }
+
+        private static object SeekerField(object state, string name) =>
+            state.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(state);
+
+        // A Build with only the given seeker pieces, so set stages appear and disappear by piece count
+        // (2 pieces -> stage2, 3 -> stage3) just like a real equipment change would produce.
+        private static Build SeekerPieceBuild(params string[] slots)
+        {
+            var profile = Profile.CreateNew(48);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                Assert.True(Content.TryGetUnique("unique.boss_seeker." + slots[i], out var unique));
+                var relic = Loot.RollUnique(new Rng((ulong)(7300 + i)), unique, 5);
+                profile.Stash.Add(relic);
+                Rules.Equip(profile, "Hero_A", relic.Uid);
+            }
+            return Build.Compute(profile, "Hero_A", 0);
+        }
+
         // --- Polaris: the per-epoch cached BossFind decisions must answer exactly what a plain scan would ---
 
         private static readonly string[] PolarisIds = (string[])typeof(HostAuthority)
@@ -556,6 +594,80 @@ namespace SodRpg.Core.Tests
                 Rules.Equip(profile, "Hero_A", relic.Uid);
             }
             return Build.Compute(profile, "Hero_A", 0);
+        }
+
+        [Fact]
+        public void Seeker_phase_keeps_while_the_build_stays_and_resets_once_stage2_leaves_the_build()
+        {
+            var rig = Create("seeker", 3);
+            var enemy = Enemy(0, 1);
+            // Two basic-attack hits advance the phase 0 -> 1 -> 2 while stage2 is equipped.
+            rig.Input("Seeker", BossEvent.MainHit, 1, enemy, enemy.position, 10f);
+            rig.Input("Seeker", BossEvent.MainHit, 2, enemy, enemy.position, 10.1f);
+            var state = SeekerStateOf(rig);
+            Assert.Equal(2, (int)SeekerField(state, "Phase"));
+
+            // Same Build instance: the tick keeps the phase and arms the per-Build cache.
+            rig.SeekerTick(10.2f);
+            Assert.Equal(2, (int)SeekerField(state, "Phase"));
+            Assert.Same(rig.Rt.Powers.Build, SeekerField(state, "Stage2Build"));
+
+            // A replacement Build with a single piece has no stage2, so the next tick must
+            // re-evaluate and reset the phase instead of trusting the cached decision.
+            rig.Rt.Powers.SetBuild(SeekerPieceBuild("weapon"));
+            rig.SeekerTick(10.3f);
+            Assert.Equal(0, (int)SeekerField(state, "Phase"));
+            Assert.Same(rig.Rt.Powers.Build, SeekerField(state, "Stage2Build"));
+        }
+
+        [Fact]
+        public void Seeker_double_survives_ticks_on_the_same_build_and_is_removed_once_stage3_leaves_the_build()
+        {
+            var rig = Create("seeker", 3);
+            rig.Rt.Boss.MovementOrigin = Vector3.zero;
+            rig.Rt.Boss.MovementOriginValid = true;
+            rig.Input("Seeker", BossEvent.MovementCompleted, 1, null, rig.Hero.position, 10f);
+            var state = SeekerStateOf(rig);
+            Assert.Equal("boss_seeker.stage3", (string)SeekerField(state, "DoubleProfile"));
+            Assert.True((float)SeekerField(state, "DoubleUntil") > 10f);
+
+            // Same Build instance: the double outlives ticks before its deadline; the
+            // creation-time profile check is reused instead of re-scanning BossMoves.
+            rig.SeekerTick(11f);
+            Assert.True((float)SeekerField(state, "DoubleUntil") > 11f);
+            Assert.Same(rig.Rt.Powers.Build, SeekerField(state, "DoubleBuild"));
+
+            // A two-piece Build still has stage2 but no stage3, so the double must go on the next tick.
+            rig.Rt.Powers.SetBuild(SeekerPieceBuild("weapon", "armor"));
+            rig.SeekerTick(11.1f);
+            Assert.Equal(0f, (float)SeekerField(state, "DoubleUntil"));
+            Assert.Equal(0L, (long)SeekerField(state, "DoubleVisual"));
+            Assert.Null(SeekerField(state, "DoubleProfile"));
+        }
+
+        [Fact]
+        public void Seeker_tick_fails_soft_on_a_missing_build_and_clears_the_cached_phase_and_double()
+        {
+            var rig = Create("seeker", 3);
+            var enemy = Enemy(0, 1);
+            rig.Input("Seeker", BossEvent.MainHit, 1, enemy, enemy.position, 10f);
+            rig.Rt.Boss.MovementOrigin = Vector3.zero;
+            rig.Rt.Boss.MovementOriginValid = true;
+            rig.Input("Seeker", BossEvent.MovementCompleted, 2, null, rig.Hero.position, 10.1f);
+            var state = SeekerStateOf(rig);
+            Assert.Equal(1, (int)SeekerField(state, "Phase"));
+            Assert.True((float)SeekerField(state, "DoubleUntil") > 10f);
+
+            // PowerRuntime never exposes a null Build; if one ever appears, the tick must drop
+            // the phase and the double instead of keeping stale cached decisions.
+            typeof(PowerRuntime).GetField("<Build>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(rig.Rt.Powers, null);
+            rig.SeekerTick(10.2f);
+            Assert.Equal(0, (int)SeekerField(state, "Phase"));
+            Assert.Equal(0f, (float)SeekerField(state, "DoubleUntil"));
+            Assert.Null(SeekerField(state, "DoubleProfile"));
+            Assert.Null(SeekerField(state, "Stage2Build"));
+            Assert.Null(SeekerField(state, "DoubleBuild"));
         }
 
         [Fact]

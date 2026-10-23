@@ -26,6 +26,9 @@ namespace SodRpg.Core.Game
         public SortedDictionary<string, int> MiniSets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         /// <summary>遺物と星の連携。装着条件はホストで判定し、常時の能力値には加えない。</summary>
         public List<LinkDef> Links { get; } = new List<LinkDef>();
+        /// <summary>ボス枠の装着内容（セット段階の固定枠を含む）。Build の生成時（Compute・Decode）にだけ
+        /// 追加し、適用後の書き換えは行わない。装備の付け替えは必ず新しい Build インスタンスの差し替えで
+        /// 表すので、適用済みの Build は不変として扱ってよい（ホスト側の毎フレーム判定はこの前提で結果をキャッシュする）。</summary>
         public List<BossMoveEntry> BossMoves { get; } = new List<BossMoveEntry>();
         public List<BossRewardEntry> BossRewards { get; } = new List<BossRewardEntry>();
         /// <summary>振ったルートの星が持つ、記憶に反応する仕掛け。</summary>
