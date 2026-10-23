@@ -74,12 +74,19 @@ namespace SodRpg.Mod
         private static readonly bool[] AzurakEventGate = BuildAzurakEventGate();
         private static bool[] BuildAzurakEventGate()
         {
-            var gate = new bool[Enum.GetValues(typeof(BossEvent)).Length];
-            gate[(int)BossEvent.MainHit] = true;
+            int maxEvent = 0;
+            foreach (BossEvent kind in Enum.GetValues(typeof(BossEvent)))
+                maxEvent = Math.Max(maxEvent, (int)kind);
+            var gate = new bool[maxEvent + 1];
+            if ((uint)BossEvent.MainHit < (uint)gate.Length) gate[(int)BossEvent.MainHit] = true;
             foreach (var profile in BossProfiles.Moves)
             {
                 if (profile.SetId != BossProfiles.AzurakSetId) continue;
-                for (int i = 0; i < profile.Actions.Count; i++) gate[(int)profile.Actions[i].Event] = true;
+                for (int i = 0; i < profile.Actions.Count; i++)
+                {
+                    int eventIndex = (int)profile.Actions[i].Event;
+                    if ((uint)eventIndex < (uint)gate.Length) gate[eventIndex] = true;
+                }
             }
             return gate;
         }
@@ -89,7 +96,9 @@ namespace SodRpg.Mod
             // Kinds no Azurak action subscribes to (e.g. the per-damage-instance NativeDamageDealt) made
             // every loop iteration fall out on action.Event != kind before this gate existed, so
             // skipping the whole BossMoves scan for them changes no result.
-            if (!AzurakEventGate[(int)kind]) return;
+            // Out-of-range kinds retain the original scan, including negative enum values.
+            int eventIndex = (int)kind;
+            if ((uint)eventIndex < (uint)AzurakEventGate.Length && !AzurakEventGate[eventIndex]) return;
             Vector3 owner = rt.Hero.agentPosition;
             if (kind == BossEvent.MainHit && BossFind(rt, "boss_azurak.stage2", out var stageEntry, out var stageProfile))
             {
