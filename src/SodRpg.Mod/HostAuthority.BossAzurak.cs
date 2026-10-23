@@ -65,9 +65,31 @@ namespace SodRpg.Mod
             PublishBossVisual(rt, state.HitVisual, 9, rt.Hero.agentPosition, rt.Hero.agentPosition, state.Hits, now,
                 state.HitsUntil, removed: state.Hits == 0, count: state.Hits);
         }
+        // Events Azurak's move profiles subscribe to, computed once from the closed BossProfiles.Moves
+        // registry (its Azurak section is CreateAzurakMoves()'s output) instead of a hand-written list:
+        // adding or changing an action in any Actions[i] slot widens this gate automatically, so a
+        // subscribed event can never be dropped silently. MainHit is always on because the stage2 hit
+        // counter branch below keys on it directly, apart from any action's subscription. Pinned against
+        // the registry by tests/Issue73.Native.Tests/AzurakEventGateTests.cs.
+        private static readonly bool[] AzurakEventGate = BuildAzurakEventGate();
+        private static bool[] BuildAzurakEventGate()
+        {
+            var gate = new bool[Enum.GetValues(typeof(BossEvent)).Length];
+            gate[(int)BossEvent.MainHit] = true;
+            foreach (var profile in BossProfiles.Moves)
+            {
+                if (profile.SetId != BossProfiles.AzurakSetId) continue;
+                for (int i = 0; i < profile.Actions.Count; i++) gate[(int)profile.Actions[i].Event] = true;
+            }
+            return gate;
+        }
         private void DispatchAzurakBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || activation == 0 || !BossAlive(rt.Hero)) return;
+            // Kinds no Azurak action subscribes to (e.g. the per-damage-instance NativeDamageDealt) made
+            // every loop iteration fall out on action.Event != kind before this gate existed, so
+            // skipping the whole BossMoves scan for them changes no result.
+            if (!AzurakEventGate[(int)kind]) return;
             Vector3 owner = rt.Hero.agentPosition;
             if (kind == BossEvent.MainHit && BossFind(rt, "boss_azurak.stage2", out var stageEntry, out var stageProfile))
             {
