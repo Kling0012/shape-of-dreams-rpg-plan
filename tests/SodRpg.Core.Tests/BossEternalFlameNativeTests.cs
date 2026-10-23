@@ -36,6 +36,7 @@ namespace SodRpg.Core.Tests
         private const string HeroKey = "Hero_A";
         private ZoneManager _previousZoneManager;
         private Room _previousRoom;
+        private bool _previousIsInAnyTransition;
         private bool _zoneStateCaptured;
 
         public enum Premise { MoveGem, ChangeCaster, ChangeParent, ChangeGemOwner }
@@ -89,6 +90,7 @@ namespace SodRpg.Core.Tests
             {
                 _previousZoneManager = NetworkedManagerBase<ZoneManager>.softInstance;
                 _previousRoom = _previousZoneManager?.currentRoom;
+                _previousIsInAnyTransition = _previousZoneManager?.isInAnyTransition ?? false;
                 _zoneStateCaptured = true;
             }
             NetworkedManagerBase<ZoneManager>.softInstance ??= new ZoneManager();
@@ -138,7 +140,7 @@ namespace SodRpg.Core.Tests
                 if (_previousZoneManager != null)
                 {
                     _previousZoneManager.currentRoom = _previousRoom;
-                    _previousZoneManager.isInAnyTransition = false;
+                    _previousZoneManager.isInAnyTransition = _previousIsInAnyTransition;
                 }
                 NetworkedManagerBase<ZoneManager>.softInstance = _previousZoneManager;
             }
