@@ -142,6 +142,19 @@
     </ItemGroup>
   </Target>
 
+  <!-- Azurak のイベント絞り込み（perf-loop/20261024-0212、PR #1078 レビューの F1/F2）:
+       DispatchAzurakBoss 冒頭の絞り込みが、手書きの列挙ではなく実レジストリ
+       （BossProfiles.Moves の Azurak 区分＝CreateAzurakMoves() の出力）の全 Action から
+       起動時に求まっていることを確かめる。生成（BuildAzurakEventGate）と静的なフラグ
+       （AzurakEventGate）を実ソースから抽出して、レジストリの全区分・全 Action の Event と
+       突き合わせる。テストは AzurakEventGateTests.cs。 -->
+  <Target Name="CompileAzurakEventGate" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossAzurak.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AzurakEventGate.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BuildAzurakEventGate" Fields="AzurakEventGate" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)AzurakEventGate.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- The profile slot notice (#97) lives in the UI partial of ProfileSlotView.cs; compile its
        exact draw methods against the harness session instead of copying their implementation. -->
   <Target Name="CompileProfileSlotUi" BeforeTargets="CoreCompile">
