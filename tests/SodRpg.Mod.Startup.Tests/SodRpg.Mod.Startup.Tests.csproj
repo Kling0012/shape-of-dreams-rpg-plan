@@ -17,6 +17,7 @@
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/ExternalLanguages.cs" Link="ModUnderTest/ExternalLanguages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativePatchPreflight.cs" Link="ModUnderTest/NativePatchPreflight.cs" />
   <Compile Include="../../src/SodRpg.Mod/PatchMethodOwnership.cs" Link="ModUnderTest/PatchMethodOwnership.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.cs" Link="ModUnderTest/DreamforgeMod.cs" />

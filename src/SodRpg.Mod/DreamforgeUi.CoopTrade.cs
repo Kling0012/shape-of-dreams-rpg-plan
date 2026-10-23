@@ -41,7 +41,7 @@ namespace SodRpg.Mod
         private string _tradeSearch = "";
         private int _tradeRarityFilter = -1, _tradeSlotFilter = -1;
         private string _tradeRarityLabel, _tradeSlotLabel;
-        private LocLanguage _tradeFilterLabelsJapanese;
+        private int _tradeFilterLabelsJapanese;
 
         // Cached only while this tab is drawn. Stat/power entries are immutable, so reference
         // comparisons also detect rerolls without formatting descriptions on every repaint.
@@ -52,7 +52,7 @@ namespace SodRpg.Mod
             public int Enhance, Level, Awakening, LimitBreaks, FusionLevel;
             public SodRpg.Core.Game.Rarity Rarity;
             public Slot Slot;
-            public LocLanguage Japanese;
+            public int Japanese;
             public StatLine[] Affixes;
             public PowerLine[] Powers;
             // Snapshot the mutable mark so in-place edits also invalidate the displayed effects.
@@ -62,7 +62,7 @@ namespace SodRpg.Mod
             {
                 if (BaseId != r.BaseId || UniqueId != r.UniqueId || NamedId != r.NamedId
                     || Enhance != r.Enhance || Level != r.ItemLevel || Awakening != r.AwakenLevel
-                    || LimitBreaks != r.LimitBreaks || FusionLevel != r.FusionLevel || Rarity != r.Rarity || Japanese != Loc.Language
+                    || LimitBreaks != r.LimitBreaks || FusionLevel != r.FusionLevel || Rarity != r.Rarity || Japanese != Loc.CacheKey
                     || Affixes.Length != r.Affixes.Count || Powers.Length != r.Powers.Count) return false;
                 var mark = r.Forbidden;
                 if ((Forbidden == null) != (mark == null)) return false;
@@ -80,7 +80,7 @@ namespace SodRpg.Mod
             {
                 Uid = r.Uid, BaseId = r.BaseId, UniqueId = r.UniqueId, NamedId = r.NamedId,
                 Enhance = r.Enhance, Level = r.ItemLevel, Awakening = r.AwakenLevel,
-                LimitBreaks = r.LimitBreaks, FusionLevel = r.FusionLevel, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Language,
+                LimitBreaks = r.LimitBreaks, FusionLevel = r.FusionLevel, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.CacheKey,
                 Name = r.DisplayName ?? "",
                 Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(), Forbidden = r.Forbidden?.Clone(),
                 Title = UiStyles.RelicTitle(r) + "  <color=#bcbcd2>" + Content.RarityName(r.Rarity)
@@ -324,7 +324,7 @@ namespace SodRpg.Mod
 
         private void DrawCoopTradeFilters()
         {
-            if (_tradeRarityLabel == null || _tradeFilterLabelsJapanese != Loc.Language) RefreshCoopTradeFilterLabels();
+            if (_tradeRarityLabel == null || _tradeFilterLabelsJapanese != Loc.CacheKey) RefreshCoopTradeFilterLabels();
             string previousSearch = _tradeSearch;
             int previousRarity = _tradeRarityFilter, previousSlot = _tradeSlotFilter;
             GUILayout.BeginHorizontal();
@@ -372,7 +372,7 @@ namespace SodRpg.Mod
 
         private void RefreshCoopTradeFilterLabels()
         {
-            _tradeFilterLabelsJapanese = Loc.Language;
+            _tradeFilterLabelsJapanese = Loc.CacheKey;
             _tradeRarityLabel = Loc.T("レア度：", "Rarity: ", "稀有度：")
                 + (_tradeRarityFilter < 0 ? Loc.T("すべて", "All", "全部") : Content.RarityName(TradeRarities[_tradeRarityFilter]));
             _tradeSlotLabel = Loc.T("部位：", "Slot: ", "部位：")
@@ -496,7 +496,7 @@ namespace SodRpg.Mod
                 TradeRelicText text = relic != null ? CoopTradeRelicText(relic) : null;
                 if (text == null && _s.CoopTrade != null && _s.CoopTrade.Preparing)
                     foreach (var cached in _tradeRelicTexts.Values)
-                        if (cached.Uid == offer.RelicUids[i] && cached.Japanese == Loc.Language) { text = cached; break; }
+                        if (cached.Uid == offer.RelicUids[i] && cached.Japanese == Loc.CacheKey) { text = cached; break; }
                 if (text == null)
                 {
                     GUILayout.Label(_s.CoopTrade != null && _s.CoopTrade.Preparing

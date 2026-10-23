@@ -544,7 +544,7 @@ Nは、同frame・同じ鍵で、適用条件を満たした1型の生成数と�
 - 鍵は8.4のとおり、型、creator/source（parentActor）、caster、対象指定（target の有無と point・angle）、開始位置、向き、設定の版。位置と向きは丸めずに float の値そのもので比較し、NaN・Infinity が混ざれば鍵が作れないものとして扱う。
 - フレーム集計は固定容量512の開放アドレス表を、フレームの刻印で使い回す。フレームごとに辞書・リスト・クロージャは作らない。1〜4個目は通常公開、5個目は表示代表、6個目以降は非公開候補で、各フレーム・各鍵の公開は5個まで。
 - 非公開候補の区分は NetworkIdentity を鍵とする弱参照表に置き、DestroyObject の Postfix で必ず外す。プールで再利用した個体に前の区分は残らない。
-- 権限を持つ接続のある個体（ownerConnection が null でない）と、非公開候補を親に持つ子は通常公開する。ゲストは親の parentActorNetId を解決できないためである。この親の判定は実行時の防波囲で、登録前の参照審査（12.4）の代わりにはならない。
+- 権限を持つ接続のある個体（ownerConnection が null でない）と、非公開候補を親に持つ子は通常公開する。子だけの通常公開では親の netId が未解決になるため、14節の処理で親も先に通常公開する。
 
 ### 12.3 失敗時の動作
 
@@ -552,7 +552,7 @@ Nは、同frame・同じ鍵で、適用条件を満たした1型の生成数と�
 
 ### 12.4 型の登録前の検証
 
-`NativeGuestPublishLimit.TryRegister` を用意した。機械的に確かめる条件は、AbilityInstance の具象サブクラスであること、Summon を継承しないこと、宣言している ClientRpc・Command・TargetRpc が表示だけだと申し立てられていること。加えて、公開される Actor から parentActor・CastInfo・SyncVar でこの型の個体が参照されないことを審査済みという申し立てを必須にする。参照の有無は機械的には確かめられないため、申し立てのない型は拒否する。条件を満たさない型は登録せず、理由を文字列で返す。この時点での呼び出し元はない。
+`NativeGuestPublishLimit.TryRegister` を用意した。機械的に確かめる条件は AbilityInstance の具象サブクラスであること、Summon を継承しないこと、宣言している ClientRpc・Command・TargetRpc が表示だけだと申し立てられていること。登録要求は初回生成のプレハブ監査まで保留する。`referencesReviewed` は Spawn 時の SyncVar 以外の参照・RPC・ゲスト通知を型と購読先で審査したという申し立てで、未確認なら要求を拒否する。プレハブ構成と Spawn 時の参照を実行時に確認する方法は14節に記す。条件を満たさない型は登録せず、理由を文字列で返す。この時点での呼び出し元はない。
 
 ### 12.5 検証と未確認
 
@@ -597,3 +597,43 @@ GemのOnEquipSkillはサーバ側で装備先SkillTriggerのActorEvent_OnDealDam
 - `yomiyasu_lint.py docs/specs/memory-projectile-coalesce.md`：error 0・warn 0。今回の否定表現は、偏差抽選をサーバ限定と誤読しないために残した。`git diff --check`も指摘なし。
 
 プレハブ・asset bundleの検査は、提供資料にないため未実行。実機・協力プレイ・専用サーバ・途中参加での確認、同frame・同鍵で6個以上生成する場面の再現、生成数・通信量・粒子の実測は、ゲームを起動できないため未実行。全体の遅いテストスイートも今回の指定範囲外として未実行とし、パイプラインに残す。実機確認だけのIssue、新しいテスト、changelog.dの断片は作成していない。
+
+## 14. 実行時の安全網
+
+ゲームのアセットがこのマシンにないため、プレハブの構成と、公開される子から非公開候補への参照を資料だけでは確かめられない。`NativeGuestPublishLimit` に実行時の監査と親の繰り上げ公開を足した。登録要求・監査済みの型はともに0件のままで、既定のゲーム効果と表示は変わらない。12節までの構成審査と生成時の参照確認は、この節の方法で補う。
+
+### 14.1 プレハブの取得と監査
+
+根拠は `Dew.CreateAbilityInstance<T>(Vector3, Quaternion?, Actor, CastInfo, Action<T>)` である。本体は `DewResources.GetSuggestedResourceLoadSettings(parent, typeof(T))` と `DewResources.GetByType<T>` でプレハブを引き、`Dew.InstantiateActor_Imp<T>` から `SpawnManager.Create` へ渡す。`GetByType(Type, ResourceLoadSettings)` は `DewResources.database.typeToGuid` からアセットを読み、型の Component を返す。
+
+`TryRegister` はプレハブの GameObject を任意の引数で受け取り、省略時は初回生成で `DewResources.GetByType(type)` から取得する。戻り値 true は要求の受理を表し、有効な登録数にはまだ加えない。最初の `NetworkServer.SpawnObject` で監査に合格してから登録を有効にする。不合格なら保留も解除し、理由を型ごとに1回警告する。失敗結果もキャッシュするため、再登録や次の生成で監査を繰り返さない。
+
+親の variant processor を再実行すると通知や乱数の順序を変えるおそれがあるため、監査では実行しない。実際に使ったバリエーションは `SpawnManager.activeInstanceToPool` と `pool` の対応から取得する。型の元プレハブ、実際のプレハブ、初回の生成個体を監査する。プールを使わず生成元を特定できない場合も登録しない。以後は同じプレハブと pool の対応だけを確認し、別のバリエーションへの変更や対応の消失では型の登録を止める。
+
+監査は非アクティブな子を含むすべての Component を調べる。許可するのはルートの対象型1個と NetworkIdentity 1個に加え、Transform・RectTransform、Renderer の各派生型、MeshFilter、ParticleSystem・ParticleSystemRenderer、TrailRenderer、LineRenderer、Light、AudioSource、Animator、Collider・Rigidbody である。Collider と Rigidbody はサーバ側の判定を維持したまま許可する。許可リスト外の部品、欠落したスクリプト、2個以上の NetworkBehaviour は拒否する。
+
+Component の UnityEvent と、直列化された値・配列・リスト内の UnityEvent に永続リスナーがあれば拒否する。継承元のフィールドも調べ、監査中の例外や過度な入れ子でも登録しない。配列、訪問済み集合、反射による調査は初回監査だけで確保し、フレームごとの再監査は行わない。
+
+### 14.2 親の繰り上げ公開
+
+`NetworkServer.SendSpawnMessage(NetworkIdentity, NetworkConnection)` の Prefix で、リモートの接続へ送る Actor の参照先を、payload を作る前に確認する。登録済みの型だけでなく StatusEffect など未登録の子も対象である。Actor の SyncVar を継承元まで調べ、Actor・NetworkBehaviour・NetworkIdentity・GameObject への参照と値型内の参照を読む。`Actor._parentActor`、`AbilityInstance._info` の caster・target、`_gem` などもこの方法で確認する。`GeneratedNetworkCode._Write_CastInfo` が caster・target を NetworkBehaviour として書くことも確認した。読み取り用 delegate は Actor の型ごとにキャッシュし、生成ごとの反射や boxing を避ける。
+
+非公開候補の親とその祖先は子の SpawnMessage より先に通常公開する。送る Actor の参照先に非公開候補か繰り上げ済みの個体がある場合だけ、この処理を行う。参照を祖先から順にたどり、非公開候補の区分を外して、準備済みの全リモート接続へ `NetworkIdentity.AddObserver` を呼ぶ。本体の `AddToObserving → ShowForConnection → SendSpawnMessage` を通るため、identity.observers と connection.observing の両方へ加わる。未準備の接続は通常の途中参加経路で扱う。繰り上げた親は以後通常公開し、途中参加で子が先に列挙された場合も同じ確認で親を先に送る。区分は破棄・プール返却時に解除する。
+
+読み取れない SyncVar の形、非公開個体同士の循環、参照の深さや件数の上限、送信処理の例外では、新しい公開制限を止める。残る非公開候補も通常公開へ戻す処理を試み、失敗は警告する。子の Spawn とサーバのゲーム処理、ローカルホストの初期化は止めない。親を代表個体へ付け替えることもしない。
+
+### 14.3 代わりに確認できる条件と残る審査
+
+プレハブの構成と永続イベントの配線は、実行中の本物を初回監査して確認する。生成時に同期される親子参照は、子の送信前に参照先を公開して解決する。資料にアセットがないことを理由に、監査を省いて登録することはない。
+
+Spawn 後に変更される参照、別の公開個体の RPC が渡す netId、独自の同期形式、購読先のゲストイベントが表示以外の状態を変えないことは、実行時の2つの処理だけでは確認できない。これらは引き続き型と購読先のコード審査を必須とし、`referencesReviewed` と RPC の表示専用確認を省かない。本文が欠けた型を有効にする根拠にも使わない。
+
+### 14.4 検証と未実行
+
+- `python3 tools/balance/gen_cs.py --check` は合格。MOD の Release ビルドは実ゲームの DLL を参照し、エラー0件・既存の警告6件で成功した。
+- `Issue73.Native.Tests` の全件一括実行は689件合格・7件失敗。失敗はすべて `GenericTransformIdlePerfTests` の初期化で、`NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync")` が false を返した。7件だけの実行では合格し、一括実行では同じ失敗が再現した。原因は未確定で、今回の範囲外のコードとテストは変更していない。
+- `SodRpg.Mod.Startup.Tests` の全件実行は233件合格・1件スキップ・失敗0件。両テストには `DOTNET_ROLL_FORWARD=LatestMajor` を指定した。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python3 tools/test_changed.py --base HEAD` は3,887件合格・8件スキップ・失敗0件。860クラスを14プロセスに分けて検査し、Issue73 も分割実行では696件すべて合格した。全件一括の失敗が解消したとは扱わない。
+- 実行中のプレハブ監査による拒否・警告1回の観測、ゲストに届く親子の SpawnMessage の順序、協力プレイ・途中参加・専用サーバの確認、Profiler と生成数・通信量の実測は未実行。このマシンにはゲームのアセットと実行環境がない。リポジトリ全体の追加のテストはパイプラインに残す。
+
+登録要求と有効登録は0件のままである。実機確認だけの Issue と、新しいテストファイルは作成していない。

@@ -103,8 +103,11 @@ namespace SodRpg.Mod
         public bool japanese;
         // #877 中国語（簡体字）。実装側の DreamforgeConfig と同じ解決にする。
         public bool chinese;
-        public LocLanguage ResolveLanguage() =>
-            chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
+        public string language = "";
+        public bool translationDump;
+        public LocLanguage ResolveLanguage(Func<string, bool> selectExternal = null) =>
+            selectExternal?.Invoke(language) == true ? LocLanguage.External
+                : chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
         public bool overflowDreamDust;
         public AutoSalvageRarity autoSalvageRarity;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;

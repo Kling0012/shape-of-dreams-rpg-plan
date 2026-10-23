@@ -111,7 +111,7 @@ namespace SodRpg.Mod
         public event Action<Hero, Hero> ClientEvent_OnOwnerChanged;
         internal void RaiseOwnerChanged(Hero oldOwner, Hero newOwner) => ClientEvent_OnOwnerChanged?.Invoke(oldOwner, newOwner);
     }
-    public sealed class EffectAutoDestroyEntry { public GameObject gameObject; }
+    public struct EffectAutoDestroyEntry { public GameObject gameObject; }
     // 本体の EffectAutoDestroy 相当。再生のたびに登録し、回収はレジストリ経由でのみ行う。
     public static class EffectAutoDestroy
     {

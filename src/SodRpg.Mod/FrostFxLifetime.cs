@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -10,8 +11,8 @@ namespace SodRpg.Mod
     internal static class FrostFxLifetimePatch
     {
         private static MethodInfo _playIntoPool;
-        private static FieldInfo _entries;
-        private static FieldInfo _entryObject;
+        private static Func<IList> _entries;
+        private static Func<IList, int, GameObject> _entryObject;
         private static Action<int> _destroyEntry;
         private static bool _disabled;
 
@@ -29,15 +30,26 @@ namespace SodRpg.Mod
                     || parameters[5].ParameterType != typeof(Quaternion)
                     || parameters[6].ParameterType != typeof(Mirror.NetworkIdentity))
                     throw new MissingMethodException("DewEffect.PlayIntoPool contract changed");
-                _entries = AccessTools.DeclaredField(typeof(EffectAutoDestroy), "_entries");
-                var entryType = _entries?.FieldType.IsGenericType == true
-                    ? _entries.FieldType.GetGenericArguments()[0] : null;
-                _entryObject = entryType == null ? null : AccessTools.DeclaredField(entryType, "gameObject");
+                var entriesField = AccessTools.DeclaredField(typeof(EffectAutoDestroy), "_entries");
+                var entryType = entriesField?.FieldType.IsGenericType == true
+                    ? entriesField.FieldType.GetGenericArguments()[0] : null;
+                var entryObject = entryType == null ? null : AccessTools.DeclaredField(entryType, "gameObject");
+                var indexer = entriesField?.FieldType.GetProperty("Item", new[] { typeof(int) });
                 var destroy = AccessTools.DeclaredMethod(typeof(EffectAutoDestroy), "DestroyEntry", new[] { typeof(int) });
-                if (_entries == null || !_entries.IsStatic || !typeof(IList).IsAssignableFrom(_entries.FieldType)
-                    || _entryObject == null || _entryObject.FieldType != typeof(GameObject)
+                if (entriesField == null || !entriesField.IsStatic || !typeof(IList).IsAssignableFrom(entriesField.FieldType)
+                    || entryObject == null || entryObject.IsStatic || entryObject.FieldType != typeof(GameObject)
+                    || indexer == null || indexer.PropertyType != entryType || indexer.GetGetMethod() == null
                     || destroy == null || !destroy.IsStatic || destroy.ReturnType != typeof(void))
                     throw new MissingMethodException("EffectAutoDestroy pool release contract changed");
+                // Read the live list through its typed indexer: native Entry is a struct,
+                // so IList[index] would box every visited entry during each release.
+                var entries = Expression.Parameter(typeof(IList));
+                var index = Expression.Parameter(typeof(int));
+                _entries = Expression.Lambda<Func<IList>>(
+                    Expression.Convert(Expression.Field(null, entriesField), typeof(IList))).Compile();
+                _entryObject = Expression.Lambda<Func<IList, int, GameObject>>(
+                    Expression.Field(Expression.MakeIndex(Expression.Convert(entries, entriesField.FieldType),
+                        indexer, new[] { index }), entryObject), entries, index).Compile();
                 _destroyEntry = (Action<int>)Delegate.CreateDelegate(typeof(Action<int>), destroy);
                 return true;
             }
@@ -64,9 +76,9 @@ namespace SodRpg.Mod
         // disabling a clone leaves an old Entry that can later retire its next playback.
         internal static void Release(GameObject effect)
         {
-            var entries = (IList)_entries.GetValue(null);
+            var entries = _entries();
             for (int i = entries.Count - 1; i >= 0; i--)
-                if (ReferenceEquals(_entryObject.GetValue(entries[i]), effect)) _destroyEntry(i);
+                if (ReferenceEquals(_entryObject(entries, i), effect)) _destroyEntry(i);
             // Also covers an already removed native registration. Never destroy a pooled clone.
             if (effect == null) return;
             DewEffect.Stop(effect);

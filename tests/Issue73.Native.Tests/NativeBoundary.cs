@@ -1529,7 +1529,7 @@ namespace SodRpg.Mod
         private bool _infinityPendingPublication;
         private bool _dirty, _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
-        private LocLanguage _writeFailureLanguage;
+        private int _writeFailureLanguage;
         private Exception _saveErrorCause;
         private string _saveErrorText;
         private AsyncProfileWriter _writeFailureKnownWriter;

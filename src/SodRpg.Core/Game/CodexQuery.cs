@@ -37,7 +37,7 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<SetDef> CarrierSets { get; internal set; }
 
         private string _search;
-        private LocLanguage _searchLanguage;
+        private int _searchLanguage;
 
         /// <summary>検索用の小文字化した文字列（名前の3言語と、いまの言語の効果文）。言語が変わったら作り直す。
         /// 中国語では効果文が中国語で入るため、英語⇔中国語の切替でも作り直す（#992。真偽値の鍵だと古い方が残る）。</summary>
@@ -45,8 +45,8 @@ namespace SodRpg.Core.Game
         {
             get
             {
-                if (_search != null && _searchLanguage == Loc.Language) return _search;
-                _searchLanguage = Loc.Language;
+                if (_search != null && _searchLanguage == Loc.CacheKey) return _search;
+                _searchLanguage = Loc.CacheKey;
                 _search = CodexQuery.BuildSearch(this).ToLowerInvariant();
                 return _search;
             }
