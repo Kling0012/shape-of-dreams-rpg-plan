@@ -290,7 +290,10 @@ namespace SodRpg.Mod
                         _collisions[j + 1] = hit;
                     }
                     float travelled = Math.Min(distance, wall);
-                    if (!s.ExplodeAtEnd || s.ExplodeOnHit)
+                    // The entity scan below is only read through the collision list: with no
+                    // collisions on this segment its cursor loop cannot run and the outcome is
+                    // unchanged, so skip the duplicate circle cast it performs internally.
+                    if ((!s.ExplodeAtEnd || s.ExplodeOnHit) && collisionCount > 0)
                     {
                         ListReturnHandle<Entity> handle;
                         var entities = DewPhysics.SphereCastAllEntities(out handle, s.Point, s.Radius, s.Direction, distance, EnemyFilter, rt.Hero);
