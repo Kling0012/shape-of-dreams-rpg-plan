@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.52 — Accessory sharing fix and lighter camera shake and Frozen Fists handling（2026-10-24）
+
+### 不具合の修正 / Bug fixes
+- 装飾品の頂点番号が範囲外のときに、正常な装飾品まで頂点データの共有が止まる問題を直しました。 / Fixed an out-of-range accessory vertex index disabling vertex-data sharing for healthy accessories.
+
+---
+
 ## v3.8.51 — Lighter combat sound playback（2026-10-24）
 
 この版では、戦闘中に効果音を鳴らすたびに繰り返していた無駄な処理を省き、激しい戦闘での負荷を減らしました。 / This version removes wasted work repeated every time a combat sound plays, reducing load in intense fights.
