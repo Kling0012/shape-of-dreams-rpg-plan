@@ -16,8 +16,8 @@ namespace Issue73.Native.Tests
     /// GetFaceRotation・TransformPointUnscaled・t.rotation * faceRotation * relRotation の
     /// 合成順序）が回転として意味のある Quaternion 境界で手計算の期待値と一致すること、
     /// (3) isNew=false・記録なし・間隔内の省略窓・設定 OFF・付け先なし・vertexIndex0 が
-    /// 負のときは本体に返ること、(4) 頂点番号が範囲外の例外で Disabled になり本体に
-    /// 返ること、(5) 時刻が変わる（次の焼き直しの）フレームでは埋め直すこと、
+    /// 負のときは本体に返ること、(4) 頂点番号が範囲外ならその呼び出しだけ本体に
+    /// 返り、正常な装飾品では共有を続けること、(5) 時刻が変わる（次の焼き直しの）フレームでは埋め直すこと、
     /// (6) 件数がしきい値を超えたら、まだ焼き直しが続いている項目は残して
     /// 間隔の数倍を過ぎた項目だけを掃除すること、を確かめる。
     /// </summary>
@@ -253,7 +253,7 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
-        public void PrefixDisablesItselfWhenAVertexIndexIsOutOfRange()
+        public void PrefixFallsBackPerAttachmentWhenAVertexIndexIsOutOfRange()
         {
             using var scenario = new Scenario();
             var skin = new SkinnedMeshRenderer();
@@ -262,13 +262,13 @@ namespace Issue73.Native.Tests
             int warnings = Log.Warnings.Count;
             var broken = Face(skin, 0, 1, 99, Vector3.zero, Quaternion.identity); // mesh は3頂点しかない
 
-            Assert.True(Prefix(broken, out _, out _, out _)); // 例外は握りつぶして本体に返る
-            Assert.True(NativeAttachFaceSharedVerts.Disabled); // この機能だけ無効になる
-            Assert.Equal(warnings + 1, Log.Warnings.Count);
-            Assert.Contains("attach face shared verts", Log.Warnings[Log.Warnings.Count - 1]); // 警告は1回だけ
+            Assert.True(Prefix(broken, out _, out _, out _)); // この呼び出しだけ本体に返る
+            Assert.False(NativeAttachFaceSharedVerts.Disabled); // 正常な装飾品の共有は無効にしない
+            Assert.Equal(warnings, Log.Warnings.Count);
 
             var healthy = Face(skin, 0, 1, 2, Vector3.zero, Quaternion.identity);
-            Assert.True(Prefix(healthy, out _, out _, out _)); // Disabled の後は常に本体に返る
+            Assert.False(Prefix(healthy, out _, out _, out bool result)); // 正常な装飾品では共有を続ける
+            Assert.True(result);
         }
 
         [Fact]
