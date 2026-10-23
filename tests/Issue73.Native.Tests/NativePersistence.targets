@@ -277,7 +277,7 @@
 
   <!-- 盾壁・群れの番犬の実際の発動処理を敵担当制と同じ境界で実行する。 -->
   <Target Name="CompileShieldWallThreats" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt;CoopGuardTarget;RecordSummonGuardTarget" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt;CoopGuardTarget;RecordSummonGuardTarget" Fields="_coopGuardCandidates" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)ShieldWallThreats.g.cs" />
     </ItemGroup>
