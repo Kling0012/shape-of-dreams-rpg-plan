@@ -919,8 +919,16 @@ namespace SodRpg.Mod
         public SourceType source;
         public float damageToShieldMultiplier;
         public bool isBlockedByImmunity;
+        private HashSet<Type> _modifyFlags;
         public float currentAmount => Math.Max(0f, amount);
         public bool HasAttr(DamageAttribute attr) => attr != 0 && (attributes & attr) == attr;
+        public bool IsAmountModifiedBy(Type actorType) => _modifyFlags != null && _modifyFlags.Contains(actorType);
+        public DamageData SetAmountModifiedBy(Type actorType)
+        {
+            if (_modifyFlags == null) _modifyFlags = new HashSet<Type>();
+            _modifyFlags.Add(actorType);
+            return this;
+        }
         public DamageData ApplyReduction(float ratio)
         {
             amount *= 1f - Math.Max(0f, Math.Min(1f, ratio));
@@ -939,6 +947,7 @@ namespace SodRpg.Mod
             source = SourceType.Normal;
             damageToShieldMultiplier = 0f;
             isBlockedByImmunity = false;
+            _modifyFlags = null;
         }
     }
     // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
