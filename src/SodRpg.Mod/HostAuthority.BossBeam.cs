@@ -218,11 +218,13 @@ namespace SodRpg.Mod
         {
             if(beam==null || !(beam.parentActor is Se_U_BeamOfBalance parent) || !_inkBeams.TryGetValue(parent,out var state) || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return;
             state.HitPrepared=false;
-            BossEnsure(state.Runtime);
+            bool ensured=BossEnsure(state.Runtime);
             if(!InkBeamCurrent(state)) return;
             InkReconcile(state.Runtime,InkGet(state.Runtime));
             InkSyncBeamSubscriptions(state);
-            state.HitPrepared=true;
+            // The pre-change InkBeamNative could only return true after InkBeamCurrent AND
+            // BossEnsure both passed; a failed ensure must leave the reused verdict unset.
+            state.HitPrepared=ensured;
         }
         private bool InkBeamParentCurrent(InkBeamState state)
         {
@@ -242,6 +244,11 @@ namespace SodRpg.Mod
             // A single native Hit re-runs this check per callback (processor, damage, heal). Reuse
             // the verdict PrepareInkBeamHit reached at the top of the Hit; only liveness can flip
             // synchronously between the dispatches, so re-check just parent, beam and caster.
+            // InkReconcile is not re-run either: it only acts when the power build or the beam
+            // memory skill changed, and the dispatch callbacks write counters, budgets, cooldown
+            // stamps and visuals only — never rt.Powers.Build or the hero's skill memory. Every
+            // per-callback reconcile inside one Hit therefore took InkReconcile's early-exit
+            // branch, so the prepare-time call covers the whole Hit.
             if(state.HitPrepared)
                 return state.Parent!=null && state.Parent.isActive && state.Beam!=null && state.Beam.isActive && Alive(state.Runtime.Hero);
             if(!InkBeamCurrent(state)) return false;
