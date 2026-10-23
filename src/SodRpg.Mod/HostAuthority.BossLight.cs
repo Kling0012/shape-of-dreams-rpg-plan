@@ -37,10 +37,13 @@ namespace SodRpg.Mod
             internal readonly long[,] Seen = new long[4,64];
             internal readonly int[] Next = new int[4];
             // BossMoves は Build の生成後に変化せず、装備の付け替えは BossEnsure が状態を一度捨てる。
-            // 9区分の在確認と (entry, profile) は作成時にだけ走査して覚える。
+            // 9区分の在確認と (entry, profile) は LightScan の実行時にだけ走査して覚える。
             internal readonly BossMoveEntry[] Entries = new BossMoveEntry[9];
             internal readonly BossMoveProfile[] Profiles = new BossMoveProfile[9];
-            internal long OwnerLife, Epoch, ChargeVisual;
+            // Epoch は rt.Boss.Epoch の検証専用。EquipEpoch は最後に LightScan を行った時点の
+            // rt.ShieldEquipmentEpoch（再走査の判定にだけ使う。Boss.Epoch は BossEnsure がこの値の
+            // 遅延コピーなので、両者を直接比べると毎ティック再走査の条件になってしまう）。
+            internal long OwnerLife, Epoch, EquipEpoch, ChargeVisual;
             internal Room Room;
             internal string Run;
             internal int Charges, HandsCount, Mask;
@@ -73,8 +76,9 @@ namespace SodRpg.Mod
             => Math.Max(0,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
                 * BossCoefficient(entry,profile,channel);
         // 9区分の在確認をまとめて行い、(entry, profile) を state に覚える。呼ぶのは状態の作成時と
-        // 装備エポックが変わった最初の1回だけ。BossFind の結果は rt.Powers.Build.BossMoves と
-        // 静的な BossProfiles だけで決まり、BossMoves は Build の生成後に変わらない。
+        // 装備エポックが変わった最初の1回だけ（呼び出し側が state.EquipEpoch に記録する）。
+        // BossFind の結果は rt.Powers.Build.BossMoves と静的な BossProfiles だけで決まり、
+        // BossMoves は Build の生成後に変わらない。
         private int LightScan(HeroRuntime rt,LightCombat state)
         {
             int mask=0;
@@ -89,10 +93,12 @@ namespace SodRpg.Mod
         private LightCombat LightState(HeroRuntime rt)
         {
             if(_lightCombat.TryGetValue(rt,out var state)) return state;
-            if(_lightCombat.Count>=64 || (state=_lightPool.Rent())==null) return null;
-            state.Mask=LightScan(rt,state); state.Epoch=rt.Boss.Epoch; state.OwnerLife=BossNativeActorLife(rt.Hero);
+            // 区分の有無を先に確定し、Light 区分を1つも持たない rt では pool に触らない（従来の順序）。
+            bool any=false;
+            for(int i=0;i<LightProfiles.Length && !any;i++) any=BossFind(rt,LightProfiles[i],out _,out _);
+            if(!any || _lightCombat.Count>=64 || (state=_lightPool.Rent())==null) return null;
+            state.Mask=LightScan(rt,state); state.Epoch=rt.Boss.Epoch; state.EquipEpoch=rt.ShieldEquipmentEpoch; state.OwnerLife=BossNativeActorLife(rt.Hero);
             state.Room=rt.Boss.Room; state.Run=rt.Boss.Run;
-            if(state.Mask==0) { _lightPool.Return(state); return null; }
             _lightCombat.Add(rt,state); return state;
         }
         private static Vector3 LightDirection(HeroRuntime rt,BossEvent kind,Vector3 point)
@@ -383,14 +389,17 @@ namespace SodRpg.Mod
             if(!_lightCombat.TryGetValue(rt,out var state)) return;
             if(rt.Boss.Build==null || !BossAlive(rt.Hero) || state.Epoch!=rt.Boss.Epoch || !BossNativeSameLife(rt.Hero,state.OwnerLife) || !BossNativeContextCurrent(state.Room,state.Run)) { ClearLightBoss(rt,true); return; }
             // 在確認は LightScan で確定済み。装備の付け替えは BossEnsure が一度状態を捨てるので、
-            // 通常のティックでは9区分の BossFind 全走査を繰り返さない。エポックが変わったときだけ
-            // 付け直して、消えた区分があれば従来どおり状態を撤去する。
-            if(state.Epoch!=rt.ShieldEquipmentEpoch)
+            // 通常のティックでは9区分の BossFind 全走査を繰り返さない。装備エポックが記録値と変わった
+            // 最初の1回だけ走査し直して、消えた区分があれば従来どおり LightCancelProfile で撤去する。
+            // Boss.Epoch は BossEnsure が ShieldEquipmentEpoch をコピーした時点の値なので、比べる相手は
+            // LightScan 実行時に state.EquipEpoch へ記録した rt.ShieldEquipmentEpoch そのもの。
+            if(state.EquipEpoch!=rt.ShieldEquipmentEpoch)
             {
                 int mask=LightScan(rt,state);
                 for(int i=0;i<LightProfiles.Length;i++)
                     if((state.Mask&(1<<i))!=0 && (mask&(1<<i))==0) LightCancelProfile(rt,state,i,now);
-                state.Mask=mask; if(mask==0) { ClearLightBoss(rt,true); return; }
+                state.Mask=mask; state.EquipEpoch=rt.ShieldEquipmentEpoch;
+                if(mask==0) { ClearLightBoss(rt,true); return; }
             }
             if(state.Charges>0 && now>=state.ChargeUntil) { state.Charges=0; LightPublishCharges(rt,state,now); }
             else if(state.Charges>0 && now>=state.ChargeRefresh) LightPublishCharges(rt,state,now);
@@ -408,8 +417,9 @@ namespace SodRpg.Mod
             float now=Time.time;
             for(int i=0;i<LightProfiles.Length;i++) LightCancelProfile(rt,state,i,now,keepCooldowns);
             LightClearCrystals(rt,state,now); state.Charges=0; LightPublishCharges(rt,state,now);
-            state.HandsCount=0; state.ChargeUntil=state.HandsUntil=0; state.Mask=0; state.Epoch=state.OwnerLife=0;
+            state.HandsCount=0; state.ChargeUntil=state.HandsUntil=0; state.Mask=0; state.Epoch=state.EquipEpoch=state.OwnerLife=0;
             state.Room=null; state.Run=null; Array.Clear(state.Seen,0,state.Seen.Length); Array.Clear(state.Next,0,state.Next.Length);
+            Array.Clear(state.Entries,0,state.Entries.Length); Array.Clear(state.Profiles,0,state.Profiles.Length);
             _lightCombat.Remove(rt); _lightPool.Return(state);
         }
     }
