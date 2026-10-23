@@ -24,6 +24,12 @@ namespace UnityEngine
         // そのまま返す（EntityRotationIdlePerfTests が向きを設定するのに使う）。
         public Vector3 eulerAngles => new Vector3(x, y, z);
         public static Vector3 operator *(Quaternion rotation, Vector3 point) => point;
+        // NativeAttachFaceSharedVerts の Prefix が本体の数式の転写で使う分。回転の意味は
+        // この検証では不要なため、Q*V と同じ passing-through（左項を返す）にする。
+        public static Quaternion operator *(Quaternion a, Quaternion b) => a;
+        // 本体 GetFaceRotation の転写が呼ぶ受け口。呼ばれるのは isNew フレームだけで、
+        // 模倣の GetBakedMeshOptimized は常に isNew=false を返すため、ここでは向きを作らない。
+        public static Quaternion LookRotation(Vector3 forward, Vector3 up) => identity;
         public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z && w == other.w;
         public override bool Equals(object obj) => obj is Quaternion other && Equals(other);
         public override int GetHashCode() => (((x.GetHashCode() * 397) ^ y.GetHashCode()) * 397 ^ z.GetHashCode()) * 397 ^ w.GetHashCode();

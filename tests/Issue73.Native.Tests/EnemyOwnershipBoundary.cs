@@ -26,6 +26,8 @@ namespace UnityEngine
         public static Vector3 forward => new Vector3(0f, 0f, 1f);
         public static bool operator ==(Vector3 a, Vector3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
         public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
+        // 本体 GetFaceRotation の転写が faceNormal を反転させる分（-（...).normalized）。
+        public static Vector3 operator -(Vector3 a) => new Vector3(-a.x, -a.y, -a.z);
         public static Vector3 LerpUnclamped(Vector3 a, Vector3 b, float t) => a + (b - a) * t;
         public float sqrMagnitude => x * x + y * y + z * z;
         // 本体 UnityEngine.Vector3 と同じ式（#866 のダッシュ掃引の転写が使う分）。
@@ -85,7 +87,12 @@ internal static class Dew
 {
     internal static float BakeMeshInterval = 0.1f;
 
-    internal struct BakedMeshHandle { }
+    internal struct BakedMeshHandle
+    {
+        // NativeAttachFaceSharedVerts の Prefix が焼き直し照会の後始末で呼ぶ受け口
+        // （実物は公開メソッド、2026-10-24 実 DLL で確認）。模倣は参照カウントを持たない。
+        internal void Return() { }
+    }
 
     internal static void GetBakedMeshOptimized(SkinnedMeshRenderer skin, out Mesh mesh,
         out BakedMeshHandle handle, out bool isNew)
