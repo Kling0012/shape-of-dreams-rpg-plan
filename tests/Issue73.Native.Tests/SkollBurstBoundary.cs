@@ -35,8 +35,16 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
-        // 本体 HostAuthority.BossRuntime.cs の BossCombatState の形（NextId だけ使う）。
-        internal sealed class BossCombatState { public long Epoch, NextId, Revision, OwnerLife; }
+        // 本体 HostAuthority.BossRuntime.cs の BossCombatState の形。バースト表示は NextId だけ、
+        // 印の経路（CompileSkollMarks の抽出）は Ready（再発動間隔）・Ledger（命中の帳簿）・
+        // Sequence（指令パルス）も使う。
+        internal sealed class BossCombatState
+        {
+            public long Epoch, NextId, Revision, OwnerLife;
+            public readonly Dictionary<string, float> Ready = new Dictionary<string, float>(128, StringComparer.Ordinal);
+            public readonly BossProgressLedger Ledger = new BossProgressLedger();
+            public readonly BossPulseBuffer Sequence = new BossPulseBuffer();
+        }
         // 本体 HostAuthority.BossRuntime.cs の BossReady は鍵ごとの再発動間隔を払う。
         // ここでは常に発動可能とし、間隔の検証はバースト表示の対象外とする。
         private static bool BossReady(HeroRuntime rt, string key, float now, int cooldown) => true;
@@ -50,18 +58,10 @@ namespace SodRpg.Mod
         // internal で Pending を公開するため、ここも internal にする。
         internal struct SkollCorePending { }
 
-        // 本体 HostAuthority.BossSkoll.cs の SkollState と持ち主の台帳（TickSkollCores が触る分）。
-        private sealed class SkollState
-        {
-            internal readonly Dictionary<Gem_U_GlacialCore, SkollCoreState> Cores = new Dictionary<Gem_U_GlacialCore, SkollCoreState>(BossProfiles.MaxEntries);
-            internal readonly List<Gem_U_GlacialCore> ExpiredCores = new List<Gem_U_GlacialCore>(BossProfiles.MaxEntries);
-        }
-        private readonly Dictionary<HeroRuntime, SkollState> _skollStates = new Dictionary<HeroRuntime, SkollState>(64);
-        private SkollState SkollOwnerState(HeroRuntime rt)
-        {
-            if (!_skollStates.TryGetValue(rt, out var state)) _skollStates.Add(rt, state = new SkollState());
-            return state;
-        }
+        // SkollState と持ち主の台帳（_skollStates / _skollStatePool / SkollOwnerState）は
+        // 本体 HostAuthority.BossSkoll.cs から CompileSkollMarks（NativePersistence.targets）
+        // が抽出した実物を使う。以前はここに Cores / ExpiredCores だけの形を置いていた
+        // （TickSkollCores の抽出が触る分）。印の経路の検証（SkollMarkTests）から同じ実物を通す。
 
         // 本体の SkollCoreRuntime は所有者の生存・報酬段階・装備の一致・部屋と run の同一性を
         // 検証して state を返す。ここでは登録台帳だけで同じ役を果たす（検証そのものは対象外）。

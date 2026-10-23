@@ -240,6 +240,11 @@ namespace SodRpg.Mod
         // 本体では Actor のプロパティ。NativeSleepPositionPerf（#751）の IL 照合が
         // typeof(Actor) の getter を探すため、フィールドではなくプロパティにする。
         public UnityEngine.Vector3 position { get; set; }
+        // 本体では Actor は UnityEngine.Component の子孫で、transform はそこから継ぐ
+        // プロパティ。Skoll の印の経路の抽出（SkollFacing）が向きの基準に読む分。
+        // 境界の Actor は基底を持たないため、ここに遅延確保の形で置く。
+        public UnityEngine.Transform transform => _transform ??= new UnityEngine.Transform();
+        private UnityEngine.Transform _transform;
         public Actor parentActor;
         public readonly Dictionary<string, string> persistentSyncedData = new Dictionary<string, string>();
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();

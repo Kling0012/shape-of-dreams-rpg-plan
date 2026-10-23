@@ -115,6 +115,20 @@
     </ItemGroup>
   </Target>
 
+  <!-- Skoll 印表示（perf-loop/20261023-2325）: 印の due の蓄積開始時刻固定・無変化ティックの再送抑止・
+       数の増加の即時差分・期限切れ後の再蓄積での due 更新を、印の経路（SkollOwnerState /
+       DispatchSkollBoss / TickSkollBoss / SkollPublishMarks と SkollState・台帳）と BossFind の
+       実ソースで確かめる。境界は SkollMarkBoundary.cs。SkollState と持ち主の台帳はここで
+       抽出した実物を使い、SkollBurstBoundary.cs には置かない（バースト側の抽出も同じ実物を見る）。 -->
+  <Target Name="CompileSkollMarks" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossSkoll.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SkollMarks.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="SkollOwnerState;SkollCooldownAvailable;SkollCommitAction;SkollReserve;SkollFacing;SkollSlash;SkollArrowField;SkollRain;SkollPublishMarks;DispatchSkollBoss;TickSkollBoss" Fields="_skollStatePool;_skollStates" NestedTypes="SkollState" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossDemon.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SkollMarkFind.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BossFind" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)SkollMarks.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)SkollMarkFind.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- The profile slot notice (#97) lives in the UI partial of ProfileSlotView.cs; compile its
        exact draw methods against the harness session instead of copying their implementation. -->
   <Target Name="CompileProfileSlotUi" BeforeTargets="CoreCompile">
