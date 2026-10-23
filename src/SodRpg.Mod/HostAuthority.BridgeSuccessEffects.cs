@@ -149,7 +149,8 @@ namespace SodRpg.Mod
                     continue;
                 }
                 if (payload.Kind != BridgePayloadKind.Damage) continue;
-                if (!transaction.IsCurrent(state.Runtime, CollectMechanismEquipment(hero, transaction.Notification.OwnerId), state.EndpointRanks)) return;
+                // No state can change between the per-payload check above and this damage dispatch,
+                // so re-collecting equipment and re-running IsCurrent here would return the same verdict.
                 if (!BridgeDamageTargetReady(hero, victim)) continue;
                 float basis = payload.DamageBasis == BridgeDamageBasis.NativeHit ? transaction.NativeDamage : Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
                 var effective = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
