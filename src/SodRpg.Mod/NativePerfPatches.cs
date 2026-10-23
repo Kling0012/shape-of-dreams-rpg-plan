@@ -67,6 +67,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ObliviaxKidnapLog = config.nativeObliviaxKidnapLog;
             NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
+            NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
         }
     }
 
@@ -122,6 +123,7 @@ namespace SodRpg.Mod
         internal static bool ObliviaxKidnapLog = true;
         internal static bool MirageVolumeIdle = true;
         internal static bool DamageShakeIdle = true;
+        internal static bool AudioSetupIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -6127,6 +6129,108 @@ namespace SodRpg.Mod
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "damage shake idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAudioSetupIdlePerf
+    {
+        // DewAudioManager.Play re-runs AudioManager.SetupAudioSource on every play of a
+        // game-scoped sound: AudioManager.NeedsSetupEverytime returns true for GameBoss /
+        // GameSelf / GameOthers / GameOtherPlayers, the types combat SFX carry after
+        // DewAudioSource.SetOwnerContext, so every hit and kill on every client pays the full
+        // setup again. Everything the method writes is derived only from (type, space, rolloff)
+        // — spatialBlend, outputAudioMixerGroup, rolloffMode, the custom rolloff curve and the
+        // min/max distances — except priority, which is deliberately rotated per play through
+        // the private GetNextDynamicPriority ring. A search of the decompiled game confirms
+        // AudioManager is the only writer of those properties, and the pooled voice sources
+        // live under the DontDestroyOnLoad DewAudioManager where no scene load resets them, so
+        // replaying the setup for the same (manager, source, type, space, rolloff) can only
+        // reproduce byte-identical state; the priority refresh is the one write that matters.
+        // The prefix keeps the exact priority expression — force => 0, else the same private
+        // method on the same instance, so the ring and its wrap-around reprioritization of the
+        // registered sources advance identically — and lets the original body run for every
+        // other shape of call: non-game types, a changed triple, a different manager instance
+        // or a source seen for the first time.
+        private sealed class CachedSetup
+        {
+            internal AudioManager Manager;
+            internal AudioType Type;
+            internal AudioSpaceType Space;
+            internal DewAudioRollOffType Rolloff;
+        }
+
+        private static readonly ConditionalWeakTable<AudioSource, CachedSetup> Cache =
+            new ConditionalWeakTable<AudioSource, CachedSetup>();
+        private static readonly ConditionalWeakTable<AudioSource, CachedSetup>.CreateValueCallback CreateCachedSetup =
+            _ => new CachedSetup();
+
+        private static Func<AudioManager, AudioSource, int> _nextDynamicPriority;
+        private static bool _disabled;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(AudioManager), "SetupAudioSource",
+                new[]
+                {
+                    typeof(AudioSource), typeof(AudioType), typeof(AudioSpaceType),
+                    typeof(DewAudioRollOffType), typeof(bool),
+                }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                var next = AccessTools.DeclaredMethod(typeof(AudioManager), "GetNextDynamicPriority",
+                    new[] { typeof(AudioSource) });
+                if (next == null || next.GetMethodBody() == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "audio setup idle", "GetNextDynamicPriority unavailable");
+                    return false;
+                }
+                _nextDynamicPriority = (Func<AudioManager, AudioSource, int>)Delegate.CreateDelegate(
+                    typeof(Func<AudioManager, AudioSource, int>), next);
+                return _nextDynamicPriority != null;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(AudioManager __instance, AudioSource source, AudioType type,
+            AudioSpaceType space, DewAudioRollOffType rolloff, bool forceCriticalPriority)
+        {
+            if (_disabled || !NativePerfOptions.AudioSetupIdle) return true;
+            try
+            {
+                if (__instance == null || source == null || _nextDynamicPriority == null) return true;
+                // Only the game-sound types are re-set up per play by DewAudioManager; every
+                // other caller (one-shot DewAudioSourceSetup, MusicManager) is left native.
+                if (!AudioManager.NeedsSetupEverytime(type)) return true;
+                if (!Cache.TryGetValue(source, out var cached)
+                    || !ReferenceEquals(cached.Manager, __instance)
+                    || cached.Type != type || cached.Space != space || cached.Rolloff != rolloff)
+                {
+                    cached = Cache.GetOrCreateValue(source);
+                    cached.Manager = __instance;
+                    cached.Type = type;
+                    cached.Space = space;
+                    cached.Rolloff = rolloff;
+                    return true;
+                }
+                source.priority = forceCriticalPriority ? 0 : _nextDynamicPriority(__instance, source);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
             }
             return true;
         }

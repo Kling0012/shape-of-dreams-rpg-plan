@@ -300,6 +300,9 @@ namespace SodRpg.Mod
         [LabelText("Skip hit-shake preparation for hits the game discards immediately anyway (host and guests) /\n被弾シェイク：本体が即時破棄する弱い被弾のシェイク準備を省く（ホストと参加者）")]
         public bool nativeDamageShakeIdle = true;
 
+        [LabelText("Skip unchanged audio re-setup on every game-sound play (host and guests) /\n戦闘音を鳴らすたびの同じ音源の初期設定を省く（ホストと参加者）")]
+        public bool nativeAudioSetupIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
