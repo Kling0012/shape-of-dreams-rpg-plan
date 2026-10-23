@@ -822,6 +822,10 @@ namespace SodRpg.Mod
         }
 
         private static readonly Dictionary<int, SharedVerts> Shared = new Dictionary<int, SharedVerts>();
+        // Keep warnings once per renderer even if its shared vertices are swept, without
+        // retaining destroyed skins or allocating on healthy/repeated fallback calls.
+        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, object> WarnedInvalidSkins =
+            new ConditionalWeakTable<SkinnedMeshRenderer, object>();
         // Reused sweep scratch: fills fire once per bake (up to ten per second per skin),
         // so the sweep must not allocate, like NativeAttachFaceIdlePerf.PruneStale.
         private static readonly List<int> StaleScratch = new List<int>();
@@ -939,7 +943,18 @@ namespace SodRpg.Mod
                     // for healthy attachments, including after a mesh shrinks.
                     if (__instance.vertexIndex0 >= vertices.Count
                         || __instance.vertexIndex1 < 0 || __instance.vertexIndex1 >= vertices.Count
-                        || __instance.vertexIndex2 < 0 || __instance.vertexIndex2 >= vertices.Count) return true;
+                        || __instance.vertexIndex2 < 0 || __instance.vertexIndex2 >= vertices.Count)
+                    {
+                        if (!WarnedInvalidSkins.TryGetValue(skin, out _))
+                        {
+                            WarnedInvalidSkins.Add(skin, new object());
+                            Log.Warn(Feature + ": vertex index out of range; falling back to native path (skin="
+                                + skin.GetInstanceID() + ", indices=(" + __instance.vertexIndex0 + ","
+                                + __instance.vertexIndex1 + "," + __instance.vertexIndex2
+                                + "), vertices.Count=" + vertices.Count + ")");
+                        }
+                        return true;
+                    }
                     // Native arithmetic verbatim (TryGetWorldPositionAndRotation after a
                     // successful populate): center of the three baked vertices, face
                     // rotation from the face plane, offset by the stored relative pose.

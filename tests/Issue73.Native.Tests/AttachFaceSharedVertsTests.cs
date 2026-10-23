@@ -265,12 +265,26 @@ namespace Issue73.Native.Tests
             Assert.True(Prefix(broken, out _, out _, out bool brokenResult)); // この呼び出しだけ本体に返る
             Assert.False(brokenResult);
             Assert.False(NativeAttachFaceSharedVerts.Disabled); // 正常な装飾品の共有は続ける
-            Assert.Equal(warnings, Log.Warnings.Count);
+            Assert.Equal(warnings + 1, Log.Warnings.Count);
+            Assert.Contains("attach face shared verts", Log.Warnings[Log.Warnings.Count - 1]);
+            Assert.Contains("indices=(0,1,99)", Log.Warnings[Log.Warnings.Count - 1]);
+            Assert.Contains("vertices.Count=3", Log.Warnings[Log.Warnings.Count - 1]);
+            Assert.True(Prefix(broken, out _, out _, out _));
+            Assert.Equal(warnings + 1, Log.Warnings.Count);
 
             var healthy = Face(skin, 0, 1, 2, Vector3.zero, Quaternion.identity);
             Assert.False(Prefix(healthy, out _, out _, out bool healthyResult)); // 同じスキンの正常な装飾品は共有する
             Assert.True(healthyResult);
             Assert.Equal(1, mesh.GetVerticesCalls); // 範囲外の呼び出しで埋めた頂点を再利用する
+
+            ArmBake(skin, mesh, previousBakeAt: 30f, now: 30.2f);
+            Assert.True(Prefix(broken, out _, out _, out _));
+            Assert.Equal(warnings + 1, Log.Warnings.Count);
+
+            var otherSkin = new SkinnedMeshRenderer();
+            ArmBake(otherSkin, mesh, previousBakeAt: 30f, now: 30.2f);
+            Assert.True(Prefix(Face(otherSkin, 0, 1, 99, Vector3.zero, Quaternion.identity), out _, out _, out _));
+            Assert.Equal(warnings + 2, Log.Warnings.Count);
         }
 
         [Fact]
