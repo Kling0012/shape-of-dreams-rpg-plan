@@ -935,6 +935,11 @@ namespace SodRpg.Mod
                 {
                     if (!isNew) return true; // tracker and bake clock disagree; the native path decides
                     List<Vector3> vertices = SharedVertices(skin.GetInstanceID(), now, mesh);
+                    // Invalid attachment indices fall back per call without disabling sharing
+                    // for healthy attachments, including after a mesh shrinks.
+                    if (__instance.vertexIndex0 >= vertices.Count
+                        || __instance.vertexIndex1 < 0 || __instance.vertexIndex1 >= vertices.Count
+                        || __instance.vertexIndex2 < 0 || __instance.vertexIndex2 >= vertices.Count) return true;
                     // Native arithmetic verbatim (TryGetWorldPositionAndRotation after a
                     // successful populate): center of the three baked vertices, face
                     // rotation from the face plane, offset by the stored relative pose.
