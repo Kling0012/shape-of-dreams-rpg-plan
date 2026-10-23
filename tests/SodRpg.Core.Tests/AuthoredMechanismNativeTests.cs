@@ -345,6 +345,86 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Ward_transform_cache_keeps_results_within_an_epoch_and_rebuilds_when_the_keystone_epoch_advances()
+        {
+            var spec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = "native.ward", Source = Source(Identity),
+                Trigger = MemoryEventKind.ConfirmedUse, Ward = new AlliedWardDefinition("native.ward", WardRecipientKind.AlliedTravelers,
+                    WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 2500, false) };
+            var key = new KeystoneDefinition("test.ward.key", new[] { Q },
+                new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(10000),
+                    new KeystoneScope(payloadKind: KeystonePayloadKind.AlliedWard)) });
+            Build Owned(KeystoneDefinition selected)
+            {
+                var build = new Build();
+                build.Mechanisms.Add(new AuthoredMechanismEntry { StarId = "test.native.ward",
+                    ContributorIds = new[] { "test.native.ward" }, Spec = spec });
+                if (selected != null) build.SelectedKeystone = selected;
+                return build;
+            }
+            var (host, runtime) = Setup(Owned(key)); var ally = new Hero { maxHealth = 2000, currentHealth = 1000 };
+            DewPlayer.gamePlayers.Add(new DewPlayer { hero = ally });
+            void Ward() => host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, Identity), MemoryEventKind.ConfirmedUse));
+            // 1) 同じ定義インスタンス・同じ世代では、刻印で倍化した結果を毎回返す。
+            Ward(); Assert.Equal(50, ally.Status.currentShield, 4);
+            Ward(); Assert.Equal(50, ally.Status.currentShield, 4);
+            host.BindAuthored(runtime, Owned(key)); // 同一署名の再設定: 世代は進まずキャッシュも作り直さない。
+            Ward(); Assert.Equal(50, ally.Status.currentShield, 4);
+            // 2) 刻印を外す再設定（世代が変わる）: 同じ定義インスタンスでも作り直して基準値へ戻る。
+            host.BindAuthored(runtime, Owned(null));
+            Ward(); Assert.Equal(25, ally.Status.currentShield, 4);
+            // 3) 刻印を付け直す再設定（世代がまた進む）: 今度は倍化側へ作り直す。
+            host.BindAuthored(runtime, Owned(key));
+            Ward(); Assert.Equal(50, ally.Status.currentShield, 4);
+        }
+
+        [Fact]
+        public void Two_heroes_sharing_one_ward_definition_keep_their_own_keystone_transforms()
+        {
+            var ward = new AlliedWardDefinition("native.ward.shared", WardRecipientKind.AlliedTravelers,
+                WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 2500, false);
+            var spec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = "native.ward.shared",
+                Source = Source(Identity), Trigger = MemoryEventKind.ConfirmedUse, Ward = ward };
+            var key = new KeystoneDefinition("test.ward.key.shared", new[] { Q },
+                new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(10000),
+                    new KeystoneScope(payloadKind: KeystonePayloadKind.AlliedWard)) });
+            Build Shared(KeystoneDefinition selected)
+            {
+                var build = new Build();
+                build.Mechanisms.Add(new AuthoredMechanismEntry { StarId = "test.native.ward.shared",
+                    ContributorIds = new[] { "test.native.ward.shared" }, Spec = spec });
+                if (selected != null) build.SelectedKeystone = selected;
+                return build;
+            }
+            var (host, runtimeA) = Setup(Shared(null));
+            var heroB = new Hero();
+            heroB.Skill.Skills[HeroSkillLocation.Identity] = new St_D_Resolve { owner = heroB };
+            heroB.Skill.Skills[HeroSkillLocation.Q] = new St_Q_CruelSun { owner = heroB };
+            heroB.Skill.Skills[HeroSkillLocation.Movement] = new St_M_DreamyWaltz { owner = heroB };
+            heroB.owner = new DewPlayer { hero = heroB, isHumanPlayer = true };
+            var buildB = Shared(null);
+            var runtimeB = new HostAuthority.HeroRuntime { Hero = heroB, HeroKey = "Hero_Vesper", Powers = new PowerRuntime(buildB, 0) };
+            host.BindAuthored(runtimeB, buildB);
+            var allyA = new Hero { maxHealth = 2000, currentHealth = 1000 };
+            var allyB = new Hero { maxHealth = 2000, currentHealth = 1000 };
+            DewPlayer.gamePlayers.Add(new DewPlayer { hero = allyA });
+            DewPlayer.gamePlayers.Add(new DewPlayer { hero = allyB });
+            var far = new UnityEngine.Vector3(100f, 0f, 0f);
+            void Dispatch(HostAuthority.HeroRuntime owner, Hero near, Hero away)
+            {
+                near.position = UnityEngine.Vector3.zero; away.position = far;
+                host.NotifyAuthored(owner, Event(host, host.Activation(owner.Hero, Identity), MemoryEventKind.ConfirmedUse));
+            }
+            // 1) どちらも刻印なし（世代は両者とも 0）: 同じ定義インスタンスでも結果は混ざらない。
+            Dispatch(runtimeA, allyA, allyB); Assert.Equal(25, allyA.Status.currentShield, 4);
+            Dispatch(runtimeB, allyB, allyA); Assert.Equal(25, allyB.Status.currentShield, 4);
+            // 2) A だけ刻印を付ける（A の世代だけ進む）: B に A の倍化結果が混ざらず、A も基準値を拾わない。
+            host.BindAuthored(runtimeA, Shared(key));
+            Dispatch(runtimeA, allyA, allyB); Assert.Equal(50, allyA.Status.currentShield, 4);
+            Dispatch(runtimeB, allyB, allyA); Assert.Equal(25, allyB.Status.currentShield, 4);
+            Dispatch(runtimeA, allyA, allyB); Assert.Equal(50, allyA.Status.currentShield, 4);
+        }
+
+        [Fact]
         public void Selected_calm_uses_real_successful_q_provenance_and_one_ordinary_pool_then_removal_disables_it()
         {
             const string q = "St_Q_EmbracingTheChill";

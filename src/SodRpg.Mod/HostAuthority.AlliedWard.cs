@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Mirror;
 using SodRpg.Core.Game;
 
@@ -16,16 +17,8 @@ namespace SodRpg.Mod
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (!Alive(owner.Hero) || FindMemory(owner.Hero, sourceMemory) == null
                 || shieldEquipmentEpoch != ModShieldEquipmentEpoch(owner)) return 0;
-            var payload = authored != null ? AuthoredKeystoneComposer.MechanismPayload(authored)
-                : AuthoredKeystoneComposer.MechanismPayload(new AuthoredMechanismSpec
-                    { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = definition.ChannelId, Ward = definition });
-            var transformed = TransformAuthoredPayload(owner.Hero, payload, sourceMemory, null, sourceKind,
-                definition.RecipientKind == WardRecipientKind.OwnedSummons ? KeystoneRecipientKind.OwnedSummon : KeystoneRecipientKind.AlliedHero);
-            if (transformed.Value <= 0 || transformed.TargetCount < 1) return 0;
-            definition = new AlliedWardDefinition(definition.ChannelId, definition.RecipientKind, definition.AmountBasis,
-                definition.PoolKind, transformed.Value * 100m, definition.IncludeOwner, (float)transformed.RadiusMetres,
-                (float)transformed.DurationSeconds, definition.BaseTargets,
-                Math.Max(0, transformed.TargetCount - definition.BaseTargets), definition.MaxTargets, definition.Limits, definition.Budget);
+            definition = EffectiveWardDefinition(owner.Hero, definition, authored, sourceMemory, sourceKind);
+            if (definition == null) return 0;
             var buffers = RentMechanismDispatchBuffers();
             try
             {
@@ -74,6 +67,54 @@ namespace SodRpg.Mod
             return count;
             }
             finally { ReturnMechanismDispatchBuffers(buffers); }
+        }
+
+        // 有効域の変換（ペイロード組立→刻印 Apply→定義組立）は刻印の状態（binding.Epoch と対で再設定される
+        // ランタイムと装備）・発動元・発動元種別だけで決まり、発動ごとに変わらない。時間・乱数・現在の HP は
+        // 読まず、Shield のペイロードは星ランク倍率の対象外（ScaleResult が恒等）なので、同一シグネチャでの
+        // Build 差し替え（Epoch を動かさない）でも結果は不変。発動ごとの組立と Apply を省き、Epoch が動いた
+        // ときだけ計算し直す。入力の定義インスタンスは設定ごとに作り直され（AuthoredMechanisms.Key が内容の
+        // 全エンコード）、AlliedWardDefinition は不変なので、インスタンスを鍵にすれば内容の変化を取りこぼさない。
+        // 世代と変換の中身は発動元ヒーローごとに決まる。刻印を持たないヒーローはすべて同じ世代 0 を返し、
+        // 変換は発動元自身の刻印ランタイムと装備を使う。そのためキャッシュは定義×発動元ヒーローごとに置く
+        // （同じ定義インスタンスが複数ヒーローに渡っても結果が混ざらず、世代の食い違いが他ヒーローの辞書を
+        // 空化させない。現在の構成では各ヒーローの Build が独自の定義インスタンスを作るが、ここはそれに
+        // 依らない）。内側のキーには刻印適用前のペイロードを決める authored（チャネル経路はチャネルごと、
+        // 橋経路は対ごとに固定インスタンス）も含め、authored の有無・違いによる誤再利用を防ぐ。
+        private sealed class WardTransformCache
+        {
+            internal long Epoch = -1;
+            internal readonly Dictionary<(AuthoredMechanismSpec Authored, string Source, KeystoneSourceKind Kind), AlliedWardDefinition> Effective
+                = new Dictionary<(AuthoredMechanismSpec, string, KeystoneSourceKind), AlliedWardDefinition>();
+        }
+        private readonly ConditionalWeakTable<AlliedWardDefinition, ConditionalWeakTable<Hero, WardTransformCache>> _wardTransformCaches
+            = new ConditionalWeakTable<AlliedWardDefinition, ConditionalWeakTable<Hero, WardTransformCache>>();
+        private AlliedWardDefinition EffectiveWardDefinition(Hero hero, AlliedWardDefinition definition, AuthoredMechanismSpec authored,
+            string sourceMemory, KeystoneSourceKind sourceKind)
+        {
+            long epoch = AuthoredKeystoneEpoch(hero);
+            var cache = _wardTransformCaches.GetOrCreateValue(definition).GetOrCreateValue(hero);
+            if (cache.Epoch != epoch)
+            {
+                cache.Epoch = epoch;
+                cache.Effective.Clear();
+            }
+            var key = (authored, sourceMemory, sourceKind);
+            if (cache.Effective.TryGetValue(key, out var effective)) return effective;
+            var payload = authored != null ? AuthoredKeystoneComposer.MechanismPayload(authored)
+                : AuthoredKeystoneComposer.MechanismPayload(new AuthoredMechanismSpec
+                    { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = definition.ChannelId, Ward = definition });
+            var transformed = TransformAuthoredPayload(hero, payload, sourceMemory, null, sourceKind,
+                definition.RecipientKind == WardRecipientKind.OwnedSummons ? KeystoneRecipientKind.OwnedSummon : KeystoneRecipientKind.AlliedHero);
+            if (transformed.Value <= 0 || transformed.TargetCount < 1)
+            {
+                cache.Effective[key] = null;
+                return null;
+            }
+            return cache.Effective[key] = new AlliedWardDefinition(definition.ChannelId, definition.RecipientKind, definition.AmountBasis,
+                definition.PoolKind, transformed.Value * 100m, definition.IncludeOwner, (float)transformed.RadiusMetres,
+                (float)transformed.DurationSeconds, definition.BaseTargets,
+                Math.Max(0, transformed.TargetCount - definition.BaseTargets), definition.MaxTargets, definition.Limits, definition.Budget);
         }
     }
 }
