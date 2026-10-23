@@ -141,6 +141,7 @@ namespace SodRpg.Mod
             new ConditionalWeakTable<FxCameraShake, Ai_Gem_E_Fever_Explosion>();
 
         private static bool _disabled;
+        private static bool _registrationChecked;
         private static readonly ShakeFields Fields = CreateFields();
 
         private static ShakeFields CreateFields()
@@ -158,6 +159,20 @@ namespace SodRpg.Mod
                 Disable(ex);
                 return null;
             }
+        }
+
+        private static void CheckRegistration()
+        {
+            // Check on first playback, after patch installation, rather than relying on
+            // patch-class order or treating an empty owner table as an installation failure.
+            _registrationChecked = true;
+            var target = AccessTools.DeclaredMethod(typeof(Ai_Gem_E_Fever_Explosion), "OnCreate");
+            var registration = AccessTools.DeclaredMethod(typeof(FeverExplosionFxPatch), "Prefix");
+            var patches = target == null ? null : Harmony.GetPatchInfo(target);
+            if (patches != null)
+                foreach (var patch in patches.Prefixes)
+                    if (patch.PatchMethod == registration) return;
+            Log.Warn("Fever OnCreate registration prefix is not installed; early camera shake cap is unavailable.");
         }
 
         // Runs in the explosion's OnCreate Prefix, before the native OnCreate captures
@@ -184,6 +199,7 @@ namespace SodRpg.Mod
             if (_disabled || Fields == null) return;
             try
             {
+                if (!_registrationChecked) CheckRegistration();
                 if (!ShakeOwners.TryGetValue(__instance, out var explosion)) return;
                 if (Fields.Shake(explosion) == __instance)
                     Cap(__instance, Fields.Amplitude(explosion), explosion.explosionRadius);
