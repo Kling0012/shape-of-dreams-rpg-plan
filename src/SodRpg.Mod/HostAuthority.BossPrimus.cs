@@ -19,11 +19,17 @@ namespace SodRpg.Mod
             internal Vector3 Glyph;
             internal long ModeVisual, CycleVisual, GlyphVisual;
             internal long Epoch;
+            // BossMoves は Build の生成時に確定し、以後はどこからも変更されない。状態は Build の
+            // 差し替え・装備エポックの変更で必ず一度捨てられるので、作成時に決めた判定は有効期間中
+            // 現行のままである。毎ヒットの BossFind 全走査は行わず、この判定を流用する。
+            internal BossMoveEntry PhaseEntry, CycleEntry;
+            internal BossMoveProfile PhaseProfile, GlyphProfile, CycleProfile;
             internal void Reset()
             {
                 MainInputs.Clear(); MemoryInputs.Clear(); MovementInputs.Clear(); DamageInputs.Clear();
                 Mode=-1; SeenKinds=EquippedMask=0; CycleUntil=GlyphUntil=ModeRefresh=0; Glyph=default;
                 ModeVisual=CycleVisual=GlyphVisual=Epoch=0;
+                PhaseEntry=CycleEntry=null; PhaseProfile=GlyphProfile=CycleProfile=null;
             }
         }
         private static readonly string[] PrimusProfiles =
@@ -41,9 +47,18 @@ namespace SodRpg.Mod
                 if(_primusCombat.Count>=64 || (state=_primusPool.Rent())==null) return null;
                 state.Epoch=rt.ShieldEquipmentEpoch; _primusCombat.Add(rt,state);
                 for (int i = 0; i < PrimusProfiles.Length; i++)
-                    if (BossFind(rt, PrimusProfiles[i], out _, out _)) state.EquippedMask |= 1 << i;
+                    if (BossFind(rt, PrimusProfiles[i], out var entry, out var profile))
+                    { state.EquippedMask |= 1 << i; PrimusKeep(state, i, entry, profile); }
             }
             return state;
+        }
+        // 毎ヒット参照する stage6/7/8 の判定を作成・装備走査のときに覚える。それ以外の区分は
+        // dispatch ループが毎回通るので覚える必要がない。
+        private static void PrimusKeep(PrimusCombat state, int i, BossMoveEntry entry, BossMoveProfile profile)
+        {
+            if (i == 6) { state.PhaseEntry = entry; state.PhaseProfile = profile; }
+            else if (i == 7) state.GlyphProfile = profile;
+            else if (i == 8) { state.CycleEntry = entry; state.CycleProfile = profile; }
         }
         private static bool PrimusAvailable(HeroRuntime rt, BossAction action, float now)
             => rt.Boss.Ready.TryGetValue(action.RuntimeKey,out var due) ? now>=due : rt.Boss.Ready.Count<128;
@@ -62,11 +77,10 @@ namespace SodRpg.Mod
         private void DispatchPrimusBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;
-            bool owned = false;
-            for(int i=0;i<rt.Boss.Build.BossMoves.Count;i++)
-                if(rt.Boss.Build.BossMoves[i].SetId==BossProfiles.PrimusSetId) { owned=true; break; }
-            if (!owned) return;
             var state=PrimusState(rt); if(state==null) return;
+            // 所有判定は PrimusState の装備走査で確定済み。PrimusSetId の move は PrimusProfiles の
+            // 9種だけで、どれか1つでも在れば EquippedMask は非0になるので、全走査のやり直しは不要。
+            if (state.EquippedMask==0) return;
             bool admitted = kind == BossEvent.MainHit ? state.MainInputs.Add(activation)
                 : kind == BossEvent.MemoryUse ? state.MemoryInputs.Add(activation)
                 : kind == BossEvent.MovementCompleted ? state.MovementInputs.Add(activation)
@@ -113,10 +127,12 @@ namespace SodRpg.Mod
         }
         private void PrimusPhaseInput(HeroRuntime rt, PrimusCombat state, BossEvent kind, Vector3 point, float now)
         {
-            if (!BossFind(rt, PrimusProfiles[6], out var entry, out var profile)) return;
+            if (state.PhaseProfile == null) return;
+            var entry = state.PhaseEntry; var profile = state.PhaseProfile;
             PrimusExpire(rt, state, now);
-            if (kind == BossEvent.MovementCompleted && BossFind(rt, PrimusProfiles[7], out _, out var glyphProfile))
+            if (kind == BossEvent.MovementCompleted && state.GlyphProfile != null)
             {
+                var glyphProfile = state.GlyphProfile;
                 PrimusClearGlyph(rt, state, now);
                 if (rt.Boss.MovementOriginValid && BossFinite(rt.Boss.MovementOrigin))
                 {
@@ -150,7 +166,8 @@ namespace SodRpg.Mod
         // The distinct-input cycle is independent of the ordinary mode's 0.5s gate.
         private bool PrimusCycleInput(HeroRuntime rt, PrimusCombat state, BossEvent kind, Vector3 direction, float now)
         {
-            if (!BossFind(rt, PrimusProfiles[8], out var entry, out var profile)) return false;
+            if (state.CycleProfile == null) return false;
+            var entry = state.CycleEntry; var profile = state.CycleProfile;
             int bit = kind == BossEvent.MainHit ? 1 : kind == BossEvent.MemoryUse ? 2 : 4;
             if ((state.SeenKinds & bit) != 0) return false;
             if (state.SeenKinds == 0) state.CycleUntil = now + profile.Actions[0].LifetimeMillis / 1000f;
@@ -250,8 +267,10 @@ namespace SodRpg.Mod
                 int equippedMask=0;
                 for(int i=0;i<PrimusProfiles.Length;i++)
                 {
-                    if(BossFind(rt,PrimusProfiles[i],out _,out _)) equippedMask|=1<<i;
-                    else if((state.EquippedMask&(1<<i))!=0) PrimusCancelProfile(rt,PrimusProfiles[i]);
+                    if(BossFind(rt,PrimusProfiles[i],out var entry,out var profile))
+                    { equippedMask|=1<<i; PrimusKeep(state,i,entry,profile); }
+                    else if((state.EquippedMask&(1<<i))!=0)
+                    { PrimusKeep(state,i,null,null); PrimusCancelProfile(rt,PrimusProfiles[i]); }
                 }
                 state.EquippedMask=equippedMask;
                 if(equippedMask==0) { ClearPrimusBoss(rt); return; }
