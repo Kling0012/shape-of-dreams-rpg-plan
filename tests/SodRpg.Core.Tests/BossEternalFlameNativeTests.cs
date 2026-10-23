@@ -10,6 +10,11 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    // Create() がプロセス共有の静的状態を書き換えるため、この Collection のテストは
+    // 他のコレクションと並列に走らせない（SixPieceSetTests と同じやり方）。
+    [CollectionDefinition("Boss EternalFlame native statics", DisableParallelization = true)]
+    public class BossEternalFlameNativeStaticsCollection { }
+
     /// <summary>
     /// #1077: TickEternalFlame の毎フレーム再検査（親・キャスター・装備・所有者）の軽量化が
     /// 結果を変えないことの固定。装備が正しい呪いは stage==0 で延長分だけ復元され、stage&gt;0 で
@@ -17,7 +22,12 @@ namespace SodRpg.Core.Tests
     /// EternalFlameCurseCurrent が必ず false にするため RestoreEternalFlameTimer＋ReleaseEternalFlameCurse
     /// が選ばれる。リンクされた本体の HostAuthority.BossEternalFlame.cs を実API相当の
     /// double（BossNativeRuntimeApi.cs）経由で駆動する。
+    /// Create() がプロセス全体で共有する静的状態（NetworkServer.active・Time.time・
+    /// HostAuthority.NativeInstance・EntityStatus.LiveStatusEffects・DewPhysics.Entities・
+    /// ZoneManager/GameManager の softInstance）を書き換えるため、他のテストと並列に動かさない
+    /// Collection（DisableParallelization）に入れる。
     /// </summary>
+    [Collection("Boss EternalFlame native statics")]
     public class BossEternalFlameNativeTests
     {
         private const string HeroKey = "Hero_A";
@@ -130,8 +140,8 @@ namespace SodRpg.Core.Tests
             Invoke(rig.Host, "TickEternalFlame", rig.Rt, 10f);
 
             // 変更前と同じ分岐: 段階>0で延長未適用の呪いは CaptureEternalFlameCurse で付け直される。
-            Assert.Equal(6f + extra, rig.Curse.maxDuration);
-            Assert.Equal(4f + extra, rig.Curse.remainingDuration);
+            Assert.Equal(6f + extra, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f + extra, rig.Curse.remainingDuration.Value, 3);
             Assert.True(rig.Curse.isActive);
             Assert.Equal(1, TrackedCurses(rig.Host));
         }
@@ -147,15 +157,15 @@ namespace SodRpg.Core.Tests
             // 所有者状態の段階はまだ0のままなので、段階の遷移は起きない。
             rig.Rt.Powers.SetBuild(InfernusBuild(4));
             rig.Host.SetEternalFlameNativeTimer(rig.Curse, 6f, 4f);
-            Assert.Equal(6f + extra, rig.Curse.maxDuration);
-            Assert.Equal(4f + extra, rig.Curse.remainingDuration);
+            Assert.Equal(6f + extra, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f + extra, rig.Curse.remainingDuration.Value, 3);
 
             // 報酬段階0のbuildでティック → ループの stage==0 分岐が延長分だけ戻す。
             rig.Rt.Powers.SetBuild(InfernusBuild(1));
             Invoke(rig.Host, "TickEternalFlame", rig.Rt, 10f);
 
-            Assert.Equal(6f, rig.Curse.maxDuration);
-            Assert.Equal(4f, rig.Curse.remainingDuration);
+            Assert.Equal(6f, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f, rig.Curse.remainingDuration.Value, 3);
             Assert.True(rig.Curse.isActive);
             Assert.Equal(1, TrackedCurses(rig.Host)); // 復元するだけで呪いは解除しない
         }
@@ -166,15 +176,15 @@ namespace SodRpg.Core.Tests
             var rig = Create(4); // 報酬段階2: 捕捉と同時に延長が入る。
             rig.Host.CaptureEternalFlameCurse(rig.Curse);
             float extra = ExtensionSeconds(2);
-            Assert.Equal(6f + extra, rig.Curse.maxDuration);
-            Assert.Equal(4f + extra, rig.Curse.remainingDuration);
+            Assert.Equal(6f + extra, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f + extra, rig.Curse.remainingDuration.Value, 3);
 
             rig.Rt.Powers.SetBuild(InfernusBuild(1));
             Invoke(rig.Host, "TickEternalFlame", rig.Rt, 10f);
 
             // 段階の下がりは延長分だけ戻し、呪い自体は残す。
-            Assert.Equal(6f, rig.Curse.maxDuration);
-            Assert.Equal(4f, rig.Curse.remainingDuration);
+            Assert.Equal(6f, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f, rig.Curse.remainingDuration.Value, 3);
             Assert.True(rig.Curse.isActive);
             Assert.Equal(1, TrackedCurses(rig.Host));
         }
@@ -189,7 +199,7 @@ namespace SodRpg.Core.Tests
             var rig = Create(4);
             rig.Host.CaptureEternalFlameCurse(rig.Curse); // 段階2で延長済み
             float extra = ExtensionSeconds(2);
-            Assert.Equal(6f + extra, rig.Curse.maxDuration);
+            Assert.Equal(6f + extra, rig.Curse.maxDuration.Value, 3);
 
             switch (premise)
             {
@@ -204,8 +214,8 @@ namespace SodRpg.Core.Tests
             // 毎フレームの再検査をやめた4条件（親・キャスター・gem.owner・装備）は、直前の
             // EternalFlameCurseCurrent が同じ意味で確認する。前提が崩れた呪いは
             // RestoreEternalFlameTimer＋ReleaseEternalFlameCurse で片付き、付け直しは起きない。
-            Assert.Equal(6f, rig.Curse.maxDuration);
-            Assert.Equal(4f, rig.Curse.remainingDuration);
+            Assert.Equal(6f, rig.Curse.maxDuration.Value, 3);
+            Assert.Equal(4f, rig.Curse.remainingDuration.Value, 3);
             Assert.Equal(0, TrackedCurses(rig.Host));
         }
     }
