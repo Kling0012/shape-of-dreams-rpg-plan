@@ -15,10 +15,18 @@ namespace SodRpg.Mod
         // Native actors outlive a MOD assembly reload. Both generic arguments must be
         // native/framework types so every loaded copy can read the same weak-key store.
         // Do not retain a MOD-defined type here or keep the actors alive.
+        private static ConditionalWeakTable<StackedStatusEffect, Tuple<int>> _capacities;
+
+        // The store is created once per domain and never replaced afterward, so each loaded
+        // copy caches the reference after its first lookup. CanInteract re-runs the native
+        // ingredient count every frame near the pot (host and client alike), and paying the
+        // AppDomain search plus its lock on every call is pure steady-state overhead.
         private static ConditionalWeakTable<StackedStatusEffect, Tuple<int>> Capacities
         {
             get
             {
+                var cached = _capacities;
+                if (cached != null) return cached;
                 var domain = AppDomain.CurrentDomain;
                 lock (domain)
                 {
@@ -28,8 +36,10 @@ namespace SodRpg.Mod
                         stored = new ConditionalWeakTable<StackedStatusEffect, Tuple<int>>();
                         domain.SetData(CapacityStoreKey, stored);
                     }
-                    return stored as ConditionalWeakTable<StackedStatusEffect, Tuple<int>> ??
+                    var capacities = stored as ConditionalWeakTable<StackedStatusEffect, Tuple<int>> ??
                         throw new InvalidOperationException("Culinary native batch store is incompatible");
+                    _capacities = capacities;
+                    return capacities;
                 }
             }
         }
@@ -194,6 +204,11 @@ namespace SodRpg.Mod
         {
             try
             {
+                // Zero needs no bound and no side effect: a missing effect and an empty stack
+                // both stay 0, and every mutation path (OnCreate/SetStack/AddStack/RemoveStack/
+                // Consume) initializes its own capacity before clamping. Skipping the status
+                // lookup keeps this per-frame path (CanInteract) free for players without stacks.
+                if (__result <= 0) return;
                 var effect = Ingredients(hero);
                 if (TryCapacity(effect, out var cookingBatch))
                     __result = Math.Min(__result, cookingBatch);
