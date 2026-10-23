@@ -68,6 +68,12 @@ namespace SodRpg.Mod
         private void DispatchAzurakBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || activation == 0 || !BossAlive(rt.Hero)) return;
+            // The nine Azurak profiles live in the closed static BossProfiles.Moves registry and their
+            // Actions[0] subscribe to MainHit, NativeDamageTaken, MemoryUse and MovementCompleted only.
+            // Any other kind makes every loop iteration fall out on action.Event != kind, so events that
+            // fire per damage instance (NativeDamageDealt) skip the whole BossMoves scan.
+            if (kind != BossEvent.MainHit && kind != BossEvent.NativeDamageTaken
+                && kind != BossEvent.MemoryUse && kind != BossEvent.MovementCompleted) return;
             Vector3 owner = rt.Hero.agentPosition;
             if (kind == BossEvent.MainHit && BossFind(rt, "boss_azurak.stage2", out var stageEntry, out var stageProfile))
             {
