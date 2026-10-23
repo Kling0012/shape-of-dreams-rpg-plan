@@ -16,7 +16,7 @@
 
 ## Pure Soul
 
-本体 `Ai_QR_Innocence_Spawner.OnCreateSequenced` は、協力人数の上限を適用したあとに性能負荷で生成数を減らす。生成数8、性能負荷0.95以上では丸めて0になる。生成ループが実行されず、強度の配分にも0除算が生じる。
+本体 `Ai_QR_Innocence_Spawner.OnCreateSequenced` は協力人数の上限を適用したあとに性能負荷で生成数を減らす。生成数8、性能負荷0.95以上では丸めて0になる。生成ループが実行されず、強度の配分にも0除算が生じる。
 
 本来の生成数が正なら、性能負荷を掛けて丸めた数を最低1にする。コルーチンの `MoveNext` にある唯一の `Mathf.RoundToInt` だけを置き換える。負荷による生成削減、協力人数の上限、強度の再配分、発射間隔、終了処理は本体に任せる。型や呼び出し位置が変わった場合は警告を出し、このパッチだけを適用しない。
 
@@ -24,9 +24,9 @@
 
 ## エッセンスHUD
 
-5〜8枠は、毎回本体の4枠グループから複製する。下段の位置、anchor、pivot、scaleは本体のまま残す。追加枠は同じ列の枠から複製し、上へ1段移す。
+5〜8枠は毎回本体の4枠グループから複製する。下段の位置、anchor、pivot、scaleは本体のまま残す。追加枠は同じ列の枠から複製し、上へ1段移す。
 
-段の間隔には、全4枠の子RectTransformを含む上下の範囲と4単位の余白を使う。非表示の編集枠も含める。Unityの標準の範囲計算は非表示の子を除くため、非表示のstaging内でも座標を直接測る。複製先は最終配置先と同じ大きさのstagingに置き、初期化前にOnEnableを実行しない。
+段の間隔には全4枠の子RectTransformを含む上下の範囲と4単位の余白を使う。非表示の編集枠も含める。Unityの標準の範囲計算は非表示の子を除くため、非表示のstaging内でも座標を直接測る。複製先は最終配置先と同じ大きさのstagingに置き、初期化前にOnEnableを実行しない。
 
 1〜4枠は変更しない。追加枠は元の4枠の横幅の範囲に並ぶ。配列や子の列挙はHUD生成時だけで、毎フレームは行わない。実際のPrefabと1920×1080の画面での描画・スクリーンショット確認は、この環境でゲームを起動できないため未実行。
 
@@ -37,3 +37,21 @@
 プールの再生元が `Shrine_Guidance.fxBreak` と一致する場合だけ、実際に再生したオブジェクトを追跡する。追跡は固定長4件、保護は実時間で2秒。保護中は確率による回収だけを回避し、非表示・部屋移動・自然終了・タイムアウトによる回収は維持する。5件目以降は本体の回収に任せる。
 
 ネットワーク送受信、破壊判定、報酬、進行、破棄の順序は変えない。他の演出の軽量化も維持する。破壊直後にネットワークの親が解決できなくなるという別経路は、この変更で修正したとは扱わない。実通信や実際の破壊演出の描画は未実行。
+
+## 要件と実装の対応
+
+2026-10-23の修正ラウンドで、FR-1〜FR-9が既存の実装に対応することを確認した。前ラウンドでは結果JSONの `requirements_done` が欠けていたため、実装済みの全要件が未実装と表示されていた。結果JSONには各FRを個別に記載し、以下の実装先を対応付ける。
+
+| 要件 | 実装先 | 対応内容 |
+| --- | --- | --- |
+| FR-1 | `src/SodRpg.Mod/HostAuthority.cs`: `ApplyPressure`、`OnMonsterDamageTaken`。`src/SodRpg.Mod/HostAuthority.EnemyOwnership.cs`: 敵担当別のダメージ補正。 | 反射を圧の与ダメージ補正から除外し、旅人ごとの共有間隔で複数敵の反射集中を抑える。 |
+| FR-2 | `src/SodRpg.Core/Game/Ids.cs`、`Content.cs`、`Nightmare.cs`。`src/SodRpg.Mod/HostAuthority.cs`: `OnMonsterDamageTaken`。`tools/balance/equipment/affixes.json`、`caps.json` と生成コード。`src/SodRpg.Mod/DreamforgeUi.cs`: `DrawRelicSearch`、`Sorted`、`HasThornsResistance`。 | 専用の棘耐性を装備の抽選・上限・説明・集計・反射軽減・絞り込みに接続する。 |
+| FR-3 | `src/SodRpg.Mod/NativePureSoulCount.cs`: `Prepare`、`Transpiler`、`RoundCount`。 | 本来の生成数が正なら、高負荷で丸めて0になる場合にも最低1発を生成する。 |
+| FR-4 | `src/SodRpg.Mod/LevelEssenceRuntime.cs`: `EnsureHud`、`ValidateGroup`。 | 5〜8枠を本体の4列から複製し、子の矩形を含む高さと余白で上段へ配置する。 |
+| FR-5 | `src/SodRpg.Mod/NativeGuidanceBreakFx.cs`: `Track`、`CleanupRoll`、再生・回収のパッチ。 | 聖堂の破壊演出に限り、固定長4件・2秒の範囲で負荷による確率回収を避ける。 |
+| FR-6 | FR-3と同じ。 | Pure Soulの生成欠落に対応する。 |
+| FR-7 | FR-4と同じ。 | 5枠以上のHUDの重なりに対応する。 |
+| FR-8 | FR-5と同じ。 | 聖堂の破壊演出の欠落に対応する。 |
+| FR-9 | FR-1・FR-2と同じ。 | 棘の見直しと装備による専用耐性の両方に対応する。 |
+
+受け付け審査の懸念には棘の反射効果を残した専用耐性、軽量化全体を維持した生成数と演出回収の限定修正、既存4枠を残したHUDの上段追加で対応した。実機での4症状の再現と描画の確認は未実行であり、テストの成功を実機確認として扱わない。
