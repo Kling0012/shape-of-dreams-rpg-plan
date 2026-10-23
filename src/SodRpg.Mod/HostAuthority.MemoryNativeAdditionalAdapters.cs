@@ -88,39 +88,46 @@ namespace SodRpg.Mod
         internal NativeMemoryPayloadScope BeginEnGardeAddedPacket(Se_D_AstridsMasterpieceEnGarde source, EventInfoAttackEffect input)
         {
             if (!(source.firstTrigger is St_D_AstridsMasterpieceEnGarde trigger)) return null;
-            return BeginVerifiedStatusAddedPacket(source, trigger, input, "native.en-garde.additional", default);
+            return BeginVerifiedStatusAddedPacket(source, trigger, nameof(St_D_AstridsMasterpieceEnGarde),
+                input, "native.en-garde.additional", null);
         }
 
         internal NativeMemoryPayloadScope BeginPrioriteAddedPacket(Se_D_AstridsMasterpiecePriorite source, EventInfoAttackEffect input)
         {
             if (!(source.firstTrigger is St_D_AstridsMasterpiecePriorite trigger)) return null;
-            return BeginVerifiedStatusAddedPacket(source, trigger, input, "native.priorite.additional", default);
+            return BeginVerifiedStatusAddedPacket(source, trigger, nameof(St_D_AstridsMasterpiecePriorite),
+                input, "native.priorite.additional", null);
         }
 
         internal NativeMemoryPayloadScope BeginFrozenFistsAddedPacket(Se_R_FrozenFists source, EventInfoAttackEffect input)
         {
             if (!(source.firstTrigger is St_R_FrozenFists trigger)) return null;
-            return BeginVerifiedStatusAddedPacket(source, trigger, input, "native.frozen.additional", input.chain.New(source));
+            return BeginVerifiedStatusAddedPacket(source, trigger, nameof(St_R_FrozenFists),
+                input, "native.frozen.additional", source);
         }
 
         internal NativeMemoryPayloadScope BeginDangerousTheoryAddedPacket(Se_R_DangerousTheory source, EventInfoAttackEffect input)
         {
             if (!(source.firstTrigger is St_R_DangerousTheory trigger)) return null;
             // The inspected native delegate constructs a fresh default chain and sets its own crit condition.
-            return BeginVerifiedStatusAddedPacket(source, trigger, input, "native.theory.additional", default);
+            return BeginVerifiedStatusAddedPacket(source, trigger, nameof(St_R_DangerousTheory),
+                input, "native.theory.additional", null);
         }
 
-        private NativeMemoryPayloadScope BeginVerifiedStatusAddedPacket(StatusEffect source, SkillTrigger trigger,
-            EventInfoAttackEffect input, string adapter, ReactionChain outputChain)
+        private NativeMemoryPayloadScope BeginVerifiedStatusAddedPacket(StatusEffect source, SkillTrigger trigger, string memoryName,
+            EventInfoAttackEffect input, string adapter, Actor chainSource)
         {
             if (!(source.info.caster is Hero hero) || input.attacker != hero || trigger.owner != hero
                 || !Alive(hero) || !source.isActive || AttributionGeneratedOrigin() != GeneratedOrigin.None
-                || FindMemory(hero, trigger.GetType().Name) != trigger || input.victim == null) return null;
+                || FindMemory(hero, memoryName) != trigger || input.victim == null) return null;
             if (!TryGetNativeTriggerActivation(input, out var original)) return null;
             if (original.OwnerId != hero.GetInstanceID()) return null;
             var identity = _memoryAttribution.DeriveNativePayload(original, adapter);
+            // Build the reaction chain only after verification: the caller's per-hit event rejects far
+            // more often than it admits, and ReactionChain.New allocates a List before any of the checks.
             return new NativeMemoryPayloadScope { Source = source, Owner = hero, Adapter = adapter,
-                Victim = input.victim, Chain = outputChain, Identity = identity, HasIdentity = true };
+                Victim = input.victim, Chain = chainSource != null ? input.chain.New(chainSource) : default,
+                Identity = identity, HasIdentity = true };
         }
 
         internal NativeMemoryPayloadScope BeginWindScarAddedPacket(Ai_D_ScarOfTheWind_DashAtk instance, Entity victim)
