@@ -110,6 +110,18 @@ namespace SodRpg.Mod
         public GameObject activateEffect = new GameObject { name = "Gem_R_Frost.activateEffect" };
         public event Action<Hero, Hero> ClientEvent_OnOwnerChanged;
         internal void RaiseOwnerChanged(Hero oldOwner, Hero newOwner) => ClientEvent_OnOwnerChanged?.Invoke(oldOwner, newOwner);
+        // 本体の Gem_R_Frost は UnityEngine.Object 由来で、Destroy 後は偽 null（== null が真）として
+        // 扱われる。リンクした実装の null チェックが本物と同じ意味で動くよう、スタブもこの規約を再現する。
+        public static bool operator ==(Gem_R_Frost lhs, Gem_R_Frost rhs)
+        {
+            if (ReferenceEquals(lhs, rhs)) return true;
+            if (ReferenceEquals(lhs, null)) return rhs.Destroyed;
+            if (ReferenceEquals(rhs, null)) return lhs.Destroyed;
+            return false;
+        }
+        public static bool operator !=(Gem_R_Frost lhs, Gem_R_Frost rhs) => !(lhs == rhs);
+        public override bool Equals(object other) => other is Gem_R_Frost value && this == value;
+        public override int GetHashCode() => base.GetHashCode();
     }
     public struct EffectAutoDestroyEntry { public GameObject gameObject; }
     // 本体の EffectAutoDestroy 相当。再生のたびに登録し、回収はレジストリ経由でのみ行う。
