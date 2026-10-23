@@ -129,6 +129,141 @@ namespace SodRpg.Core.Tests
             else Assert.Equal(10000f - expected * (stat / 100f), enemy.currentHealth, 3);
         }
 
+        private static object Field(object target, string name)
+        {
+            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.NotNull(field);
+            return field.GetValue(target);
+        }
+
+        // The production scan itself is the expectation: the cache must hold exactly its results.
+        private static bool BossFindForTest(Rig rig, string profileId, out object entry, out object profile)
+        {
+            var method = typeof(HostAuthority).GetMethod("BossFind", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.NotNull(method);
+            var args = new object[] { rig.Rt, profileId, null, null };
+            bool found = (bool)method.Invoke(rig.Host, args);
+            entry = args[2]; profile = args[3];
+            return found;
+        }
+
+        [Theory]
+        [InlineData(2, false, false, 70)]
+        [InlineData(3, true, false, 206)]
+        [InlineData(6, true, true, 511)]
+        public void Primus_creation_caches_the_stage_profiles_that_the_equipment_scan_finds(int pieces, bool hasGlyph, bool hasCycle, int equippedMask)
+        {
+            var rig = Create("primus_aeron", pieces);
+            var state = Invoke(rig.Host, "PrimusState", rig.Rt);
+            Assert.NotNull(state);
+            Assert.Equal(equippedMask, (int)Field(state, "EquippedMask"));
+            Assert.True(BossFindForTest(rig, "boss_primus_aeron.stage2", out var phaseEntry, out var phaseProfile));
+            Assert.Same(phaseEntry, Field(state, "PhaseEntry"));
+            Assert.Same(phaseProfile, Field(state, "PhaseProfile"));
+            if (hasGlyph)
+            {
+                Assert.True(BossFindForTest(rig, "boss_primus_aeron.stage3", out _, out var glyphProfile));
+                Assert.Same(glyphProfile, Field(state, "GlyphProfile"));
+            }
+            else
+            {
+                Assert.False(BossFindForTest(rig, "boss_primus_aeron.stage3", out _, out _));
+                Assert.Null(Field(state, "GlyphProfile"));
+            }
+            if (hasCycle)
+            {
+                Assert.True(BossFindForTest(rig, "boss_primus_aeron.stage6", out var cycleEntry, out var cycleProfile));
+                Assert.Same(cycleEntry, Field(state, "CycleEntry"));
+                Assert.Same(cycleProfile, Field(state, "CycleProfile"));
+            }
+            else
+            {
+                Assert.False(BossFindForTest(rig, "boss_primus_aeron.stage6", out _, out _));
+                Assert.Null(Field(state, "CycleEntry"));
+                Assert.Null(Field(state, "CycleProfile"));
+            }
+        }
+
+        [Fact]
+        public void Primus_epoch_rescan_nulls_the_cache_of_removed_stages_and_discards_empty_states()
+        {
+            var rig = Create("primus_aeron", 6);
+            var state = Invoke(rig.Host, "PrimusState", rig.Rt);
+            Assert.NotNull(state);
+            var phaseProfile = Field(state, "PhaseProfile");
+            // In-game, equipment changes always swap in a different Build instance and BossEnsure
+            // discards the state (the EquipmentChangedForTest path covered by
+            // Primus_stage236_cycles_repeat_identically_across_an_equipment_epoch_change). Mutating
+            // BossMoves in place keeps the same Build, so this exercises TickPrimusBoss's epoch
+            // rescan branch as a defensive fallback.
+            var moves = rig.Rt.Powers.Build.BossMoves;
+            moves.RemoveAll(m => m.ProfileId == "boss_primus_aeron.stage3" || m.ProfileId == "boss_primus_aeron.stage6");
+            rig.Rt.ShieldEquipmentEpoch++;
+            Invoke(rig.Host, "TickPrimusBoss", rig.Rt, 10.5f);
+            Assert.Same(state, Invoke(rig.Host, "PrimusState", rig.Rt));
+            Assert.Equal(127, (int)Field(state, "EquippedMask"));
+            Assert.Same(phaseProfile, Field(state, "PhaseProfile"));
+            Assert.Null(Field(state, "GlyphProfile"));
+            Assert.Null(Field(state, "CycleEntry"));
+            Assert.Null(Field(state, "CycleProfile"));
+            // Losing the last Primus move discards the state instead of keeping a mask-0 entry.
+            moves.RemoveAll(m => m.SetId == BossProfiles.PrimusSetId);
+            rig.Rt.ShieldEquipmentEpoch++;
+            Invoke(rig.Host, "TickPrimusBoss", rig.Rt, 10.6f);
+            var states = (System.Collections.IDictionary)Field(rig.Host, "_primusCombat");
+            Assert.False(states.Contains(rig.Rt));
+            Assert.Null(Invoke(rig.Host, "PrimusState", rig.Rt));
+        }
+
+        [Fact]
+        public void Primus_builds_without_primus_moves_never_register_a_state()
+        {
+            var rig = Create("azurak", 1, "armor");
+            var enemy = Enemy(0, 1);
+            rig.Input("Primus", BossEvent.MainHit, 1, enemy, enemy.position, 10f);
+            rig.Input("Primus", BossEvent.MemoryUse, 2, null, Vector3.zero, 10.1f);
+            rig.Input("Primus", BossEvent.MovementCompleted, 3, null, Vector3.zero, 10.2f);
+            rig.Tick(10.3f);
+            var states = (System.Collections.IDictionary)Field(rig.Host, "_primusCombat");
+            Assert.Equal(0, states.Count);
+            Assert.Null(Invoke(rig.Host, "PrimusState", rig.Rt));
+            Assert.Equal(1000f, enemy.currentHealth);
+            Assert.Equal(0f, rig.Hero.Status.currentShield);
+        }
+
+        [Fact]
+        public void Primus_stage236_cycles_repeat_identically_across_an_equipment_epoch_change()
+        {
+            var rig = Create("primus_aeron", 6);
+            rig.Hero.Status.attackDamage = 100f;
+            rig.Hero.maxHealth = 1000f;
+            rig.Hero.currentHealth = 1000f;
+            var enemy = Enemy(0, 1.8f);
+            // weapon 18 + head 2x10 + stage2 technique 12 + hands 18 + feet 2x10 + stage6 finisher 3x30.
+            // The charm projectile needs native physics and contributes no damage here. Ticks between the
+            // inputs fire the earlier shapes and release their field slots (4 per set), as frames do.
+            rig.Input("Primus", BossEvent.MainHit, 1, enemy, enemy.position, 10f);
+            rig.Input("Primus", BossEvent.MemoryUse, 2, null, enemy.position, 10.1f);
+            rig.Tick(10.55f);
+            rig.Input("Primus", BossEvent.MovementCompleted, 3, null, enemy.position, 10.6f);
+            rig.Tick(11.3f);
+            Assert.Equal(1000f - 178f, enemy.currentHealth, 3);
+            Assert.Equal(380f * (6f - .7f) / 6f, rig.Hero.Status.currentShield, 3);
+            // Re-equipping bumps the equipment epoch; BossEnsure tears the cached state down.
+            rig.EquipSkill(new St_U_WorldCracker { owner = rig.Hero });
+            rig.Host.EquipmentChangedForTest(rig.Hero);
+            var states = (System.Collections.IDictionary)Field(rig.Host, "_primusCombat");
+            Assert.False(states.Contains(rig.Rt));
+            // After the stage6 gate (18s), the same three inputs reproduce the same outcome.
+            rig.Input("Primus", BossEvent.MainHit, 4, enemy, enemy.position, 28.3f);
+            rig.Input("Primus", BossEvent.MemoryUse, 5, null, enemy.position, 28.4f);
+            rig.Tick(28.85f);
+            rig.Input("Primus", BossEvent.MovementCompleted, 6, null, enemy.position, 28.9f);
+            rig.Tick(29.6f);
+            Assert.Equal(1000f - 356f, enemy.currentHealth, 3);
+            Assert.Equal(380f * (6f - .7f) / 6f, rig.Hero.Status.currentShield, 3);
+        }
+
         [Fact]
         public void Azurak_armor_requires_actual_hp_loss_without_spending_cooldown_on_absorption()
         {
