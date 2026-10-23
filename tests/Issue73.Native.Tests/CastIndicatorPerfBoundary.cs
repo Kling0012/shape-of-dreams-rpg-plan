@@ -39,6 +39,12 @@ namespace UnityEngine
             set { _localScale = value; localScaleWrites++; }
         }
         internal Vector3 localPosition { get; set; }
+
+        // LineRegion の UpdateProperties が body 側のワールド回転を読む分（ワールド位置
+        // position は CharacterModelDisplayBoundsBoundary.cs の partial、向き forward は
+        // SkollMarkBoundary.cs の partial が持つ。body の localEulerAngles への書き込みは
+        // 入力になった読み取りから組み立てる）。意味は本体と同じで、状態は保持するだけ。
+        internal Vector3 eulerAngles { get; set; }
     }
 }
 
@@ -64,6 +70,31 @@ namespace DTT.AreaOfEffectRegions
         internal static readonly int ProgressShaderID = 7;
         // 追跡していない入力の見本（拒否の見本 UntrackedExtraInput が読む）。
         internal float _opacity;
+        internal void UpdateProperties() { }
+    }
+
+    // 照準矢印（LineRegion）の境界。ValidateBody が typeof(LineRegionBase) の4つの getter を
+    // 探すため、プロパティはここに置く。フィールドは Prepare が FieldRefAccess で解決する
+    // 対象（ハーネスでは呼ばれないが、本体と同じメンバー一式を持つ）。
+    internal class LineRegionBase
+    {
+        internal float _angle;
+        internal float _length;
+        internal float _width;
+        internal float _fillProgress;
+        internal float Angle { get; set; }
+        internal float Length { get; set; }
+        internal float Width { get; set; }
+        internal float FillProgress { get; set; }
+    }
+
+    internal sealed class LineRegion : LineRegionBase
+    {
+        internal UnityEngine.Transform _bodyTransform;
+        internal UnityEngine.Transform _headTransform;
+        internal UnityEngine.MeshRenderer _bodyRenderer;
+        internal UnityEngine.MeshRenderer _headRenderer;
+        internal static readonly int ProgressShaderID = 8;
         internal void UpdateProperties() { }
     }
 }

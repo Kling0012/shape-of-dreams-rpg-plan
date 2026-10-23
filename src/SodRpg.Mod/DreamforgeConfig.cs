@@ -195,6 +195,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged cast indicator circle updates / 変わっていない照準円の描画更新を省く")]
         public bool nativeCastIndicatorCircle = true;
 
+        [LabelText("Skip unchanged cast indicator arrow updates / 変わっていない照準矢印の描画更新を省く")]
+        public bool nativeCastIndicatorLine = true;
+
         [LabelText("Reuse the unchanged camera-angle rotation / 変わっていないカメラ角度回転を使い回す")]
         public bool nativeCameraZoomRotation = true;
 

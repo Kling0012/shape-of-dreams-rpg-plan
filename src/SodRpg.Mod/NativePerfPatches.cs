@@ -32,6 +32,7 @@ namespace SodRpg.Mod
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
+            NativePerfOptions.CastIndicatorLine = config.nativeCastIndicatorLine;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
             NativePerfOptions.OcclusionIdle = config.nativeOcclusionIdle;
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
@@ -86,6 +87,7 @@ namespace SodRpg.Mod
         internal static bool TransformSyncIdle = true;
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
+        internal static bool CastIndicatorLine = true;
         internal static bool CameraZoomRotation = true;
         internal static bool OcclusionIdle = true;
         internal static bool CharacterModelDisplayBounds = true;
@@ -1290,7 +1292,8 @@ namespace SodRpg.Mod
         // Identity of a member-referencing instruction, or null when the instruction references
         // no method or field. Opcodes that can carry a member operand are all counted so an
         // untracked read cannot hide behind a less common form (ldsfld, ldftn, ldtoken, ...).
-        private static string MemberIdentity(CodeInstruction instruction)
+        // Shared with the line-region patch below, which checks the same kind of body.
+        internal static string MemberIdentity(CodeInstruction instruction)
         {
             string name = instruction.opcode.Name;
             if (instruction.operand is MethodBase method)
@@ -1314,7 +1317,7 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private static bool MatchesExpectedMembers(List<string> members)
+        internal static bool MatchesExpectedMembers(List<string> members)
         {
             if (members.Count != ExpectedMembers.Length) return false;
             members.Sort(StringComparer.Ordinal);
@@ -1435,6 +1438,306 @@ namespace SodRpg.Mod
         private static void ForgetConfirmed(DTT.AreaOfEffectRegions.CircleRegion region)
         {
             if (TrackedInputs.TryGetValue(region, out CircleInputs inputs)) inputs.Has = false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCastIndicatorLineRegionPerf
+    {
+        // Same design as NativeCastIndicatorCirclePerf above, for the arrow cast indicator:
+        // CastIndicatorManager.DrawLineRegion and LineRegion's own Update both call
+        // LineRegion.UpdateProperties every frame while the arrow is on screen.
+        private sealed class LineInputs
+        {
+            internal bool Has;
+            internal float Angle;
+            internal float Length;
+            internal float Width;
+            internal float Fill;
+            internal Vector3 BodyEuler;
+            internal Vector3 BodyPosition;
+            internal Vector3 BodyScale;
+            internal Vector3 HeadScale;
+            internal Material BodyMaterial;
+            internal Material HeadMaterial;
+        }
+
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.LineRegion, LineInputs> TrackedInputs =
+            new ConditionalWeakTable<DTT.AreaOfEffectRegions.LineRegion, LineInputs>();
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.LineRegion, LineInputs>.CreateValueCallback CreateInputs =
+            _ => new LineInputs();
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.LineRegion, Transform> _bodyTransform;
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.LineRegion, Transform> _headTransform;
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.LineRegion, MeshRenderer> _bodyRendererRef;
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.LineRegion, MeshRenderer> _headRendererRef;
+        // Reusable snapshot candidate handed from the prefix to the postfix, as in the circle patch.
+        [ThreadStatic] private static LineInputs _pending;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(DTT.AreaOfEffectRegions.LineRegion), nameof(DTT.AreaOfEffectRegions.LineRegion.UpdateProperties), ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _bodyTransform = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.LineRegion, Transform>("_bodyTransform");
+                _headTransform = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.LineRegion, Transform>("_headTransform");
+                _bodyRendererRef = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.LineRegion, MeshRenderer>("_bodyRenderer");
+                _headRendererRef = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.LineRegion, MeshRenderer>("_headRenderer");
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "cast indicator line", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Every member the native LineRegion.UpdateProperties references, captured from the
+        // shipped DTT.AreaOfEffectRegions.Runtime.dll (2026-10-24), kept sorted (ordinal) with
+        // duplicates counted, written the way MemberIdentity normalizes instructions. Beyond
+        // the four counted reads below, this list is what actually guarantees the skip is
+        // equivalence-preserving: a future body that keeps those counts but reads anything
+        // else (an untracked field, an extra call) no longer matches.
+        private static readonly string[] ExpectedMembers =
+        {
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Angle/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_FillProgress/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_FillProgress/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Length/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Length/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Length/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Width/0",
+            "call DTT.AreaOfEffectRegions.LineRegionBase::get_Width/0",
+            "call UnityEngine.Material::SetFloat/2",
+            "call UnityEngine.Material::SetFloat/2",
+            "call UnityEngine.Mathf::InverseLerp/3",
+            "call UnityEngine.Mathf::InverseLerp/3",
+            "call UnityEngine.Mathf::Max/2",
+            "call UnityEngine.Mathf::Min/2",
+            "call UnityEngine.Renderer::get_sharedMaterial/0",
+            "call UnityEngine.Renderer::get_sharedMaterial/0",
+            "call UnityEngine.Transform::get_eulerAngles/0",
+            "call UnityEngine.Transform::get_eulerAngles/0",
+            "call UnityEngine.Transform::get_eulerAngles/0",
+            "call UnityEngine.Transform::get_forward/0",
+            "call UnityEngine.Transform::get_localScale/0",
+            "call UnityEngine.Transform::get_localScale/0",
+            "call UnityEngine.Transform::get_localScale/0",
+            "call UnityEngine.Transform::get_localScale/0",
+            "call UnityEngine.Transform::get_position/0",
+            "call UnityEngine.Transform::set_eulerAngles/1",
+            "call UnityEngine.Transform::set_localEulerAngles/1",
+            "call UnityEngine.Transform::set_localScale/1",
+            "call UnityEngine.Transform::set_localScale/1",
+            "call UnityEngine.Transform::set_position/1",
+            "call UnityEngine.Vector3::op_Addition/2",
+            "call UnityEngine.Vector3::op_Multiply/2",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyRenderer",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_bodyTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_headRenderer",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_headTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_headTransform",
+            "ldfld DTT.AreaOfEffectRegions.LineRegion::_headTransform",
+            "ldfld UnityEngine.Vector3::x",
+            "ldfld UnityEngine.Vector3::y",
+            "ldfld UnityEngine.Vector3::y",
+            "ldfld UnityEngine.Vector3::z",
+            "ldfld UnityEngine.Vector3::z",
+            "ldsfld DTT.AreaOfEffectRegions.LineRegion::ProgressShaderID",
+            "newobj UnityEngine.Vector3::.ctor/3",
+            "newobj UnityEngine.Vector3::.ctor/3",
+            "newobj UnityEngine.Vector3::.ctor/3",
+        };
+
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var length = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.LineRegionBase), nameof(DTT.AreaOfEffectRegions.LineRegionBase.Length));
+            var width = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.LineRegionBase), nameof(DTT.AreaOfEffectRegions.LineRegionBase.Width));
+            var fill = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.LineRegionBase), nameof(DTT.AreaOfEffectRegions.LineRegionBase.FillProgress));
+            var setFloat = AccessTools.Method(typeof(Material), nameof(Material.SetFloat), new[] { typeof(int), typeof(float) });
+            int lengths = 0, widths = 0, fills = 0, floats = 0;
+            var members = new List<string>();
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(length)) lengths++;
+                if (code[i].Calls(width)) widths++;
+                if (code[i].Calls(fill)) fills++;
+                if (code[i].Calls(setFloat)) floats++;
+                var identity = NativeCastIndicatorCirclePerf.MemberIdentity(code[i]);
+                if (identity != null) members.Add(identity);
+            }
+            // The line rewrite is only worth skipping while it stays this exact shape: three
+            // length reads, two width reads, two fill reads and two material floats, and no
+            // other member read or write besides the ones in ExpectedMembers.
+            if (lengths == 3 && widths == 2 && fills == 2 && floats == 2
+                && NativeCastIndicatorCirclePerf.MatchesExpectedMembers(members)) return true;
+            NativePerfPatch.Warn(ref _warned, "cast indicator line", "native line region body changed");
+            return false;
+        }
+
+        // Pure skip decision, kept as a standalone method with primitive parameters so the
+        // native test harness can exercise it directly. The world euler, world position and
+        // both local scales are compared per component, as strict as the four scalars, instead
+        // of Unity's Vector3== which tolerates ~1e-5 differences; a missing snapshot or a null
+        // material always runs the body.
+        internal static bool ShouldSkip(bool has,
+            float prevAngle, float prevLength, float prevWidth, float prevFill,
+            Vector3 prevBodyEuler, Vector3 prevBodyPosition, Vector3 prevBodyScale, Vector3 prevHeadScale,
+            Material prevBodyMaterial, Material prevHeadMaterial,
+            float angle, float length, float width, float fill,
+            Vector3 bodyEuler, Vector3 bodyPosition, Vector3 bodyScale, Vector3 headScale,
+            Material bodyMaterial, Material headMaterial)
+            => has && bodyMaterial != null && headMaterial != null
+               && ReferenceEquals(prevBodyMaterial, bodyMaterial) && ReferenceEquals(prevHeadMaterial, headMaterial)
+               && prevAngle == angle && prevLength == length && prevWidth == width && prevFill == fill
+               && prevBodyEuler.x == bodyEuler.x && prevBodyEuler.y == bodyEuler.y && prevBodyEuler.z == bodyEuler.z
+               && prevBodyPosition.x == bodyPosition.x && prevBodyPosition.y == bodyPosition.y && prevBodyPosition.z == bodyPosition.z
+               && prevBodyScale.x == bodyScale.x && prevBodyScale.y == bodyScale.y && prevBodyScale.z == bodyScale.z
+               && prevHeadScale.x == headScale.x && prevHeadScale.y == headScale.y && prevHeadScale.z == headScale.z;
+
+        // LineRegion.UpdateProperties rewrites the body/head transforms and two material floats
+        // from Angle, Length, Width, FillProgress, the body's world euler/position/scale, the
+        // head's scale and the two renderers' materials. CastIndicatorManager and the region's
+        // own Update both call it every frame while the arrow indicator is on screen, yet those
+        // inputs move only when the aim or the caster actually moves. While they are unchanged
+        // every write would store the value it already has (each is idempotent given the inputs,
+        // including the head position computed from the just-written body scale), so skip it.
+        // The prefix reads through the same public accessors the body calls (get_Angle etc. are
+        // plain field pass-throughs on LineRegionBase), so decision and body can never see two
+        // different values. The prefix only reads the inputs and prepares the snapshot candidate;
+        // committing it into the per-region record is the postfix's job, because Harmony does
+        // not run postfixes when the original threw: a body interrupted mid-write leaves the
+        // previous snapshot in place, so the next frame retries the body exactly as without
+        // this patch. Every path that hands the region to the body — snapshot miss, missing or
+        // null transform/material, or the patch being off — drops the record's confirmation
+        // first, so a frame the body may have interrupted can never be mistaken for
+        // already-applied on a later frame either.
+        private static bool Prefix(DTT.AreaOfEffectRegions.LineRegion __instance, ref LineInputs __state)
+        {
+            __state = null;
+            if (_disabled || !NativePerfOptions.CastIndicatorLine)
+            {
+                // While the patch is off the body runs untracked, so the transforms may no longer
+                // match the confirmed snapshot once the patch comes back.
+                ForgetConfirmed(__instance);
+                return true;
+            }
+            try
+            {
+                Transform body = _bodyTransform(__instance);
+                Transform head = _headTransform(__instance);
+                // Keep missing transforms or materials on the native path, exactly as without
+                // this patch, but drop the confirmation: the body runs untracked through here
+                // too (the native Update also guards the transforms).
+                if (body == null || head == null)
+                {
+                    ForgetConfirmed(__instance);
+                    return true;
+                }
+                Material bodyMaterial = _bodyRendererRef(__instance).sharedMaterial;
+                Material headMaterial = _headRendererRef(__instance).sharedMaterial;
+                if (bodyMaterial == null || headMaterial == null)
+                {
+                    ForgetConfirmed(__instance);
+                    return true;
+                }
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                float angle = __instance.Angle;
+                float length = __instance.Length;
+                float width = __instance.Width;
+                float fill = __instance.FillProgress;
+                Vector3 bodyEuler = body.eulerAngles;
+                Vector3 bodyPosition = body.position;
+                Vector3 bodyScale = body.localScale;
+                Vector3 headScale = head.localScale;
+                if (ShouldSkip(inputs.Has, inputs.Angle, inputs.Length, inputs.Width, inputs.Fill,
+                        inputs.BodyEuler, inputs.BodyPosition, inputs.BodyScale, inputs.HeadScale,
+                        inputs.BodyMaterial, inputs.HeadMaterial,
+                        angle, length, width, fill, bodyEuler, bodyPosition, bodyScale, headScale,
+                        bodyMaterial, headMaterial))
+                    return false;
+                // The body is about to run and Harmony will not call the postfix if it throws,
+                // so un-confirm now; only a clean run re-confirms through the postfix.
+                inputs.Has = false;
+                LineInputs pending = _pending ?? new LineInputs();
+                _pending = null;
+                pending.Has = true;
+                pending.Angle = angle;
+                pending.Length = length;
+                pending.Width = width;
+                pending.Fill = fill;
+                pending.BodyEuler = bodyEuler;
+                pending.BodyPosition = bodyPosition;
+                pending.BodyScale = bodyScale;
+                pending.HeadScale = headScale;
+                pending.BodyMaterial = bodyMaterial;
+                pending.HeadMaterial = headMaterial;
+                __state = pending;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator line", ex.Message);
+                __state = null;
+            }
+            return true;
+        }
+
+        // Commits the snapshot candidate the prefix prepared, only on the frames where the body
+        // ran to completion — same contract as the circle patch.
+        private static void Postfix(DTT.AreaOfEffectRegions.LineRegion __instance, LineInputs __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                inputs.Has = __state.Has;
+                inputs.Angle = __state.Angle;
+                inputs.Length = __state.Length;
+                inputs.Width = __state.Width;
+                inputs.Fill = __state.Fill;
+                inputs.BodyEuler = __state.BodyEuler;
+                inputs.BodyPosition = __state.BodyPosition;
+                inputs.BodyScale = __state.BodyScale;
+                inputs.HeadScale = __state.HeadScale;
+                inputs.BodyMaterial = __state.BodyMaterial;
+                inputs.HeadMaterial = __state.HeadMaterial;
+                _pending = __state;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator line", ex.Message);
+            }
+        }
+
+        // The postfix never runs when the body threw, so without this hook the candidate the
+        // prefix took from the pool slot would be dropped and every throwing frame would
+        // allocate a replacement. Returns void, so the body's exception keeps propagating
+        // untouched — only the buffer is recycled.
+        private static void Finalizer(LineInputs __state)
+        {
+            if (__state == null || _pending != null) return;
+            _pending = __state;
+        }
+
+        // Drops a record's confirmation for a region handed back to the body untracked. TryGetValue
+        // allocates nothing and creates no record for regions that were never tracked.
+        private static void ForgetConfirmed(DTT.AreaOfEffectRegions.LineRegion region)
+        {
+            if (TrackedInputs.TryGetValue(region, out LineInputs inputs)) inputs.Has = false;
         }
     }
 
