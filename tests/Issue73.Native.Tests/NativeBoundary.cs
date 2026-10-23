@@ -243,6 +243,11 @@ namespace SodRpg.Mod
     {
         private static int _nextId;
         private readonly int _id = ++_nextId;
+        // 本体 Actor.cs（r1.4.1.2 逆コンパイル）と同じ非公開のデータ辞書。本体の
+        // TryGetData/AddData/RemoveData はこの辞書を typeof(T) で読み書きする。
+        // NativeDamageShakeIdlePerf（#1063）の Prepare が FieldRefAccess で解決し、
+        // Prefix が既存シェイクの有無（Ad_DamageShake の型キー）を読む。
+        private Dictionary<Type, object> _dataByType = new Dictionary<Type, object>();
         public int GetInstanceID() => _id;
         // 本体では Actor のプロパティ。NativeSleepPositionPerf（#751）の IL 照合が
         // typeof(Actor) の getter を探すため、フィールドではなくプロパティにする。
@@ -1075,13 +1080,19 @@ namespace SodRpg.Mod
         public Func<float> valueGetter;
         internal int _id;
     }
-    // 被弾シェイク本体（実機ではグローバル名前空間）。NativeDamageShakeIdlePerf の Prefix が
-    // 参照する公開字段だけを置く。入れ子の Ad_DamageShake（private）はここに無いため、
-    // ハーネスで Prepare を呼ぶと実機と同じ退路（警告1回でパッチ無効）になる。
+    // 被弾シェイク本体（実機ではグローバル名前空間 Dew.Core）。NativeDamageShakeIdlePerf の
+    // Prepare が探す部位（OnClientTakeDamage・入れ子の Ad_DamageShake）と Prefix が読む公開
+    // 字段を実機の形どおりに置く。メソッドは対象の解決だけに使い中身は空、入れ子型は
+    // _dataByType の型キーとしてだけ使う（本体の Ad_DamageShake の字段は誰も参照しない）。
+    // これでハーネスでも Prepare は実機と同じ経路（Find・Inner・FieldRefAccess）を通る。
     internal class FlavourManager
     {
+        private class Ad_DamageShake { }
+
         public Vector2 shakeDamageRatioRange;
         public AnimationCurve shakeDuration;
+
+        private void OnClientTakeDamage(EventInfoDamage info) { }
     }
     internal static class NetworkedManagerBase<T>
     {
