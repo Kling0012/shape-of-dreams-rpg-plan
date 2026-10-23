@@ -69,6 +69,7 @@ namespace SodRpg.Mod
             NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
+            NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
         }
     }
 
@@ -126,6 +127,7 @@ namespace SodRpg.Mod
         internal static bool MirageVolumeIdle = true;
         internal static bool DamageShakeIdle = true;
         internal static bool AudioSetupIdle = true;
+        internal static bool ChaosPetalIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -6633,6 +6635,108 @@ namespace SodRpg.Mod
                 _offBumped = true;
                 NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChaosPetalIdlePerf
+    {
+        // Shrine_CorruptedChaos_PetalAnimator.FrameUpdate runs on every machine (LogicBehaviour
+        // registers on enable; LogicUpdateManager.Update dispatches FrameUpdate with no distance
+        // or visibility culling) and re-resolves every petal through Transform.GetChild(i) each
+        // frame, although the petal hierarchy is fixed: Start captures _originalLocalScales once
+        // and nothing in Dew.Contents/Dew.Core reparents the shrine model or its petals at
+        // runtime (the only reader of the hierarchy is the animator's own Start; Destroy() takes
+        // the whole shrine). This prefix keeps the petal Transforms in a per-instance table and
+        // repeats the original statement with the same arithmetic in the same order — Time.time
+        // is a per-frame constant, so hoisting its two products cannot change a value — and
+        // skips the original, whose only other statement is an empty base.FrameUpdate() call.
+        // Per frame per shrine this replaces N native child lookups with one table hit and one
+        // childCount check, on guests too.
+        //
+        // Residual assumptions, same class as the other cached-transform skips: a foreign mod
+        // restructuring the petals with an unchanged child count is undetectable but would
+        // desync vanilla's own Start-time scales too; a shrunken hierarchy rebuilds the table
+        // from the live order (what vanilla's GetChild would read) and hands frames back to the
+        // original once the live count no longer covers Start's capture — where vanilla throws
+        // ArgumentOutOfRangeException per frame and LogicUpdateManager already logs and swallows
+        // it, this patch detaches with one warning instead.
+        private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals> PetalTable =
+            new ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>();
+        private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>.CreateValueCallback CreatePetals =
+            _ => new Petals();
+        private static AccessTools.FieldRef<Shrine_CorruptedChaos_PetalAnimator, Vector3[]> _originals;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private sealed class Petals
+        {
+            public Transform[] Items;
+
+            // Returns the cached petal Transforms, rebuilt when the live child count no longer
+            // matches Start's capture (the vanilla loop would read the same shifted children
+            // through GetChild). Null when the hierarchy shrank: GetChild would throw past the
+            // capture length, so the caller hands the frame back to the original.
+            public Transform[] Get(Transform root, int expected)
+            {
+                Transform[] items = Items;
+                if (items != null && items.Length == expected) return items;
+                if (root.childCount < expected) return null;
+                items = new Transform[expected];
+                for (int i = 0; i < expected; i++) items[i] = root.GetChild(i);
+                Items = items;
+                return items;
+            }
+        }
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_CorruptedChaos_PetalAnimator), "FrameUpdate", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _originals = AccessTools.FieldRefAccess<Shrine_CorruptedChaos_PetalAnimator, Vector3[]>("_originalLocalScales");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chaos petal idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_CorruptedChaos_PetalAnimator __instance)
+        {
+            if (_disabled || !NativePerfOptions.ChaosPetalIdle) return true;
+            try
+            {
+                Vector3[] originals = _originals(__instance);
+                if (originals == null || originals.Length == 0) return true;
+                Transform[] petals = PetalTable.GetValue(__instance, CreatePetals)
+                    .Get(__instance.transform, originals.Length);
+                if (petals == null) return true;
+                float time = Time.time;
+                float base0 = time * __instance.sin0Time;
+                float base1 = time * __instance.sin1Time;
+                float offset0 = __instance.sin0Offset, magnitude0 = __instance.sin0Mag;
+                float offset1 = __instance.sin1Offset, magnitude1 = __instance.sin1Mag;
+                for (int i = 0; i < petals.Length; i++)
+                {
+                    petals[i].localScale = originals[i]
+                        * (1f + Mathf.Sin(base0 + (float)i * offset0) * magnitude0
+                             + Mathf.Sin(base1 + (float)i * offset1) * magnitude1);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos petal idle", ex.Message);
+            }
+            return true;
         }
     }
 }
