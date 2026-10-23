@@ -28,7 +28,7 @@ namespace SodRpg.Mod
         {
             internal long MarkerReservation, MarkerVisual, SeedReservation, SeedVisual, MarkVisual;
             internal Vector3 Marker, Seed, SeedDirection, DashLast;
-            internal float MarkerUntil, MarksUntil, SeedDue, SeedDamage, DashUntil, DashDamage, NextMarkVisual;
+            internal float MarkerUntil, MarksUntil, SeedDue, SeedDamage, DashUntil, DashDamage, NextMarkVisual, MarkDue;
             internal int Marks;
             internal bool Relocated, SeedMagic, DashMagic;
             internal BossAction SeedAction;
@@ -45,7 +45,7 @@ namespace SodRpg.Mod
             internal void Reset()
             {
                 Host=null; Runtime=null; MarkerReservation=MarkerVisual=SeedReservation=SeedVisual=MarkVisual=0;
-                Marker=Seed=SeedDirection=DashLast=default; MarkerUntil=MarksUntil=SeedDue=SeedDamage=DashUntil=DashDamage=NextMarkVisual=0;
+                Marker=Seed=SeedDirection=DashLast=default; MarkerUntil=MarksUntil=SeedDue=SeedDamage=DashUntil=DashDamage=NextMarkVisual=MarkDue=0;
                 Marks=0; Relocated=SeedMagic=DashMagic=false; SeedAction=null; Dash=null; Channel=null; DashHits.Clear();
                 OwnedChannel.Profile=null; Array.Clear(OwnedChannel.Targets,0,OwnedChannel.Targets.Length);
             }
@@ -103,11 +103,14 @@ namespace SodRpg.Mod
             if(state.Channel!=null && !BossReservationExists(rt,state.Channel.Reservation)) NyxRemoveChannel(rt,state,now);
             if(state.Marks>0 && now>=state.MarksUntil) { state.Marks=0; NyxPublishMarks(rt,state,now); }
         }
+        // due は印の蓄積開始時刻に固定する（SkollPublishMarks と同じ規約）。毎回の現在時刻を渡すと
+        // PublishBossVisual の同一性判定が必ず失敗し、印の数も位置も変わらない0.25秒ごとの再発行が
+        // 全員への差分送信になっていた。増減・移動・削除の送信経路は従来どおり。
         private void NyxPublishMarks(HeroRuntime rt,NyxState state,float now)
         {
             if(state.MarkVisual==0) state.MarkVisual=++rt.Boss.NextId;
             state.NextMarkVisual=now+.25f;
-            PublishBossVisual(rt,state.MarkVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Marks,now,state.MarksUntil,
+            PublishBossVisual(rt,state.MarkVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Marks,state.MarkDue,state.MarksUntil,
                 state.Marks==0,element:BossElement.Light,count:state.Marks);
         }
         private void NyxPlaceMarker(HeroRuntime rt,NyxState state,Vector3 point,float now)
@@ -269,6 +272,7 @@ namespace SodRpg.Mod
                         if(BossFind(rt,"boss_nyx.stage3",out _,out _))
                         {
                             NyxShortPull(rt,center,center,64,now);
+                            if(state.Marks==0) state.MarkDue=now;
                             state.Marks=Math.Min(3,state.Marks+1); state.MarksUntil=now+12; NyxPublishMarks(rt,state,now);
                         }
                     }

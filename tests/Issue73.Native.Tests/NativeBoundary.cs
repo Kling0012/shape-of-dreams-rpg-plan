@@ -632,6 +632,10 @@ namespace SodRpg.Mod
         // 本体の攻撃目標。召喚体の反撃判定（HostAuthority.SummonOwnership.cs）が読む。
         public Entity attackTarget;
         public Displacement ongoingDisplacement;
+        // 本体 Dew.Core EntityControl の移動終了・中断の通知。Nyx の経路の抽出
+        // （NyxStopDash と DispatchNyxBoss の feet）が登録と解除をする分。境界では発火しない。
+        public Action<Displacement> ClientEvent_OnDisplacementFinished;
+        public Action<Displacement> ClientEvent_OnDisplacementCanceled;
         public int Cancels;
         public float outerRadius;
         public int MoveToDestinationCalls;

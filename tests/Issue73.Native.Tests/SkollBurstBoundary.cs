@@ -37,8 +37,9 @@ namespace SodRpg.Mod
     {
         // 本体 HostAuthority.BossRuntime.cs の BossCombatState の形。バースト表示は NextId だけ、
         // 印の経路（CompileSkollMarks の抽出）は Ready（再発動間隔）・Ledger（命中の帳簿）・
-        // Sequence（指令パルス）も使う。
-        internal sealed class BossCombatState
+        // Sequence（指令パルス）も使う。Nyx の経路（CompileNyxMarks の抽出）が読む Build・
+        // Movement・Defense は NyxMarkBoundary.cs の部分宣言で足す。
+        internal sealed partial class BossCombatState
         {
             public long Epoch, NextId, Revision, OwnerLife;
             public readonly Dictionary<string, float> Ready = new Dictionary<string, float>(128, StringComparer.Ordinal);

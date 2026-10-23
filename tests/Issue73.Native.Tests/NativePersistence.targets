@@ -129,6 +129,19 @@
     </ItemGroup>
   </Target>
 
+  <!-- Nyx 印表示（perf-loop/20261024-0045）: 印の due の蓄積開始時刻固定・無変化の0.25秒ごとの
+       再発行の抑止・数と位置と MarksUntil の変化の即時差分・期限切れ後の再蓄積での due 更新を、
+       印の経路（DispatchNyxBoss / TickNyxBoss / NyxReconcileTokens / NyxPublishMarks /
+       NyxPlaceMarker と NyxState・台帳）の実ソースで確かめる。境界は NyxMarkBoundary.cs。
+       種・領域・ダッシュの毎ティック処理と敵の引き寄せは印表示の対象外のため境界の形だけに
+       する（SkollMarkBoundary.cs と同じ扱い）。 -->
+  <Target Name="CompileNyxMarks" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossNyx.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NyxMarks.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="NyxGet;NyxReconcileTokens;NyxPublishMarks;NyxPlaceMarker;NyxRemoveMarker;NyxRemoveSeed;NyxRemoveChannel;NyxAvailable;NyxReserve;NyxCommitReserve;NyxFacing;NyxStartChannel;NyxStopDash;DispatchNyxBoss;TickNyxBoss" Fields="NyxMarkerProfile;_nyxStates;_nyxPool" NestedTypes="NyxState;NyxChannelState" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)NyxMarks.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- The profile slot notice (#97) lives in the UI partial of ProfileSlotView.cs; compile its
        exact draw methods against the harness session instead of copying their implementation. -->
   <Target Name="CompileProfileSlotUi" BeforeTargets="CoreCompile">
