@@ -81,6 +81,14 @@ namespace SodRpg.Mod
             }
             return mask;
         }
+        // Entries/Profiles を書き込まない在確認だけの走査。Polaris の区分を持たない英雄にも
+        // 毎イベント呼ばれる経路があるため、状態を作る前にこれであるかどうかを確かめる。
+        private int PolarisMask(HeroRuntime rt)
+        {
+            int mask = 0;
+            for (int i = 0; i < PolarisProfiles.Length; i++) if (BossFind(rt, PolarisProfiles[i], out _, out _)) mask |= 1 << i;
+            return mask;
+        }
         private PolarisCombat PolarisState(HeroRuntime rt)
         {
             if (_polarisCombat.TryGetValue(rt, out var state))
@@ -92,11 +100,14 @@ namespace SodRpg.Mod
                 if ((state.Mask & ~mask) != 0) { ClearPolarisBoss(rt); state = null; }
                 else { state.Mask = mask; return state; }
             }
-            if (_polarisCombat.Count >= 64 || (state = _polarisPool.Rent()) == null) return null;
+            // Polaris の報酬だけを装備している英雄など、区分が1つも無いまま毎イベント呼ばれる経路がある。
+            // Rent → Reset → Return の固定費を毎イベント払わないよう、まず書き込みなしの走査で在確認し、
+            // 区分が1つでもあれば状態を作って判定を覚える（作成時に走査が2回になるが、作成は1回きり）。
+            int newMask = PolarisMask(rt);
+            if (newMask == 0 || _polarisCombat.Count >= 64 || (state = _polarisPool.Rent()) == null) return null;
             state.Reset();
-            int newMask = PolarisScan(rt, state);
+            PolarisScan(rt, state);
             state.Epoch = rt.ShieldEquipmentEpoch;
-            if (newMask == 0) { _polarisPool.Return(state); return null; }
             state.Mask = newMask; _polarisCombat.Add(rt, state);
             return state;
         }
