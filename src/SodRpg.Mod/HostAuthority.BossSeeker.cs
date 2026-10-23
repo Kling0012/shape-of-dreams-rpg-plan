@@ -166,20 +166,30 @@ namespace SodRpg.Mod
         {
             if(_seekerStates.TryGetValue(rt,out var state))
             {
-                if(state.DoubleUntil>0 && (now>=state.DoubleUntil || !SeekerDoubleProfileValid(rt,state))) SeekerRemoveDouble(rt,state,now);
-                if(!ReferenceEquals(state.Stage2Build,rt.Powers.Build))
+                var build=rt.Powers.Build;
+                if(build==null)
                 {
-                    state.Stage2Build=rt.Powers.Build;
-                    if(!BossFind(rt,"boss_seeker.stage2",out _,out _)) state.Phase=0;
+                    // PowerRuntime は Build を必ず持たせるので通常は来ない。Build が無ければ
+                    // stage2 も分身のプロファイルも探しようがないので、キャッシュごと初期状態へ戻す。
+                    SeekerRemoveDouble(rt,state,now); state.Phase=0; state.Stage2Build=null; state.DoubleBuild=null;
+                }
+                else
+                {
+                    if(state.DoubleUntil>0 && (now>=state.DoubleUntil || !SeekerDoubleProfileValid(rt,state,build))) SeekerRemoveDouble(rt,state,now);
+                    if(!ReferenceEquals(state.Stage2Build,build))
+                    {
+                        state.Stage2Build=build;
+                        if(!BossFind(rt,"boss_seeker.stage2",out _,out _)) state.Phase=0;
+                    }
                 }
             }
             TickSeekerSoulPrison(rt,now);
         }
         // state.DoubleProfile が現行 Build にまだ在るか。同じ Build なら作成時の判定を流用する。
-        private bool SeekerDoubleProfileValid(HeroRuntime rt,SeekerState state)
+        private bool SeekerDoubleProfileValid(HeroRuntime rt,SeekerState state,Build build)
         {
-            if(ReferenceEquals(state.DoubleBuild,rt.Powers.Build)) return true;
-            state.DoubleBuild=rt.Powers.Build;
+            if(ReferenceEquals(state.DoubleBuild,build)) return true;
+            state.DoubleBuild=build;
             return BossFind(rt,state.DoubleProfile,out _,out _);
         }
         private void ClearSeekerBoss(HeroRuntime rt,bool preserveRewards=false)
