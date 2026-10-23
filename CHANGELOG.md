@@ -10,6 +10,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.50 — Lighter accessories, arrow aiming, cooking pot and PackGuard summons（2026-10-24）
+
+この版では、キャラクターに付く装飾品、矢印の照準、料理ポット、PackGuard の召喚物による護衛のまわりで続いていた無駄な処理を省き、プレイ中の負荷を減らしました。 / This version removes wasted work around accessories attached to characters, the arrow aiming indicator, the cooking pot and PackGuard summon guarding, reducing load during play.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- キャラクターの体の表面に付いて動きに追従する装飾品が、1人のキャラクターに複数付いていると、装飾品の数だけキャラクターの形のデータを丸ごと写し直していました。これは1秒に最大10回起き、ホストと参加者の両方で起きていました。今はキャラクター1人につき1回だけ写し、それを装飾品どうしで使い回します。装飾品を多く付けた英雄がいるほど、ホストと参加者の処理が軽くなります。装飾品の位置、向き、動きへの追従は変わりません。 / When a character wore several accessories attached to the body surface, the game copied the character's whole shape data once per accessory, up to 10 times per second, on both the host and co-op players. It now copies it once per character and shares it between accessories. The more accessories heroes wear, the lighter the host and players run. Accessory position, orientation and how they follow movement are unchanged.
+- 矢印の照準を出している間は、照準が何も変わっていなくても、ゲームが照準の表示を1フレームに2回描き直していました。今は向き、長さ、位置などが変わったときだけ描き直します。照準は画面に1つなので、軽くなる幅は小さめです。照準の見た目と、マウスやキャラクターの動きへの追従は変わりません。 / While the arrow aiming indicator was shown, the game redrew it twice every frame even when nothing about it had changed. It now redraws only when its direction, length, position or similar changes. Since only one indicator is on screen, the gain is small. The indicator's look and how it follows the mouse and the character are unchanged.
+- 料理ポットのそばに立っている間、素材を1つも持っていなくても、ゲームが毎フレーム英雄の素材を数え直していました。今は素材がないときはこの数え直しを省きます。素材を持っているときも、毎フレームの処理を少し減らしました。ポットのそばにいる間、ホストと参加者のどちらも自分の PC の処理が少し軽くなります。素材の数、調理できる量の上限、ポットを使えるかどうかは変わりません。 / While standing near a cooking pot, the game recounted the hero's ingredients every frame, even with no ingredients at all. It now skips this when there are none, and does a little less work every frame when there are some. Both host and co-op players run a little lighter on their own PC near the pot. Ingredient counts, the cooking amount limit and whether the pot can be used are unchanged.
+- PackGuard の効果で召喚物が一番弱い味方を守るとき、ホストのゲームが0.25秒ごとに、召喚物1体ごとに部屋の全員を調べ直して、その味方を狙う敵を探していました。今は1回の確認で1度だけ探し、全部の召喚物で使い回します。召喚物が多く、敵も多い部屋ほど、ホストの処理が少し軽くなります。召喚物が狙う敵の選び方は変わりません。 / When PackGuard summons protected the weakest ally, the host's game rescanned everyone in the room for each summon every 0.25 seconds, looking for enemies targeting that ally. It now searches once per check and shares the result across all summons. Rooms with many summons and many enemies now run a little lighter on the host. How summons choose which enemy to target is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.49 — Lighter combat around Primus, Light, Infernus, Azurak gear and keystone effects（2026-10-24）
 
 この版では、Primus、Light、Infernus、Azurak の装備と、刻印の効果のまわりで続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Primus, Light, Infernus and Azurak gear and keystone effects, reducing load during combat.
