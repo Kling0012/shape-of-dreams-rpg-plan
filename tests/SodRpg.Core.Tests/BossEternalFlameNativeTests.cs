@@ -34,6 +34,9 @@ namespace SodRpg.Core.Tests
     public class BossEternalFlameNativeTests : IDisposable
     {
         private const string HeroKey = "Hero_A";
+        private ZoneManager _previousZoneManager;
+        private Room _previousRoom;
+        private bool _zoneStateCaptured;
 
         public enum Premise { MoveGem, ChangeCaster, ChangeParent, ChangeGemOwner }
 
@@ -80,8 +83,15 @@ namespace SodRpg.Core.Tests
 
         // Infernus build（1部位=報酬段階0、4部位=段階2）のヒーロー。Identity の記憶と
         // その第1スロットの Gem_U_EternalFlame、対象 6s/残り 4s の呪いを組む。
-        private static Rig Create(int pieces)
+        private Rig Create(int pieces)
         {
+            if (!_zoneStateCaptured)
+            {
+                _previousZoneManager = NetworkedManagerBase<ZoneManager>.softInstance;
+                _previousRoom = _previousZoneManager?.currentRoom;
+                _zoneStateCaptured = true;
+            }
+            NetworkedManagerBase<ZoneManager>.softInstance ??= new ZoneManager();
             Mirror.NetworkServer.active = true;
             Time.time = 10f;
             NetworkedManagerBase<ZoneManager>.softInstance.currentRoom = new Room();
@@ -123,8 +133,15 @@ namespace SodRpg.Core.Tests
             HostAuthority.NativeInstance = null;
             Mirror.NetworkServer.active = false;
             Time.time = 0f;
-            NetworkedManagerBase<ZoneManager>.softInstance.currentRoom = new Room();
-            NetworkedManagerBase<ZoneManager>.softInstance.isInAnyTransition = false;
+            if (_zoneStateCaptured)
+            {
+                if (_previousZoneManager != null)
+                {
+                    _previousZoneManager.currentRoom = _previousRoom;
+                    _previousZoneManager.isInAnyTransition = false;
+                }
+                NetworkedManagerBase<ZoneManager>.softInstance = _previousZoneManager;
+            }
             NetworkedManagerBase<GameManager>.softInstance.runId = "native-run";
             EntityStatus.LiveStatusEffects.Clear();
             DewPhysics.Entities.Clear();
