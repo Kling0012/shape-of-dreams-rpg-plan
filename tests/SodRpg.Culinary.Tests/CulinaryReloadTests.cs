@@ -118,6 +118,47 @@ namespace SodRpg.Culinary.Tests
             Assert.Empty(Mod.Log.Warnings);
         }
 
+        [Fact]
+        public void ZeroNativeCountStaysZeroWithoutCapturingTheCapacity()
+        {
+            var copy = Load();
+            var effect = new Se_Gem_L_Culinary_Stack { maxStack = 40, stack = 0 };
+            // A missing effect and an empty stack are the two ways native reports zero;
+            // both must stay zero without the postfix touching the shared store.
+            Assert.Equal(0, Count(copy, Owner(effect), 0));
+            Assert.Equal(0, Count(copy, new Hero(), 0));
+            Assert.Equal(40, effect.maxStack); // the native maximum is never raised
+            var store = AppDomain.CurrentDomain.GetData(StoreKey)
+                as ConditionalWeakTable<StackedStatusEffect, Tuple<int>>;
+            Assert.False(store != null && store.TryGetValue(effect, out _));
+            Assert.Empty(Mod.Log.Warnings);
+        }
+
+        [Fact]
+        public void MutationsAfterASkippedZeroCountStillCaptureAndBoundTheBatch()
+        {
+            var copy = Load();
+            var set = new Se_Gem_L_Culinary_Stack { maxStack = 40, stack = 0 };
+            Assert.Equal(0, Count(copy, Owner(set), 0)); // the postfix skipped its capture
+            Call(copy, "BeforeMutation", set); // SetStack initializes on its own
+            Assert.Equal(int.MaxValue, set.maxStack);
+            var store = AppDomain.CurrentDomain.GetData(StoreKey)
+                as ConditionalWeakTable<StackedStatusEffect, Tuple<int>>;
+            Assert.True(store.TryGetValue(set, out var capacity));
+            Assert.Equal(40, capacity.Item1);
+            Assert.Equal(40, Count(copy, Owner(set), 100));
+
+            var added = new Se_Gem_L_Culinary_Stack { maxStack = 17, stack = 0 };
+            Assert.Equal(0, Count(copy, Owner(added), 0));
+            object[] arguments = { added, 90 };
+            Call(copy, "BeforeAdd", arguments); // AddStack initializes on its own too
+            added.AddStack((int)arguments[1]);
+            Assert.Equal(int.MaxValue, added.maxStack);
+            Assert.Equal(90, added.stack); // the growing inventory is not truncated
+            Assert.Equal(17, Count(copy, Owner(added), added.stack));
+            Assert.Empty(Mod.Log.Warnings);
+        }
+
         [Theory]
         [InlineData(-1)]
         [InlineData(0)]
