@@ -56,7 +56,13 @@ namespace SodRpg.Mod
                 ? new Scope{Beam=__instance,Target=e}:default(Scope);
             if(NetworkServer.active) HostAuthority.NativeInstance?.PrepareInkBeamHit(__instance);
         }
-        private static void Finalizer(Scope __state) { Current=__state; }
+        private static void Finalizer(Scope __state)
+        {
+            // The scope closes here (finally position): drop the per-Hit verdict with it so the
+            // reuse cannot cross a Hit boundary even if Current kept this beam's values.
+            if(NetworkServer.active) HostAuthority.NativeInstance?.FinishInkBeamHit(Current.Beam);
+            Current=__state;
+        }
     }
     [HarmonyPatch(typeof(Se_U_BeamOfBalance),"OnCreate")]
     internal static class InkBeamParentCreation
@@ -108,7 +114,7 @@ namespace SodRpg.Mod
             internal Action<EventInfoDamage> Damaged;
             internal Action<EventInfoHeal> Healed;
             internal DataProcessor<DamageData,Actor,Entity> Processor;
-            internal bool ProcessorAttached,DamageAttached,HealAttached;
+            internal bool ProcessorAttached,DamageAttached,HealAttached,HitPrepared;
             internal readonly List<long> PhantomVisuals=new List<long>(12);
             internal InkBeamState()
             {
@@ -217,10 +223,22 @@ namespace SodRpg.Mod
         internal void PrepareInkBeamHit(Ai_U_BeamOfBalance_Beam beam)
         {
             if(beam==null || !(beam.parentActor is Se_U_BeamOfBalance parent) || !_inkBeams.TryGetValue(parent,out var state) || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return;
-            BossEnsure(state.Runtime);
+            state.HitPrepared=false;
+            bool ensured=BossEnsure(state.Runtime);
             if(!InkBeamCurrent(state)) return;
             InkReconcile(state.Runtime,InkGet(state.Runtime));
             InkSyncBeamSubscriptions(state);
+            // The pre-change InkBeamNative could only return true after InkBeamCurrent AND
+            // BossEnsure both passed; a failed ensure must leave the reused verdict unset.
+            state.HitPrepared=ensured;
+        }
+        // The reused verdict must not outlive the Hit that armed it: InkBeamNativeHit's finalizer
+        // calls this where the native scope closes, so a dispatch outside a Hit always falls back
+        // to the full per-callback verification.
+        internal void FinishInkBeamHit(Ai_U_BeamOfBalance_Beam beam)
+        {
+            if(beam==null || !(beam.parentActor is Se_U_BeamOfBalance parent) || !_inkBeams.TryGetValue(parent,out var state)) return;
+            state.HitPrepared=false;
         }
         private bool InkBeamParentCurrent(InkBeamState state)
         {
@@ -236,7 +254,20 @@ namespace SodRpg.Mod
         private bool InkBeamNative(InkBeamState state,Actor actor,Entity target,bool enemy)
         {
             var hit=InkBeamNativeHit.Current;
-            if(hit.Beam!=state.Beam || hit.Target!=target || hit.Enemy!=enemy || actor!=state.Beam || AttributionGeneratedOrigin()!=GeneratedOrigin.None || !InkBeamCurrent(state)) return false;
+            if(hit.Beam!=state.Beam || hit.Target!=target || hit.Enemy!=enemy || actor!=state.Beam || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return false;
+            // A single native Hit re-runs this check per callback (processor, damage, heal). Reuse
+            // the verdict PrepareInkBeamHit reached at the top of the Hit; InkBeamNativeHit's
+            // finalizer drops it where the scope closes, so the reuse stays inside one Hit. Only
+            // liveness can flip synchronously between the dispatches, so re-check just parent,
+            // beam and caster.
+            // InkReconcile is not re-run either: it only acts when the power build or the beam
+            // memory skill changed, and the dispatch callbacks write counters, budgets, cooldown
+            // stamps and visuals only — never rt.Powers.Build or the hero's skill memory. Every
+            // per-callback reconcile inside one Hit therefore took InkReconcile's early-exit
+            // branch, so the prepare-time call covers the whole Hit.
+            if(state.HitPrepared)
+                return state.Parent!=null && state.Parent.isActive && state.Beam!=null && state.Beam.isActive && Alive(state.Runtime.Hero);
+            if(!InkBeamCurrent(state)) return false;
             if(!BossEnsure(state.Runtime)) return false;
             InkReconcile(state.Runtime,InkGet(state.Runtime));
             return true;
@@ -426,7 +457,7 @@ namespace SodRpg.Mod
             state.Host=null; state.Runtime=null; state.Parent=null; state.Beam=null; state.Skill=null; state.ParentActor=null; state.Room=null; state.Run=null;
             state.ParentCreation=state.BeamCreation=state.SkillCreation=state.H=state.WhiteSpent=state.DarkSpent=state.NextVisual=0;
             state.Life=state.LastAddedPacket=state.Visual=state.DarkVisual=state.ParentLife=state.BeamLife=state.SkillLife=state.ParentActorLife=0;
-            state.Magic=state.WhiteDisabled=state.DarkDisabled=state.ProcessorAttached=state.DamageAttached=state.HealAttached=false;
+            state.Magic=state.WhiteDisabled=state.DarkDisabled=state.ProcessorAttached=state.DamageAttached=state.HealAttached=state.HitPrepared=false;
             state.WhiteStage=state.DarkStage=state.Adds=state.Spears=state.Illuminations=state.WhiteTargets=0;
             state.White=state.Flat=state.Spear=state.Illumination=null; state.SpearAction=null;
             Array.Clear(state.WhiteHeroes,0,state.WhiteHeroes.Length); Array.Clear(state.WhiteHeroLives,0,state.WhiteHeroLives.Length);

@@ -92,7 +92,9 @@ namespace SodRpg.Mod
         }
         public int Shields;
         public float ShieldAmount, ShieldDuration;
-        private static bool Alive(Hero hero) => hero != null && hero.isActive;
+        // 本体（HostAuthority.cs）と同じ意味: 気絶（isKnockedOut）も生存扱いにしない。
+        // #1094 のビーム命中判定の流用テストがこの差に依存してしまう。
+        private static bool Alive(Hero hero) => hero != null && hero.isActive && !hero.isKnockedOut;
         private void LogPowerTrigger(Power power) { }
         private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
         { Shields++; ShieldAmount = amount; ShieldDuration = duration; }
