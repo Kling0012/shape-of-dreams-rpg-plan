@@ -161,6 +161,9 @@ namespace Mirror
         public static float Max(float a, float b) => a > b ? a : b;
         public static float Min(float a, float b) => a < b ? a : b;
         public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
+        // 照準矢印（NativeCastIndicatorLineRegionPerf）の形状見本が参照する本体 API。本体と同じ式。
+        public static float InverseLerp(float a, float b, float value)
+            => a != b ? Clamp01((value - a) / (b - a)) : 0f;
         public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
         // #1010: Notify の抽出が通知の行数（int）に使う本体 API。
         public static int Clamp(int value, int min, int max) => value < min ? min : value > max ? max : value;
