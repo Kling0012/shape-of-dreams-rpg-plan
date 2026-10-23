@@ -387,5 +387,38 @@ namespace SodRpg.Core.Tests
             AssertUntouched(Snap(allyOld, false, Gate(allyOld, false)), "ally hit after losing " + loss + " (per-callback, after dispatch)");
         }
 
+        // 修正ラウンド2（F1）: 判定の流用は1回の Hit に閉じる。InkBeamNativeHit のスコープが
+        // 閉じる位置（Finalizer）で HitPrepared を落とすため、Hit の外で起こったコールバックは、
+        // Current に前の Hit の値が残っている想定でも古い判定を拾わず、毎回の全検証に戻る。
+        // 対照例として、スコープを閉じなければ（判定が Hit をまたいで残れば）同じ場面で
+        // 生存確認だけを通ることを確かめる。
+        [Fact]
+        public void Closing_the_hit_scope_drops_the_reused_verdict()
+        {
+            var closed = Create(DarkMoon);
+            Focus(closed);
+            closed.Host.PrepareInkBeamHit(closed.Beam);
+            Assert.True(HitPrepared(closed));
+            SodRpg.Mod.InkBeamNativeHit.Current = new SodRpg.Mod.InkBeamNativeHit.Scope { Beam = closed.Beam, Target = closed.Enemy, Enemy = true };
+            var closeScope = typeof(SodRpg.Mod.InkBeamNativeHit).GetMethod("Finalizer", BindingFlags.NonPublic | BindingFlags.Static);
+            closeScope.Invoke(null, new object[] { default(SodRpg.Mod.InkBeamNativeHit.Scope) });
+            Assert.False(HitPrepared(closed), "closing the hit scope must drop the reused verdict");
+            Assert.Null(SodRpg.Mod.InkBeamNativeHit.Current.Beam);
+
+            // Hit の外のコールバック（前の Hit と同じ Current が残っている想定）。フラグが落ちて
+            // いるため全検証を通り、ゾーン遷移中は InkBeamCurrent（BossNativeContextCurrent）で止まる。
+            SodRpg.Mod.NetworkedManagerBase<SodRpg.Mod.ZoneManager>.softInstance.isInAnyTransition = true;
+            Assert.False(Gate(closed, true), "a callback outside the hit must re-run the full checks");
+            EnemyHit(closed, 777);
+            AssertUntouched(Snap(closed, true, Gate(closed, true)), "enemy hit outside the hit after the scope closed");
+
+            var stillArmed = Create(DarkMoon);
+            Focus(stillArmed);
+            stillArmed.Host.PrepareInkBeamHit(stillArmed.Beam);
+            Assert.True(HitPrepared(stillArmed));
+            SodRpg.Mod.NetworkedManagerBase<SodRpg.Mod.ZoneManager>.softInstance.isInAnyTransition = true;
+            Assert.True(Gate(stillArmed, true), "with the scope not yet closed the liveness-only reuse still applies");
+        }
+
     }
 }

@@ -56,7 +56,13 @@ namespace SodRpg.Mod
                 ? new Scope{Beam=__instance,Target=e}:default(Scope);
             if(NetworkServer.active) HostAuthority.NativeInstance?.PrepareInkBeamHit(__instance);
         }
-        private static void Finalizer(Scope __state) { Current=__state; }
+        private static void Finalizer(Scope __state)
+        {
+            // The scope closes here (finally position): drop the per-Hit verdict with it so the
+            // reuse cannot cross a Hit boundary even if Current kept this beam's values.
+            if(NetworkServer.active) HostAuthority.NativeInstance?.FinishInkBeamHit(Current.Beam);
+            Current=__state;
+        }
     }
     [HarmonyPatch(typeof(Se_U_BeamOfBalance),"OnCreate")]
     internal static class InkBeamParentCreation
@@ -226,6 +232,14 @@ namespace SodRpg.Mod
             // BossEnsure both passed; a failed ensure must leave the reused verdict unset.
             state.HitPrepared=ensured;
         }
+        // The reused verdict must not outlive the Hit that armed it: InkBeamNativeHit's finalizer
+        // calls this where the native scope closes, so a dispatch outside a Hit always falls back
+        // to the full per-callback verification.
+        internal void FinishInkBeamHit(Ai_U_BeamOfBalance_Beam beam)
+        {
+            if(beam==null || !(beam.parentActor is Se_U_BeamOfBalance parent) || !_inkBeams.TryGetValue(parent,out var state)) return;
+            state.HitPrepared=false;
+        }
         private bool InkBeamParentCurrent(InkBeamState state)
         {
             return NetworkServer.active && state.Parent!=null && state.Parent.isActive && state.Parent.creationTime==state.ParentCreation && state.Parent.parentActor==state.ParentActor
@@ -242,8 +256,10 @@ namespace SodRpg.Mod
             var hit=InkBeamNativeHit.Current;
             if(hit.Beam!=state.Beam || hit.Target!=target || hit.Enemy!=enemy || actor!=state.Beam || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return false;
             // A single native Hit re-runs this check per callback (processor, damage, heal). Reuse
-            // the verdict PrepareInkBeamHit reached at the top of the Hit; only liveness can flip
-            // synchronously between the dispatches, so re-check just parent, beam and caster.
+            // the verdict PrepareInkBeamHit reached at the top of the Hit; InkBeamNativeHit's
+            // finalizer drops it where the scope closes, so the reuse stays inside one Hit. Only
+            // liveness can flip synchronously between the dispatches, so re-check just parent,
+            // beam and caster.
             // InkReconcile is not re-run either: it only acts when the power build or the beam
             // memory skill changed, and the dispatch callbacks write counters, budgets, cooldown
             // stamps and visuals only — never rt.Powers.Build or the hero's skill memory. Every
