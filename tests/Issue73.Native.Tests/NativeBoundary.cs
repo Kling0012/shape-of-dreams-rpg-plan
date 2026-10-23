@@ -866,6 +866,43 @@ namespace SodRpg.Mod
     internal class BasicEffect { public bool isAlive = true; public StatusEffect parent; }
     internal sealed class StunEffect : BasicEffect { }
     internal sealed class RootEffect : BasicEffect { }
+    // （2026-10-24）本体の音の列挙と音源の初期設定（Dew.Core r1.4.1.2 逆コンパイルと同じ署名・
+    // 分類）。NativeAudioSetupIdlePerf が Prepare で SetupAudioSource と私的な
+    // GetNextDynamicPriority を解決し、Prefix で NeedsSetupEverytime を呼ぶため、本体どおりの
+    // 形だけを置く。本体の GetNextDynamicPriority は先頭で DewSave.platformSettings.audio.
+    // useAdvancedPrioritization を見て、無効なら輪を進めず 1 を返す（設定の分岐はこの私的メソッドの
+    // 中にあり、SetupAudioSource 側に設定の分岐はない。r1.4.1.2 逆コンパイル確認）。模倣は呼ばれる
+    // たびに値を変え、呼び出し回数を数える（Prefix が優先度へ代入する値と私的メソッドの呼び出し回数を
+    // 確かめるためのもの）。
+    internal enum AudioType : byte { UI = 0, Music = 1, SFX = 2, GameBoss = 3, GameSelf = 4, GameOtherPlayers = 7, GameOthers = 5, GameEnvironment = 6 }
+    internal enum AudioSpaceType { Normal, Global }
+    internal enum DewAudioRollOffType : byte { Default, Loud, Unity }
+    internal class AudioSource { public int priority { get; set; } }
+    internal class AudioManager
+    {
+        public static int NextDynamicPriorityCalls;
+        public static bool NeedsSetupEverytime(AudioType type)
+        {
+            switch (type)
+            {
+                case AudioType.UI:
+                case AudioType.Music:
+                case AudioType.SFX:
+                case AudioType.GameEnvironment:
+                    return false;
+                case AudioType.GameBoss:
+                case AudioType.GameSelf:
+                case AudioType.GameOtherPlayers:
+                case AudioType.GameOthers:
+                    return true;
+                default:
+                    throw new ArgumentOutOfRangeException("type", type, null);
+            }
+        }
+        public void SetupAudioSource(AudioSource source, AudioType type, AudioSpaceType space,
+            DewAudioRollOffType rolloff, bool forceCriticalPriority) { }
+        private int GetNextDynamicPriority(AudioSource source) => 100 + ++NextDynamicPriorityCalls;
+    }
     internal class StatusEffect : Actor
     {
         // 実機の StatusEffect.victim はプロパティ（実 DLL の IL は get_victim を呼ぶ）。
