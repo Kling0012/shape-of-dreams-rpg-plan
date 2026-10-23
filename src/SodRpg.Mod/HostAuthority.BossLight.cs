@@ -36,6 +36,10 @@ namespace SodRpg.Mod
             internal readonly RaycastHit2D[] Walls = new RaycastHit2D[32];
             internal readonly long[,] Seen = new long[4,64];
             internal readonly int[] Next = new int[4];
+            // BossMoves は Build の生成後に変化せず、装備の付け替えは BossEnsure が状態を一度捨てる。
+            // 9区分の在確認と (entry, profile) は作成時にだけ走査して覚える。
+            internal readonly BossMoveEntry[] Entries = new BossMoveEntry[9];
+            internal readonly BossMoveProfile[] Profiles = new BossMoveProfile[9];
             internal long OwnerLife, Epoch, ChargeVisual;
             internal Room Room;
             internal string Run;
@@ -68,14 +72,27 @@ namespace SodRpg.Mod
         private static float LightAmount(HeroRuntime rt,BossMoveEntry entry,BossMoveProfile profile,string channel)
             => Math.Max(0,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
                 * BossCoefficient(entry,profile,channel);
+        // 9区分の在確認をまとめて行い、(entry, profile) を state に覚える。呼ぶのは状態の作成時と
+        // 装備エポックが変わった最初の1回だけ。BossFind の結果は rt.Powers.Build.BossMoves と
+        // 静的な BossProfiles だけで決まり、BossMoves は Build の生成後に変わらない。
+        private int LightScan(HeroRuntime rt,LightCombat state)
+        {
+            int mask=0;
+            for(int i=0;i<LightProfiles.Length;i++)
+            {
+                if(BossFind(rt,LightProfiles[i],out var entry,out var profile))
+                { mask|=1<<i; state.Entries[i]=entry; state.Profiles[i]=profile; }
+                else { state.Entries[i]=null; state.Profiles[i]=null; }
+            }
+            return mask;
+        }
         private LightCombat LightState(HeroRuntime rt)
         {
             if(_lightCombat.TryGetValue(rt,out var state)) return state;
-            int mask=0;
-            for(int i=0;i<LightProfiles.Length;i++) if(BossFind(rt,LightProfiles[i],out _,out _)) mask|=1<<i;
-            if(mask==0 || _lightCombat.Count>=64 || (state=_lightPool.Rent())==null) return null;
-            state.Mask=mask; state.Epoch=rt.Boss.Epoch; state.OwnerLife=BossNativeActorLife(rt.Hero);
+            if(_lightCombat.Count>=64 || (state=_lightPool.Rent())==null) return null;
+            state.Mask=LightScan(rt,state); state.Epoch=rt.Boss.Epoch; state.OwnerLife=BossNativeActorLife(rt.Hero);
             state.Room=rt.Boss.Room; state.Run=rt.Boss.Run;
+            if(state.Mask==0) { _lightPool.Return(state); return null; }
             _lightCombat.Add(rt,state); return state;
         }
         private static Vector3 LightDirection(HeroRuntime rt,BossEvent kind,Vector3 point)
@@ -99,7 +116,8 @@ namespace SodRpg.Mod
             if(row<2) LightChargeInput(rt,state,origin,direction,now);
             for(int index=0;index<6;index++)
             {
-                if(!BossFind(rt,LightProfiles[index],out var entry,out var profile)) continue;
+                var entry=state.Entries[index]; var profile=state.Profiles[index];
+                if(profile==null) continue; // 在確認は LightScan で確定済み。イベントごとの BossFind 全走査の代わりに判定を流用する。
                 var action=profile.Actions[0];
                 if(action.Event!=kind) continue;
                 if(index==4)
@@ -136,7 +154,8 @@ namespace SodRpg.Mod
         }
         private void LightChargeInput(HeroRuntime rt,LightCombat state,Vector3 origin,Vector3 direction,float now)
         {
-            if(!BossFind(rt,LightProfiles[6],out var entry,out var profile)) return;
+            var entry=state.Entries[6]; var profile=state.Profiles[6];
+            if(profile==null) return;
             if(profile.Actions.Count<2)
             {
                 // Fail-soft: without the second action the charge count and lifetime are unknown, so only this
@@ -157,12 +176,15 @@ namespace SodRpg.Mod
             }
             if(!LightAvailable(rt,action,now) || LightBeamActive(state,profile.Id) || LightFreeBeams(state)==0) return;
             var beam=LightAddBeam(rt,state,profile.Id,action,origin,direction,LightAmount(rt,entry,profile,action.ChannelId),now+action.DelayMillis/1000f,0,0);
-            if(BossFind(rt,LightProfiles[7],out var terminalEntry,out var terminalProfile))
+            var terminalProfile=state.Profiles[7];
+            if(terminalProfile!=null)
             {
-                beam.Terminal=terminalProfile.Actions[0]; beam.TerminalAmount=LightAmount(rt,terminalEntry,terminalProfile,beam.Terminal.ChannelId);
+                beam.Terminal=terminalProfile.Actions[0]; beam.TerminalAmount=LightAmount(rt,state.Entries[7],terminalProfile,beam.Terminal.ChannelId);
             }
             state.Charges=0; state.ChargeUntil=0; LightPublishCharges(rt,state,now); LightCommit(rt,action,now);
-            if(!BossFind(rt,LightProfiles[8],out var phaseEntry,out var phaseProfile)) return;
+            var phaseProfile=state.Profiles[8];
+            if(phaseProfile==null) return;
+            var phaseEntry=state.Entries[8];
             var sweep=phaseProfile.Actions[0];
             if(!LightAvailable(rt,sweep,now) || LightBeamActive(state,phaseProfile.Id) || LightFreeBeams(state)<3) return;
             if(!LightSupportPoints(origin,direction,out var first,out var second)) return;
@@ -181,7 +203,7 @@ namespace SodRpg.Mod
         }
         private void LightStartPhase(HeroRuntime rt,LightCombat state,LightBeamState source,float now)
         {
-            if(source.PhaseAction==null || !BossFind(rt,LightProfiles[8],out _,out _)
+            if(source.PhaseAction==null || state.Profiles[8]==null
                 || LightBeamActive(state,LightProfiles[8]) || LightFreeBeams(state)<3) return;
             for(int i=0;i<3;i++)
             {
@@ -253,7 +275,7 @@ namespace SodRpg.Mod
             {
                 beam.Started=true;
                 LightStartPhase(rt,state,beam,now);
-                if(beam.Terminal!=null && BossFind(rt,LightProfiles[7],out _,out _))
+                if(beam.Terminal!=null && state.Profiles[7]!=null)
                 {
                     var sequence=rt.Boss.Sequence.Reset();
                     sequence.Add(new BossScheduledPulse(beam.Terminal,actualEnd,actualEnd,beam.TerminalAmount,beam.Magic,650));
@@ -360,13 +382,16 @@ namespace SodRpg.Mod
             TickWorldCrackers(rt,now);
             if(!_lightCombat.TryGetValue(rt,out var state)) return;
             if(rt.Boss.Build==null || !BossAlive(rt.Hero) || state.Epoch!=rt.Boss.Epoch || !BossNativeSameLife(rt.Hero,state.OwnerLife) || !BossNativeContextCurrent(state.Room,state.Run)) { ClearLightBoss(rt,true); return; }
-            int mask=0;
-            for(int i=0;i<LightProfiles.Length;i++)
+            // 在確認は LightScan で確定済み。装備の付け替えは BossEnsure が一度状態を捨てるので、
+            // 通常のティックでは9区分の BossFind 全走査を繰り返さない。エポックが変わったときだけ
+            // 付け直して、消えた区分があれば従来どおり状態を撤去する。
+            if(state.Epoch!=rt.ShieldEquipmentEpoch)
             {
-                if(BossFind(rt,LightProfiles[i],out _,out _)) mask|=1<<i;
-                else if((state.Mask&(1<<i))!=0) LightCancelProfile(rt,state,i,now);
+                int mask=LightScan(rt,state);
+                for(int i=0;i<LightProfiles.Length;i++)
+                    if((state.Mask&(1<<i))!=0 && (mask&(1<<i))==0) LightCancelProfile(rt,state,i,now);
+                state.Mask=mask; if(mask==0) { ClearLightBoss(rt,true); return; }
             }
-            state.Mask=mask; if(mask==0) { ClearLightBoss(rt,true); return; }
             if(state.Charges>0 && now>=state.ChargeUntil) { state.Charges=0; LightPublishCharges(rt,state,now); }
             else if(state.Charges>0 && now>=state.ChargeRefresh) LightPublishCharges(rt,state,now);
             LightTickCrystals(rt,state,now);
