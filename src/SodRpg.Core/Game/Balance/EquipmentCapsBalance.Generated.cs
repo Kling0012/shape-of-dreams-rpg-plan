@@ -125,6 +125,7 @@ namespace SodRpg.Core.Game
         internal const int Stat_SummonPower = 80;
         internal const int Stat_SacrificeReduction = 40;
         internal const int Stat_HealingReceivedPct = 60;
+        internal const int Stat_ThornsResistancePct = 60;
 
         internal static readonly string[] ContentFingerprintRecords = new string[]
         {
@@ -250,6 +251,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:caps:v1:stat/ShieldPower/cap:int32:value=60",
             "balance:equipment:caps:v1:stat/SummonPower/cap:int32:value=80",
             "balance:equipment:caps:v1:stat/Tenacity/cap:int32:value=60",
+            "balance:equipment:caps:v1:stat/ThornsResistancePct/cap:int32:value=60",
         };
     }
 }

@@ -609,7 +609,7 @@ namespace SodRpg.Mod
             rt.PressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
             {
                 // Preserve the legacy path in solo/OFF; assigned children apply pressure just once.
-                if (OwnershipReplacesAncestorPressure(actor, monster)) return;
+                if (damage.IsAmountModifiedBy(typeof(Nightmares)) || OwnershipReplacesAncestorPressure(actor, monster)) return;
                 float multiplier = (float)_pressure.DamageMultiplier;
                 OverrideOwnershipDamage(monster, ref multiplier);
                 damage.ApplyAmplification(multiplier - 1f);
@@ -847,6 +847,10 @@ namespace SodRpg.Mod
             foreach (var k in _thornsScratch) _thornsNextReflect.Remove(k);
         }
 
+        private sealed class ThornsWindow { internal float Next; }
+        private readonly ConditionalWeakTable<Hero, ThornsWindow> _thornsWindows =
+            new ConditionalWeakTable<Hero, ThornsWindow>();
+
         private void OnMonsterDamageTaken(EventInfoDamage info)
         {
             try
@@ -857,16 +861,22 @@ namespace SodRpg.Mod
                 var attacker = info.actor != null ? info.actor as Entity ?? info.actor.firstEntity : null;
                 if (!(attacker is Hero hero) || !Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy) return;
                 float now = Time.time;
+                // A traveler's reflection window is shared by every Thorned enemy.
+                var window = _thornsWindows.GetOrCreateValue(hero);
+                if (now < window.Next) return;
                 var key = new KeyValuePair<Monster, Hero>(m, hero);
                 if (_thornsNextReflect.TryGetValue(key, out float next) && now < next) return;
                 _thornsNextReflect[key] = now + Nightmares.ThornsReflectInterval;
                 if (_thornsNextReflect.Count > 256) PruneThornsTimers(now);
-                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth);
+                int resistance = _runtimes.TryGetValue(hero, out var heroRuntime)
+                    ? heroRuntime.Powers.Build.Get(Stat.ThornsResistancePct) : 0;
+                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth, resistance);
                 if (amount <= 0f) return;
+                window.Next = now + Nightmares.ThornsReflectInterval;
                 _reflectingDamage = true;
                 try
                 {
-                    m.PureDamage(amount, 0f)
+                    m.PureDamage(amount, 0f).SetAmountModifiedBy(typeof(Nightmares))
                         .Dispatch(hero, _registeredOn != null ? info.chain.New(_registeredOn) : info.chain);
                     LogAffixTrigger(NightmareAffix.Thorned, "reflected");
                 }

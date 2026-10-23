@@ -136,7 +136,7 @@
   </Target>
 
   <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts;HasThornsResistance" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese;_relicThornsResistance" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>

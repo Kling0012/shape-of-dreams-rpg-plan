@@ -104,6 +104,11 @@
         "max": 12,
         "weight": 8
       },
+      "ThornsResistancePct": {
+        "min": 6,
+        "max": 12,
+        "weight": 8
+      },
       "MoveSpeedPct": {
         "min": 2,
         "max": 4,
@@ -232,6 +237,11 @@
         "weight": 4
       },
       "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 6
+      },
+      "ThornsResistancePct": {
         "min": 6,
         "max": 12,
         "weight": 6
@@ -423,6 +433,11 @@
         "weight": 6
       },
       "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 8
+      },
+      "ThornsResistancePct": {
         "min": 6,
         "max": 12,
         "weight": 8

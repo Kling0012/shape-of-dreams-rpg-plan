@@ -4773,6 +4773,7 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.Armor, AffixPoolsBalance.Armor_Armor_Min, AffixPoolsBalance.Armor_Armor_Max, AffixPoolsBalance.Armor_Armor_Weight),
                 new AffixDef(Stat.HealthRegen, AffixPoolsBalance.Armor_HealthRegen_Min, AffixPoolsBalance.Armor_HealthRegen_Max, AffixPoolsBalance.Armor_HealthRegen_Weight),
                 new AffixDef(Stat.Tenacity, AffixPoolsBalance.Armor_Tenacity_Min, AffixPoolsBalance.Armor_Tenacity_Max, AffixPoolsBalance.Armor_Tenacity_Weight),
+                new AffixDef(Stat.ThornsResistancePct, AffixPoolsBalance.Armor_ThornsResistancePct_Min, AffixPoolsBalance.Armor_ThornsResistancePct_Max, AffixPoolsBalance.Armor_ThornsResistancePct_Weight),
                 new AffixDef(Stat.MoveSpeedPct, AffixPoolsBalance.Armor_MoveSpeedPct_Min, AffixPoolsBalance.Armor_MoveSpeedPct_Max, AffixPoolsBalance.Armor_MoveSpeedPct_Weight),
                 new AffixDef(Stat.Haste, AffixPoolsBalance.Armor_Haste_Min, AffixPoolsBalance.Armor_Haste_Max, AffixPoolsBalance.Armor_Haste_Weight),
                 new AffixDef(Stat.LightAmp, AffixPoolsBalance.Armor_LightAmp_Min, AffixPoolsBalance.Armor_LightAmp_Max, AffixPoolsBalance.Armor_LightAmp_Weight),
@@ -4802,6 +4803,7 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.LightAmp, AffixPoolsBalance.Charm_LightAmp_Min, AffixPoolsBalance.Charm_LightAmp_Max, AffixPoolsBalance.Charm_LightAmp_Weight),
                 new AffixDef(Stat.DarkAmp, AffixPoolsBalance.Charm_DarkAmp_Min, AffixPoolsBalance.Charm_DarkAmp_Max, AffixPoolsBalance.Charm_DarkAmp_Weight),
                 new AffixDef(Stat.Tenacity, AffixPoolsBalance.Charm_Tenacity_Min, AffixPoolsBalance.Charm_Tenacity_Max, AffixPoolsBalance.Charm_Tenacity_Weight),
+                new AffixDef(Stat.ThornsResistancePct, AffixPoolsBalance.Charm_ThornsResistancePct_Min, AffixPoolsBalance.Charm_ThornsResistancePct_Max, AffixPoolsBalance.Charm_ThornsResistancePct_Weight),
                 new AffixDef(Stat.CritDamagePct, AffixPoolsBalance.Charm_CritDamagePct_Min, AffixPoolsBalance.Charm_CritDamagePct_Max, AffixPoolsBalance.Charm_CritDamagePct_Weight),
                 new AffixDef(Stat.HealPower, AffixPoolsBalance.Charm_HealPower_Min, AffixPoolsBalance.Charm_HealPower_Max, AffixPoolsBalance.Charm_HealPower_Weight),
                 new AffixDef(Stat.ShieldPower, AffixPoolsBalance.Charm_ShieldPower_Min, AffixPoolsBalance.Charm_ShieldPower_Max, AffixPoolsBalance.Charm_ShieldPower_Weight),
@@ -4848,6 +4850,7 @@ namespace SodRpg.Core.Game
             {
                 new AffixDef(Stat.MoveSpeedPct, AffixPoolsBalance.Feet_MoveSpeedPct_Min, AffixPoolsBalance.Feet_MoveSpeedPct_Max, AffixPoolsBalance.Feet_MoveSpeedPct_Weight),
                 new AffixDef(Stat.Tenacity, AffixPoolsBalance.Feet_Tenacity_Min, AffixPoolsBalance.Feet_Tenacity_Max, AffixPoolsBalance.Feet_Tenacity_Weight),
+                new AffixDef(Stat.ThornsResistancePct, AffixPoolsBalance.Feet_ThornsResistancePct_Min, AffixPoolsBalance.Feet_ThornsResistancePct_Max, AffixPoolsBalance.Feet_ThornsResistancePct_Weight),
                 new AffixDef(Stat.Armor, AffixPoolsBalance.Feet_Armor_Min, AffixPoolsBalance.Feet_Armor_Max, AffixPoolsBalance.Feet_Armor_Weight),
                 new AffixDef(Stat.MaxHealthPct, AffixPoolsBalance.Feet_MaxHealthPct_Min, AffixPoolsBalance.Feet_MaxHealthPct_Max, AffixPoolsBalance.Feet_MaxHealthPct_Weight),
                 new AffixDef(Stat.MaxHealthFlat, AffixPoolsBalance.Feet_MaxHealthFlat_Min, AffixPoolsBalance.Feet_MaxHealthFlat_Max, AffixPoolsBalance.Feet_MaxHealthFlat_Weight),
@@ -5237,6 +5240,7 @@ namespace SodRpg.Core.Game
             [Stat.Haste] = EquipmentCapsBalance.Stat_Haste,
             [Stat.MoveSpeedPct] = EquipmentCapsBalance.Stat_MoveSpeedPct,
             [Stat.Tenacity] = EquipmentCapsBalance.Stat_Tenacity,
+            [Stat.ThornsResistancePct] = EquipmentCapsBalance.Stat_ThornsResistancePct,
             [Stat.FireAmp] = EquipmentCapsBalance.Stat_FireAmp,
             [Stat.ColdAmp] = EquipmentCapsBalance.Stat_ColdAmp,
             [Stat.LightAmp] = EquipmentCapsBalance.Stat_LightAmp,
@@ -5645,6 +5649,7 @@ namespace SodRpg.Core.Game
                 case Stat.Haste: return Loc.T($"スキル加速 {sign}{v}（記憶のクールダウン回復を速める）", $"Ability haste {sign}{v} (speeds up memory cooldown recovery)", $"技能加速 {sign}{v}（加快记忆的冷却恢复）");
                 case Stat.MoveSpeedPct: return Loc.T($"移動速度 {sign}{v}%", $"Movement speed {sign}{v}%", $"移动速度 {sign}{v}%");
                 case Stat.Tenacity: return Loc.T($"行動妨害耐性 {sign}{v}（受ける行動妨害の持続時間を短くする）", $"Tenacity {sign}{v} (shortens crowd-control effects on you)", $"行动干扰抗性 {sign}{v}（缩短所受控制效果的持续时间）");
+                case Stat.ThornsResistancePct: return Loc.T($"棘耐性 {sign}{v}%（棘皮の反射ダメージを軽減。合計最大60%）", $"Thorns resistance {sign}{v}% (reduces Thorned reflection, up to 60% total)", $"棘皮抗性 {sign}{v}%（降低棘皮反伤，合计最高60%）");
                 case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%", $"火属性效果 {sign}{v}%");
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%", $"冰属性效果 {sign}{v}%");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%", $"光属性效果 {sign}{v}%");

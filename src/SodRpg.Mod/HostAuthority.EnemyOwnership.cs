@@ -341,7 +341,7 @@ namespace SodRpg.Mod
             };
             state.Damage = (ref DamageData damage, Actor actor, Entity target) =>
             {
-                if (OwnershipSource(actor) != state.Enemy) return;
+                if (damage.IsAmountModifiedBy(typeof(Nightmares)) || OwnershipSource(actor) != state.Enemy) return;
                 if (!OwnershipSupplementPressure(state)) return;
                 float multiplier = (float)_pressure.DamageMultiplier;
                 OverrideOwnershipDamage(state.Enemy, ref multiplier);
