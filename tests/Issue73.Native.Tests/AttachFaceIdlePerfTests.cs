@@ -14,7 +14,9 @@ namespace Issue73.Native.Tests
     /// bakeUnscaledTime == Time.unscaledTime のときだけ真）なので、記録と判定も同じ時刻で行う。
     /// ShouldSkipLookup は境界（焼き直しと同じフレーム・記録の方が新しい時刻・間隔ちょうど・間隔内・
     /// 間隔超過）、Prefix は記録なし・設定 OFF で本体に戻ることと、焼き直し後の間隔内の照会だけを
-    /// 偽で省略すること、Postfix は isNew のときだけ記録すること、RecordNewBake はしきい値超過時に
+    /// 偽で省略すること、Postfix は isNew のとき、省略（nativeAttachFaceIdle）と焼き頂点の
+    /// 共有（nativeAttachFaceSharedVerts）のどちらかが ON のときだけ記録すること、
+    /// RecordNewBake はしきい値超過時に
     /// 間隔を過ぎた項目だけを掃除して省略を続けること、PruneStale は前回の掃除から間隔が過ぎるまで
     /// 再走査しないことを確かめる。
     /// </summary>
@@ -119,6 +121,7 @@ namespace Issue73.Native.Tests
         public void PostfixRecordsTheBakeOnlyWhenTheMeshIsNew()
         {
             var savedOption = NativePerfOptions.AttachFaceIdle;
+            var savedShared = NativePerfOptions.AttachFaceSharedVerts;
             var savedTime = Time.unscaledTime;
             try
             {
@@ -134,11 +137,16 @@ namespace Issue73.Native.Tests
 
                 NativePerfOptions.AttachFaceIdle = false;
                 Postfix(new SkinnedMeshRenderer(), true);
-                Assert.Single(LastNewBake()); // 設定 OFF の間は記録しない
+                Assert.Equal(2, LastNewBake().Count); // 共有頂点キャッシュが ON なら記録が続く
+
+                NativePerfOptions.AttachFaceSharedVerts = false;
+                Postfix(new SkinnedMeshRenderer(), true);
+                Assert.Equal(2, LastNewBake().Count); // 両方 OFF の間は記録しない
             }
             finally
             {
                 NativePerfOptions.AttachFaceIdle = savedOption;
+                NativePerfOptions.AttachFaceSharedVerts = savedShared;
                 Time.unscaledTime = savedTime;
             }
         }

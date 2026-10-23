@@ -26,7 +26,7 @@ namespace UnityEngine
     }
 
     // （#866）掃引の始点をずらす回転。Quaternion は CameraZoomRotationPerfBoundary.cs の
-    // 既存の境界（op_Multiply は点をそのまま返す）を使うため、ここには置かない。
+    // 既存の境界（op_Multiply は本体と同じ回転）を使うため、ここには置かない。
     // 基底の Component はここで宣言した部分宣言だけに書く（ほかの部分宣言は基底を書かない）。
     internal partial class Transform : Component
     {

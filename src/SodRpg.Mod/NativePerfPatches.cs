@@ -25,6 +25,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.GuestPublishLimit = config.nativeGuestPublishLimit;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
+            NativePerfOptions.AttachFaceSharedVerts = config.nativeAttachFaceSharedVerts;
             NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
@@ -80,6 +81,7 @@ namespace SodRpg.Mod
         internal static bool ProcCoalesce = true;
         internal static bool GuestPublishLimit = true;
         internal static bool AttachFaceIdle = true;
+        internal static bool AttachFaceSharedVerts = true;
         internal static bool EmbracePosition = true;
         internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
@@ -591,7 +593,10 @@ namespace SodRpg.Mod
         // could mask one re-bake for at most BakeMeshInterval — a brief accessory follow
         // lag that the next bake heals; the nativeAttachFaceIdle option turns the skip off.
         private const int PruneThreshold = 64;
-        private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
+        // Shared by NativeAttachFaceSharedVerts (same file): that patch reads the tracker to
+        // decide which frames can report isNew. Internal so the sibling class needs no
+        // reflection; the tests reach it the same way either way.
+        internal static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
         // Reused sweep scratch: RecordNewBake fires on every new bake (several per frame
         // in crowded scenes), so the sweep itself must not allocate (principle II).
         private static readonly List<int> StaleScratch = new List<int>();
@@ -732,12 +737,13 @@ namespace SodRpg.Mod
 
         // Every play-mode bake goes through this method, including bakes triggered by
         // other users of the same renderer, so the tracker above never misses a new mesh.
+        // The record feeds both the idle skip and the shared-vertex cache below.
         private static void Postfix(SkinnedMeshRenderer skin, bool isNew)
         {
             if (NativeAttachFaceIdlePerf.Disabled) return;
             try
             {
-                if (isNew && NativePerfOptions.AttachFaceIdle)
+                if (isNew && (NativePerfOptions.AttachFaceIdle || NativePerfOptions.AttachFaceSharedVerts))
                     NativeAttachFaceIdlePerf.RecordNewBake(skin);
             }
             catch (Exception ex)
@@ -747,6 +753,228 @@ namespace SodRpg.Mod
                 NativeAttachFaceIdlePerf.Disabled = true;
                 NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAttachFaceSharedVerts
+    {
+        // AttachToFace.TryGetWorldPositionAndRotation runs once per frame per face
+        // accessory on every client, guests included. On the frame a skin re-bakes
+        // (Dew.GetBakedMeshOptimized reports isNew, at most once per Dew.BakeMeshInterval)
+        // its populate copies the whole baked vertex list into the caller's pooled list to
+        // read exactly three vertices — so a hero wearing several face accessories makes
+        // every client repeat the same full-mesh copy once per accessory, ten times per
+        // second. This prefix serves that one frame per bake from a single cached copy per
+        // skin: the first caller fills it with the same Mesh.GetVertices call the native
+        // path makes, the rest read their three vertices from it.
+        //
+        // Frames without a bake are untouched: the tracker's skip test also proves isNew is
+        // impossible there (a bake this frame would have been recorded under the current
+        // unscaledTime), and on those frames the native populate returns false without
+        // copying anything. The cache is only read in the same frame it was filled
+        // (BakedTime == Time.unscaledTime), and a bake can only happen inside
+        // GetBakedMeshOptimized — the very call this prefix makes — so a cache hit always
+        // holds the vertices the native path would have copied, bit for bit.
+        //
+        // The replaced body is the shipped arithmetic verbatim; the two helpers it calls
+        // are inlined as well. All three shipped bodies are fingerprinted like
+        // NativeEmbracePositionPerf does (2026-10-24, ilspycmd + reflection on the shipped
+        // Dew.Core.dll r1.4.1.2), so a game update that edits any of them turns this patch
+        // off instead of silently using stale math. TryGetWorldPositionAndRotation is only
+        // reachable from AttachToFace.Update's play-mode branch (the edit-mode branch
+        // returns before calling it, decompiled 2026-10-24); a future edit-mode caller
+        // would make GetBakedMeshOptimized throw, which disables this patch with one
+        // warning and leaves the native behavior in place.
+        //
+        // Riding on the shared bake tracker means a tracker failure also silences this
+        // patch: it then hands every frame back to the native path — correct, just no
+        // longer shared. Cache growth is bounded like the tracker: entries only fill on
+        // witnessed bakes and are swept once the count passes the threshold, at most once
+        // per bake interval; a swept entry costs one refill, not correctness. Staleness
+        // starts several bake intervals out (see PruneStale), so entries whose skins keep
+        // baking — refreshing their entry each interval — are never swept.
+        internal const int NativeTryGetIlLength = 241;
+        internal const ulong NativeTryGetIlHash = 5068565405368308652UL;
+        internal const int NativeTryGetLocals = 7;
+        internal const int NativeFaceRotationIlLength = 107;
+        internal const ulong NativeFaceRotationIlHash = 187308829083148739UL;
+        internal const int NativeFaceRotationLocals = 4;
+        internal const int NativeTransformPointIlLength = 24;
+        internal const ulong NativeTransformPointIlHash = 12150565633245802773UL;
+        internal const int NativeTransformPointLocals = 0;
+
+        private const int PruneThreshold = 16;
+        // A skin still wearing attachments re-bakes at most once per Dew.BakeMeshInterval,
+        // so an entry in use refreshes at that cadence. Sweeping at exactly one interval
+        // would evict entries only marginally past it between bakes — still in use — and
+        // every eviction discards a list Mesh.GetVertices grew to full mesh size (thousands
+        // of vertices) that the next bake must grow again (principle II). Only an entry
+        // several intervals without any bake — a destroyed renderer, or a skin whose face
+        // attachments are all gone — never fills again and is dead weight.
+        private const float StaleAfterIntervals = 10f;
+        private const string Feature = "attach face shared verts";
+
+        private sealed class SharedVerts
+        {
+            internal float BakedTime;
+            internal readonly List<Vector3> Vertices = new List<Vector3>();
+        }
+
+        private static readonly Dictionary<int, SharedVerts> Shared = new Dictionary<int, SharedVerts>();
+        // Reused sweep scratch: fills fire once per bake (up to ten per second per skin),
+        // so the sweep must not allocate, like NativeAttachFaceIdlePerf.PruneStale.
+        private static readonly List<int> StaleScratch = new List<int>();
+        private static float _lastPruneTime;
+        private static MethodInfo _tryGet;
+        internal static bool Disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _tryGet = AccessTools.DeclaredMethod(typeof(AttachToFace), "TryGetWorldPositionAndRotation");
+                if (_tryGet == null || _tryGet.IsStatic || _tryGet.ReturnType != typeof(bool))
+                    throw new MissingMethodException("AttachToFace.TryGetWorldPositionAndRotation");
+                return MatchesShippedBody(_tryGet, NativeTryGetIlLength, NativeTryGetIlHash, NativeTryGetLocals)
+                    && MatchesShippedBody(AccessTools.DeclaredMethod(typeof(AttachToFace), "GetFaceRotation"),
+                        NativeFaceRotationIlLength, NativeFaceRotationIlHash, NativeFaceRotationLocals)
+                    && MatchesShippedBody(AccessTools.DeclaredMethod(typeof(AttachToFace), "TransformPointUnscaled"),
+                        NativeTransformPointIlLength, NativeTransformPointIlHash, NativeTransformPointLocals);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return false;
+            }
+        }
+
+        private static bool MatchesShippedBody(MethodBase method, int ilLength, ulong hash, int locals)
+        {
+            try
+            {
+                if (method == null) throw new MissingMethodException("AttachToFace helper");
+                var body = method.GetMethodBody();
+                if (body == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, Feature, "native " + method.Name + " body unavailable");
+                    return false;
+                }
+                byte[] il = body.GetILAsByteArray();
+                if (il.Length == ilLength && NativeEmbracePositionPerf.Fnv1a(il) == hash
+                    && body.LocalVariables.Count == locals && body.ExceptionHandlingClauses.Count == 0)
+                    return true;
+                NativePerfPatch.Warn(ref _warned, Feature, "native " + method.Name + " body changed (il " + il.Length + ")");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodInfo TargetMethod() => _tryGet;
+
+        private static List<Vector3> SharedVertices(int skinId, float now, Mesh mesh)
+        {
+            if (!Shared.TryGetValue(skinId, out SharedVerts entry))
+            {
+                if (Shared.Count > PruneThreshold) PruneStale(now);
+                entry = new SharedVerts();
+                Shared[skinId] = entry;
+            }
+            if (entry.BakedTime != now)
+            {
+                // Mesh.GetVertices refills the whole list for the current bake, exactly like
+                // the native per-instance copy; sharing only makes the fill once per skin
+                // and bake. List capacity persists across bakes, so refills do not allocate.
+                mesh.GetVertices(entry.Vertices);
+                entry.BakedTime = now;
+            }
+            return entry.Vertices;
+        }
+
+        // Bounds the table like the tracker's sweep, but staleness starts StaleAfterIntervals
+        // out (default 1 second): evicting at one interval would drop entries whose skins
+        // merely sit between bakes, forcing the shared list — grown to full mesh size — to
+        // be rebuilt on the next bake. Entries past the stale window can never fill again
+        // (their skin has not baked for seconds), so removing them cannot change behavior;
+        // the sweep itself stays at the tracker's cadence of at most once per bake interval.
+        private static void PruneStale(float now)
+        {
+            if (now - _lastPruneTime <= Dew.BakeMeshInterval) return;
+            _lastPruneTime = now;
+            foreach (KeyValuePair<int, SharedVerts> pair in Shared)
+                if (now - pair.Value.BakedTime > Dew.BakeMeshInterval * StaleAfterIntervals)
+                    StaleScratch.Add(pair.Key);
+            for (int i = 0; i < StaleScratch.Count; i++)
+                Shared.Remove(StaleScratch[i]);
+            StaleScratch.Clear();
+        }
+
+        private static bool Prefix(AttachToFace __instance, out Vector3 position, out Quaternion rotation, ref bool __result)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+            if (Disabled || !NativePerfOptions.AttachFaceSharedVerts || NativeAttachFaceIdlePerf.Disabled) return true;
+            try
+            {
+                SkinnedMeshRenderer skin = __instance.targetRenderer;
+                if (skin == null || __instance.vertexIndex0 < 0) return true;
+                // Ride the bake tracker: a frame it would skip cannot report isNew (a bake
+                // this frame would carry the current unscaledTime), and a skin without a
+                // record never baked for this MOD, so the native populate stays on its own
+                // cheap path there.
+                if (!NativeAttachFaceIdlePerf.LastNewBake.TryGetValue(skin.GetInstanceID(), out float baked)) return true;
+                float now = Time.unscaledTime;
+                if (NativeAttachFaceIdlePerf.ShouldSkipLookup(baked, now, Dew.BakeMeshInterval)) return true;
+                Dew.GetBakedMeshOptimized(skin, out Mesh mesh, out Dew.BakedMeshHandle handle, out bool isNew);
+                try
+                {
+                    if (!isNew) return true; // tracker and bake clock disagree; the native path decides
+                    List<Vector3> vertices = SharedVertices(skin.GetInstanceID(), now, mesh);
+                    // Native arithmetic verbatim (TryGetWorldPositionAndRotation after a
+                    // successful populate): center of the three baked vertices, face
+                    // rotation from the face plane, offset by the stored relative pose.
+                    Vector3 a = vertices[__instance.vertexIndex0];
+                    Vector3 b = vertices[__instance.vertexIndex1];
+                    Vector3 c = vertices[__instance.vertexIndex2];
+                    Vector3 center = (a + b + c) / 3f;
+                    Quaternion faceRotation = GetFaceRotation(a, b, c);
+                    Vector3 localPos = center + faceRotation * __instance.relPosition;
+                    Transform t = skin.transform;
+                    position = t.position + t.rotation * localPos; // TransformPointUnscaled
+                    rotation = t.rotation * faceRotation * __instance.relRotation;
+                    __result = true;
+                    return false;
+                }
+                finally
+                {
+                    handle.Return();
+                }
+            }
+            catch (Exception ex)
+            {
+                Disabled = true;
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return true;
+            }
+        }
+
+        // Shipped AttachToFace.GetFaceRotation, verbatim (decompiled 2026-10-24).
+        private static Quaternion GetFaceRotation(Vector3 a, Vector3 b, Vector3 c)
+        {
+            Vector3 normalized = (b - a).normalized;
+            Vector3 normalized2 = (c - a).normalized;
+            Vector3 normalized3 = Vector3.Cross(normalized, normalized2).normalized;
+            Vector3 vector = -(normalized + normalized2).normalized;
+            if (normalized3 == Vector3.zero || vector == Vector3.zero)
+            {
+                return Quaternion.identity;
+            }
+            return Quaternion.LookRotation(normalized3, vector);
         }
     }
 

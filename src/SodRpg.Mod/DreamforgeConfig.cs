@@ -174,6 +174,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
         public bool nativeAttachFaceIdle = true;
 
+        [LabelText("Share baked-mesh vertex copies among face attachments / 面に付ける装飾の焼きメッシュの頂点コピーを1回にまとめる")]
+        public bool nativeAttachFaceSharedVerts = true;
+
         [LabelText("Reuse embrace skill position reads / 取り込み中の記憶の座標読み出しを毎フレーム1回にまとめる")]
         public bool nativeEmbracePositionReuse = true;
 
