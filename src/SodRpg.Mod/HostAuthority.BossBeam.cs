@@ -108,7 +108,7 @@ namespace SodRpg.Mod
             internal Action<EventInfoDamage> Damaged;
             internal Action<EventInfoHeal> Healed;
             internal DataProcessor<DamageData,Actor,Entity> Processor;
-            internal bool ProcessorAttached,DamageAttached,HealAttached;
+            internal bool ProcessorAttached,DamageAttached,HealAttached,HitPrepared;
             internal readonly List<long> PhantomVisuals=new List<long>(12);
             internal InkBeamState()
             {
@@ -217,10 +217,12 @@ namespace SodRpg.Mod
         internal void PrepareInkBeamHit(Ai_U_BeamOfBalance_Beam beam)
         {
             if(beam==null || !(beam.parentActor is Se_U_BeamOfBalance parent) || !_inkBeams.TryGetValue(parent,out var state) || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return;
+            state.HitPrepared=false;
             BossEnsure(state.Runtime);
             if(!InkBeamCurrent(state)) return;
             InkReconcile(state.Runtime,InkGet(state.Runtime));
             InkSyncBeamSubscriptions(state);
+            state.HitPrepared=true;
         }
         private bool InkBeamParentCurrent(InkBeamState state)
         {
@@ -236,7 +238,13 @@ namespace SodRpg.Mod
         private bool InkBeamNative(InkBeamState state,Actor actor,Entity target,bool enemy)
         {
             var hit=InkBeamNativeHit.Current;
-            if(hit.Beam!=state.Beam || hit.Target!=target || hit.Enemy!=enemy || actor!=state.Beam || AttributionGeneratedOrigin()!=GeneratedOrigin.None || !InkBeamCurrent(state)) return false;
+            if(hit.Beam!=state.Beam || hit.Target!=target || hit.Enemy!=enemy || actor!=state.Beam || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return false;
+            // A single native Hit re-runs this check per callback (processor, damage, heal). Reuse
+            // the verdict PrepareInkBeamHit reached at the top of the Hit; only liveness can flip
+            // synchronously between the dispatches, so re-check just parent, beam and caster.
+            if(state.HitPrepared)
+                return state.Parent!=null && state.Parent.isActive && state.Beam!=null && state.Beam.isActive && Alive(state.Runtime.Hero);
+            if(!InkBeamCurrent(state)) return false;
             if(!BossEnsure(state.Runtime)) return false;
             InkReconcile(state.Runtime,InkGet(state.Runtime));
             return true;
@@ -426,7 +434,7 @@ namespace SodRpg.Mod
             state.Host=null; state.Runtime=null; state.Parent=null; state.Beam=null; state.Skill=null; state.ParentActor=null; state.Room=null; state.Run=null;
             state.ParentCreation=state.BeamCreation=state.SkillCreation=state.H=state.WhiteSpent=state.DarkSpent=state.NextVisual=0;
             state.Life=state.LastAddedPacket=state.Visual=state.DarkVisual=state.ParentLife=state.BeamLife=state.SkillLife=state.ParentActorLife=0;
-            state.Magic=state.WhiteDisabled=state.DarkDisabled=state.ProcessorAttached=state.DamageAttached=state.HealAttached=false;
+            state.Magic=state.WhiteDisabled=state.DarkDisabled=state.ProcessorAttached=state.DamageAttached=state.HealAttached=state.HitPrepared=false;
             state.WhiteStage=state.DarkStage=state.Adds=state.Spears=state.Illuminations=state.WhiteTargets=0;
             state.White=state.Flat=state.Spear=state.Illumination=null; state.SpearAction=null;
             Array.Clear(state.WhiteHeroes,0,state.WhiteHeroes.Length); Array.Clear(state.WhiteHeroLives,0,state.WhiteHeroLives.Length);
