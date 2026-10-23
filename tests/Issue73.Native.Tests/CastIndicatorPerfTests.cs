@@ -9,14 +9,13 @@ using Xunit;
 namespace Issue73.Native.Tests
 {
     /// <summary>
-    /// （#766）照準円の変わっていない再描画を省く NativeCastIndicatorCirclePerf の検証。
-    /// ValidateBody は実ソースから抽出した本体そのものに、本体 CircleRegion.UpdateProperties
-    /// と同じ読み出し・書き込み一式の見本（CastIndicatorIlShapes）を PatchProcessor.
-    /// GetOriginalInstructions で読んで渡し、追跡する4種（get_Radius・get_Offset・SetFloat・
-    /// _fillProgress）の回数が1つでも崩れた形と、回数が同じまま追跡していない入力を
-    /// 読み足した形を拒否することを確かめる。ShouldSkip は前回値と今回値だけからスキップ
-    /// 可否を判定する純粋な関数として確かめる。Prefix/Postfix は、前回値の確定が本体の
-    /// 正常終了後（Postfix）だけに行われること、本体を通す経路（入力の変化・null マテリアル・
+    /// （#766）照準円の変わっていない再描画を省く NativeCastIndicatorCirclePerf と、（#1087）照準矢印の
+    /// 同じ省略 NativeCastIndicatorLineRegionPerf の検証。ValidateBody は実ソースから抽出した本体その
+    /// ものに、本体 UpdateProperties と同じ読み出し・書き込み一式の見本（CastIndicatorIlShapes）を
+    /// PatchProcessor.GetOriginalInstructions で読んで渡し、追跡する4種の回数が1つでも崩れた形と、
+    /// 回数が同じまま追跡していない入力を読み足した形を拒否することを確かめる。ShouldSkip は前回値と
+    /// 今回値だけからスキップ可否を判定する純粋な関数として確かめる。Prefix/Postfix は、前回値の確定が
+    /// 本体の正常終了後（Postfix）だけに行われること、本体を通す経路（入力の変化・null マテリアル・
     /// 設定無効）では前回の確定値が無効化されること、fill を FillProgress プロパティではなく
     /// _fillProgress フィールドから読むことを確かめる。Finalizer は、本体が例外で中断して
     /// Postfix が走らないフレームでも再利用候補が pool 欄へ返され、次のフレームの確保が
@@ -346,6 +345,186 @@ namespace Issue73.Native.Tests
                 Assert.True(RunPrefix(region, out _));       // 確定値は捨ててあるので省かない
             }
             finally { NativePerfOptions.CastIndicatorCircle = saved; }
+        }
+
+        // ---- 照準矢印（NativeCastIndicatorLineRegionPerf）の検証 ----
+
+        // ShouldSkip に渡す入力一式。スナップショットと今回値の組を作りやすいようにまとめた
+        // （ShouldSkip の引数はプリミティブ型だけで22個あるため）。
+        private sealed class LineSnapshot
+        {
+            internal float Angle = 30f;
+            internal float Length = 5f;
+            internal float Width = 0.75f;
+            internal float Fill = 0.5f;
+            internal Vector3 BodyEuler = new Vector3(10f, 20f, 30f);
+            internal Vector3 BodyPosition = new Vector3(1f, 2f, 3f);
+            internal Vector3 BodyScale = new Vector3(2f, 1f, 5f);
+            internal Vector3 HeadScale = new Vector3(0.75f, 0.75f, 0.75f);
+            internal Vector3 HeadEuler = new Vector3(0f, 20f, 0f);
+            internal Material BodyMaterial = new Material();
+            internal Material HeadMaterial = new Material();
+        }
+
+        private static LineSnapshot CopyLine(LineSnapshot source) => new LineSnapshot
+        {
+            Angle = source.Angle,
+            Length = source.Length,
+            Width = source.Width,
+            Fill = source.Fill,
+            BodyEuler = source.BodyEuler,
+            BodyPosition = source.BodyPosition,
+            BodyScale = source.BodyScale,
+            HeadScale = source.HeadScale,
+            HeadEuler = source.HeadEuler,
+            BodyMaterial = source.BodyMaterial,
+            HeadMaterial = source.HeadMaterial,
+        };
+
+        private static bool ShouldSkipLine(bool has, LineSnapshot previous, LineSnapshot current)
+            => NativeCastIndicatorLineRegionPerf.ShouldSkip(has,
+                previous.Angle, previous.Length, previous.Width, previous.Fill,
+                previous.BodyEuler, previous.BodyPosition, previous.BodyScale, previous.HeadScale, previous.HeadEuler,
+                previous.BodyMaterial, previous.HeadMaterial,
+                current.Angle, current.Length, current.Width, current.Fill,
+                current.BodyEuler, current.BodyPosition, current.BodyScale, current.HeadScale, current.HeadEuler,
+                current.BodyMaterial, current.HeadMaterial);
+
+        // 前回値を既定のままとし、今回値を1つだけ変えたときの判定。
+        private static bool SkipLineAfter(Action<LineSnapshot> change)
+        {
+            var previous = new LineSnapshot();
+            var current = CopyLine(previous);
+            change(current);
+            return ShouldSkipLine(true, previous, current);
+        }
+
+        [Fact]
+        public void ValidateBodyAcceptsTheNativeLineRewriteShape()
+        {
+            Assert.True(NativeCastIndicatorLineRegionPerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.LineSameShape))));
+        }
+
+        [Fact]
+        public void ValidateBodyRejectsASecondAngleReadOnTheLine()
+        {
+            // 追跡する4種（Length・Width・FillProgress・SetFloat）の回数は同じまま、数えていない
+            // Angle の読み出しを1つ足した形。回数の検証だけでは受理されてしまうため、メンバー
+            // 一式の照合で拒否する。
+            Assert.False(NativeCastIndicatorLineRegionPerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.LineSecondAngleRead))));
+        }
+
+        [Fact]
+        public void ValidateBodyRejectsASingleMissingLengthReadOnTheLine()
+        {
+            // Length の読み出しが3回より1つ少ない形。
+            Assert.False(NativeCastIndicatorLineRegionPerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.LineSingleLengthRead))));
+        }
+
+        [Fact]
+        public void ValidateBodyRejectsAMissingLineMaterialFloat()
+        {
+            // マテリアル float の書き込みが2回より1つ少ない形。
+            Assert.False(NativeCastIndicatorLineRegionPerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.LineWithoutMaterialFloat))));
+        }
+
+        [Fact]
+        public void ValidateBodyRejectsAnUntrackedExtraInputReadOnTheLine()
+        {
+            // 追跡する4種の回数は同じまま、追跡していない入力（_opacity）を1つ読み足した形。
+            Assert.False(NativeCastIndicatorLineRegionPerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.LineUntrackedExtraInput))));
+        }
+
+        [Fact]
+        public void LineShouldSkipWhenEveryInputMatchesTheSnapshot()
+        {
+            var snapshot = new LineSnapshot();
+            Assert.True(ShouldSkipLine(true, snapshot, CopyLine(snapshot)));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWithoutASnapshotEvenForIdenticalInputs()
+        {
+            var snapshot = new LineSnapshot();
+            Assert.False(ShouldSkipLine(false, snapshot, CopyLine(snapshot)));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenTheAngleChanged()
+        {
+            Assert.False(SkipLineAfter(s => s.Angle = 31f));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenTheLengthChanged()
+        {
+            Assert.False(SkipLineAfter(s => s.Length = 6f));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenTheWidthChanged()
+        {
+            Assert.False(SkipLineAfter(s => s.Width = 0.8f));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenTheFillChanged()
+        {
+            Assert.False(SkipLineAfter(s => s.Fill = 0.75f));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenAnyTransformComponentChangedByTheSmallestStep()
+        {
+            // body の回転・位置・スケール、head のスケール・回転の各 x/y/z（15成分）について、
+            // 1 ULP 上の隣接 float だけ違う値でも変わったと判定する。Unity の Vector3== が持つ
+            // 約1e-5 の許容より小さい差を、Angle などのスカラーと同じ厳密さで見る確認。
+            // head の回転は現形状の本体が読んでいるとは限らないが、メンバー照合ではどちらの
+            // インスタンスに対する読み取りか区別できないため、スナップショットは安全側として
+            // 追跡する（head が外部から回されたフレームは再実行する）。
+            var cases = new (string name, Action<LineSnapshot> change)[]
+            {
+                ("body euler X", s => s.BodyEuler.x = AdjacentFloat(s.BodyEuler.x)),
+                ("body euler Y", s => s.BodyEuler.y = AdjacentFloat(s.BodyEuler.y)),
+                ("body euler Z", s => s.BodyEuler.z = AdjacentFloat(s.BodyEuler.z)),
+                ("body position X", s => s.BodyPosition.x = AdjacentFloat(s.BodyPosition.x)),
+                ("body position Y", s => s.BodyPosition.y = AdjacentFloat(s.BodyPosition.y)),
+                ("body position Z", s => s.BodyPosition.z = AdjacentFloat(s.BodyPosition.z)),
+                ("body scale X", s => s.BodyScale.x = AdjacentFloat(s.BodyScale.x)),
+                ("body scale Y", s => s.BodyScale.y = AdjacentFloat(s.BodyScale.y)),
+                ("body scale Z", s => s.BodyScale.z = AdjacentFloat(s.BodyScale.z)),
+                ("head scale X", s => s.HeadScale.x = AdjacentFloat(s.HeadScale.x)),
+                ("head scale Y", s => s.HeadScale.y = AdjacentFloat(s.HeadScale.y)),
+                ("head scale Z", s => s.HeadScale.z = AdjacentFloat(s.HeadScale.z)),
+                ("head euler X", s => s.HeadEuler.x = AdjacentFloat(s.HeadEuler.x)),
+                ("head euler Y", s => s.HeadEuler.y = AdjacentFloat(s.HeadEuler.y)),
+                ("head euler Z", s => s.HeadEuler.z = AdjacentFloat(s.HeadEuler.z)),
+            };
+            foreach (var (name, change) in cases)
+                Assert.False(SkipLineAfter(change), name);
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenAMaterialInstanceWasReplaced()
+        {
+            // 値が同じでも別の実体なら再実行する（差し替え後の float 書き込みを保証）。
+            Assert.False(SkipLineAfter(s => s.BodyMaterial = new Material()));
+            Assert.False(SkipLineAfter(s => s.HeadMaterial = new Material()));
+        }
+
+        [Fact]
+        public void LineShouldNotSkipWhenAMaterialIsNull()
+        {
+            // null マテリアルはパッチなしと同じ経路（本体を必ず通す）。
+            Assert.False(SkipLineAfter(s => s.BodyMaterial = null));
+            Assert.False(SkipLineAfter(s => s.HeadMaterial = null));
+            var snapshot = new LineSnapshot { BodyMaterial = null, HeadMaterial = null };
+            Assert.False(ShouldSkipLine(true, snapshot, CopyLine(snapshot)));
         }
     }
 }

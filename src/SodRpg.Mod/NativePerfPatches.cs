@@ -1284,7 +1284,7 @@ namespace SodRpg.Mod
             // The cast indicator's circle rewrite is only worth skipping while it stays this
             // exact shape: one range read, two offset reads, one material float from _fillProgress,
             // and no other member read or write besides the ones in ExpectedMembers.
-            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1 && MatchesExpectedMembers(members)) return true;
+            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1 && MatchesExpectedMembers(members, ExpectedMembers)) return true;
             NativePerfPatch.Warn(ref _warned, "cast indicator circle", "native circle region body changed");
             return false;
         }
@@ -1317,12 +1317,15 @@ namespace SodRpg.Mod
             return null;
         }
 
-        internal static bool MatchesExpectedMembers(List<string> members)
+        // Compares the sorted member list against the given expected list. Takes the expected
+        // array as a parameter: both the circle and the line patch use this helper, and each
+        // must be checked against its own ExpectedMembers, not the enclosing class's.
+        internal static bool MatchesExpectedMembers(List<string> members, string[] expectedMembers)
         {
-            if (members.Count != ExpectedMembers.Length) return false;
+            if (members.Count != expectedMembers.Length) return false;
             members.Sort(StringComparer.Ordinal);
             for (int i = 0; i < members.Count; i++)
-                if (string.CompareOrdinal(members[i], ExpectedMembers[i]) != 0) return false;
+                if (string.CompareOrdinal(members[i], expectedMembers[i]) != 0) return false;
             return true;
         }
 
@@ -1458,6 +1461,10 @@ namespace SodRpg.Mod
             internal Vector3 BodyPosition;
             internal Vector3 BodyScale;
             internal Vector3 HeadScale;
+            // Tracked for the same reason as the body's euler: the member check only names the
+            // members the body references, not which transform instance each read targets, so
+            // the snapshot watches the head's world rotation too (the safe side).
+            internal Vector3 HeadEuler;
             internal Material BodyMaterial;
             internal Material HeadMaterial;
         }
@@ -1582,22 +1589,25 @@ namespace SodRpg.Mod
             // length reads, two width reads, two fill reads and two material floats, and no
             // other member read or write besides the ones in ExpectedMembers.
             if (lengths == 3 && widths == 2 && fills == 2 && floats == 2
-                && NativeCastIndicatorCirclePerf.MatchesExpectedMembers(members)) return true;
+                && NativeCastIndicatorCirclePerf.MatchesExpectedMembers(members, ExpectedMembers)) return true;
             NativePerfPatch.Warn(ref _warned, "cast indicator line", "native line region body changed");
             return false;
         }
 
         // Pure skip decision, kept as a standalone method with primitive parameters so the
-        // native test harness can exercise it directly. The world euler, world position and
-        // both local scales are compared per component, as strict as the four scalars, instead
-        // of Unity's Vector3== which tolerates ~1e-5 differences; a missing snapshot or a null
-        // material always runs the body.
+        // native test harness can exercise it directly. Both transforms' world euler, the
+        // body's world position and both local scales are compared per component, as strict
+        // as the four scalars, instead of Unity's Vector3== which tolerates ~1e-5 differences;
+        // a missing snapshot or a null material always runs the body. The head's world euler
+        // is part of the comparison even though the current body shape consumes the body's
+        // rotation only: the member check below cannot tell which instance each euler read
+        // targets, so the snapshot takes the safe side and watches both.
         internal static bool ShouldSkip(bool has,
             float prevAngle, float prevLength, float prevWidth, float prevFill,
-            Vector3 prevBodyEuler, Vector3 prevBodyPosition, Vector3 prevBodyScale, Vector3 prevHeadScale,
+            Vector3 prevBodyEuler, Vector3 prevBodyPosition, Vector3 prevBodyScale, Vector3 prevHeadScale, Vector3 prevHeadEuler,
             Material prevBodyMaterial, Material prevHeadMaterial,
             float angle, float length, float width, float fill,
-            Vector3 bodyEuler, Vector3 bodyPosition, Vector3 bodyScale, Vector3 headScale,
+            Vector3 bodyEuler, Vector3 bodyPosition, Vector3 bodyScale, Vector3 headScale, Vector3 headEuler,
             Material bodyMaterial, Material headMaterial)
             => has && bodyMaterial != null && headMaterial != null
                && ReferenceEquals(prevBodyMaterial, bodyMaterial) && ReferenceEquals(prevHeadMaterial, headMaterial)
@@ -1605,13 +1615,14 @@ namespace SodRpg.Mod
                && prevBodyEuler.x == bodyEuler.x && prevBodyEuler.y == bodyEuler.y && prevBodyEuler.z == bodyEuler.z
                && prevBodyPosition.x == bodyPosition.x && prevBodyPosition.y == bodyPosition.y && prevBodyPosition.z == bodyPosition.z
                && prevBodyScale.x == bodyScale.x && prevBodyScale.y == bodyScale.y && prevBodyScale.z == bodyScale.z
-               && prevHeadScale.x == headScale.x && prevHeadScale.y == headScale.y && prevHeadScale.z == headScale.z;
+               && prevHeadScale.x == headScale.x && prevHeadScale.y == headScale.y && prevHeadScale.z == headScale.z
+               && prevHeadEuler.x == headEuler.x && prevHeadEuler.y == headEuler.y && prevHeadEuler.z == headEuler.z;
 
         // LineRegion.UpdateProperties rewrites the body/head transforms and two material floats
         // from Angle, Length, Width, FillProgress, the body's world euler/position/scale, the
-        // head's scale and the two renderers' materials. CastIndicatorManager and the region's
-        // own Update both call it every frame while the arrow indicator is on screen, yet those
-        // inputs move only when the aim or the caster actually moves. While they are unchanged
+        // head's scale and world euler, and the two renderers' materials. CastIndicatorManager
+        // and the region's own Update both call it every frame while the arrow indicator is on
+        // screen, yet those inputs move only when the aim or the caster actually moves. While they are unchanged
         // every write would store the value it already has (each is idempotent given the inputs,
         // including the head position computed from the just-written body scale), so skip it.
         // The prefix reads through the same public accessors the body calls (get_Angle etc. are
@@ -1662,10 +1673,11 @@ namespace SodRpg.Mod
                 Vector3 bodyPosition = body.position;
                 Vector3 bodyScale = body.localScale;
                 Vector3 headScale = head.localScale;
+                Vector3 headEuler = head.eulerAngles;
                 if (ShouldSkip(inputs.Has, inputs.Angle, inputs.Length, inputs.Width, inputs.Fill,
-                        inputs.BodyEuler, inputs.BodyPosition, inputs.BodyScale, inputs.HeadScale,
+                        inputs.BodyEuler, inputs.BodyPosition, inputs.BodyScale, inputs.HeadScale, inputs.HeadEuler,
                         inputs.BodyMaterial, inputs.HeadMaterial,
-                        angle, length, width, fill, bodyEuler, bodyPosition, bodyScale, headScale,
+                        angle, length, width, fill, bodyEuler, bodyPosition, bodyScale, headScale, headEuler,
                         bodyMaterial, headMaterial))
                     return false;
                 // The body is about to run and Harmony will not call the postfix if it throws,
@@ -1682,6 +1694,7 @@ namespace SodRpg.Mod
                 pending.BodyPosition = bodyPosition;
                 pending.BodyScale = bodyScale;
                 pending.HeadScale = headScale;
+                pending.HeadEuler = headEuler;
                 pending.BodyMaterial = bodyMaterial;
                 pending.HeadMaterial = headMaterial;
                 __state = pending;
@@ -1712,6 +1725,7 @@ namespace SodRpg.Mod
                 inputs.BodyPosition = __state.BodyPosition;
                 inputs.BodyScale = __state.BodyScale;
                 inputs.HeadScale = __state.HeadScale;
+                inputs.HeadEuler = __state.HeadEuler;
                 inputs.BodyMaterial = __state.BodyMaterial;
                 inputs.HeadMaterial = __state.HeadMaterial;
                 _pending = __state;
