@@ -6151,24 +6151,32 @@ namespace SodRpg.Mod
         // reproduce byte-identical state; the priority refresh is the one write that matters.
         // The prefix keeps the exact priority expression — force => 0, else the same private
         // method on the same instance, so the ring and its wrap-around reprioritization of the
-        // registered sources advance identically — and lets the original body run for every
-        // other shape of call: non-game types, a changed triple, a different manager instance
-        // or a source seen for the first time.
+        // registered sources advance identically. Every other shape of call runs the original
+        // body: non-game types (which also drop the cached entry, because DewAudioManager.Play
+        // reuses pooled voices across all types and a non-game setup rewrote the mixer group
+        // and rolloff for its own type), a changed triple, a different manager instance or a
+        // source seen for the first time. The tuple is recorded only in a postfix that Harmony
+        // runs after the body completed, so an interrupted body is never treated as applied;
+        // while the setting is off (or after a failure disabled the patch) a generation counter
+        // is bumped once and every entry recorded before the switch stops matching. A cache
+        // hit therefore always means the last writer of the source was the original body with
+        // that exact tuple.
         private sealed class CachedSetup
         {
             internal AudioManager Manager;
             internal AudioType Type;
             internal AudioSpaceType Space;
             internal DewAudioRollOffType Rolloff;
+            internal int Generation;
         }
 
         private static readonly ConditionalWeakTable<AudioSource, CachedSetup> Cache =
             new ConditionalWeakTable<AudioSource, CachedSetup>();
-        private static readonly ConditionalWeakTable<AudioSource, CachedSetup>.CreateValueCallback CreateCachedSetup =
-            _ => new CachedSetup();
 
         private static Func<AudioManager, AudioSource, int> _nextDynamicPriority;
         private static bool _disabled;
+        private static int _generation = 1; // starts above the 0 a fresh CachedSetup carries
+        private static bool _offBumped;
         private static MethodBase _target;
         private static bool _warned;
 
@@ -6204,35 +6212,83 @@ namespace SodRpg.Mod
         private static MethodBase TargetMethod() => _target;
 
         private static bool Prefix(AudioManager __instance, AudioSource source, AudioType type,
-            AudioSpaceType space, DewAudioRollOffType rolloff, bool forceCriticalPriority)
+            AudioSpaceType space, DewAudioRollOffType rolloff, bool forceCriticalPriority, ref bool __state)
         {
-            if (_disabled || !NativePerfOptions.AudioSetupIdle) return true;
+            __state = false;
+            if (_disabled || !NativePerfOptions.AudioSetupIdle)
+            {
+                // While the feature is off (or a failure disabled it) the body runs with no
+                // bookkeeping here, so entries recorded earlier would go stale: bump the
+                // generation once per off-stretch and include it in the match below.
+                if (!_offBumped)
+                {
+                    _generation++;
+                    _offBumped = true;
+                }
+                return true;
+            }
+            _offBumped = false;
             try
             {
                 if (__instance == null || source == null || _nextDynamicPriority == null) return true;
                 // Only the game-sound types are re-set up per play by DewAudioManager; every
                 // other caller (one-shot DewAudioSourceSetup, MusicManager) is left native.
-                if (!AudioManager.NeedsSetupEverytime(type)) return true;
-                if (!Cache.TryGetValue(source, out var cached)
-                    || !ReferenceEquals(cached.Manager, __instance)
-                    || cached.Type != type || cached.Space != space || cached.Rolloff != rolloff)
+                // DewAudioManager.Play also hands pooled voices to non-game types, and that
+                // body rewrote the mixer group and rolloff for its own type, so the cached
+                // game-sound tuple no longer describes the source — drop it.
+                if (!AudioManager.NeedsSetupEverytime(type))
                 {
-                    cached = Cache.GetOrCreateValue(source);
-                    cached.Manager = __instance;
-                    cached.Type = type;
-                    cached.Space = space;
-                    cached.Rolloff = rolloff;
+                    Cache.Remove(source);
                     return true;
                 }
-                source.priority = forceCriticalPriority ? 0 : _nextDynamicPriority(__instance, source);
-                return false;
+                if (Cache.TryGetValue(source, out var cached) && cached.Generation == _generation
+                    && ReferenceEquals(cached.Manager, __instance)
+                    && cached.Type == type && cached.Space == space && cached.Rolloff == rolloff)
+                {
+                    // The advanced-prioritization setting branch lives inside GetNextDynamicPriority
+                    // (r1.4.1.2 decompile: it returns 1 without touching the ring when the setting
+                    // is off), so one unconditional call here reproduces the original in both
+                    // setting states, and force short-circuits to 0 exactly like the body.
+                    source.priority = forceCriticalPriority ? 0 : _nextDynamicPriority(__instance, source);
+                    return false;
+                }
+                if (cached != null) cached.Manager = null; // stale until the postfix confirms
+                __state = true;
+                return true;
             }
             catch (Exception ex)
             {
                 _disabled = true;
+                _generation++; // the failed call must not leave anything looking applied
+                _offBumped = true;
                 NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
             }
             return true;
+        }
+
+        private static void Postfix(AudioManager __instance, AudioSource source, AudioType type,
+            AudioSpaceType space, DewAudioRollOffType rolloff, bool __state, bool __runOriginal)
+        {
+            // Record the tuple only now that the body has completed for it: Harmony skips
+            // postfixes when the body throws, and __runOriginal is false on the prefix-skip
+            // path, so a hit always means the original applied this exact tuple last.
+            if (!__state || !__runOriginal) return;
+            try
+            {
+                var cached = Cache.GetOrCreateValue(source);
+                cached.Manager = __instance;
+                cached.Type = type;
+                cached.Space = space;
+                cached.Rolloff = rolloff;
+                cached.Generation = _generation;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                _generation++;
+                _offBumped = true;
+                NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
+            }
         }
     }
 }
