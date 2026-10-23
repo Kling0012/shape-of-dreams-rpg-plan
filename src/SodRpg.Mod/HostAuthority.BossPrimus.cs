@@ -64,8 +64,8 @@ namespace SodRpg.Mod
             }
             return state;
         }
-        // 毎ヒット参照する stage6/7/8 の判定を作成・装備走査のときに覚える。それ以外の区分は
-        // dispatch ループが毎回通るので覚える必要がない。
+        // 毎ヒット参照する PrimusProfiles の index 6/7/8（stage2・stage3・stage6）の判定を
+        // 作成・装備走査のときに覚える。それ以外の区分は dispatch ループが毎回通るので覚える必要がない。
         private static void PrimusKeep(PrimusCombat state, int i, BossMoveEntry entry, BossMoveProfile profile)
         {
             if (i == 6) { state.PhaseEntry = entry; state.PhaseProfile = profile; }
