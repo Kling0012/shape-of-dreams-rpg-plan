@@ -102,19 +102,21 @@ namespace SodRpg.Core.Game
         public const int WardShieldPct = MonstersBalance.WardShieldPct;
         /// <summary>棘皮：受けたダメージを返す割合（%）。v1.31 で20→15、さらに1回の上限を設けた。</summary>
         public const int ThornsReflectPct = MonstersBalance.ThornsReflectPct;
-        /// <summary>棘皮：1回に返す量の上限（攻撃した旅人の最大HPに対する%、夢の圧・潜行の倍率を掛ける前）。</summary>
+        /// <summary>棘皮：圧の与ダメージ倍率を適用しない、1回の上限（旅人の最大HPに対する%）。</summary>
         public const float ThornsReflectMaxHealthPct = MonstersBalance.ThornsReflectMaxHealthPct;
-        /// <summary>棘皮：同じ敵から同じ旅人へ返す間隔（秒）。多段攻撃・連打で何度も返さない。</summary>
+        /// <summary>棘皮：旅人ごとに全ての敵で共有する反射間隔（秒）。</summary>
         public const float ThornsReflectInterval = MonstersBalance.ThornsReflectInterval;
 
         /// <summary>
         /// 棘皮で返す量。プレイヤーの火力は HP よりずっと伸びやすいので、与えたダメージの割合だけで返すと
         /// 強くなるほど自滅する（v1.31、利用者の指摘）。攻撃した旅人の最大HPの割合で頭打ちにする。
         /// </summary>
-        public static float ThornsReflectAmount(float damageDealt, float attackerMaxHealth)
+        public static float ThornsReflectAmount(float damageDealt, float attackerMaxHealth, float tenacity = 0f)
         {
             if (damageDealt <= 0f || attackerMaxHealth <= 0f) return 0f;
-            return Math.Min(damageDealt * ThornsReflectPct / 100f, attackerMaxHealth * ThornsReflectMaxHealthPct / 100f);
+            float resistance = Math.Max(0f, Math.Min(60f, tenacity));
+            return Math.Min(damageDealt * ThornsReflectPct / 100f, attackerMaxHealth * ThornsReflectMaxHealthPct / 100f)
+                * (1f - resistance / 100f);
         }
         /// <summary>飢渇：与えたダメージのうち回復する割合（%）。</summary>
         public const int RavenousLeechPct = MonstersBalance.RavenousLeechPct;
@@ -306,7 +308,7 @@ namespace SodRpg.Core.Game
                 case NightmareAffix.Regenerating: return Loc.T($"毎秒最大HPの{MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}%回復。攻撃を集中して倒す。", $"Heals {MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}% max HP each second; focus damage to defeat it.", $"每秒恢复最大生命值的{MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}%；集中火力将其击败。");
                 case NightmareAffix.Arcane: return Loc.T($"魔力+{ArcanePowerPct}%・スキル加速+{ArcaneHaste}。術を避け、発動後に攻める。", $"Power +{ArcanePowerPct}%, haste +{ArcaneHaste}; evade spells and punish after casting.", $"法术强度+{ArcanePowerPct}%，技能急速+{ArcaneHaste}；躲开法术，趁施法后反击。");
                 case NightmareAffix.Warded: return Loc.T($"防御+{WardedArmor}、出現時に最大HP{WardShieldPct}%の障壁。障壁を割って攻める。", $"Armor +{WardedArmor} and a spawn shield of {WardShieldPct}% max HP; break the barrier.", $"护甲+{WardedArmor}，出现时获得相当于最大生命值{WardShieldPct}%的护盾；先击破护盾。");
-                case NightmareAffix.Thorned: return Loc.T($"防御+{ThornedArmor}。旅人から受けたダメージの{ThornsReflectPct}%をその旅人へ返す（1回につき最大HPの{MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}%まで、夢の圧と潜行で増える。{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒に1回まで。召喚獣の攻撃は返さない）。", $"Armor +{ThornedArmor}. Returns {ThornsReflectPct}% of damage taken from a traveler to that traveler (at most {MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}% of their max HP per hit, raised by dream pressure and delve; once per {MonsterBehavior.Number((decimal)ThornsReflectInterval)} s; not to summons).", $"护甲+{ThornedArmor}。将受到旅人伤害的{ThornsReflectPct}%反弹给该旅人（每次命中最多为其最大生命值的{MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}%，随梦境之压和下潜提高；每{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒最多一次；不反弹给召唤物）。");
+                case NightmareAffix.Thorned: return Loc.T($"防御+{ThornedArmor}。旅人から受けたダメージの{ThornsReflectPct}%をその旅人へ返す（1回につき最大HPの{MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}%まで。夢の圧・潜行の与ダメージ倍率は掛からない。旅人ごとに全ての棘皮で{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒に1回まで。行動妨害耐性で最大60%軽減。召喚獣の攻撃は返さない）。", $"Armor +{ThornedArmor}. Returns {ThornsReflectPct}% of damage taken from a traveler (at most {MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}% of their max HP per hit, without dream pressure or delve damage amplification; all Thorned enemies share one {MonsterBehavior.Number((decimal)ThornsReflectInterval)} s interval per traveler; Tenacity reduces reflection by up to 60%; not to summons).", $"护甲+{ThornedArmor}。将受到旅人伤害的{ThornsReflectPct}%反弹给该旅人（每次最多为其最大生命值的{MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}%，不受梦境之压或下潜的伤害倍率加成；每位旅人的所有棘皮反伤共用{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒间隔；行动干扰抗性可降低反伤，最高60%；不反弹给召唤物）。");
                 case NightmareAffix.Ravenous: return Loc.T($"攻撃力+{RavenousAttackPct}%、与ダメージの{RavenousLeechPct}%回復。攻撃を避けて回復を防ぐ。", $"Attack +{RavenousAttackPct}%; heals for {RavenousLeechPct}% of damage dealt. Dodge to deny healing.", $"攻击力+{RavenousAttackPct}%；恢复所造成伤害的{RavenousLeechPct}%的生命值。闪避攻击以阻止其恢复。");
                 case NightmareAffix.Sundering: return Loc.T($"攻撃力+{SunderingAttackPct}%、命中で防御-{SunderArmor}を{MonsterBehavior.Number((decimal)SunderSeconds)}秒。追撃を避ける。", $"Attack +{SunderingAttackPct}%; hits reduce armor by {SunderArmor} for {MonsterBehavior.Number((decimal)SunderSeconds)}s. Avoid follow-up hits.", $"攻击力+{SunderingAttackPct}%；命中使护甲降低{SunderArmor}，持续{MonsterBehavior.Number((decimal)SunderSeconds)}秒。避免连续受击。");
                 case NightmareAffix.Veiled: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃の被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内へ近づく。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m; approach within {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m.", $"受到的伤害降低{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%，仅对来自{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}米以外的攻击生效；靠近至{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}米内攻击。");

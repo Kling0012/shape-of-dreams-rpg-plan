@@ -1,6 +1,6 @@
 # Issue #1055 再現記録
 
-修正前の処理を抽出したハーネスで、棘による同時反射の致死ケースと、Pure Soul の生成数が0になるケースを確認した。ゲーム実機で報告の4症状を再現した結果ではない。本体の修正やバランス変更は行っていない。
+修正前の処理を抽出したハーネスで、棘による同時反射の致死ケースと、Pure Soul の生成数が0になるケースを確認した。後述の修正後の検証では、同じ6ケースを使って改善を確認した。ゲーム実機で報告の4症状を再現した結果ではない。
 
 ## 実行方法
 
@@ -18,7 +18,7 @@ python3 tests/repro/issue1055/run.py
 | `SOD_MANAGED` | `/home/wang/dev/sod-gamedata/Shape of Dreams/Shape of Dreams_Data/Managed`。`Dew.Contents.dll` から `Ai_QR_Innocence_Spawner` を読む。 |
 | `ILSPYCMD` | `/home/wang/.dotnet/tools/ilspycmd`。該当型だけを標準出力へ逆コンパイルする。 |
 
-製品側の `HostAuthority.ApplyPressure`、`OnMonsterDamageTaken`、棘のタイマー処理を実行時に抽出する。反射量と夢の圧の計算には、参照した `SodRpg.Core` を使う。Pure Soul は本体から抽出した `clampedCount` と `OnCreateSequenced` を使う。生成ファイルは `obj/` に置く。資料がない場合や抽出・コンパイルに失敗した場合は、再現成功に数えず終了コード2になる。
+製品側の `HostAuthority.ApplyPressure`、`OnMonsterDamageTaken`、棘のタイマー処理を実行時に抽出する。反射量と夢の圧の計算には、参照した `SodRpg.Core` を使う。Pure Soul は本体から抽出した `clampedCount` と `OnCreateSequenced` を使い、製品の `NativePureSoulCount` をHarmonyで適用する。ハーネスのHarmonyは.NET 10でコルーチンのfault節を扱える2.4.2、製品の参照はゲーム付属の2.3.6。生成ファイルは `obj/` に置く。資料がない場合や抽出・コンパイルに失敗した場合は、再現成功に数えず終了コード2になる。
 
 ## 修正前の実行結果
 
@@ -84,7 +84,23 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.DeathFx.Tests/SodRpg.Mod.
 
 最初のCore・AutoCast実行は.NET 8ランタイムがなく起動に失敗した。上記のロールフォワード設定で成功を確認した。ランタイムの追加インストールは行っていない。
 
-## 未実行
+## 修正後の検証（2026-10-23）
+
+製品の修正を適用した同じ6ケースは全て成功した。高圧の棘の反射は合計20、HP980。Pure Soul は性能負荷0、0.9、0.95、1でそれぞれ8、1、1、1発となった。
+
+修正を一時的に外す確認も実行した。`HostAuthority.cs` と `Nightmare.cs` をHEADの内容へ戻し、`NativePureSoulCount.RoundCount` を元の丸めだけにすると、同じ3件が失敗した（終了コード1）。保存した修正を再適用すると6件全て成功した（終了コード0）。ハーネスのケースと期待値は変えていない。
+
+- 修正なし: `.ci-logs/issue1055/20261023T121458240127Z/results.json`
+- 再適用: `.ci-logs/issue1055/20261023T121530311195Z/results.json`
+- 手順のログ: `.ci-logs/issue1055/revert-check/reverted.log` と `restored.log`
+
+修正工程で関連する既存テストを再実行し、Core 34件、AutoCast 19件、FxBudget 12件、DeathFx 3件、NativeStartupTests 16件、計84件が成功した。ゲームDLL付きの製品ビルドも成功した。参照用のゲームディレクトリに `Mods` がないことを確認し、ゲームへの配置は実行していない。
+
+最初の `--no-restore` 付きビルドはassetsファイルがなく失敗し、通常のビルドで成功した。ハーネスへのHarmony 2.3.6の適用は.NET 10で `InvalidProgramException` となり、2.4.2へ変更して成功した。これは実ゲームでのパッチ適用の成功を示すものではない。
+
+## 再現工程での未実行
+
+以下は製品を修正する前の工程の記録。修正後の検証は上記を参照。
 
 - ゲーム実機の起動、Limboでのプレイ、画面外の棘への攻撃、`dreamforge_simkill`。この環境ではゲームを動かせないため。
 - Unity上のHUD描画とスクリーンショット、祠の破壊演出と通信の実行。実行環境と実際のPrefab配置がないため。

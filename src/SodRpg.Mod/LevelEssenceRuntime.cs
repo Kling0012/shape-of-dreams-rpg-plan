@@ -148,34 +148,55 @@ namespace SodRpg.Mod
                     // OnEnableが旧slotIndexで宝石を購読しないよう、初期化は非表示の親の下で行う。
                     var staging = new GameObject("Dreamforge_EssenceStaging", typeof(RectTransform));
                     staging.SetActive(false);
-                    staging.transform.SetParent(group.transform, false);
+                    staging.transform.SetParent(original[3].transform.parent, false);
+                    var stagingRect = (RectTransform)staging.transform;
+                    stagingRect.anchorMin = Vector2.zero;
+                    stagingRect.anchorMax = Vector2.one;
+                    stagingRect.sizeDelta = Vector2.zero;
                     for (int n = original.Length + 1; n <= 8; n++)
                     {
-                        var template = expanded[n - 2];
+                        var template = original[3];
                         var clone = UnityEngine.Object.Instantiate(template, staging.transform, false);
                         clone.name = "Dreamforge_EssenceSlots_" + n;
                         clone.SetActive(false);
                         // 全部できる前に失敗しても、途中の複製は非表示のまま。
                         var slots = clone.GetComponentsInChildren<UI_InGame_GemSlot>(true);
                         Array.Sort(slots, (a, b) => a.slotIndex.CompareTo(b.slotIndex));
-                        var extra = UnityEngine.Object.Instantiate(slots[slots.Length - 1].gameObject,
-                            slots[slots.Length - 1].transform.parent, false).GetComponent<UI_InGame_GemSlot>();
-                        extra.slotIndex = n - 1;
-                        extra.button = button;
-                        var all = clone.GetComponentsInChildren<UI_InGame_GemSlot>(true);
-                        // 4枠の幅の中に二段（各4枠）で並べる。編集用の本体コンポーネントも複製される。
-                        Array.Sort(all, (a, b) => a.slotIndex.CompareTo(b.slotIndex));
-                        var first = (RectTransform)all[0].transform;
-                        float size = Math.Max(12f, first.rect.width);
-                        float step = size + 4f;
-                        foreach (var layout in clone.GetComponentsInChildren<LayoutGroup>(true)) layout.enabled = false;
-                        for (int i = 0; i < all.Length; i++)
+                        // Preserve the native four columns, anchors, pivots and scale.
+                        // Measure visible child rectangles in their common parent's coordinates.
+                        var first = (RectTransform)slots[0].transform;
+                        float bottom = float.PositiveInfinity, top = float.NegativeInfinity;
+                        var corners = new Vector3[4];
+                        foreach (var slot in slots)
                         {
-                            var rect = (RectTransform)all[i].transform;
-                            if (rect.parent != first.parent) throw new InvalidOperationException("HUD sockets do not share a parent");
-                            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-                            rect.anchoredPosition = new Vector2((i % 4 - 1.5f) * step, -(i / 4) * step);
-                            all[i].button = button;
+                            if (slot.transform.parent != first.parent)
+                                throw new InvalidOperationException("HUD sockets do not share a parent");
+                            // Include inactive frames while staging: native bounds helpers omit them.
+                            foreach (var rect in slot.GetComponentsInChildren<RectTransform>(true))
+                            {
+                                rect.GetWorldCorners(corners);
+                                for (int c = 0; c < corners.Length; c++)
+                                {
+                                    float y = first.parent.InverseTransformPoint(corners[c]).y;
+                                    bottom = Math.Min(bottom, y);
+                                    top = Math.Max(top, y);
+                                }
+                            }
+                            slot.button = button;
+                        }
+                        float step = top - bottom + 4f;
+                        if (float.IsNaN(step) || float.IsInfinity(step) || step <= 4f)
+                            throw new InvalidOperationException("HUD socket bounds are unavailable");
+                        foreach (var layout in clone.GetComponentsInChildren<LayoutGroup>(true)) layout.enabled = false;
+                        for (int i = 4; i < n; i++)
+                        {
+                            var source = slots[i - 4];
+                            var extra = UnityEngine.Object.Instantiate(source.gameObject, source.transform.parent, false)
+                                .GetComponent<UI_InGame_GemSlot>();
+                            extra.slotIndex = i;
+                            extra.button = button;
+                            // Extra sockets grow away from the skill buttons, never down into them.
+                            ((RectTransform)extra.transform).anchoredPosition += new Vector2(0f, step);
                         }
                         ValidateGroup(clone, n, button);
                         clone.transform.SetParent(original[original.Length - 1].transform.parent, false);

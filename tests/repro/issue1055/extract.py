@@ -46,6 +46,9 @@ text = (
     + block(host, r"private void ApplyPressure\(") + "\n"
     + block(host, r"private sealed class ThornsKeyComparer\b") + "\n"
     + block(host, r"private void PruneThornsTimers\(") + "\n"
+    + (block(host, r"private sealed class ThornsWindow\b")
+       + "\nprivate readonly ConditionalWeakTable<Hero, ThornsWindow> _thornsWindows = new ConditionalWeakTable<Hero, ThornsWindow>();\n"
+       if "private sealed class ThornsWindow" in host else "")
     + block(host, r"private void OnMonsterDamageTaken\(") + "\n} }\n"
     + "public partial struct DamageData {\n"
     + block(native_damage, r"public DamageData ApplyAmplification\(") + "\n}\n"

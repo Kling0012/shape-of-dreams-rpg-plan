@@ -5602,7 +5602,7 @@ namespace SodRpg.Core.Game
                 case Stat.HealthRegen: return Loc.T($"HP自動回復量 {sign}{v}/秒", $"Health regeneration {sign}{v}/s", $"生命自动回复 {sign}{v}/秒");
                 case Stat.Haste: return Loc.T($"スキル加速 {sign}{v}（記憶のクールダウン回復を速める）", $"Ability haste {sign}{v} (speeds up memory cooldown recovery)", $"技能加速 {sign}{v}（加快记忆的冷却恢复）");
                 case Stat.MoveSpeedPct: return Loc.T($"移動速度 {sign}{v}%", $"Movement speed {sign}{v}%", $"移动速度 {sign}{v}%");
-                case Stat.Tenacity: return Loc.T($"行動妨害耐性 {sign}{v}（受ける行動妨害の持続時間を短くする）", $"Tenacity {sign}{v} (shortens crowd-control effects on you)", $"行动干扰抗性 {sign}{v}（缩短所受控制效果的持续时间）");
+                case Stat.Tenacity: return Loc.T($"行動妨害耐性 {sign}{v}（受ける行動妨害の持続時間を短くし、棘皮の反射ダメージも同じ割合で軽減。棘の軽減は最大60%）", $"Tenacity {sign}{v} (shortens crowd-control effects and reduces Thorned reflection by the same percentage, up to 60% reflection reduction)", $"行动干扰抗性 {sign}{v}（缩短所受控制效果的持续时间，并按相同比例降低棘皮反伤，反伤减免最高60%）");
                 case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%", $"火属性效果 {sign}{v}%");
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%", $"冰属性效果 {sign}{v}%");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%", $"光属性效果 {sign}{v}%");

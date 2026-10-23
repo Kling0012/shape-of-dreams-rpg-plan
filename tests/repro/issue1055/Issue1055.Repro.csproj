@@ -8,6 +8,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../../src/SodRpg.Core/SodRpg.Core.csproj" />
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.4.2" />
+    <PackageReference Include="MonoMod.Core" Version="1.3.6" />
+    <Compile Include="../../../src/SodRpg.Mod/NativePureSoulCount.cs" Link="NativePureSoulCount.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="NativeApi.cs" />
     <Compile Include="$(IntermediateOutputPath)Production.cs" />

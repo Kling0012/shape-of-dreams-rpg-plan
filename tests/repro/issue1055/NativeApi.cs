@@ -48,9 +48,10 @@ public class Hero : Entity
     public float maxHealth = 1000f;
     public float currentHealth = 1000f;
     public float received;
+    public Status Status = new Status();
 }
 public class Monster : Entity { public Status Status = new Status(); }
-public class Status { public void CalculateStatsIfDirty() { } }
+public class Status { public float tenacity; public void CalculateStatsIfDirty() { } }
 public delegate void DamageProcessor(ref DamageData damage, Actor actor, Entity target);
 public class ProcessorGroup
 {
@@ -66,8 +67,11 @@ public partial struct DamageData
     public float originalAmount;
     public float amplificationMultiplier;
     private Actor actor;
+    private Type amountModifier;
+    public bool IsAmountModifiedBy(Type type) => amountModifier == type;
+    public DamageData SetAmountModifiedBy(Type type) { amountModifier = type; return this; }
     public DamageData(float amount, Actor source)
-    { originalAmount = amount; amplificationMultiplier = 1f; actor = source; }
+    { originalAmount = amount; amplificationMultiplier = 1f; actor = source; amountModifier = null; }
     public float currentAmount => Math.Max(0f, originalAmount) * amplificationMultiplier;
     public void Dispatch(Hero hero, ReactionChain chain)
     {
@@ -93,7 +97,11 @@ public class EventInfoDamage
 public struct FinalDamage { public float amount; }
 namespace SodRpg.Mod
 {
-    public static class Log { public static void Error(string message) => throw new Exception(message); }
+    public static class Log
+    {
+        public static void Error(string message) => throw new Exception(message);
+        public static void Warn(string message) => Console.Error.WriteLine(message);
+    }
     internal partial class HostAuthority
     {
         private DreamPressure _pressure;

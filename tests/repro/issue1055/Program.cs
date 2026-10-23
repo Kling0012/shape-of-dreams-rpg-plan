@@ -19,6 +19,7 @@ internal static class Program
     {
         try
         {
+            new HarmonyLib.Harmony("issue1055.repro").CreateClassProcessor(typeof(NativePureSoulCount)).Patch();
             Time.time = 10f;
             var neutral = new HostAuthority(DreamPressure.Neutral);
             var control = new Hero();

@@ -115,6 +115,7 @@ namespace SodRpg.Mod
         private bool _forgeAllSlots = true;
         // 装備タブと鍛冶タブの「名前で検索」（#420）。2つのタブで共通。表示の絞り込みだけで保存しない。
         private string _relicSearch = "", _relicSearchFolded = "";
+        private bool _relicThornsResistance;
         private string _status;
         private float _statusUntil;
         // 連携（v1.26）：ローカルの旅人の装着は0.5秒に1回だけ見る（OnGUI は1フレームに何度も走るため）。
@@ -1814,7 +1815,8 @@ namespace SodRpg.Mod
             _scrollList = flex
                 ? GUILayout.BeginScrollView(_scrollList, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, ForgeListSize)
                 : GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
-            if (list.Count == 0 && _relicSearchFolded.Length > 0) GUILayout.Label(Loc.T("名前に検索語を含む遺物がありません。", "No relics match the search.", "没有名称包含搜索词的遗物。"), _st.Small);
+            if (list.Count == 0 && _relicThornsResistance) GUILayout.Label(Loc.T("条件に合う棘への耐性装備がありません。", "No thorns resistance gear matches these filters.", "没有符合条件的棘皮抗性装备。"), _st.Small);
+            else if (list.Count == 0 && _relicSearchFolded.Length > 0) GUILayout.Label(Loc.T("名前に検索語を含む遺物がありません。", "No relics match the search.", "没有名称包含搜索词的遗物。"), _st.Small);
             else if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here.",
             "还没有。远征中击败敌人会掉落遗物，存入仓库后就会来到这里。"), _st.Small);
             // 保管庫は工房で千個以上まで広がるので、見えている行だけを描く（行の高さは一定）。
@@ -1865,6 +1867,13 @@ namespace SodRpg.Mod
             if (GUILayout.Button(Loc.T("解除", "Clear", "清除"), _st.Button, RelicSearchClearSize)) q = "";
             GUI.enabled = enabled;
             GUILayout.EndHorizontal();
+            bool resistance = GUILayout.Toggle(_relicThornsResistance,
+                Loc.T("棘への耐性（行動妨害耐性のある装備）", "Thorns resistance (gear with Tenacity)", "棘皮抗性（带有行动干扰抗性的装备）"), _relicThornsResistance ? _st.ButtonWrapSel : _st.ButtonWrap);
+            if (resistance != _relicThornsResistance)
+            {
+                _relicThornsResistance = resistance;
+                _scrollList.y = 0f;
+            }
             if (q == _relicSearch) return;
             _relicSearch = q;
             string folded = RelicSearch.Fold(q);
@@ -1963,7 +1972,7 @@ namespace SodRpg.Mod
                 var r = stash[i];
                 state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
-            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Language + ":" + _relicSearchFolded;
+            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Language + ":" + _relicSearchFolded + ":" + _relicThornsResistance;
         }
 
         /// <summary>一覧（高さで区別）の並べ替えを使い回す。変更通知・保存・言語・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
@@ -1976,9 +1985,18 @@ namespace SodRpg.Mod
             list.Clear();
             list.AddRange(relics);
             if (_relicSearchFolded.Length > 0) list.RemoveAll(r => !RelicSearch.Matches(r.PlainName, _relicSearchFolded));
+            if (_relicThornsResistance) list.RemoveAll(r => !HasThornsResistance(r));
             list.Sort((a, b) => b.Score.CompareTo(a.Score));
             _sortedKey[id] = key;
             return list;
+        }
+
+        private static bool HasThornsResistance(Relic relic)
+        {
+            int tenacity = 0;
+            foreach (var stat in relic.EffectiveStats())
+                if (stat.Stat == Stat.Tenacity) tenacity += stat.Value;
+            return tenacity > 0;
         }
 
         // ───── 一覧の行の文字（★装着中・▲いまより強い・NEW 新しく手に入れた物・鍵） ─────
