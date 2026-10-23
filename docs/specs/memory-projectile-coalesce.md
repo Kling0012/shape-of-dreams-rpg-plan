@@ -637,3 +637,52 @@ Spawn 後に変更される参照、別の公開個体の RPC が渡す netId、
 - 実行中のプレハブ監査による拒否・警告1回の観測、ゲストに届く親子の SpawnMessage の順序、協力プレイ・途中参加・専用サーバの確認、Profiler と生成数・通信量の実測は未実行。このマシンにはゲームのアセットと実行環境がない。リポジトリ全体の追加のテストはパイプラインに残す。
 
 登録要求と有効登録は0件のままである。実機確認だけの Issue と、新しいテストファイルは作成していない。
+
+## 15. 束1の再判定
+
+2026-10-23、`Ai_D_SalamanderPowder_Projectile` の登録を再検討し、引き続き登録しないと判定した。固有のクライアント処理の本文は読めたが、別の公開個体の RPC が弾自身を参照する経路があり、14節の安全網では保護されない。`referencesReviewed=true` の条件を満たさないため、起動時の `TryRegister` 呼び出しは追加しない。同フレーム・同鍵で6個以上生成されても全個体を通常公開し、5個への削減は行わない。
+
+### 15.1 型とクライアント処理の確認
+
+現行の `Dew.Contents.dll` から対象型を `ilspycmd -t Ai_D_SalamanderPowder_Projectile` で個別に抽出し、`Dew.Core.dll` の継承元も読み直した。対象型の個別抽出と Core 全体の抽出は終了コード0だった。Contents 全体の抽出は一部の別型で復元に失敗し、終了コード70となったため、全体を確認済みとは扱わない。以下の判断には、本文を読めた型とメソッドを用いた。抽出先は `/tmp/sod-memco-b1r-evidence` で、逆コンパイルしたコードはリポジトリに含めない。
+
+| 処理・条件 | 確認した内容 |
+|---|---|
+| 型・RPC・サーバ処理 | 13節で確認した AbilityInstance の具象型、Summon 非継承、固有 RPC なし、各個体の偏差抽選、命中時の fireStack 評価を前提とした |
+| 固有の `OnCreate` | `Random.insideUnitSphere * deviateMag` を個体の `_deviateVector` に入れ、負の y を反転してから基底を呼ぶ。本文は `ret` だけではなく、独自の購読・子管理・通知はない。抽選はゲストでも行う |
+| 固有の `PositionSolver`・`OnEntity` | 前者は個体の軌道に偏差を加える。後者は基底の命中通知後に Fire ダメージを作り、命中時の fireStack で会心・増幅を判定して Dispatch し、自身を破棄する。衝突と OnEntity の呼び出しは Projectile.LogicUpdate のサーバ側処理にある |
+| 固有の破棄処理 | `OnDestroyActor` などの独自 override はない。StandardProjectile、Projectile、AbilityInstance、Actor の基底処理を通る |
+| 基底の生成・破棄 | StandardProjectile は軌道と速度、Projectile は軌道・位置・回転と飛翔 FX、AbilityInstance は開始・終了 FX と sequence を扱う。Actor は生成時に祖先の `ClientActorEvent_OnCreate` を呼び、親の `children`・`childrenInNetwork` と ActorManager の一覧に登録する。破棄時は自身の `ClientActorEvent_OnDestroyed` を呼び、一覧から外す。基底まで表示処理だけだとは申し立てない |
+| 生成元と生成通知の購読先 | St_D_SalamanderPowder はサーバで生成し、対象弾へ独自の beforePrepare callback を渡さない。確認した ACH_MASTER_OF_HAMMER と Se_R_AnnihilationStance の生成通知は別の弾型だけを処理する。St_D_CircleOfLife、St_D_HeartOfThePack、Se_Star_Nachia_L_AllyUnstoppable の該当購読はサーバ側で、対象弾の型にも該当しない。これだけで全購読先の安全性が確認できたとはしない |
+| 継承した Projectile の4つの表示 RPC | `RpcPlayOnEntityEffect`、`RpcPlayOnDissipateEffect`、`RpcStopOnFlyEffect`、`RpcPlayOnCompleteEffect` の受信本文は FX の再生・停止処理。次節の ClientEventManager の通知 RPC は別経路である |
+
+### 15.2 公開 RPC からの弾参照
+
+非公開弾が命中した場合、公開された ClientEventManager からその弾の参照が届く経路を確認した。
+
+1. 対象弾の `Damage(...).Dispatch(victim)` は、弾自身を `DamageData.actor` に設定して `actor.DealDamage` を呼ぶ。MOD の `HostAuthority.AuthoredKeystonePackets` は Dispatch を包むが、actor を別の公開個体へ置き換えない。
+2. `Actor.DealDamage` は `actor = this` の `EventInfoDamage` を作り、被害 Entity の `EntityEvent_OnTakeDamage` を呼ぶ。また `SetLastAttacker(this)` で弾を記録し、致死時の `Entity.Kill` はその参照を `EventInfoKill.actor` として `EntityEvent_OnDeath` に渡す。
+3. ClientEventManager はサーバでこの2つの Entity イベントを購読し、`InvokeOnTakeDamage` と `InvokeOnDeath` の ClientRpc を送る。`GeneratedNetworkCode._Write_EventInfoDamage` と `_Write_EventInfoKill` は、いずれも `writer.WriteNetworkBehaviour(value.actor)` で弾自身の netId と部品番号を書く。弾自身の observer を減らしても、公開された manager の通知は送られる。
+4. ゲストに弾が生成されていなければ、Mirror の `ReadNetworkBehaviour<Actor>` は参照を解決できず null を返す。ClientEventManager の受信本文は victim だけを確認して通知し、actor を復元しない。
+5. `DewPersistentGameObserver.AchOnKillLastHit` は actor が null の通知を除外する。購読先の例である `ACH_M_M_M_MONSTER_KILL` は、通知された actor または祖先の討伐数を更新し、`childrenInNetwork` を使って集計する。したがって非公開化によって、表示以外の通知・集計結果が変わる経路がある。実績の達成可否や具体的な集計差は実機で未確認だが、通知を除外する分岐は本文から確認できる。
+
+14.2の `PreparePublication` は SendSpawnMessage の前に送信対象 Actor の SyncVar を読む処理で、これらの RPC payload の参照先は調べない。公開される子が生成されて弾を参照すれば親を繰り上げられるが、すべての命中でその子が先に生成される保証はない。子の生成を伴わない命中・死亡通知の安全性を、親の繰り上げ公開で代替することはできない。既存の `NativeEnemyHitDamageScope` も受信通知の FX 用スコープを設定するだけで、弾の公開や参照の復元は行わない。
+
+### 15.3 実行時に確認する範囲と残る条件
+
+プレハブの部品構成・永続 UnityEvent は14.1の初回監査に委ね、公開される子の Spawn 時の親参照は14.2の繰り上げ公開に委ねる。この2点は登録を見送る理由にはしていない。ただし、これらは15.2の別個体の RPC 参照を保証しない。
+
+今回の判断では、全購読先と ActorManager の全消費側の審査完了も申し立てない。再び登録を検討するには、別の公開個体が送る RPC の弾参照と、ゲスト側の通知・一覧の省略が表示以外を変えないことを確認する必要がある。RPC の保護拡張や親の付け替えは今回の範囲に含めない。
+
+コード・登録表・設定の配線は変更しない。サーバの Spawn・個体数・軌道・偏差・命中・ダメージ・Fire・通知・乱数順序、14節の監査と繰り上げ公開、既存のエッセンス4型と束0の判定にも変更はない。changelog.d と新しいテストファイルは追加しない。
+
+### 15.4 今回の検証と未実行
+
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。入力と生成済みファイルに差はない。
+- `/usr/bin/dotnet build src/SodRpg.Mod -c Release`：成功、エラー0件・警告6件。GameDir は `/home/wang/dev/sod-gamedata/Shape of Dreams`、ModDeployDir は `/tmp/sod-memco-b1r-build-deploy` を指定した。
+- `DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet test tests/Issue73.Native.Tests -c Release`：705件合格・失敗0件・スキップ0件。14.4に記録した7件の失敗も今回は起きなかったが、過去の失敗原因を解消したとは扱わない。
+- 同じ環境指定による `SodRpg.Mod.Startup.Tests` の全件実行：237件合格・失敗0件・1件スキップ。スキップは既存の `ModReloadTests.SecondLoadOfRenamedModAssemblyStillVerifiesItsOwnPatch` で、Release 時の JIT インライン化を理由に Skip 指定されている。
+- 同じ環境指定による `SodRpg.Mod.AutoCast.Tests` の全件実行：19件合格・失敗0件・スキップ0件。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python3 tools/test_changed.py --base HEAD`：終了コード0。今回の仕様書1ファイルを対象にし、関連テストは0件だった。既定の比較元は `--list` で確認したところ41ファイルの差分とビルド定義の変更を含み、892クラスの全件実行を選んだ。全体のスイートを避ける指示に従い、既定の比較元での実行は未実行とした。
+
+実行中のプレハブ監査と親の繰り上げ公開、協力プレイ・途中参加・専用サーバ、同フレーム・同鍵で6個以上生成する場面の再現、RPC の受信と実績への影響、生成数・通信量・粒子の実測は未実行。このマシンにはゲームのアセットと実行環境がない。リポジトリ全体の追加のテストと遅いスイートも未実行で、パイプラインに残す。
