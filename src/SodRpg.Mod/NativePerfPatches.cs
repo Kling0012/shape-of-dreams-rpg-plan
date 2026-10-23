@@ -821,11 +821,18 @@ namespace SodRpg.Mod
             internal readonly List<Vector3> Vertices = new List<Vector3>();
         }
 
+        private sealed class InvalidSkinWarning
+        {
+            internal int Warned;
+        }
+
         private static readonly Dictionary<int, SharedVerts> Shared = new Dictionary<int, SharedVerts>();
         // Keep warnings once per renderer even if its shared vertices are swept, without
         // retaining destroyed skins or allocating on healthy/repeated fallback calls.
-        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, object> WarnedInvalidSkins =
-            new ConditionalWeakTable<SkinnedMeshRenderer, object>();
+        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning> WarnedInvalidSkins =
+            new ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning>();
+        private static readonly ConditionalWeakTable<SkinnedMeshRenderer, InvalidSkinWarning>.CreateValueCallback CreateInvalidSkinWarning =
+            _ => new InvalidSkinWarning();
         // Reused sweep scratch: fills fire once per bake (up to ten per second per skin),
         // so the sweep must not allocate, like NativeAttachFaceIdlePerf.PruneStale.
         private static readonly List<int> StaleScratch = new List<int>();
@@ -945,9 +952,9 @@ namespace SodRpg.Mod
                         || __instance.vertexIndex1 < 0 || __instance.vertexIndex1 >= vertices.Count
                         || __instance.vertexIndex2 < 0 || __instance.vertexIndex2 >= vertices.Count)
                     {
-                        if (!WarnedInvalidSkins.TryGetValue(skin, out _))
+                        InvalidSkinWarning warning = WarnedInvalidSkins.GetValue(skin, CreateInvalidSkinWarning);
+                        if (System.Threading.Interlocked.Exchange(ref warning.Warned, 1) == 0)
                         {
-                            WarnedInvalidSkins.Add(skin, new object());
                             Log.Warn(Feature + ": vertex index out of range; falling back to native path (skin="
                                 + skin.GetInstanceID() + ", indices=(" + __instance.vertexIndex0 + ","
                                 + __instance.vertexIndex1 + "," + __instance.vertexIndex2
