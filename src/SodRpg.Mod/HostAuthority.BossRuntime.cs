@@ -261,6 +261,9 @@ namespace SodRpg.Mod
             if (!BossEquipmentSnapshot(rt, state, ref changed)) { ClearBossEffects(rt); return false; }
             if (changed)
             {
+                // Build の差し替え時は必ずここで ClearBossEffects にボス状態を捨てさせる。
+                // PolarisCombat の Entries/Profiles キャッシュ（HostAuthority.BossPolaris.cs）は、
+                // Build の差し替えで必ずこの状態破棄が起きることを前提にしている（BossMoves の差し替え後の直接変更は禁止）。
                 if (state.Build != null) ClearBossEffects(rt, state.Room == room && state.Run == run
                     && state.OwnerLife == ownerLife && ownerLife != 0, keepEquipmentSnapshot: true);
                 state.Build = build; state.Epoch = rt.ShieldEquipmentEpoch; state.Room = room; state.Run = run; state.OwnerLife = ownerLife;

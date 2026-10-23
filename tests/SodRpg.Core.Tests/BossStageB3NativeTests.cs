@@ -44,6 +44,14 @@ namespace SodRpg.Core.Tests
                 Time.time = now;
                 Invoke(Host, "Dispatch" + boss + "Boss", Rt, kind, activation, victim, point, now);
             }
+            internal void PolarisTick(float now)
+            {
+                // Calls TickPolarisBoss alone: the full TickBossEffects path runs BossEnsure
+                // first, which wipes the whole Polaris state on a Build/epoch swap, so the
+                // tick's own re-evaluation of a swapped Build is only observable here.
+                Time.time = now;
+                Invoke(Host, "TickPolarisBoss", Rt, now);
+            }
         }
 
         private static object Invoke(object target, string name, params object[] args)
@@ -530,6 +538,64 @@ namespace SodRpg.Core.Tests
             return Build.Compute(profile, "Hero_A", 0);
         }
 
+        // --- Polaris: the per-epoch cached BossFind decisions must answer exactly what a plain scan would ---
+
+        private static readonly string[] PolarisIds = (string[])typeof(HostAuthority)
+            .GetField("PolarisProfiles", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+
+        private static System.Collections.IDictionary PolarisStates(Rig rig)
+        {
+            var states = (System.Collections.IDictionary)typeof(HostAuthority)
+                .GetField("_polarisCombat", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(rig.Host);
+            Assert.NotNull(states);
+            return states;
+        }
+
+        private static object PolarisStateOf(Rig rig)
+        {
+            var states = PolarisStates(rig);
+            return states.Contains(rig.Rt) ? states[rig.Rt] : null;
+        }
+
+        private static object PolarisField(object state, string name) =>
+            state.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(state);
+
+        // The cache must hold exactly what a plain BossFind over the current Build answers for
+        // every one of the nine categories: the mask bit iff found, and the same (entry, profile)
+        // references. The old code ran this scan on every event and tick; only the timing changed.
+        private static void AssertPolarisCacheMatchesBossFind(Rig rig)
+        {
+            var state = PolarisStateOf(rig);
+            Assert.NotNull(state);
+            Assert.Equal(rig.Rt.ShieldEquipmentEpoch, (long)PolarisField(state, "Epoch"));
+            int mask = (int)PolarisField(state, "Mask");
+            var entries = (Array)PolarisField(state, "Entries");
+            var profiles = (Array)PolarisField(state, "Profiles");
+            for (int i = 0; i < PolarisIds.Length; i++)
+            {
+                var args = new object[] { rig.Rt, PolarisIds[i], null, null };
+                bool found = (bool)Invoke(rig.Host, "BossFind", args);
+                Assert.Equal(found, (mask & (1 << i)) != 0);
+                Assert.Same(args[2], entries.GetValue(i));
+                Assert.Same(args[3], profiles.GetValue(i));
+            }
+        }
+
+        // A Build with only the given polaris pieces, so set stages appear and disappear by piece
+        // count (2 pieces add stage2, 3 add stage3, 6 add stage6) like a real equipment change.
+        private static Build PolarisPieceBuild(params string[] slots)
+        {
+            var profile = Profile.CreateNew(48);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                Assert.True(Content.TryGetUnique("unique.boss_polaris." + slots[i], out var unique));
+                var relic = Loot.RollUnique(new Rng((ulong)(7400 + i)), unique, 5);
+                profile.Stash.Add(relic);
+                Rules.Equip(profile, "Hero_A", relic.Uid);
+            }
+            return Build.Compute(profile, "Hero_A", 0);
+        }
+
         [Fact]
         public void Seeker_phase_keeps_while_the_build_stays_and_resets_once_stage2_leaves_the_build()
         {
@@ -602,6 +668,68 @@ namespace SodRpg.Core.Tests
             Assert.Null(SeekerField(state, "DoubleProfile"));
             Assert.Null(SeekerField(state, "Stage2Build"));
             Assert.Null(SeekerField(state, "DoubleBuild"));
+        }
+
+        [Fact]
+        public void Polaris_cached_decisions_match_bossfind_and_are_reused_while_the_equipment_epoch_stays()
+        {
+            var rig = Create("polaris", 6);
+            rig.Input("Polaris", BossEvent.MemoryUse, 1, null, Vector3.zero, 10f);
+            AssertPolarisCacheMatchesBossFind(rig);
+            // Further events and ticks on the same epoch reuse the cached decisions; the cache
+            // must still answer exactly what a plain BossFind over the same Build would.
+            rig.Input("Polaris", BossEvent.MovementCompleted, 2, null, rig.Hero.position, 10.6f);
+            rig.Tick(10.7f);
+            AssertPolarisCacheMatchesBossFind(rig);
+        }
+
+        [Fact]
+        public void Polaris_refreshes_the_cached_decisions_when_the_epoch_changes_and_a_piece_is_added()
+        {
+            var rig = Create("polaris", 2, "weapon", "armor");
+            rig.Input("Polaris", BossEvent.MemoryUse, 1, null, Vector3.zero, 10f);
+            rig.Input("Polaris", BossEvent.MovementCompleted, 2, null, rig.Hero.position, 10.6f);
+            var state = PolarisStateOf(rig);
+            Assert.NotNull(state);
+            Assert.Equal(1, (int)PolarisField(state, "Mode")); // beast mode entered via the movement
+
+            // A real equipment change swaps the Build and bumps the equipment epoch together.
+            // Adding the head piece adds the head and stage3 categories without losing any, so
+            // the state must survive (mode kept) and re-attach its decisions to the new Build.
+            rig.Rt.Powers.SetBuild(PolarisPieceBuild("weapon", "armor", "head"));
+            rig.Rt.ShieldEquipmentEpoch++;
+            // 10.65f sits inside stage2's 0.5s input gate armed at 10.6f, so a wrongly discarded
+            // and rebuilt state could not re-enter beast mode here; mode 1 proves survival.
+            rig.Input("Polaris", BossEvent.MovementCompleted, 3, null, rig.Hero.position, 10.65f);
+            Assert.Same(state, PolarisStateOf(rig));
+            Assert.Equal(1, (int)PolarisField(state, "Mode"));
+            AssertPolarisCacheMatchesBossFind(rig);
+        }
+
+        [Fact]
+        public void Polaris_discards_the_state_once_a_category_leaves_the_build_on_an_epoch_change()
+        {
+            var rig = Create("polaris", 2, "weapon", "armor");
+            rig.Input("Polaris", BossEvent.MemoryUse, 1, null, Vector3.zero, 10f);
+            rig.Input("Polaris", BossEvent.MovementCompleted, 2, null, rig.Hero.position, 10.6f);
+            var state = PolarisStateOf(rig);
+            Assert.NotNull(state);
+            Assert.Equal(1, (int)PolarisField(state, "Mode"));
+
+            // Dropping to a single piece removes the armor and stage2 categories. The next tick
+            // must discard the state instead of trusting the stale cached decisions...
+            rig.Rt.Powers.SetBuild(PolarisPieceBuild("weapon"));
+            rig.Rt.ShieldEquipmentEpoch++;
+            rig.PolarisTick(10.7f);
+            Assert.False(PolarisStates(rig).Contains(rig.Rt));
+
+            // ...and the next event rebuilds it from the current Build alone: only the weapon
+            // category remains, with a fresh mode and decisions matching a plain BossFind.
+            rig.Input("Polaris", BossEvent.MemoryUse, 3, null, Vector3.zero, 11.2f);
+            var fresh = PolarisStateOf(rig);
+            Assert.NotNull(fresh);
+            Assert.Equal(0, (int)PolarisField(fresh, "Mode"));
+            AssertPolarisCacheMatchesBossFind(rig);
         }
     }
 }
