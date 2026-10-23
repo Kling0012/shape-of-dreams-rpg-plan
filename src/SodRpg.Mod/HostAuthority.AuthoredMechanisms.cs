@@ -20,6 +20,9 @@ namespace SodRpg.Mod
             internal int Count;
             internal string Quota;
             internal readonly HashSet<long> Counted = new HashSet<long>();
+            // EveryN 変換は刻印の状態（binding.Epoch）と発動元だけで決まり、被弾ごとに変わらないのでチャンネルごとに覚える。
+            internal long EveryNEpoch;
+            internal readonly Dictionary<(string, KeystoneSourceKind), int> EveryNBySource = new Dictionary<(string, KeystoneSourceKind), int>();
         }
         private sealed class AuthoredOwnerState
         {
@@ -368,6 +371,21 @@ namespace SodRpg.Mod
                 rt.Hero.netId.ToString(CultureInfo.InvariantCulture), notification.SourceMemory,
                 PressureDividendKillOrigin.NativeMemory, PressureDividendVictimKind.NativeLootEnemy), channels, equipped);
         }
+        // 刻印ランタイムは必ず binding.Epoch の更新と対で再設定されるので、Epoch が同じ間は EveryN 変換の
+        // 結果は不変。被弾ごとのペイロード組立と Apply を省き、Epoch が動いたときだけ計算し直す。
+        private int AuthoredChannelEveryN(Hero hero, AuthoredChannelState channel, string source, KeystoneSourceKind sourceKind)
+        {
+            long epoch = AuthoredKeystoneEpoch(hero);
+            if (channel.EveryNEpoch != epoch)
+            {
+                channel.EveryNEpoch = epoch;
+                channel.EveryNBySource.Clear();
+            }
+            var key = (source, sourceKind);
+            if (!channel.EveryNBySource.TryGetValue(key, out int everyN))
+                channel.EveryNBySource[key] = everyN = TransformAuthoredEveryN(hero, source, channel.Entry.Spec, sourceKind);
+            return everyN;
+        }
         private void DispatchAuthoredChannel(HeroRuntime rt, AuthoredOwnerState state, AuthoredChannelState channel,
             MemoryActivationEvent notification, EquippedMechanismMemory source, Entity victim, float nativeDamage,
             MechanismEquipment equipment, BridgeSuccessTransaction transaction, List<PressureDividendChannel> dividends)
@@ -399,7 +417,8 @@ namespace SodRpg.Mod
             }
             var sourceKind = notification.NativePayloadKind == NativePayloadKind.MainBasicAttack ? KeystoneSourceKind.OwnedBasicAttack
                 : notification.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
-            int everyN = spec.Kind == AuthoredMechanismKind.DirectedRecharge ? 1 : TransformAuthoredEveryN(rt.Hero, source.Memory, spec, sourceKind);
+            int everyN = spec.Kind == AuthoredMechanismKind.DirectedRecharge ? 1
+                : AuthoredChannelEveryN(rt.Hero, channel, source.Memory, sourceKind);
             if (everyN > 1)
             {
                 if (!channel.Counted.Add(notification.ActivationId)) return;
