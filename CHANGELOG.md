@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.47 — Lighter Skoll marks and Seeker gear（2026-10-24）
+
+この版では、Skoll の印と Seeker の装備で続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Skoll's marks and Seeker gear, reducing load during combat.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Skoll の印が付いている間は、印の位置も数も変わっていなくても、協力プレイの参加者全員へ同じ表示の通信を何度も送り直していました。印1つにつき1秒に最大10回です。今は印が増えたり減ったり、動いたりしたときだけ送ります。印が付いている時間が長いほど、通信と処理が少し軽くなります。印の見た目、動きへの追従、効果は変わりません。 / While Skoll's marks were active, the same mark display was sent again and again to everyone in co-op, up to 10 times per second per mark, even when the marks had not moved or changed in number. Updates are now sent only when marks are added, removed or moved. The longer marks stay active, the lighter network traffic and processing get. Mark visuals, how they follow movement, and their effects are unchanged.
+- Seeker の装備を付けている間、ホストのゲームが装備の内容を1秒に最大120回確かめ直していました。今は装備を付け替えたときだけ確かめます。ホストの処理が少し軽くなります。Seeker の段階の進み方、分身、装備を外したときの戻り方は変わりません。 / While Seeker gear was equipped, the host's game rechecked the gear up to 120 times per second. It now checks only when gear is changed, making the host run a little lighter. Seeker stage progress, the double, and the reset when the gear is removed are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.46 — Lighter combat processing for weak hits（2026-10-24）
 
 この版では、敵やプレイヤーが弱い攻撃を受けたときに、揺れの演出が出ないにもかかわらず演出の準備と片付けをしていた処理を省き、戦闘中の負荷を減らしました。 / This version cuts work done on weak hits, where the hit shake was being set up and removed again even though no shake was shown, reducing load during combat.
