@@ -639,7 +639,9 @@ namespace Issue73.Native.Tests
             typeof(NativeGenericTransformIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
             typeof(NativeGenericTransformIdlePerf).GetField("_warned", Hidden).SetValue(null, false);
             NativePerfOptions.GenericTransformIdle = true;
-            Assert.True(NativeGenericTransformIdlePerf.TryPrepare("GenericTransformSync"));
+            // Contract tests may load Dew.Core's global GenericTransformSync first.
+            // Use the stand-in's full name so its fields use the harness Unity types.
+            Assert.True(NativeGenericTransformIdlePerf.TryPrepare(typeof(GenericTransformSync).FullName));
         }
 
         public void Dispose()
