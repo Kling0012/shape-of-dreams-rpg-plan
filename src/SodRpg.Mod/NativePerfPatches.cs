@@ -791,7 +791,9 @@ namespace SodRpg.Mod
         // patch: it then hands every frame back to the native path — correct, just no
         // longer shared. Cache growth is bounded like the tracker: entries only fill on
         // witnessed bakes and are swept once the count passes the threshold, at most once
-        // per bake interval; a swept entry costs one refill, not correctness.
+        // per bake interval; a swept entry costs one refill, not correctness. Staleness
+        // starts several bake intervals out (see PruneStale), so entries whose skins keep
+        // baking — refreshing their entry each interval — are never swept.
         internal const int NativeTryGetIlLength = 241;
         internal const ulong NativeTryGetIlHash = 5068565405368308652UL;
         internal const int NativeTryGetLocals = 7;
@@ -803,6 +805,14 @@ namespace SodRpg.Mod
         internal const int NativeTransformPointLocals = 0;
 
         private const int PruneThreshold = 16;
+        // A skin still wearing attachments re-bakes at most once per Dew.BakeMeshInterval,
+        // so an entry in use refreshes at that cadence. Sweeping at exactly one interval
+        // would evict entries only marginally past it between bakes — still in use — and
+        // every eviction discards a list Mesh.GetVertices grew to full mesh size (thousands
+        // of vertices) that the next bake must grow again (principle II). Only an entry
+        // several intervals without any bake — a destroyed renderer, or a skin whose face
+        // attachments are all gone — never fills again and is dead weight.
+        private const float StaleAfterIntervals = 10f;
         private const string Feature = "attach face shared verts";
 
         private sealed class SharedVerts
@@ -886,12 +896,18 @@ namespace SodRpg.Mod
             return entry.Vertices;
         }
 
+        // Bounds the table like the tracker's sweep, but staleness starts StaleAfterIntervals
+        // out (default 1 second): evicting at one interval would drop entries whose skins
+        // merely sit between bakes, forcing the shared list — grown to full mesh size — to
+        // be rebuilt on the next bake. Entries past the stale window can never fill again
+        // (their skin has not baked for seconds), so removing them cannot change behavior;
+        // the sweep itself stays at the tracker's cadence of at most once per bake interval.
         private static void PruneStale(float now)
         {
             if (now - _lastPruneTime <= Dew.BakeMeshInterval) return;
             _lastPruneTime = now;
             foreach (KeyValuePair<int, SharedVerts> pair in Shared)
-                if (now - pair.Value.BakedTime > Dew.BakeMeshInterval)
+                if (now - pair.Value.BakedTime > Dew.BakeMeshInterval * StaleAfterIntervals)
                     StaleScratch.Add(pair.Key);
             for (int i = 0; i < StaleScratch.Count; i++)
                 Shared.Remove(StaleScratch[i]);

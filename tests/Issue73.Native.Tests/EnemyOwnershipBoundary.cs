@@ -94,12 +94,18 @@ internal static class Dew
         internal void Return() { }
     }
 
+    // 焼き直し照会の模倣を動かすための窓。テストが Mesh と isNew を仕込むと
+    // GetBakedMeshOptimized はそれをそのまま返す。既定（null / false）は従来どおり
+    // 「焼き直さず、新しくない」。テストは使い終わったら必ず既定へ戻す。
+    internal static Mesh BakedMesh;
+    internal static bool BakedMeshIsNew;
+
     internal static void GetBakedMeshOptimized(SkinnedMeshRenderer skin, out Mesh mesh,
         out BakedMeshHandle handle, out bool isNew)
     {
-        mesh = null;
+        mesh = BakedMesh;
         handle = default;
-        isNew = false;
+        isNew = BakedMeshIsNew;
     }
 
     internal static UnityEngine.AI.NavMeshPathStatus GetNavMeshPathStatusCached(

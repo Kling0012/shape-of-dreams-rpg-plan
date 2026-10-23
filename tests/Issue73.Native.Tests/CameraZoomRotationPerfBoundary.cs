@@ -7,29 +7,97 @@ using UnityEngine;
 namespace UnityEngine
 {
     // （#763）Quaternion の境界。実物の Euler はテスト環境で動かせないため、
-    // 入力角度をそのまま記録し、等価比較の材料にする。回転の意味（成分への変換）は
-    // この検証では不要で、見本・FollowRotation が同じ呼び出し形をとることだけが要る。
+    // 入力角度をそのまま記録し、等価比較の材料にする。見本・FollowRotation は
+    // 同じ呼び出し形をとることだけが要る。
     // （#983）実物と同じ x/y/z/w の4成分に揃え、等価も4成分の完全一致で比べる
     // （NativeMerchantPropIdlePerf が回転を成分ごとの float == で比べるため）。
-    // 既存の使い手（Euler と既定値）は w を 0 のまま持つので、挙動は変わらない。
+    // 既存の使い手（Euler の記録）は w を 0 のまま持つので、挙動は変わらない。
+    // （#1084）積（Q*V・Q*Q）と LookRotation は本体と同じ式の実回転。Euler の記録だけは
+    // 上記のとおり角度をそのまま返す（eulerAngles を使う既存テストを変えないため）。
     internal struct Quaternion : IEquatable<Quaternion>
     {
         public float x, y, z, w;
         public Quaternion(float x, float y, float z) { this.x = x; this.y = y; this.z = z; w = 0f; }
         public Quaternion(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
-        public static Quaternion identity => default;
+        // （#1084）本体と同じ w=1 の単位回転。default（全成分 0）のままだと Q*Q の合成で
+        // 積を 0 に潰してしまうため、積が実回転になったのを機に本体の値へ揃えた。
+        // identity を等価比較に使っている既存テストは無い（NativeBoundary の初期値は
+        // 読まれる前に必ず Euler の代入で上書きされる）。
+        public static Quaternion identity => new Quaternion(0f, 0f, 0f, 1f);
         public static Quaternion Euler(float x, float y, float z) => new Quaternion(x, y, z);
         // NativeEntityRotationIdlePerf の Prefix が読む本体 API の受け口。この境界の
         // Quaternion は Euler の入力角度をそのまま成分に持つので、eulerAngles はそれを
         // そのまま返す（EntityRotationIdlePerfTests が向きを設定するのに使う）。
         public Vector3 eulerAngles => new Vector3(x, y, z);
-        public static Vector3 operator *(Quaternion rotation, Vector3 point) => point;
-        // NativeAttachFaceSharedVerts の Prefix が本体の数式の転写で使う分。回転の意味は
-        // この検証では不要なため、Q*V と同じ passing-through（左項を返す）にする。
-        public static Quaternion operator *(Quaternion a, Quaternion b) => a;
-        // 本体 GetFaceRotation の転写が呼ぶ受け口。呼ばれるのは isNew フレームだけで、
-        // 模倣の GetBakedMeshOptimized は常に isNew=false を返すため、ここでは向きを作らない。
-        public static Quaternion LookRotation(Vector3 forward, Vector3 up) => identity;
+        // 本体 UnityEngine.Quaternion.operator*(Quaternion, Vector3) と同じ式（回転行列を
+        // 成分ごとに掛ける形）。NativeAttachFaceSharedVerts の Prefix が転写した数式の
+        // 位置と向きを手計算の期待値と比べるには、回転が本当に回転として働く必要がある。
+        // （#1084）既存の使い手（CameraZoomIlShapes など）はこの演算の返り値の数値を
+        // 検証していない（命令並びだけを見る）ので、pass-through からの変更は影響しない。
+        public static Vector3 operator *(Quaternion rotation, Vector3 point)
+        {
+            float num1 = rotation.x * 2f;
+            float num2 = rotation.y * 2f;
+            float num3 = rotation.z * 2f;
+            float num4 = rotation.x * num1;
+            float num5 = rotation.y * num2;
+            float num6 = rotation.z * num3;
+            float num7 = rotation.x * num2;
+            float num8 = rotation.x * num3;
+            float num9 = rotation.y * num3;
+            float num10 = rotation.w * num1;
+            float num11 = rotation.w * num2;
+            float num12 = rotation.w * num3;
+            return new Vector3(
+                (1f - (num5 + num6)) * point.x + (num7 - num12) * point.y + (num8 + num11) * point.z,
+                (num7 + num12) * point.x + (1f - (num4 + num6)) * point.y + (num9 - num10) * point.z,
+                (num8 - num11) * point.x + (num9 + num10) * point.y + (1f - (num4 + num5)) * point.z);
+        }
+        // 本体 UnityEngine.Quaternion.operator*(Quaternion, Quaternion) と同じ式
+        // （ハミルトン積。左項を後に適用する本体の順序）。NativeAttachFaceSharedVerts の
+        // Prefix が t.rotation * faceRotation * relRotation の合成順序を検証するために使う。
+        public static Quaternion operator *(Quaternion lhs, Quaternion rhs)
+        {
+            return new Quaternion(
+                lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y,
+                lhs.w * rhs.y + lhs.y * rhs.w + lhs.z * rhs.x - lhs.x * rhs.z,
+                lhs.w * rhs.z + lhs.z * rhs.w + lhs.x * rhs.y - lhs.y * rhs.x,
+                lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z);
+        }
+        // 本体 UnityEngine.Quaternion.LookRotation と同じ作り方（本体の内部実装と同じ
+        // 直交基底 → 行列 → 四元数）。GetFaceRotation の転写が面の法線向きを作るのに使い、
+        // テストは結果の +Z が法線を向くことまで確かめる。長さがごく小さい forward は
+        // 本体でも警告を出して未定義になるため、ここでは単位を返す。
+        public static Quaternion LookRotation(Vector3 forward, Vector3 up)
+        {
+            Vector3 z = forward.normalized;
+            if (z == Vector3.zero) return identity;
+            Vector3 x = Vector3.Cross(up, z).normalized;
+            if (x == Vector3.zero) return identity;
+            Vector3 y = Vector3.Cross(z, x);
+            // 行列の列が x・y・z 軸（本体の内部実装と同じ trace 分岐の四元数化）。
+            float m00 = x.x, m01 = y.x, m02 = z.x;
+            float m10 = x.y, m11 = y.y, m12 = z.y;
+            float m20 = x.z, m21 = y.z, m22 = z.z;
+            float trace = m00 + m11 + m22;
+            if (trace > 0f)
+            {
+                float s = (float)Math.Sqrt(trace + 1f) * 2f;
+                return new Quaternion((m21 - m12) / s, (m02 - m20) / s, (m10 - m01) / s, s / 4f);
+            }
+            if (m00 > m11 && m00 > m22)
+            {
+                float s = (float)Math.Sqrt(1f + m00 - m11 - m22) * 2f;
+                return new Quaternion(s / 4f, (m01 + m10) / s, (m02 + m20) / s, (m21 - m12) / s);
+            }
+            if (m11 > m22)
+            {
+                float s = (float)Math.Sqrt(1f + m11 - m00 - m22) * 2f;
+                return new Quaternion((m01 + m10) / s, s / 4f, (m12 + m21) / s, (m02 - m20) / s);
+            }
+            float sz = (float)Math.Sqrt(1f + m22 - m00 - m11) * 2f;
+            return new Quaternion((m02 + m20) / sz, (m12 + m21) / sz, sz / 4f, (m10 - m01) / sz);
+        }
         public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z && w == other.w;
         public override bool Equals(object obj) => obj is Quaternion other && Equals(other);
         public override int GetHashCode() => (((x.GetHashCode() * 397) ^ y.GetHashCode()) * 397 ^ z.GetHashCode()) * 397 ^ w.GetHashCode();

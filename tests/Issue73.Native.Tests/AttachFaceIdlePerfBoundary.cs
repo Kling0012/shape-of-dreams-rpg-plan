@@ -38,11 +38,20 @@ internal class RoomComponentStartDependencyAttribute : Attribute
 
 namespace UnityEngine
 {
-    // NativeAttachFaceSharedVerts の Prefix が isNew フレームで呼ぶ受け口。
-    // 模倣の GetBakedMeshOptimized は常に isNew=false を返すため、この受け口は呼ばれない。
+    // NativeAttachFaceSharedVerts の Prefix が isNew フレームで呼ぶ受け口。本体の
+    // Mesh.GetVertices は渡したリストを頂点列で埋め直すので、模倣もテストが仕込んだ
+    // 頂点列で埋め直し、呼び出し回数を数える（同じスキンの共有で1回だけ走る検証のため）。
     internal class Mesh
     {
-        internal void GetVertices(List<Vector3> vertices) { }
+        internal List<Vector3> Vertices { get; set; } = new List<Vector3>();
+        internal int GetVerticesCalls;
+
+        internal void GetVertices(List<Vector3> vertices)
+        {
+            GetVerticesCalls++;
+            vertices.Clear();
+            vertices.AddRange(Vertices);
+        }
     }
 
     // 本体の SkinnedMeshRenderer の境界。GetInstanceID はハーネス内で一意の連番を返す。
