@@ -73,6 +73,8 @@ namespace SodRpg.Core.Game
         PowerFlat = 25,
         /// <summary>自分が受けるHP回復量（%）。</summary>
         HealingReceivedPct = 26,
+        /// <summary>棘皮から受ける反射ダメージの軽減（%）。</summary>
+        ThornsResistancePct = 27,
     }
 
     /// <summary>

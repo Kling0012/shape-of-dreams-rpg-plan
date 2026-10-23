@@ -19,6 +19,11 @@ namespace UnityEngine
             Labels.Add(text);
             return false;
         }
+        internal static bool Toggle(bool value, string text, object style, params GUILayoutOption[] options)
+        {
+            Labels.Add(text);
+            return value;
+        }
         internal static GUILayoutOption Width(float width) => new GUILayoutOption();
         internal static GUILayoutOption ExpandHeight(bool expand) => new GUILayoutOption();
         internal static GUILayoutOption MinHeight(float height) => new GUILayoutOption();
@@ -71,6 +76,6 @@ namespace SodRpg.Mod
         public readonly object Header = new object(), Small = new object(), Warn = new object(),
             Button = new object(), ButtonSel = new object();
         // #771: 交換タブの検索欄（DrawCoopTradeFilters）が使う折り返しボタン。
-        public readonly object ButtonWrap = new object();
+        public readonly object ButtonWrap = new object(), ButtonWrapSel = new object();
     }
 }

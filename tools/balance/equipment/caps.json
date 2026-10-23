@@ -124,6 +124,7 @@
     "ShieldPower": 60,
     "SummonPower": 80,
     "SacrificeReduction": 40,
-    "HealingReceivedPct": 60
+    "HealingReceivedPct": 60,
+    "ThornsResistancePct": 60
   }
 }
