@@ -14,13 +14,13 @@ namespace SodRpg.Mod
             internal long MainActivation, DoubleVisual, PhaseVisual;
             internal float DoubleUntil;
             internal Vector3 DoublePoint;
-            internal bool Echo;
+            internal bool Echo, MissingBuildWarned;
             internal string DoubleProfile;
             // BossMoves は Build の生成時に確定し、以後は変わらない。BossFind の全走査は
             // Build が差し替わった最初の1回だけ行い、同じ Build では結果を流用する。
             internal Build Stage2Build, DoubleBuild;
             internal void Reset()
-            { Phase=0; MainActivation=DoubleVisual=PhaseVisual=0; DoubleUntil=0; DoublePoint=default; Echo=false; DoubleProfile=null; Stage2Build=null; DoubleBuild=null; }
+            { Phase=0; MainActivation=DoubleVisual=PhaseVisual=0; DoubleUntil=0; DoublePoint=default; Echo=false; MissingBuildWarned=false; DoubleProfile=null; Stage2Build=null; DoubleBuild=null; }
         }
         private readonly Dictionary<HeroRuntime,SeekerState> _seekerStates = new Dictionary<HeroRuntime,SeekerState>(64);
         private readonly BossObjectPool<SeekerState> _seekerPool = new BossObjectPool<SeekerState>(64,()=>new SeekerState());
@@ -172,9 +172,15 @@ namespace SodRpg.Mod
                     // PowerRuntime は Build を必ず持たせるので通常は来ない。Build が無ければ
                     // stage2 も分身のプロファイルも探しようがないので、キャッシュごと初期状態へ戻す。
                     SeekerRemoveDouble(rt,state,now); state.Phase=0; state.Stage2Build=null; state.DoubleBuild=null;
+                    if(!state.MissingBuildWarned)
+                    {
+                        state.MissingBuildWarned=true;
+                        Log.Warn($"Host: Seeker missing Build for hero netId={rt.Hero?.netId}; reset phase to 0, removed double, cleared Build caches.");
+                    }
                 }
                 else
                 {
+                    state.MissingBuildWarned=false;
                     if(state.DoubleUntil>0 && (now>=state.DoubleUntil || !SeekerDoubleProfileValid(rt,state,build))) SeekerRemoveDouble(rt,state,now);
                     if(!ReferenceEquals(state.Stage2Build,build))
                     {
