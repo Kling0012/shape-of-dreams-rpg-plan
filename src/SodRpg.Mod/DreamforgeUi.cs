@@ -1868,7 +1868,7 @@ namespace SodRpg.Mod
             GUI.enabled = enabled;
             GUILayout.EndHorizontal();
             bool resistance = GUILayout.Toggle(_relicThornsResistance,
-                Loc.T("棘への耐性（行動妨害耐性のある装備）", "Thorns resistance (gear with Tenacity)", "棘皮抗性（带有行动干扰抗性的装备）"), _relicThornsResistance ? _st.ButtonWrapSel : _st.ButtonWrap);
+                Loc.T("棘耐性のある装備", "Gear with Thorns resistance", "带有棘皮抗性的装备"), _relicThornsResistance ? _st.ButtonWrapSel : _st.ButtonWrap);
             if (resistance != _relicThornsResistance)
             {
                 _relicThornsResistance = resistance;
@@ -1993,10 +1993,10 @@ namespace SodRpg.Mod
 
         private static bool HasThornsResistance(Relic relic)
         {
-            int tenacity = 0;
+            int resistance = 0;
             foreach (var stat in relic.EffectiveStats())
-                if (stat.Stat == Stat.Tenacity) tenacity += stat.Value;
-            return tenacity > 0;
+                if (stat.Stat == Stat.ThornsResistancePct) resistance += stat.Value;
+            return resistance > 0;
         }
 
         // ───── 一覧の行の文字（★装着中・▲いまより強い・NEW 新しく手に入れた物・鍵） ─────

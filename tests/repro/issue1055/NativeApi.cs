@@ -108,6 +108,8 @@ namespace SodRpg.Mod
         private Actor _registeredOn;
         private bool _reflectingDamage;
         private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
+        private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
+        private sealed class HeroRuntime { public PowerRuntime Powers; }
         private readonly Dictionary<KeyValuePair<Monster, Hero>, float> _thornsNextReflect =
             new Dictionary<KeyValuePair<Monster, Hero>, float>(new ThornsKeyComparer());
         private readonly List<KeyValuePair<Monster, Hero>> _thornsScratch = new List<KeyValuePair<Monster, Hero>>();

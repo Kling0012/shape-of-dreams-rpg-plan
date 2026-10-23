@@ -1,0 +1,2 @@
+### 新機能 / New features
+- 棘皮の反射が高い夢の圧や複数の敵への同時攻撃で集中する負担を軽減しました。防具・装飾品・足に専用の「棘耐性」の特性を追加し、装備・鍛冶の一覧で絞り込めるようにしました。協力プレイでは全員を同じ版へ更新してください。 / Reduced the burden of Thorned reflection at high dream pressure and when hitting multiple enemies at once. Added a dedicated Thorns resistance affix to armor, charms and footwear, with filtering in gear and forge lists. All co-op players must update to the same version.

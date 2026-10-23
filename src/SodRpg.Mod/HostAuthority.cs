@@ -868,7 +868,9 @@ namespace SodRpg.Mod
                 if (_thornsNextReflect.TryGetValue(key, out float next) && now < next) return;
                 _thornsNextReflect[key] = now + Nightmares.ThornsReflectInterval;
                 if (_thornsNextReflect.Count > 256) PruneThornsTimers(now);
-                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth, hero.Status != null ? hero.Status.tenacity : 0f);
+                int resistance = _runtimes.TryGetValue(hero, out var heroRuntime)
+                    ? heroRuntime.Powers.Build.Get(Stat.ThornsResistancePct) : 0;
+                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth, resistance);
                 if (amount <= 0f) return;
                 window.Next = now + Nightmares.ThornsReflectInterval;
                 _reflectingDamage = true;
