@@ -10,6 +10,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.49 — Lighter combat around Primus, Light, Infernus, Azurak gear and keystone effects（2026-10-24）
+
+この版では、Primus、Light、Infernus、Azurak の装備と、刻印の効果のまわりで続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Primus, Light, Infernus and Azurak gear and keystone effects, reducing load during combat.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Primus の装備を付けている間、攻撃が当たったり受けたりするたびに、ホストのゲームが装備の内容を最大3〜4回確かめ直していました。今は装備を付け替えたときにまとめて確かめ、それ以外のときに確かめるのは1回だけです。戦闘中のホストの処理が少し軽くなります。Primus のダメージ、障壁、段階の進み方、装備を外したときの戻り方は変わりません。 / While Primus gear was equipped, the host's game rechecked the gear up to 3–4 times every time a hit landed or was taken. It now does the full check when gear is changed and checks only once otherwise, making the host run a little lighter in combat. Primus damage, barriers, stage progress, and the reset when the gear is removed are unchanged.
+- Light の装備を付けている間、ホストのゲームが装備の内容を確かめ直していました。1秒に最大540回、さらに攻撃1回ごとに最大9回です。今は装備を付け替えたときだけ確かめます。戦闘中のホストの処理が少し軽くなります。Light のチャージ、ビーム、落雷、クリスタル、シールドの動きは変わりません。 / While Light gear was equipped, the host's game kept rechecking the gear, up to 540 times per second plus up to 9 times on every attack. It now checks only when gear is changed, making the host run a little lighter in combat. Light charges, beams, lightning strikes, crystals and shields are unchanged.
+- Infernus の装備を付けている間、敵に付いた火の呪いごとに、ホストのゲームが直前に済ませた確認をもう一度繰り返していました。これを毎フレーム行っていました。今は1回だけ確かめます。火の呪いを付けた敵が多いほど、ホストの処理が少し軽くなります。呪いの続く時間、延長、火の付与、見た目は変わりません。 / While Infernus gear was equipped, the host's game repeated the same check it had just finished for every fire curse on enemies, every frame. It now checks once. The more enemies carry the fire curse, the lighter the host runs. Curse duration, extensions, burning and visuals are unchanged.
+- Azurak の装備を付けている間、主人公がダメージを与えるたびなど、Azurak の効果に関係のない場面でも、ホストのゲームが装備の内容を確かめていました。今は関係のある場面でだけ確かめます。戦闘中のホストの処理が少し軽くなります。Azurak の効果と発動のしかたは変わりません。 / While Azurak gear was equipped, the host's game checked the gear even on events Azurak's effects never use, such as every time the hero dealt damage. It now checks only on relevant events, making the host run a little lighter in combat. Azurak's effects and how they trigger are unchanged.
+- 刻印で「N回に1回」の発動間隔が変わる効果では、被弾や撃破のたびに、ホストのゲームが刻印による変化を計算し直していました。今は刻印を付け外ししたときや装備を変えたときだけ計算し直します。ヒット数や召喚が多い戦闘ほど、ホストの処理が少し軽くなります。発動の間隔と回復量は変わりません。 / For effects whose "once every N times" interval is changed by keystones, the host's game recalculated the keystone change on every hit taken or kill. It now recalculates only when keystones are added or removed or gear is changed. Fights with many hits or summons now run a little lighter on the host. Trigger intervals and healing amounts are unchanged.
+- 味方を守る障壁（Allied Ward）の効果では、発動するたびに、ホストのゲームが刻印による強化を計算し直していました。今は刻印を付け外ししたときや装備を変えたときだけ計算し直します。発動が多い戦闘ほど、ホストの処理が少し軽くなります。障壁の量、守る相手の数と選び方は変わりません。協力プレイで同じ効果を持つ仲間がいても、それぞれの刻印に応じた結果になります。 / For Allied Ward effects, the host's game recalculated the keystone boost every time the effect triggered. It now recalculates only when keystones are added or removed or gear is changed. Fights with many triggers now run a little lighter on the host. Barrier amounts and the number and choice of allies protected are unchanged. When several co-op players have the same effect, each player's own keystones still apply.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.48 — Lighter combat around Polaris gear, Nyx marks and projectiles（2026-10-24）
 
 この版では、Polaris の装備、Nyx の印、飛んでいる弾のまわりで続いていた無駄な処理を省き、戦闘中の負荷を減らしました。 / This version removes wasted work around Polaris gear, Nyx's marks and projectiles in flight, reducing load during combat.
