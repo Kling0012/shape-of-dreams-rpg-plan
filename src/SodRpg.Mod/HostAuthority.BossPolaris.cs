@@ -111,6 +111,9 @@ namespace SodRpg.Mod
             state.Mask = newMask; _polarisCombat.Add(rt, state);
             return state;
         }
+        // Only BossDispatch (forest == false) calls this. Its event entry points and
+        // TickBossEffects run BossEnsure first, so a Build swap clears the Polaris
+        // cache before PolarisState can reuse it with an unchanged equipment epoch.
         private void DispatchPolarisBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;
