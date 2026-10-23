@@ -1,0 +1,20 @@
+# Paths are relative to the repository root. Text patterns use Python re.search.
+# Command-line tools, logs and developer-only configuration are not player UI.
+file:src/SodRpg.Cli/**
+file:src/SodRpg.Mod/DreamforgeConfig.cs
+file:src/SodRpg.Mod/Log.cs
+file:src/SodRpg.Mod/*Diagnostics.cs
+file:src/SodRpg.Mod/HostAuthority.SpecialEnemyLog.cs
+file:src/SodRpg.Mod/obj/**
+file:src/SodRpg.Mod/bin/**
+file:src/SodRpg.Core/obj/**
+file:src/SodRpg.Core/bin/**
+# DreamforgeMod also contains player-facing settings-save errors; retain those.
+text:^Specify a registered boss-exclusive set id or boss type name\.$
+text:^Specify a registered boss type name during an active run\.$
+text:^Developer grant: $
+text:^Developer boss roll:
+text:development grants\.$
+text:^\[debug\]
+text:^\[DreamforgeRPG\]
+text:^Source: developer grant$

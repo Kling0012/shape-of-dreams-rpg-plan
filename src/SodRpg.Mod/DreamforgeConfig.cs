@@ -1,3 +1,4 @@
+using System;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
 
@@ -18,13 +19,14 @@ namespace SodRpg.Mod
         [LabelText("Secure point panel key / 確保地点の画面を隠す・出すキー")]
         public Key securePanelKey = Key.F9;
 
-        // 表示言語は3択（#877）: chinese=true → 中国語 / japanese=true → 日本語 / 両方false → 英語。
+        // 外部言語が未指定・無効なら、chinese=true → 中国語 / japanese=true → 日本語 / 両方false → 英語。
         // chinese が japanese より優先する。旧版のMODはこの項目を無視して
         // japanese（中国語選択時は false ＝ 英語）へ戻るため、旧版でも安全に既定の言語で動く。
         // 壊れた保存では両方既定値（true/false ＝ 日本語）に戻り、未知の言語値は生じない。
         [LabelText("UI language: Japanese / 表示言語：日本語")]
-        [Description("Language is a three-way choice. Chinese (Simplified) takes priority over Japanese; uncheck both for English. / "
-            + "表示言語は3択です。簡体中文（中国語）をチェックすると日本語より優先され、両方外すと英語になります。")]
+        [Description("Used when no loaded external language is selected. Chinese (Simplified) takes priority over Japanese; uncheck both for English. / "
+            + "読み込めた外部言語が選ばれていないときに使います。簡体中文は日本語より優先され、両方外すと英語になります。 / "
+            + "未选择已加载的外部语言时使用。简体中文优先于日语；两项都不选则使用英语。")]
         public bool japanese = true;
 
         [LabelText("UI language: Chinese, Simplified / 表示言語：简体中文（优先于日语 / 日本語より優先）")]
@@ -32,9 +34,16 @@ namespace SodRpg.Mod
             + "チェックすると簡体字中国語で表示します（未訳の部分は英語）。日本語より優先されます。")]
         public bool chinese = false;
 
-        /// <summary>2つの真偽値から表示言語を決める。壊れた値もこの組み合わせに収まる。</summary>
-        public LocLanguage ResolveLanguage() =>
-            chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
+        [LabelText("External language code / 外部言語のコード / 外部语言代码")]
+        public string language = "";
+
+        [LabelText("Write missing translations / 未訳の文を書き出す / 导出未翻译文本")]
+        public bool translationDump = false;
+
+        /// <summary>読み込めた外部言語を優先し、見つからなければ従来の設定を使う。</summary>
+        public LocLanguage ResolveLanguage(Func<string, bool> selectExternal = null) =>
+            selectExternal?.Invoke(language) == true ? LocLanguage.External
+                : chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
 
         /// <summary>自動分解の設定から分解してよいレア度の境界（この値未満）を返す。
         /// 「しない」と壊れた保存値（範囲外の整数）では null に戻す（ResolveNameplates と同じ防御）。</summary>

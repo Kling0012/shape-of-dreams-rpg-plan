@@ -24,29 +24,24 @@ namespace SodRpg.Mod
         internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
         private static readonly List<Txt> MismatchTexts = new List<Txt>();
         private static readonly List<string> MismatchScratch = new List<string>();
-        private static LocLanguage _mismatchScratchLanguage;
+        private static int _mismatchScratchLanguage;
 
         /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。言語を切り替えたら、その言語で作り直す。</summary>
         internal static IReadOnlyList<string> VersionWarnings
         {
             get
             {
-                if (_mismatchScratchLanguage != Loc.Language) FillMismatchScratch();
+                if (_mismatchScratchLanguage != Loc.CacheKey) FillMismatchScratch();
                 return MismatchScratch;
             }
         }
 
         private static void FillMismatchScratch()
         {
-            _mismatchScratchLanguage = Loc.Language;
+            _mismatchScratchLanguage = Loc.CacheKey;
             MismatchScratch.Clear();
             // ホストの HUD への表示文（送信はしない）。警告の Txt は3言語揃い、中国語の無いものは英語へ戻す（#992）。
-            foreach (var text in MismatchTexts) MismatchScratch.Add(_mismatchScratchLanguage switch
-            {
-                LocLanguage.Japanese => text.Ja,
-                LocLanguage.Chinese => text.Zh ?? text.En,
-                _ => text.En,
-            });
+            foreach (var text in MismatchTexts) MismatchScratch.Add(text.ToString());
         }
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;

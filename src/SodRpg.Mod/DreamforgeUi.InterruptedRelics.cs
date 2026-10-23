@@ -8,14 +8,14 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] InterruptedRelicButtonSize = { GUILayout.ExpandWidth(true) };
 
         private int _interruptedRelicLabelCount = -1;
-        private LocLanguage _interruptedRelicLabelLanguage;
+        private int _interruptedRelicLabelLanguage;
         private string _interruptedRelicLabel;
 
         private void DrawInterruptedRelics()
         {
             if (!_s.HasInterruptedRelics) return;
             int count = _s.Profile.InterruptedRelics.Count;
-            LocLanguage language = Loc.Language; // 3値（#877）。真偽値だと英語⇔中国語で古い表示が残る。
+            int language = Loc.CacheKey;
             if (_interruptedRelicLabel == null || _interruptedRelicLabelCount != count
                 || _interruptedRelicLabelLanguage != language)
             {

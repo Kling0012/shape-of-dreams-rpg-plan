@@ -38,7 +38,7 @@ namespace SodRpg.Mod
         // count texts are memoized and rebuilt only when the branch, the count or the language changes.
         private const int CoopWaitTextSalvage = 0, CoopWaitTextHeld = 1, CoopWaitTextRewards = 2;
         private int _coopWaitTextKind = -1, _coopWaitTextCount = -1;
-        private LocLanguage _coopWaitTextLanguage;
+        private int _coopWaitTextLanguage;
         private string _coopWaitText;
 
         // Calls are limited to trade events and the existing five-second probe. Interpolation
@@ -137,11 +137,11 @@ namespace SodRpg.Mod
         // compared and drawn by value, so reusing the cached instance changes no observable result.
         private string CoopCountWaitText(int kind, int count)
         {
-            if (_coopWaitTextKind == kind && _coopWaitTextCount == count && _coopWaitTextLanguage == Loc.Language)
+            if (_coopWaitTextKind == kind && _coopWaitTextCount == count && _coopWaitTextLanguage == Loc.CacheKey)
                 return _coopWaitText;
             _coopWaitTextKind = kind;
             _coopWaitTextCount = count;
-            _coopWaitTextLanguage = Loc.Language;
+            _coopWaitTextLanguage = Loc.CacheKey;
             switch (kind)
             {
                 case CoopWaitTextSalvage:
