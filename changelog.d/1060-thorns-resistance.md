@@ -1,2 +1,3 @@
 ### 新機能 / New features
 - 防具・装飾品・足に専用の「棘耐性」の特性を追加し、装備・鍛冶の一覧で絞り込めるようにしました。協力プレイでは全員を同じ版へ更新してください。 / Added a dedicated Thorns resistance affix to armor, charms and footwear, with filtering in gear and forge lists. All co-op players must update to the same version.
+- 棘皮の反射による難易度を緩和しました。反射には夢の圧・潜行・Infinityと協力プレイの敵担当別の与ダメージ倍率を掛けず、旅人ごとに全ての棘皮で反射間隔を共有することで、複数の敵からの反射が同時に集中するのを抑えます。棘皮の反射効果は残ります。 / Reduced the difficulty of Thorned reflections. Reflected damage no longer receives damage multipliers from dream pressure, delve, Infinity or co-op enemy ownership. Each traveler now shares a reflection interval across all Thorned enemies, limiting simultaneous reflections from multiple enemies. Thorned enemies still reflect damage.
