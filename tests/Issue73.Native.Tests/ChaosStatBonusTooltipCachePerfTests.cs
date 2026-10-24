@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using SodRpg.Mod;
 using Xunit;
@@ -12,8 +14,10 @@ namespace Issue73.Native.Tests
     /// Se_Shrine_Chaos_StatBonus に対して TryPrepare で読み取りを組み直して確かめる:
     /// (a) 同じ入力の2回目は本体（模倣の GetCustomTooltipDescription）を呼ばず、前回と同じ
     ///     文字列をそのまま返す、
-    /// (b) 入力のどれか（synced ボーナスの float・int、SyncVar の float・int、言語データの
-    ///     参照）を変えると作り直し、新しい値が文に現れる、
+    /// (b) 入力の 23 値（synced ボーナスの float・int、SyncVar の float・int）それぞれ
+    ///     を1つずつ変えると作り直し、新しい値が文に現れる（<see cref="InputMutations"/> の
+    ///     23 行で全値を機械的に列挙し、行数が読み取りの値の数と一致することも確かめる）、
+    ///     言語データの参照を替えても作り直す、
     /// (c) Prefix がキャッシュを返した呼び出しでは Postfix はスナップショットを取り直さない
     ///     （Harmony の仕様で Postfix は省いた後でも呼ばれるため、目印で省す）、
     /// (d) 設定が無効なら常に本体を走らせる、
@@ -86,69 +90,65 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, shrine.tooltipDescriptionBuilds);
         }
 
-        // (b) synced ボーナスの float（syncedRegularChaosBonus 側）を変えると作り直す。
-        [Fact]
-        public void AChangedRegularBonusFloatRebuildsTheText()
+        // (b) 入力 23 値（float 13・int 10）の1行分: 字段の置き場所つきの名前と、その値だけを
+        // 非零へ替える操作と、替えた値が文に現れることを見る目印。並びは NativePerfPatches.cs の
+        // _floatGetters・_intGetters と同じ順（float 13 → int 10）。模倣型が internal なので
+        // 操作はこの非公開の表に置き、[Theory] には名前だけ（string）を渡す。
+        private static readonly (string Name, Action<Se_Shrine_Chaos_StatBonus> Change, string Expected)[] MutationRows =
         {
-            var shrine = new Se_Shrine_Chaos_StatBonus();
-            string first = CallTooltip(shrine);
-            shrine.syncedRegularChaosBonus._maxHealthFlat = 12.5f;
-            string second = CallTooltip(shrine);
-            Assert.NotEqual(first, second);
-            Assert.Equal(2, shrine.tooltipDescriptionBuilds);
-            Assert.Contains("hp=12.5", second);
+            ("syncedRegularChaosBonus._maxHealthFlat", s => s.syncedRegularChaosBonus._maxHealthFlat = 12.5f, "hp=12.5"),
+            ("syncedRegularChaosBonus._armorFlat", s => s.syncedRegularChaosBonus._armorFlat = 2.25f, "ar=2.25"),
+            ("syncedRegularChaosBonus._attackDamageFlat", s => s.syncedRegularChaosBonus._attackDamageFlat = 3.5f, "ad=3.5"),
+            ("syncedRegularChaosBonus._abilityPowerFlat", s => s.syncedRegularChaosBonus._abilityPowerFlat = 4.5f, "ap=4.5"),
+            ("syncedRegularChaosBonus._attackSpeedPercentage", s => s.syncedRegularChaosBonus._attackSpeedPercentage = 5.5f, "as=5.5"),
+            ("syncedRegularChaosBonus._abilityHasteFlat", s => s.syncedRegularChaosBonus._abilityHasteFlat = 6.5f, "ah=6.5"),
+            ("syncedCorruptedChaosBonus._attackRangeFlat", s => s.syncedCorruptedChaosBonus._attackRangeFlat = 1.5f, "rng=1.5"),
+            ("syncedCorruptedChaosBonus._critChanceFlat", s => s.syncedCorruptedChaosBonus._critChanceFlat = 3.25f, "crit=3.25"),
+            ("syncedCorruptedChaosBonus._fireEffectAmpFlat", s => s.syncedCorruptedChaosBonus._fireEffectAmpFlat = 7.5f, "fire=7.5"),
+            ("syncedCorruptedChaosBonus._coldEffectAmpFlat", s => s.syncedCorruptedChaosBonus._coldEffectAmpFlat = 8.5f, "cold=8.5"),
+            ("syncedCorruptedChaosBonus._movementSpeedPercentage", s => s.syncedCorruptedChaosBonus._movementSpeedPercentage = 9.5f, "ms=9.5"),
+            ("syncedCorruptedChaosBonus._abilityHasteFlat", s => s.syncedCorruptedChaosBonus._abilityHasteFlat = 10.5f, "cah=10.5"),
+            ("currentDodgeHaste", s => s.currentDodgeHaste = 4.5f, "dh=4.5"),
+            ("syncedCorruptedChaosBonus._everyFourAttackStartIndexFlat", s => s.syncedCorruptedChaosBonus._everyFourAttackStartIndexFlat = 3, "e4=3"),
+            ("currentDodgeAddedCharges", s => s.currentDodgeAddedCharges = 2, "dc=2"),
+            ("currentAddedDarkMaxStack", s => s.currentAddedDarkMaxStack = 3, "dark=3"),
+            ("currentAddedLightMaxStack", s => s.currentAddedLightMaxStack = 4, "light=4"),
+            ("currentAddedMaxLevel", s => s.currentAddedMaxLevel = 5, "lvl=5"),
+            ("currentAddedGemSlotQ", s => s.currentAddedGemSlotQ = 2, "gq=2"),
+            ("currentAddedGemSlotW", s => s.currentAddedGemSlotW = 6, "gw=6"),
+            ("currentAddedGemSlotE", s => s.currentAddedGemSlotE = 7, "ge=7"),
+            ("currentAddedGemSlotR", s => s.currentAddedGemSlotR = 8, "gr=8"),
+            ("currentAddedGemSlotIdentity", s => s.currentAddedGemSlotIdentity = 9, "gi=9"),
+        };
+
+        public static IEnumerable<object[]> InputMutations
+            => MutationRows.Select(r => new object[] { r.Name });
+
+        // (b) の機械的な塞ぎ: 変更の行数が、Prefix が比較に使う読み取り（_floatGetters・
+        // _intGetters）の数と一致する。読み取りへ値を足して行を足し忘れても（その逆でも）、
+        // 値を変える行が1つ欠けて作り直しに失敗するか、この行数の検証が失敗する。
+        [Fact]
+        public void TheMutationRowsCoverExactlyTheCompiledGetters()
+        {
+            var type = typeof(NativeChaosStatBonusTooltipCachePerf);
+            int floats = ((Array)type.GetField("_floatGetters", Hidden).GetValue(null)).Length;
+            int ints = ((Array)type.GetField("_intGetters", Hidden).GetValue(null)).Length;
+            Assert.Equal(floats + ints, MutationRows.Length);
         }
 
-        // (b) synced ボーナスの float（syncedCorruptedChaosBonus 側）を変えても作り直す。
-        [Fact]
-        public void AChangedCorruptedBonusFloatRebuildsTheText()
+        // (b) 23 値それぞれを1つずつ変えると作り直し、新しい値が文に現れる。
+        [Theory]
+        [MemberData(nameof(InputMutations))]
+        public void AChangedInputValueRebuildsTheText(string name)
         {
+            var row = MutationRows.Single(r => r.Name == name);
             var shrine = new Se_Shrine_Chaos_StatBonus();
             string first = CallTooltip(shrine);
-            shrine.syncedCorruptedChaosBonus._critChanceFlat = 3.25f;
+            row.Change(shrine);
             string second = CallTooltip(shrine);
             Assert.NotEqual(first, second);
             Assert.Equal(2, shrine.tooltipDescriptionBuilds);
-            Assert.Contains("crit=3.25", second);
-        }
-
-        // (b) SyncVar の float（効果自身の字段）を変えても作り直す。
-        [Fact]
-        public void AChangedSyncVarFloatRebuildsTheText()
-        {
-            var shrine = new Se_Shrine_Chaos_StatBonus();
-            string first = CallTooltip(shrine);
-            shrine.currentDodgeHaste = 4.5f;
-            string second = CallTooltip(shrine);
-            Assert.NotEqual(first, second);
-            Assert.Equal(2, shrine.tooltipDescriptionBuilds);
-            Assert.Contains("dh=4.5", second);
-        }
-
-        // (b) synced ボーナスの int を変えても作り直す。
-        [Fact]
-        public void AChangedBonusIntRebuildsTheText()
-        {
-            var shrine = new Se_Shrine_Chaos_StatBonus();
-            string first = CallTooltip(shrine);
-            shrine.syncedCorruptedChaosBonus._everyFourAttackStartIndexFlat = 3;
-            string second = CallTooltip(shrine);
-            Assert.NotEqual(first, second);
-            Assert.Equal(2, shrine.tooltipDescriptionBuilds);
-            Assert.Contains("e4=3", second);
-        }
-
-        // (b) SyncVar の int を変えても作り直す。
-        [Fact]
-        public void AChangedSyncVarIntRebuildsTheText()
-        {
-            var shrine = new Se_Shrine_Chaos_StatBonus();
-            string first = CallTooltip(shrine);
-            shrine.currentAddedGemSlotQ = 2;
-            string second = CallTooltip(shrine);
-            Assert.NotEqual(first, second);
-            Assert.Equal(2, shrine.tooltipDescriptionBuilds);
-            Assert.Contains("gq=2", second);
+            Assert.Contains(row.Expected, second);
         }
 
         // (b) 言語データの参照を替えても作り直す（言語の切り替え。値はどちらも変わらない）。
