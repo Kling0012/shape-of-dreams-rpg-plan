@@ -1196,6 +1196,22 @@ namespace SodRpg.Mod
         // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が読む現在値。実機では SyncVar の
         // 裏の字段を返す公開プロパティで、初期値は new された空のロードアウト。
         public HeroLoadoutData selectedLoadout = new HeroLoadoutData();
+        // 実機の Mirror weaver が [SyncVar] selectedLoadout 向けに生成するセッターの模倣。
+        // 本体はクラス既定の参照等値で比べ、参照が変わるときだけ字段へ代入して dirty を
+        // 立て hook を起こす（実 DLL 逆コンパイル 2026-10-24）。境界では参照の代入と
+        // 「書いた回数」（dirty・hook の代理）だけを再現し、NativeMidJoinLoadoutIdlePerf の
+        // Prepare がこのセッターを解決できるようにする（テストでパッチを有効なまま確かめる）。
+        public HeroLoadoutData Network_003CselectedLoadout_003Ek__BackingField
+        {
+            get => selectedLoadout;
+            set
+            {
+                if (ReferenceEquals(selectedLoadout, value)) return;
+                selectedLoadout = value;
+                selectedLoadoutWrites++;
+            }
+        }
+        public int selectedLoadoutWrites;
         public readonly SyncList<string> selectedAccessories = new SyncList<string>();
         public List<string> ownedItems = new List<string>();
         public bool IsAllowedToUseItem(string itemName)
@@ -1261,8 +1277,7 @@ namespace SodRpg.Mod
     // 実機ではグローバル名前空間の公開クラスで、スキル4つと星のリスト4つを持ち、Mirror の
     // SyncVar はクラス既定の参照等値で比べる（実 DLL 逆コンパイル 2026-10-24）。本体では
     // new されたインスタンスがそのまま代入されるため、この境界にも同じ字段の形だけを置く。
-    // 中身は呼ばれない（本体側の weaver 生成セッターは境界にないのでパッチは無効になる）ので、
-    // コンストラクターの既定値の形だけ合っていればよい。
+    // 公開字段は実機と同じ8項目だけ（それ以外だと Prepare の字段照合がパッチを無効にする）。
     internal struct LoadoutStarItem
     {
         public string name;
