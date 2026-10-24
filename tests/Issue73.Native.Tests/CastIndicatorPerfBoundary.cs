@@ -31,12 +31,14 @@ namespace UnityEngine
     {
         // 値の意味は本体と同じ。書き込んだ回数も数える（NativeHeroWeaponIdlePerf が
         // 同じ値の書き込みを省くかどうかの検証に使う）。
+        // throwOnRead / throwOnWrite（FxAttachIdlePerfBoundary.cs の部分宣言の欄）は
+        // 破棄済み Transform へのアクセスを模すための検証用の鉤。null なら何もしない。
         private Vector3 _localScale;
         internal int localScaleWrites;
         internal Vector3 localScale
         {
-            get => _localScale;
-            set { _localScale = value; localScaleWrites++; }
+            get { if (throwOnRead != null) throw throwOnRead; return _localScale; }
+            set { if (throwOnWrite != null) throw throwOnWrite; _localScale = value; localScaleWrites++; }
         }
         internal Vector3 localPosition { get; set; }
 

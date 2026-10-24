@@ -6653,13 +6653,17 @@ namespace SodRpg.Mod
     // differs, so it is overwritten exactly when the native write would have been. The
     // transpiler re-points only those call sites and demands the shipped shape (4 localScale,
     // 1 position, 1 SetPositionAndRotation, all on Transform); any other shape leaves the
-    // method unmodified with one warning.
+    // method unmodified with one warning. A wrapper that hits a null or destroyed transform
+    // re-issues the unconditional native write (which throws the very exception the
+    // unpatched method would have thrown) and stays armed; any other exception disables the
+    // patch fail-soft through a warning flag of its own.
     [HarmonyPatch]
     internal static class NativeFxAttachIdlePerf
     {
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
+        private static bool _runtimeWarned;
 
         private static bool Prepare()
         {
@@ -6708,6 +6712,13 @@ namespace SodRpg.Mod
             return code;
         }
 
+        // Attached effects die mid-frame as a matter of course, so a null or destroyed
+        // transform is ordinary churn, not a patch failure: the native write would throw the
+        // very same exception, and one such write must not disarm the optimization for every
+        // other effect. Anything else is unexpected and disables fail-soft.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
         private static void WriteLocalScale(Transform tr, Vector3 value)
         {
             if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.localScale = value; return; }
@@ -6718,8 +6729,9 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (IsGoneTransform(ex)) { tr.localScale = value; return; }
                 _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "attached FX idle", ex.Message);
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
                 tr.localScale = value;
             }
         }
@@ -6734,8 +6746,9 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
                 _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "attached FX idle", ex.Message);
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
                 tr.position = value;
             }
         }
@@ -6756,8 +6769,9 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (IsGoneTransform(ex)) { tr.SetPositionAndRotation(position, rotation); return; }
                 _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "attached FX idle", ex.Message);
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
                 tr.SetPositionAndRotation(position, rotation);
             }
         }

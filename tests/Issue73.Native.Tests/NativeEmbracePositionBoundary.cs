@@ -52,7 +52,9 @@ namespace SodRpg.Mod
 
     // 本体 EntityVisual.model（EntityModel.holsteredWeapon）と付属エフェクトの最小限の形。
     internal class EntityModel { public Transform holsteredWeapon; }
-    internal class FxAttachToEntity { }
+    // NativeFxAttachIdlePerf の書き込み指紋の見本（FxAttachIdlePerfBoundary.cs）を足せるよう
+    // partial にする（この部分宣言自体の中身は従来どおり空のまま）。
+    internal partial class FxAttachToEntity { }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
     internal struct SyncMovementData
