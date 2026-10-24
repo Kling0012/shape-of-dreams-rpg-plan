@@ -6654,13 +6654,18 @@ namespace SodRpg.Mod
         // every frame, so each write only re-dirties the telegraph's transform hierarchy —
         // several telegraphs are alive at once during a fight and every client, guests
         // included, advances all of them. The wrappers below compare the fresh value against
-        // the current one and write only on a real change: an equal value cannot change what
-        // Unity renders, and nothing in the shipped game reads Transform.hasChanged (same
-        // verification as the hero-weapon idle patch). External writers are respected
-        // because the comparison reads the transform every time — a transform an animation
-        // has moved elsewhere differs from the computed value and is overwritten exactly
-        // when the native write would have been. NaN values compare unequal and are written,
-        // like in the native body. The transpiler re-points only those two call sites and
+        // the current one bit-exactly (IEEE754 bits, so +0 and -0 are apart — the native
+        // write stores the sign bit too) and write only when the bits differ: a bit-equal
+        // value cannot change what Unity renders, and nothing in the shipped game reads
+        // Transform.hasChanged (same verification as the hero-weapon idle patch). External
+        // writers are respected because the comparison reads the transform every time — a
+        // transform an animation has moved elsewhere differs from the computed value and is
+        // overwritten exactly when the native write would have been. Values that read back
+        // with different bits — the world position of a parented transform, or a quaternion
+        // Unity normalizes on read — never match, so those keep writing every frame exactly
+        // like the native body; only a bit-identical read-back is skipped. NaN values
+        // compare unequal and are written, like in the native body. The transpiler
+        // re-points only those two call sites and
         // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
         // any other shape leaves the method unmodified with one warning.
         private static MethodBase _target;
@@ -6709,13 +6714,19 @@ namespace SodRpg.Mod
             return code;
         }
 
+        // float == reads 0f and -0f as equal while the native write would store the -0's
+        // sign bit, so the bit comparison decides; the != first keeps NaN never-equal
+        // (a NaN value writes every frame, like in the native body).
+        private static bool BitsDiffer(float a, float b)
+            => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
+
         private static void WritePosition(Transform tr, Vector3 value)
         {
             if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.position = value; return; }
             try
             {
                 Vector3 current = tr.position;
-                if (current.x != value.x || current.y != value.y || current.z != value.z) tr.position = value;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.position = value;
             }
             catch (Exception ex)
             {
@@ -6731,7 +6742,7 @@ namespace SodRpg.Mod
             try
             {
                 Quaternion current = tr.rotation;
-                if (current.x != value.x || current.y != value.y || current.z != value.z || current.w != value.w) tr.rotation = value;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z) || BitsDiffer(current.w, value.w)) tr.rotation = value;
             }
             catch (Exception ex)
             {

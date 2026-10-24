@@ -15,8 +15,9 @@ namespace Issue73.Native.Tests
     /// （NativeCastTelegraphIdlePerf）の検証。WritePosition / WriteRotation を模倣の
     /// Transform（CharacterModelDisplayBoundsBoundary.cs の position と書き込み記録、
     /// DashSweepStepPerfBoundary.cs の rotation と書き込み回数）で直接動かし、
-    /// 位置も回転も成分ごとの float == で完全一致するときだけ書き込みを省き、
-    /// 1成分でも違えば・NaN を含めば・設定 OFF なら本体どおりに毎回書くこと、
+    /// 位置も回転も成分ごとの IEEE754 ビット一致（+0 と -0 の区別を含む）のときだけ
+    /// 書き込みを省き、1成分でも違えば・NaN を含めば・設定 OFF なら本体どおりに
+    /// 毎回書くこと、
     /// 外部から動かされた transform は次の書き込みで計算値に戻ることを確かめる。
     /// あわせて Transpiler の書き込み数チェックを模倣の FxCastTelegraph
     /// （NativeEmbracePositionBoundary.cs の転写）に直接動かし、呼び出し箇所が
@@ -77,12 +78,15 @@ namespace Issue73.Native.Tests
                 Assert.Equal(pose.x, transform.position.x); // 値もそのまま
                 Assert.Equal(pose.y, transform.position.y);
                 Assert.Equal(pose.z, transform.position.z);
-                // +0 と -0 は == で等しい: ゼロの符号が違うだけなら書き込まない。
+                // +0 と -0 は == で等しいが符号ビットが違う: 本体は -0 を書いて保持する
+                // ので、ビット一致比較では「変わった」と扱い書く。保持値も -0 になる。
                 var zeroTransform = new Transform();
                 zeroTransform.position = new Vector3(0f, 0.5f, 0f);
                 int zeroWrites = zeroTransform.positionWriteLog.Count;
                 RunWritePosition(zeroTransform, new Vector3(-0f, 0.5f, 0f));
-                Assert.Equal(zeroWrites, zeroTransform.positionWriteLog.Count);
+                Assert.Equal(zeroWrites + 1, zeroTransform.positionWriteLog.Count);
+                Assert.Equal(BitConverter.SingleToInt32Bits(-0f),
+                    BitConverter.SingleToInt32Bits(zeroTransform.position.x));
             });
         }
 
@@ -162,6 +166,14 @@ namespace Issue73.Native.Tests
                 RunWriteRotation(transform, facing);
                 Assert.Equal(writes, transform.rotationWrites); // 書き込まれない
                 Assert.Equal(facing, transform.rotation); // 値もそのまま
+                // 回転も符号付きゼロを区別する: x が +0 の保持値へ -0 を書くときは書く。
+                var negativeZeroTurn = new Quaternion(-0f, 0.38268343f, 0f, 0.92387953f);
+                transform.rotation = new Quaternion(0f, 0.38268343f, 0f, 0.92387953f);
+                int zeroWrites = transform.rotationWrites;
+                RunWriteRotation(transform, negativeZeroTurn);
+                Assert.Equal(zeroWrites + 1, transform.rotationWrites);
+                Assert.Equal(BitConverter.SingleToInt32Bits(-0f),
+                    BitConverter.SingleToInt32Bits(transform.rotation.x));
             });
         }
 
