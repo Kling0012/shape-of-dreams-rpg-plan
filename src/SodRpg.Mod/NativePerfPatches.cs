@@ -6946,20 +6946,22 @@ namespace SodRpg.Mod
                 }
             }
             // The activeSelf check must end in a brfalse continue branch, a different
-            // branch must share its target (the null-check brtrue continue proving the
-            // label is the loop increment — the continue branch itself is excluded, it
-            // always matches its own target), and nothing else may be bound to the
-            // insertion point.
+            // branch must share its landing instruction (the null-check continue branch
+            // proving the label is the loop increment — the activeSelf branch itself is
+            // excluded, it always lands on its own target), and nothing else may be bound
+            // to the insertion point. Harmony reads every branch as its own Label value
+            // attached to the target instruction, so two branches to the same offset never
+            // compare equal as labels: sharing is decided by the resolved landing index.
             bool sharedTarget = false;
-            if (branchIndex >= 0 && continueLabel is Label target)
+            if (branchIndex >= 0 && continueLabel != null)
             {
-                for (int i = 0; i < code.Count; i++)
+                int continueIndex = IndexOfLabel(code, continueLabel);
+                if (continueIndex >= 0)
                 {
-                    if (i == branchIndex) continue;
-                    if (code[i].operand is Label label && target.Equals(label) && IsBranch(code[i].opcode))
+                    for (int i = 0; i < code.Count && !sharedTarget; i++)
                     {
-                        sharedTarget = true;
-                        break;
+                        if (i == branchIndex || !IsBranch(code[i].opcode) || !(code[i].operand is Label label)) continue;
+                        sharedTarget = IndexOfLabel(code, label) == continueIndex;
                     }
                 }
             }
@@ -6989,6 +6991,14 @@ namespace SodRpg.Mod
         {
             return opcode == OpCodes.Brtrue || opcode == OpCodes.Brtrue_S
                 || opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
+        }
+
+        // Index of the instruction a branch operand (a Label) points at, or -1.
+        private static int IndexOfLabel(IList<CodeInstruction> code, object operand)
+        {
+            for (int i = 0; i < code.Count; i++)
+                if (operand is Label target && code[i].labels.Contains(target)) return i;
+            return -1;
         }
 
         // The vanilla loop's continue check is `if (piece == null || !activeSelf) continue;`,

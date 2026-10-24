@@ -22,14 +22,26 @@ namespace UnityEngine
     internal partial class Transform
     {
         internal Transform parent { get; set; }
+        // （#1112）ギブ静止スキップの Transpiler 検証が IL 見本で通る分。実機では
+        // UnityEngine.Component の公開プロパティ gameObject（その部品が属する GameObject）。
+        // 境界では自分用に遅延確保するだけでよい（見本の中身は走らない）。
+        internal GameObject gameObject => _gameObject ??= new GameObject();
+        private GameObject _gameObject;
+        // （#1112）実機 UnityEngine.Transform.Rotate の受け口。NativeGibsRestPerf の
+        // Transpiler が AccessTools.Method でこの名前を解決し、IL 見本の呼び出しが
+        // 指紋の「Rotate 1回」に数えられる（中身は呼ばれないので空）。
+        internal void Rotate(Vector3 eulers) { }
     }
     // NativeProjectileIdleRpcPerf の Prefix が読む効果プレハブ字段の境界。実機では
     // UnityEngine.GameObject（ prefab 参照）。中身は読まない。
     // （#983）PropEnt_Merchant_Base の境界ループが各 props の transform を読むため、
     // 自身の Transform を返す受け口を足した（実機の GameObject.transform と同じ意味）。
+    // （#1112）activeSelf は実機 GameObject.activeSelf と同じ名前の受け口。
+    // NativeGibsRestPerf の Transpiler の指紋がこの getter の呼び出しを数える。
     internal class GameObject
     {
         public Transform transform;
+        public bool activeSelf { get; set; }
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
@@ -71,6 +83,138 @@ namespace SodRpg.Mod
         internal bool _burst;
         internal void Update() { }
         private void DoBurst() { }
+
+        // --- （#1112）NativeGibsRestPerf.Transpiler に渡す IL 見本（CameraZoomIlShapes と
+        // 同じ扱い）。本体 Dew.Core FxGibs_Kinematic.Update が持つのと同じ指紋
+        // （docs/specs/perf-loop/20261024-1019.md の逆アセンブル確認: activeSelf 確認1回・
+        // Rotate 1回・bounds 1回・position の取得と設定が各2回・DoBurst 1回・_pieces[i] の
+        // 読み取り1回）と分岐の形（null 確認の分岐と activeSelf の brfalse が同じ continue
+        // 先を共有する `if (piece == null || !activeSelf) continue;`）を再現する。本体の
+        // 全訳ではなく、指紋の数えと挿入位置の確認に必要な並びだけを置く。中身は走らない。
+        // レンダラーの取得は実機の GetComponent の代わりに RendererOf を通す（指紋は
+        // Renderer.bounds の読み取りだけを数えるため、取得経路は数えない）。
+        internal void NativeLikeUpdate()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        private static Renderer RendererOf(Transform piece) => null;
+
+        // 指紋が壊れた見本（Transpiler が適用せず元の IL を返すことの確認用）。
+        // activeSelf 確認が2回になる形（実物の指紋は1回だけ）。
+        internal void NativeLikeUpdateWithTwoActiveChecks()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                if (!piece.gameObject.activeSelf) return;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // null 確認と activeSelf 確認が continue を共有しない形（else 連鎖）。activeSelf 枝の
+        // 飛び先を共有するほかの分岐が無くなる（または枝が brfalse でなくなる）。
+        internal void NativeLikeUpdateWithoutSharedContinue()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null)
+                {
+                    _velocities[i] = Vector3.zero;
+                }
+                else if (!piece.gameObject.activeSelf)
+                {
+                    _spins[i] = 0f;
+                }
+                else
+                {
+                    Vector3 velocity = _velocities[i];
+                    velocity.y -= 20f * dt;
+                    Vector3 position = piece.position;
+                    position += velocity * dt;
+                    piece.position = position;
+                    piece.Rotate(Vector3.up * (_spins[i] * dt));
+                    Bounds bounds = RendererOf(piece).bounds;
+                    if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                    {
+                        velocity.y = 0f;
+                        Vector3 snapped = piece.position;
+                        snapped.y -= bounds.center.y - bounds.extents.y;
+                        piece.position = snapped;
+                    }
+                    _velocities[i] = velocity;
+                }
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // Rotate が2回になる形（実物の指紋は1回だけ）。
+        internal void NativeLikeUpdateWithTwoRotates()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                piece.Rotate(Vector3.zero);
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
     }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }

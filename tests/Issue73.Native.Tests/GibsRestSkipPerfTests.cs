@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using HarmonyLib;
 using SodRpg.Mod;
 using UnityEngine;
 using Xunit;
@@ -16,8 +20,12 @@ namespace Issue73.Native.Tests
     /// (2b) 縮小の開始で既についていた静止フラグが外れる、(3) 再爆発（DoBurst）の
     /// Postfix（NativeGibsRestReset）がフラグをすべて消す、(4) 配列の長度が揃わない
     /// 再初期化状態で Prefix が古いフラグを残さない、(5) 設定が無効のときは
-    /// ShouldSkip が常に false。Transpiler の実 IL への挿入成否は指紋検査と警告1回の
-    /// 非適用で代替しており、ここでは扱わない（実機での警告ログ確認は未実行事項）。
+    /// ShouldSkip が常に false。Transpiler には本体 Update と同じ指紋の IL 見本
+    /// （NativeEmbracePositionBoundary.cs の FxGibs_Kinematic.NativeLikeUpdate）を
+    /// PatchProcessor.GetOriginalInstructions で読んで渡して、(6) 挿入位置と挿入される
+    /// 4命令、(6b) 指紋が一致しない見本では警告を1回出して元の IL がそのまま返ることを
+    /// 確かめる。continue 先の命令列が実際のループ増分であることの直接検証と、実 DLL
+    /// への適用はここで扱わない（実機での警告ログ確認は未実行事項）。
     /// </summary>
     public sealed class GibsRestSkipPerfTests : IDisposable
     {
@@ -59,6 +67,59 @@ namespace Issue73.Native.Tests
 
         private static bool ShouldSkipOf(FxGibs_Kinematic fx, int index)
             => (bool)typeof(NativeGibsRestPerf).GetMethod("ShouldSkip", Hidden).Invoke(null, new object[] { fx, index });
+
+        // IL 見本（NativeEmbracePositionBoundary.cs の NativeLikeUpdate 系）をコンパイル済み
+        // の命令列として読む。実機では Harmony が実 DLL の Update から同じ形で読む
+        // （CameraZoomRotationPerfTests と同じ仕組み）。
+        private static IList<CodeInstruction> InstructionsOf(string method)
+        {
+            var target = typeof(FxGibs_Kinematic).GetMethod(method, Hidden);
+            Assert.NotNull(target);
+            return PatchProcessor.GetOriginalInstructions(target);
+        }
+
+        private static List<CodeInstruction> TranspileOf(IList<CodeInstruction> instructions)
+            => ((IEnumerable<CodeInstruction>)typeof(NativeGibsRestPerf).GetMethod("Transpiler", Hidden)
+                .Invoke(null, new object[] { instructions })).ToList();
+
+        private static bool TranspilerWarned()
+            => (bool)typeof(NativeGibsRestPerf).GetField("_warned", Hidden).GetValue(null);
+
+        private static (IList<CodeInstruction> Code, (OpCode, object)[] Snapshot) SnapshotOf(string method)
+        {
+            var code = InstructionsOf(method);
+            return (code, code.Select(i => (i.opcode, i.operand)).ToArray());
+        }
+
+        private static void AssertUnchanged(IList<CodeInstruction> patched, (OpCode, object)[] before)
+        {
+            Assert.Equal(before.Length, patched.Count);
+            for (int i = 0; i < patched.Count; i++)
+                Assert.True(patched[i].opcode == before[i].Item1 && Equals(patched[i].operand, before[i].Item2),
+                    "instruction changed at " + i);
+        }
+
+        private static int ActiveSelfSite(IList<CodeInstruction> code)
+        {
+            int site = -1, calls = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].operand is MethodInfo method && method.DeclaringType == typeof(GameObject)
+                    && method.Name == "get_activeSelf") { calls++; site = i; }
+            Assert.Equal(1, calls);
+            return site;
+        }
+
+        private static int PiecesIndexLoadSite(IList<CodeInstruction> code)
+        {
+            int ldelem = -1, loads = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].opcode == OpCodes.Ldelem_Ref) { loads++; ldelem = i; }
+            Assert.Equal(1, loads); // _pieces[i] の読み取りは見本でも実物と同じく1回だけ
+            return ldelem - 1;
+        }
+
+        private static bool IsBrFalse(OpCode opcode)
+            => opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
 
         // pieces 破片のギブを1つ作る。全破片に同じ速度（y 成分 vy、x/z 成分 hSpeed）と回転
         // spin を与え、接地は ground、効果値は value。破片の実体は Prefix が読む配列の
@@ -193,6 +254,64 @@ namespace Issue73.Native.Tests
             Assert.False(ShouldSkipOf(fx, 0));
             Assert.False(ShouldSkipOf(fx, 1));
             Assert.Empty(Log.Warnings);
+        }
+
+        // (6) Transpiler が IL のどこに挿入するか。本体 Update と同じ指紋の見本を渡して、
+        // 挿入が activeSelf 確認の brfalse の直後であること、挿入される4命令が
+        // ldarg.0・_pieces[i] の添字 ldloc の複製（opcode と operand だけを写す）・
+        // ShouldSkip 呼び出し・continue 先（brfalse と同じ飛び先）への brtrue であること、
+        // ほかの命令が1つも変わらないことを確かめる。
+        [Fact]
+        public void TheTranspilerInsertsTheSkipBranchRightAfterTheActiveSelfGuard()
+        {
+            var (original, before) = SnapshotOf(nameof(FxGibs_Kinematic.NativeLikeUpdate));
+            int activeIndex = ActiveSelfSite(original);
+            Assert.True(activeIndex >= 0 && activeIndex + 1 < original.Count);
+            Assert.True(IsBrFalse(original[activeIndex + 1].opcode), "activeSelf guard must end in brfalse");
+            Assert.NotNull(original[activeIndex + 1].operand); // 飛び先（continue 先）を持つ
+            int branchIndex = activeIndex + 1;
+            int indexLoadIndex = PiecesIndexLoadSite(original);
+            Assert.True(indexLoadIndex >= 1);
+
+            var patched = TranspileOf(original);
+
+            Assert.False(TranspilerWarned()); // 警告なしで適用される
+            Assert.Empty(Log.Warnings);
+            Assert.Equal(before.Length + 4, patched.Count);
+            for (int i = 0; i <= branchIndex; i++)
+                Assert.True(patched[i].opcode == before[i].Item1 && Equals(patched[i].operand, before[i].Item2),
+                    "before the insertion changed at " + i);
+            // 挿入位置は brfalse の直後（本体の null/active 確認の直後に当たる）
+            Assert.Equal(OpCodes.Ldarg_0, patched[branchIndex + 1].opcode);
+            // 添字の ldloc は見本の _pieces[i] が使うものと同じ opcode・operand に複製される
+            Assert.Equal(before[indexLoadIndex].Item1, patched[branchIndex + 2].opcode);
+            Assert.Equal(before[indexLoadIndex].Item2, patched[branchIndex + 2].operand);
+            Assert.Equal(OpCodes.Call, patched[branchIndex + 3].opcode);
+            Assert.Equal(AccessTools.Method(typeof(NativeGibsRestPerf), "ShouldSkip"), patched[branchIndex + 3].operand);
+            Assert.Equal(OpCodes.Brtrue, patched[branchIndex + 4].opcode);
+            Assert.True(Equals(before[branchIndex].Item2, patched[branchIndex + 4].operand),
+                "brtrue must jump to the brfalse target (the loop increment)");
+            for (int i = branchIndex + 5; i < patched.Count; i++)
+                Assert.True(patched[i].opcode == before[i - 4].Item1 && Equals(patched[i].operand, before[i - 4].Item2),
+                    "after the insertion changed at " + i);
+        }
+
+        // (6b) 指紋が一致しない見本では、警告を1回出して元の IL をそのまま返す。
+        // 見本ごとの壊し方: activeSelf 確認が2回（実物は1回）、null 確認と activeSelf 確認が
+        // continue を共有しない形（else 連鎖）、Rotate が2回（実物は1回）。
+        [Theory]
+        [InlineData(nameof(FxGibs_Kinematic.NativeLikeUpdateWithTwoActiveChecks))]
+        [InlineData(nameof(FxGibs_Kinematic.NativeLikeUpdateWithoutSharedContinue))]
+        [InlineData(nameof(FxGibs_Kinematic.NativeLikeUpdateWithTwoRotates))]
+        public void TheTranspilerReturnsTheOriginalIlUnchangedWhenTheFingerprintDiffers(string shape)
+        {
+            var (original, before) = SnapshotOf(shape);
+
+            var patched = TranspileOf(original);
+
+            Assert.True(TranspilerWarned()); // 形が変わっていれば警告を1回出す
+            Assert.Single(Log.Warnings);
+            AssertUnchanged(patched, before);
         }
     }
 }
