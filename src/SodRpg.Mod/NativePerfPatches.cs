@@ -7298,6 +7298,12 @@ namespace SodRpg.Mod
             if (_target == null) return false;
             try
             {
+                // A missing field fails when Prefix is JIT-compiled, before its catch can run.
+                if (AccessTools.Field(typeof(TransitionManager), "screenFadeCg") == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "transition idle", "native screenFadeCg field unavailable");
+                    return false;
+                }
                 return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
             }
             catch (Exception ex)
