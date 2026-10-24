@@ -339,6 +339,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the per-frame empty-loadout re-sync while a player waits to rejoin (host) /\n途中参加の待機中に空のロードアウトを毎フレーム同期し直すのを省く（ホスト）")]
         public bool nativeMidJoinLoadoutIdle = true;
 
+        [LabelText("Reuse the chaos-shrine bonus tooltip text while its values are unchanged (host and guests) /\n混沌の神殿の加護のツールチップ文を、値が変わらない間は使い回す（ホストと参加者）")]
+        public bool nativeChaosStatBonusTooltipCache = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
