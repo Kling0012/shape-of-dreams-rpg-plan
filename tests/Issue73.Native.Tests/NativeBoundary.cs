@@ -1735,9 +1735,11 @@ internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Componen
 // 本体 Dew.Core InputManager（入力管理、ManagerBase の子孫）と振動シェイクの境界。
 // NativeGamepadRumbleIdlePerf（リンク）が NativePerfPatch.Find と FieldRefAccess の
 // 型引数で参照するため、コンパイルを通すための最小の形。実物と同じグローバル
-// 名前空間に置く。振動パッチ自体は Harmony 依存でテストから駆動しないので、
-// Prepare が読む _shakes フィールドの形だけを実物
-// （decompiled/sod-decomp/Dew.Core/InputManager.cs）に合わせて持つ。
+// 名前空間に置く。スキップ判定の本体（ShouldSkip・DeriveSentZero）は純粋な静的関数で
+// GamepadRumbleIdlePerfTests から直接駆動する。Prefix/Postfix/Prepare の Harmony 経路は
+// テストから駆動しないので、Prepare が読む _shakes フィールドの形だけを実物
+// （decompiled/sod-decomp/Dew.Core/InputManager.cs）に合わせて持つ。シェイクの
+// フィールド並びはテストの本体模擬（エンベロープの畳み込み）も読む。
 internal sealed class ShakeInstance
 {
     public float startTime;

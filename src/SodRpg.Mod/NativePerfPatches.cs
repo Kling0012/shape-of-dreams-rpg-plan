@@ -6939,6 +6939,23 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
+        // The two decisions below live as pure functions of their arguments so the tests
+        // (GamepadRumbleIdlePerfTests) can drive them directly; Prefix and Postfix only
+        // read the state and delegate here.
+
+        // The body may be skipped only on a frame where no shake is left (the list the
+        // prefix reads was already folded by the previous body run) and the last body run
+        // verifiably sent (0, 0). Everything else goes to the vanilla body untouched.
+        internal static bool ShouldSkip(int shakeCount, bool lastSentZero) => shakeCount == 0 && lastSentZero;
+
+        // Derivation of what the body just sent: the fold contributes nothing while the
+        // list is empty, a non-gamepad mode forces both values to zero, and a timeScale
+        // under 0.001 skips the accumulation — any one of these means (0, 0) was sent.
+        // Only gamepad-mode shakes held over from the fold on an unpaused frame can have
+        // contributed, so only that keeps the flag cleared.
+        internal static bool DeriveSentZero(int shakeCount, bool gamepadMode, float timeScale) =>
+            shakeCount == 0 || !gamepadMode || timeScale < 0.001f;
+
         private static bool Prefix(InputManager __instance)
         {
             if (_disabled || !NativePerfOptions.GamepadRumbleIdle) return true;
@@ -6946,8 +6963,7 @@ namespace SodRpg.Mod
             {
                 // Only the known-zero idle state is skipped; any shake, or a flag the postfix
                 // could not vouch for, goes to the vanilla body untouched.
-                if (_shakes(__instance).Count > 0 || !_lastSentZero) return true;
-                return false;
+                return !ShouldSkip(_shakes(__instance).Count, _lastSentZero);
             }
             catch (Exception ex)
             {
@@ -6965,9 +6981,8 @@ namespace SodRpg.Mod
                 // What the body just sent is (0, 0) unless gamepad-mode shakes could have
                 // contributed on an unpaused frame; the same derivation holds on a skipped
                 // frame, where the list is empty and the state stays (0, 0).
-                _lastSentZero = _shakes(__instance).Count == 0
-                    || DewInput.currentMode != InputMode.Gamepad
-                    || Time.timeScale < 0.001f;
+                _lastSentZero = DeriveSentZero(_shakes(__instance).Count,
+                    DewInput.currentMode == InputMode.Gamepad, Time.timeScale);
             }
             catch (Exception ex)
             {
