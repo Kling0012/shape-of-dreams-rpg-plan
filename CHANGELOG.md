@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.68 — Lighter gem slot checks and co-op dividend handling（2026-10-25）
+
+この版では、ジェム枠の表示と、協力プレイで参加者が配当を受け取るときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the gem slot display and from co-op players receiving dividends.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ゲームは、移動ボタンのジェム枠の表示が消えていないかを毎秒確かめています。これまでは確かめるたびに、ジェム枠の表示を毎回探し直していました。今は一度見つけた表示を使い回し、画面が作り直されたときだけ探し直します。確かめる処理が少し軽くなる見込みですが、実際の効果はまだ測っていません。ジェム枠が消えたときに表示し直す動きは変わりません。 / The game checks every second that the gem slot display on the movement button has not disappeared. Until now, it searched for that display again on every check. The game now reuses the display it found and only searches again when the screen is rebuilt. These checks should run a little lighter, though the actual effect has not been measured yet. Gem slots that disappear are still shown again as before.
+- 協力プレイの参加者は、夢の圧が効いた戦闘で敵が倒されるたびに配当を受け取ります。これまでは受け取るたびに、通知のための余分なデータを作っていました。今はその余分なデータを作りません。敵を続けて倒す場面で、参加者のゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。配当の受け取り方と、通知の内容や順番は変わりません。 / In co-op, players receive a dividend each time an enemy is defeated in a fight affected by dream pressure. Until now, each dividend created extra data just for its notification. The game no longer creates that extra data. Co-op players' games should run a little lighter when enemies are defeated one after another, though the actual effect has not been measured yet. How dividends are received and the content and order of notifications are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.67 — Maintenance update with no gameplay changes（2026-10-25）
 
 この版では、プレイヤーから見える変化はありません。今後の修正に備えて、開発用の確認を足しただけの版です。 / This version has no changes players will notice. It only adds a development-side check to prepare for future fixes.
