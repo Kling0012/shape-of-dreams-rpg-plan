@@ -1193,6 +1193,25 @@ namespace SodRpg.Mod
         public bool isEveryInfoSet;
         public string selectedSkin = "";
         public string selectedHeroType = "Hero_Mist";
+        // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が読む現在値。実機では SyncVar の
+        // 裏の字段を返す公開プロパティで、初期値は new された空のロードアウト。
+        public HeroLoadoutData selectedLoadout = new HeroLoadoutData();
+        // 実機の Mirror weaver が [SyncVar] selectedLoadout 向けに生成するセッターの模倣。
+        // 本体はクラス既定の参照等値で比べ、参照が変わるときだけ字段へ代入して dirty を
+        // 立て hook を起こす（実 DLL 逆コンパイル 2026-10-24）。境界では参照の代入と
+        // 「書いた回数」（dirty・hook の代理）だけを再現し、NativeMidJoinLoadoutIdlePerf の
+        // Prepare がこのセッターを解決できるようにする（テストでパッチを有効なまま確かめる）。
+        public HeroLoadoutData Network_003CselectedLoadout_003Ek__BackingField
+        {
+            get => selectedLoadout;
+            set
+            {
+                if (ReferenceEquals(selectedLoadout, value)) return;
+                selectedLoadout = value;
+                selectedLoadoutWrites++;
+            }
+        }
+        public int selectedLoadoutWrites;
         public readonly SyncList<string> selectedAccessories = new SyncList<string>();
         public List<string> ownedItems = new List<string>();
         public bool IsAllowedToUseItem(string itemName)
@@ -1253,6 +1272,25 @@ namespace SodRpg.Mod
         public string skillKey;
         public Func<float> valueGetter;
         internal int _id;
+    }
+    // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が同じ値かどうかを比べる本体のロードアウト。
+    // 実機ではグローバル名前空間の公開クラスで、スキル4つと星のリスト4つを持ち、Mirror の
+    // SyncVar はクラス既定の参照等値で比べる（実 DLL 逆コンパイル 2026-10-24）。本体では
+    // new されたインスタンスがそのまま代入されるため、この境界にも同じ字段の形だけを置く。
+    // 字段は公開・非公開とも実機と同じ8項目だけ（非公開字段が1つでも増えると Prepare の
+    // 字段照合がパッチを無効にする）。
+    internal struct LoadoutStarItem
+    {
+        public string name;
+        public int level;
+    }
+    internal sealed class HeroLoadoutData
+    {
+        public int skillQ, skillR, skillTrait, skillMovement;
+        public List<LoadoutStarItem> cDestruction = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cLife = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cImagination = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cFlexible = new List<LoadoutStarItem>();
     }
     // 被弾シェイク本体（実機ではグローバル名前空間 Dew.Core）。NativeDamageShakeIdlePerf の
     // Prepare が探す部位（OnClientTakeDamage・入れ子の Ad_DamageShake）と Prefix が読む公開

@@ -330,6 +330,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the already-zero agent velocity rewrite in the movement integration (host and the local hero) /\n移動を自分で処理する実体の、すでにゼロのエージェント速度の毎フレーム再書き込みを省く（ホストと自分の英雄） /\n跳过移动整合中已为零的代理速度的每帧重写（主机与本地英雄）")]
         public bool nativeAgentVelocityIdle = true;
 
+        [LabelText("Skip the per-frame empty-loadout re-sync while a player waits to rejoin (host) /\n途中参加の待機中に空のロードアウトを毎フレーム同期し直すのを省く（ホスト）")]
+        public bool nativeMidJoinLoadoutIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
