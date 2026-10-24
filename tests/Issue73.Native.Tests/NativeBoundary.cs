@@ -1854,6 +1854,45 @@ namespace UnityEngine
         internal int childCount => children.Count;
         internal Transform GetChild(int index) => children[index];
     }
+
+    // 本体 UnityEngine.Animator の最小の受け口。NativeEntityAnimationLayerWeightIdlePerf の
+    // GetWeight が読み書きするレイヤー1の重みの実体と、読み出し回数（読み飛ばしの検証用）。
+    internal sealed class Animator
+    {
+        public int GetLayerWeightCalls;
+        // Rebind / コントローラ再設定がレイヤー1を戻す既定値（本体のコントローラ既定の代わり）。
+        public float rebindLayer1Weight;
+        private float _layer1Weight;
+        // 読み出し回数を乱さずに値を確かめるための覗き口（テスト用）。
+        public float layer1Weight => _layer1Weight;
+        public float GetLayerWeight(int layer)
+        {
+            GetLayerWeightCalls++;
+            return layer == 1 ? _layer1Weight : 0f;
+        }
+        public void SetLayerWeight(int layer, float value)
+        {
+            if (layer == 1) _layer1Weight = value;
+        }
+        // 本体 Animator.Rebind: 全レイヤーの重みをコントローラの既定へ戻す（模倣ではレイヤー1だけ）。
+        // 本体には private Rebind(bool) もあるが、模倣は public Rebind() だけで
+        // NativeEntityAnimationLayerWeightReset の FindByName が名前で拾える形にする。
+        public void Rebind()
+        {
+            _layer1Weight = rebindLayer1Weight;
+        }
+        // 本体と同じくコントローラの再設定は内部で再バインドを起こし、重みを既定へ戻す。
+        public object runtimeAnimatorController
+        {
+            get => _controller;
+            set
+            {
+                _controller = value;
+                _layer1Weight = rebindLayer1Weight;
+            }
+        }
+        private object _controller = new object();
+    }
 }
 
 // 本体 Dew.Contents Shrine_CorruptedChaos_PetalAnimator（堕落した混沌の神殿の花びら
@@ -1884,6 +1923,51 @@ internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Componen
             transform.GetChild(i).localScale = _originalLocalScales[i]
                 * (1f + Mathf.Sin(Time.time * sin0Time + (float)i * sin0Offset) * sin0Mag
                      + Mathf.Sin(Time.time * sin1Time + (float)i * sin1Offset) * sin1Mag);
+    }
+}
+
+// 本体 Dew.Core EntityAnimation（能力アニメのレイヤー重みの制御）の模倣。
+// NativeEntityAnimationLayerWeightIdlePerf の Transpiler 対象の FrameUpdateAnimations /
+// LateUpdate が、実 DLL 逆コンパイル（decompiled/sod-decomp/Dew.Core/EntityAnimation.cs）
+// と同じ形で Animator.GetLayerWeight(1) を各1回だけ呼ぶ見本（指紋の対象はその2呼び出し）。
+// レイヤー1の重みの実体は境界の Animator 側に置き、MoveTowards の遷移と LateUpdate の
+// 分岐は本体と同じ式の転写にする。実物と同じグローバル名前空間に置く。
+internal sealed class EntityAnimation
+{
+    // 本体はネストした public struct（isPlaying を含む）。GetWeight が isPlaying だけを読む。
+    internal struct AbilityAnimationStatus
+    {
+        public bool isPlaying;
+    }
+
+    public UnityEngine.Animator animator;
+    public AbilityAnimationStatus abilityAnimStatus;
+
+    // 本体 FrameUpdateAnimations のうち GetLayerWeight(1) の呼び出しとその使い方の転写。
+    private void FrameUpdateAnimations()
+    {
+        float layerWeight = animator.GetLayerWeight(1);
+        float target = abilityAnimStatus.isPlaying ? 1f : 0f;
+        float moved = Mathf.MoveTowards(layerWeight, target, Time.deltaTime / 0.1f);
+        if (moved != layerWeight) animator.SetLayerWeight(1, moved);
+    }
+
+    // 本体 LateUpdate のうち GetLayerWeight(1) の呼び出しと分岐の転写（回転フィックスの中身は省く）。
+    private void LateUpdate()
+    {
+        if (animator.GetLayerWeight(1) > 0f)
+        {
+        }
+    }
+
+    // 本体 UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single（RPC 受信部）の
+    // うち上半身レイヤーを1にする経路の転写: isPlaying を true にしてから
+    // SetLayerWeight(1, 1f) を書く。NativeEntityAnimationLayerWeightReset の Postfix 対象。
+    // 引数（DewAnimationClip・int・float）は省いて名前だけ合わせる（Postfix は __instance しか読まない）。
+    private void UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single()
+    {
+        abilityAnimStatus.isPlaying = true;
+        animator.SetLayerWeight(1, 1f);
     }
 }
 

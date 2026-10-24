@@ -345,6 +345,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the per-frame empty-loadout re-sync while a player waits to rejoin (host) /\n途中参加の待機中に空のロードアウトを毎フレーム同期し直すのを省く（ホスト）")]
         public bool nativeMidJoinLoadoutIdle = true;
 
+        [LabelText("Skip the settled animation layer weight reads every frame (host and guests) /\n落ち着いた能力アニメのレイヤー重みの毎フレーム読み直しを省く（ホストと参加者）")]
+        public bool nativeEntityAnimLayerWeightIdle = true;
+
         [LabelText("Reuse the chaos-shrine bonus tooltip text while its values are unchanged (host and guests) /\n混沌の神殿の加護のツールチップ文を、値が変わらない間は使い回す（ホストと参加者）")]
         public bool nativeChaosStatBonusTooltipCache = true;
 

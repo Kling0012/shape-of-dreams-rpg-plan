@@ -232,6 +232,9 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
         private float _nextBountyFlush;
+        // 仕掛け発動の報告（GimmicksTriggered）の1秒間引き送信。TickBountyReports と同じ1秒間隔。
+        // 判定と累計の取り出しは、テストからリンクできる GimmickReportThrottle に切り出してある。
+        private readonly GimmickReportThrottle _gimmickReportThrottle = new GimmickReportThrottle(BountyFlushSeconds);
         private readonly HashSet<Power> _triggeredPowers = new HashSet<Power>();
         private readonly HashSet<Shrine> _shrines = new HashSet<Shrine>();
         private readonly Action<Actor> _onActorAdd;
@@ -429,15 +432,18 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
             // #161: 仕掛け発動の報告はティックごとに1通にまとめる（合計は不変）。
+            // 発動が続く戦闘ではこの形でも毎フレーム1通になり参加者の受信が増えるので、
+            // 依頼カウント（TickBountyReports）と同じ1秒間隔にまとめる。合計は不変で、
+            // 外す直前のフラッシュ（Unhook）は即時のまま落とさない。
+            if (!_gimmickReportThrottle.IsTickDue(_tickNow)) return;
             foreach (var rt in _runtimes.Values) FlushGimmickReports(rt);
         }
 
         private void FlushGimmickReports(HeroRuntime rt)
         {
             if (rt.PendingGimmickReports <= 0) return;
-            int count = rt.PendingGimmickReports;
-            rt.PendingGimmickReports = 0;
-            SendBountyReport(rt, BountyReportKind.GimmicksTriggered, count);
+            SendBountyReport(rt, BountyReportKind.GimmicksTriggered,
+                GimmickReportThrottle.TakePending(ref rt.PendingGimmickReports));
         }
 
         private void StageBossEffects()
@@ -1033,6 +1039,8 @@ namespace SodRpg.Mod
             // 夢の圧が高いほど悪夢化しやすい。インフィニティは対象外。
             double pressureMult = InfinityMode.State == null ? _pressure.NightmareChanceMultiplier : 1.0;
             double mult = (DailyDream.Get(dailyId)?.NightmareMult ?? 1.0) * PartyGearChanceMult() * pressureMult;
+            // 部屋の兆しの敵係数は隊の構成から1まとめで1回だけ計算する（-1=未計算）。
+            float omenScale = -1f;
             for (int i = _spawnQueue.Count - 1; i >= 0; i--)
             {
                 var m = _spawnQueue[i].Key;
@@ -1050,7 +1058,7 @@ namespace SodRpg.Mod
                 if (m.owner == null || m.owner.isHumanPlayer) { _spawnQueue.RemoveAt(i); continue; }
                 if (!_monsters.TryGetValue(m, out var rt)) { _spawnQueue.RemoveAt(i); continue; }
                 ApplyPressure(rt);
-                ApplyRoomOmenMonster(rt);
+                ApplyRoomOmenMonster(rt, ref omenScale);
                 // Pressure is already active; give the initial depth build time to arrive.
                 // A co-op ward must classify its initial enemies before their first received hit.
                 if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f

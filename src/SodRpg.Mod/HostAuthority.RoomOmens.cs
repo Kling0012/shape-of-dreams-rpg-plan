@@ -96,6 +96,8 @@ namespace SodRpg.Mod
                 }
                 var room = _zone?.currentRoom;
                 bool publish = false;
+                // 共通の敵の係数は1隊で1つなので、部屋まとめの適用では1回だけ計算する（-1=未計算）。
+                float omenScale = -1f;
                 if (force || !ReferenceEquals(room, _omenRoom) || _omenRunId != run.RunId || !_omenSetting)
                 {
                     if (!force && _zone != null && _zone.isInAnyTransition) return;
@@ -120,7 +122,7 @@ namespace SodRpg.Mod
                         catch (Exception ex) { Log.Warn("Co-op Omen draw skipped: " + ex.Message); }
                     }
                     RoomOmens.SetKillModifier(this, _roomOmen);
-                    foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster);
+                    foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster, ref omenScale);
                     publish = true;
                 }
                 if (_roomOmen == RoomOmen.ResonantWard && !CoopOmensEnabled)
@@ -128,7 +130,7 @@ namespace SodRpg.Mod
                     ClearRoomOmen();
                     _roomOmen = RoomOmens.Roll(Rng.SeedFrom(run.RunId), _zone.currentRoomIndex);
                     RoomOmens.SetKillModifier(this, _roomOmen);
-                    foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster);
+                    foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster, ref omenScale);
                     publish = true;
                 }
                 SyncRoomOmenHeroes();
@@ -198,7 +200,19 @@ namespace SodRpg.Mod
             _omenHeroes.Remove(hero);
         }
 
-        private void ApplyRoomOmenMonster(MonsterRuntime rt)
+        // 共有される敵は隊の中で最も軽い受領係数を使う。隊の構成は1つの適用まとめの間は変わらないため、
+        // まとめの先頭で1回だけ計算し、呼び出し側から ref で渡す（-1=未計算）。
+        private float OmenPartyScale()
+        {
+            float scale = 1f;
+            if (_am != null)
+                foreach (var hero in _am.allHeroes)
+                    if (hero != null && hero.owner != null && hero.owner.isHumanPlayer)
+                        scale = Math.Min(scale, (float)RoomOmens.TrialScale(ClientSession.HeroKeyOf(hero)));
+            return scale;
+        }
+
+        private void ApplyRoomOmenMonster(MonsterRuntime rt, ref float scale)
         {
             if (_omensFailed || rt.OmenBonus != null || rt.Monster == null || rt.Monster is BossMonster
                 || rt.Monster.owner == null || rt.Monster.owner.isHumanPlayer || rt.Monster.Status == null
@@ -206,12 +220,7 @@ namespace SodRpg.Mod
                 || _roomOmen != RoomOmen.RestlessEnemies && _roomOmen != RoomOmen.SturdyEnemies) return;
             try
             {
-                float scale = 1f;
-                // Shared enemies use the least severe receiver coefficient in the active party.
-                if (_am != null)
-                    foreach (var hero in _am.allHeroes)
-                        if (hero != null && hero.owner != null && hero.owner.isHumanPlayer)
-                            scale = Math.Min(scale, (float)RoomOmens.TrialScale(ClientSession.HeroKeyOf(hero)));
+                if (scale < 0f) scale = OmenPartyScale();
                 float value = (float)RoomOmens.Value(_roomOmen) * scale;
                 rt.OmenBonus = _roomOmen == RoomOmen.RestlessEnemies
                     ? new StatBonus { movementSpeedPercentage = value } : new StatBonus { maxHealthPercentage = value };
