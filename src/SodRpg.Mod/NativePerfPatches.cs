@@ -1510,7 +1510,7 @@ namespace SodRpg.Mod
                 else if (method.Name == "set_localScale") scale++;
             }
             if (hasCount == 3 && position == 1 && rotation == 1 && scale == 1) return true;
-            WarnOnce("native sync write body changed (writes " + position + "/" + rotation + "/" + scale + ")");
+            WarnOnce("native sync write body changed (has " + hasCount + ", writes " + position + "/" + rotation + "/" + scale + ")");
             return false;
         }
 

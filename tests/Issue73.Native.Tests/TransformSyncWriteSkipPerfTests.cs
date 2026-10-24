@@ -307,6 +307,7 @@ namespace Issue73.Native.Tests
                 Assert.False(NativeTransformSyncWriteSkipPerf.ValidateBody(
                     InstructionsOf(nameof(TransformSyncWriteSkipIlShapes.TwoHasCalls))));
                 Assert.Single(Log.Warnings);
+                Assert.Contains("has 2, writes 1/1/1", Log.Warnings[0]);
             });
         }
 
