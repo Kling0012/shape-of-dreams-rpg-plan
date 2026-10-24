@@ -285,6 +285,58 @@ namespace SodRpg.Core.Tests
             Hits(4); Assert.Equal(170, hero.currentHealth, 3);
         }
 
+        [Fact]
+        public void Shared_unlimited_caps_match_fresh_caps_across_all_three_damage_paths()
+        {
+            // 原則 II（C-II）: 軽量化で3経路（TransformAuthoredMemoryDamage／ApplyAuthoredFinalNativeDamage／
+            // TransformAuthoredGeneratedDamage）が共有する上限なし KeystoneCaps（UnlimitedKeystoneCaps）が、
+            // 従来の「変換ごとに new KeystoneCaps(decimal.MaxValue)」と同じ変換結果を返すこと。
+            // 3層を +25% する刻印で3経路すべてを実際に変換させ、fresh な Caps で直接
+            // TransformAuthoredPayload した期待値と比較する。2周して再び同一になることも確かめる
+            // （先行する経路が共有インスタンスを汚せば2周目で変わる）。
+            var key = new KeystoneDefinition("test.shared.caps.key", new[] { Q }, new[]
+            {
+                KeystoneTransform.Scale(KeystoneLayer.StarMemoryDamage, KeystoneField.Value, new KeystoneMagnitude(2500), new KeystoneScope()),
+                KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(2500), new KeystoneScope()),
+                KeystoneTransform.Scale(KeystoneLayer.GeneratedDamage, KeystoneField.Value, new KeystoneMagnitude(2500), new KeystoneScope())
+            });
+            var (host, runtime) = Setup(Build.Decode(new Build { SelectedKeystone = key }.Encode()));
+            var hero = runtime.Hero; var enemy = Enemy();
+            var activation = host.Activation(hero, Q);
+            // 期待値は従来と同じ「呼び出しごとに new KeystoneCaps(decimal.MaxValue)」で組み立てる。
+            decimal memoryBasis = (decimal)40f / StarDamageScaling.Multiplier(runtime.Powers.Build.SpentStarPoints);
+            decimal expectedMemory = host.TransformAuthoredPayload(hero,
+                new KeystonePayload(KeystoneLayer.StarMemoryDamage, memoryBasis, new KeystoneCaps(decimal.MaxValue)),
+                Q, null, KeystoneSourceKind.NativeMemory).Value;
+            decimal expectedGenerated = host.TransformAuthoredPayload(hero,
+                new KeystonePayload(KeystoneLayer.GeneratedDamage, (decimal)80f, new KeystoneCaps(decimal.MaxValue),
+                    effect: GimmickEffect.Burst), Q, null, KeystoneSourceKind.Generated).Value;
+            float NativeExpected()
+            {
+                decimal value = host.TransformAuthoredPayload(hero,
+                    new KeystonePayload(KeystoneLayer.NativeDamage, (decimal)100f, new KeystoneCaps(decimal.MaxValue)),
+                    Q, null, KeystoneSourceKind.NativeMemory).Value;
+                var expected = new DamageData(100);
+                float ratio = (float)(value / (decimal)100f);
+                if (ratio < 1f) expected.ApplyReduction(1f - ratio);
+                else if (ratio > 1f) expected.ApplyAmplification(ratio - 1f);
+                return expected.currentAmount;
+            }
+            // 空回し防止: +25% の刻印が実際に載っていて、3経路とも入力を増幅していること。
+            Assert.True((float)expectedMemory > 40f);
+            Assert.True(NativeExpected() > 100f);
+            Assert.True((float)expectedGenerated > 80f);
+
+            for (int round = 0; round < 2; round++)
+            {
+                Assert.Equal((float)expectedMemory, host.TransformAuthoredMemoryDamage(hero, Q, 40f));
+                var native = new DamageData(100);
+                host.NativeKeyDamage(runtime, enemy, activation, ref native);
+                Assert.Equal(NativeExpected(), native.currentAmount);
+                Assert.Equal((float)expectedGenerated, host.TransformAuthoredGeneratedDamage(hero, 80f, Q, null, GimmickEffect.Burst));
+            }
+        }
+
         [Theory]
         [InlineData(AuthoredMechanismCondition.BridgeSuccess, BridgeGateKind.Mark)]
         [InlineData(AuthoredMechanismCondition.BridgeMark, BridgeGateKind.Mark)]
