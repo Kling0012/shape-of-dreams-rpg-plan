@@ -6861,6 +6861,11 @@ namespace SodRpg.Mod
         private static bool BitsDiffer(float a, float b)
             => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
 
+        // Cast effects can die mid-frame too; preserve the native write's exception without
+        // disabling the optimization for every other telegraph.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
         private static void WritePosition(Transform tr, Vector3 value)
         {
             if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.position = value; return; }
@@ -6871,6 +6876,7 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
                 tr.position = value;
@@ -6887,6 +6893,7 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                if (IsGoneTransform(ex)) { tr.rotation = value; return; }
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
                 tr.rotation = value;
