@@ -526,5 +526,97 @@ namespace Issue73.Native.Tests
             Assert.Equal(100f * room.DamageMultiplier, dealt.amount, 1); // 攻撃には D を掛けない
             Assert.Empty(Log.Warnings);
         }
+
+        // ---- 人数の数え方（2026-10-24 の軽量化: 所属確認の省略） ----
+
+        private static bool InvokeBool(string name, DewPlayer player) =>
+            (bool)typeof(HostAuthority).GetMethod(name, Hidden).Invoke(null, new[] { player });
+
+        // 変更前は gamePlayers を列挙して OwnershipConnected（List.Contains を含む）で数えていた。
+        // 省略後も、列挙した要素の判定が OwnershipConnected と一致し、人数と戻り値が変わらないことを
+        // 変更前と同じ式で数え直して突き合わせる。各場合（ローカル1人・ゲスト接続あり・
+        // connectionToClient が null の非ローカル・isHumanPlayer=false・null 要素）を順に重ねる。
+        [Fact]
+        public void Player_counting_matches_the_old_OwnershipConnected_rule_for_each_kind_of_entry()
+        {
+            var host = Host(out _); // 担当制ON。動的難易度の設定は呼び出しごとに切り替える。
+            var running = host.GetType().GetMethod("DynamicRunning", Hidden);
+
+            bool OldRunning(bool solo)
+            {
+                int count = 0;
+                foreach (var player in DewPlayer.gamePlayers)
+                {
+                    bool connected = InvokeBool("OwnershipConnected", player);
+                    // 数える側の条件（IsCountableConnected）は、列挙元自身の要素では古い条件と一致する。
+                    Assert.Equal(connected, InvokeBool("IsCountableConnected", player));
+                    if (connected) count++;
+                }
+                return count == 1 ? solo : count > 1; // 担当制ON
+            }
+
+            void AssertSame(bool solo, bool expected)
+            {
+                host.ConfigureDynamicDifficulty(true, solo);
+                bool actual = (bool)running.Invoke(host, null);
+                Assert.Equal(OldRunning(solo), actual); // 変更前の式と一致
+                Assert.Equal(expected, actual);         // 数え方の意味も固定
+            }
+
+            // ソロ（ローカル1人）: 接続がなくても local なら数える。1人のときはソロ設定に従う。
+            var local = new DewPlayer { netId = 5, guid = "guid-5" };
+            DewPlayer.gamePlayers.Add(local);
+            DewPlayer.local = local;
+            AssertSame(false, false);
+            AssertSame(true, true);
+
+            // ゲスト接続あり: 接続済みのゲストが加わると 2人でマルチとして動く。
+            var guest = new DewPlayer { netId = 9, guid = "guid-9", connectionToClient = new NetworkConnectionToClient() };
+            DewPlayer.gamePlayers.Add(guest);
+            AssertSame(false, true);
+            AssertSame(true, true);
+
+            // ローカル不在でも接続済みなら数える（1人なのでソロ設定に従う）。
+            DewPlayer.local = null;
+            AssertSame(true, true);
+            DewPlayer.local = local;
+
+            // connectionToClient が null の非ローカルは数えない: 2人いても 1人のまま。
+            DewPlayer.gamePlayers.Remove(guest);
+            DewPlayer.gamePlayers.Add(new DewPlayer { netId = 13, guid = "guid-13" });
+            AssertSame(false, false);
+
+            // isHumanPlayer=false は数えない。
+            DewPlayer.gamePlayers.Add(new DewPlayer { netId = 21, guid = "guid-21", isHumanPlayer = false,
+                connectionToClient = new NetworkConnectionToClient() });
+            AssertSame(false, false);
+
+            // null 要素は数えず、例外にもならない。
+            DewPlayer.gamePlayers.Add(null);
+            AssertSame(false, false);
+
+            // 接続済みがもう1人増えれば 2人でマルチ。
+            DewPlayer.gamePlayers.Add(new DewPlayer { netId = 25, guid = "guid-25", connectionToClient = new NetworkConnectionToClient() });
+            AssertSame(false, true);
+
+            // 誰もいなければ（null 要素だけなら）動かない。
+            DewPlayer.gamePlayers.Clear();
+            DewPlayer.gamePlayers.Add(null);
+            AssertSame(true, false);
+            Assert.Empty(Log.Warnings);
+        }
+
+        // 一覧から外れた相手では、数える側の条件は所属確認の分だけ緩い。IsCountableConnected は
+        // OwnershipConnected の置き換えではなく、列挙元の要素を数える専用であることの境目。
+        [Fact]
+        public void Countable_connected_is_ownership_connected_minus_list_membership_only()
+        {
+            var left = new DewPlayer { netId = 5, guid = "guid-5", connectionToClient = new NetworkConnectionToClient() };
+            Assert.True(InvokeBool("IsCountableConnected", left)); // 一覧外でも接続済みなら真
+            Assert.False(InvokeBool("OwnershipConnected", left));  // 一覧外は数えない
+            DewPlayer.gamePlayers.Add(left);
+            Assert.True(InvokeBool("OwnershipConnected", left));   // 一覧に入れば同じ判定
+            Assert.Empty(Log.Warnings);
+        }
     }
 }

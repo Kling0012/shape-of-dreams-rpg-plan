@@ -64,10 +64,10 @@ namespace SodRpg.Mod
             if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0) return false;
             int count = 0;
             // 2026-10-24：数える相手は列挙元の gamePlayers 自身の要素なので、OwnershipConnected の
-            // List.Contains（1人につき O(n) の所属再確認）は常に真。同じ条件から所属確認だけを外して数える。
+            // List.Contains（1人につき O(n) の所属再確認）は常に真。条件は IsCountableConnected として
+            // OwnershipConnected と共有し、所属確認だけを外して数える。
             foreach (var player in DewPlayer.gamePlayers)
-                if (player != null && player.isHumanPlayer
-                    && (player == DewPlayer.local || player.connectionToClient != null)) count++;
+                if (IsCountableConnected(player)) count++;
             return count == 1 ? _dynamicSolo : count > 1 && _enemyOwnershipEnabled;
         }
 
