@@ -73,6 +73,7 @@ namespace SodRpg.Mod
             NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
+            NativePerfOptions.GemResponsibilityHitCache = config.nativeGemResponsibilityHitCache;
             NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
         }
@@ -136,6 +137,7 @@ namespace SodRpg.Mod
         internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
         internal static bool GamepadRumbleIdle = true;
+        internal static bool GemResponsibilityHitCache = true;
         internal static bool MusicSourceIdle = true;
         internal static bool TransitionIdle = true;
     }
@@ -7261,6 +7263,249 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGemResponsibilityHitPerf
+    {
+        // Gem_C_Responsibility の被弾演出 RPC の受け口 UserCode_RpcPlayHit__Entity__Single は、
+        // ホストが被害者ごとに送るたび、それを受け取った全クライアント（ホスト自身のローカル
+        // クライアントと各参加者）で走る。本体は3つの曲線を評価した後、fxHit プレハブの子孫を
+        // GetComponentsInChildrenNonAlloc で2回（DewAudioSource と FxCameraShake）全走査して
+        // プールのリストを出し入れし、その結果へ値を書いてから FxPlayNew で再生する。
+        //
+        // fxHit はシーンに置かれないプレハブアセットで、実行中に子の構成を変える処理は本体にも
+        // この MOD にも無い（この受け口が書くのは pitchMultiplier・volumeMultiplier・amplitude・
+        // localScale の値だけで、子の追加・削除・有効化はしない）。走査は includeInactive=false
+        // （本体が呼ぶ2引数の GetComponentsInChildrenNonAlloc は bool を渡さず Unity の
+        // List だけを取るオーバーロードへ任せ、その受け手は includeInactive に false を渡す。
+        // Dew.Core.dll と UnityEngine.CoreModule.dll の IL で確認、spec と
+        // GemResponsibilityHitPerfTests に記録）で毎回同じ要素を返すだけなので、被弾ごとの
+        // 再走査とプールの出入りは無駄。Prefix は
+        // fxHit の参照が変わった最初の1回だけ本体と同じ走査で配列を作り、以後はその配列へ
+        // 同じ値を同じ順で書く。曲線の評価・各コンポーネントへの書き込み・localScale・
+        // FxPlayNew の呼び出しは本体と同じ式と順序なので、見た目も音も変わらない。
+        //
+        // Prefix が本体の丸ごとを置き換えるため、Prepare は本体 IL の形を検証する。単純な
+        // 出現回数ではなく値の流れまで見て、曲線3つが strength だけで評価されてそれぞれの
+        // ローカルに入り、pitchMultiplier・volumeMultiplier・amplitude への書き込みと
+        // localScale（Vector3.one * volumeCurve の結果）と FxPlayNew(fxHit, e) がその
+        // ローカルと fxHit フィールドから作られていること、子走査2回が bool を取らない
+        // 2引数の GetComponentsInChildrenNonAlloc（includeInactive=false の意味）で
+        // DewAudioSource・FxCameraShake それぞれに fxHit を渡して呼ばれていることを
+        // 確かめる。形が変わっていればこの修正だけを外して警告する。本体が数えていない
+        // 種類の文を追加した場合は検出できないため、その場合はゲーム更新のたびに
+        // この指紋を見直すこと。
+        private static GameObject _cachedFx;
+        private static DewAudioSource[] _cachedAudio;
+        private static FxCameraShake[] _cachedShake;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem_C_Responsibility), "UserCode_RpcPlayHit__Entity__Single",
+                new[] { typeof(Entity), typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                if (ValidateShape(PatchProcessor.GetOriginalInstructions(_target))) return true;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", "native body shape changed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                return false;
+            }
+        }
+
+        // 本体 r1.4.1.2 の UserCode_RpcPlayHit__Entity__Single の IL と同じ形かどうか。
+        // 値の流れ（どの曲線の評価結果がどの書き込みと localScale に入るか、走査と再生の
+        // 受け手が fxHit フィールドか）まで確かめるため、回数の一致に加えて命令の並びを見る。
+        // GemResponsibilityHitPerfTests が受理と拒否の見本で直接呼ぶため internal。
+        internal static bool ValidateShape(IList<CodeInstruction> code)
+        {
+            var fxHit = AccessTools.Field(typeof(Gem_C_Responsibility), nameof(Gem_C_Responsibility.fxHit));
+            var evaluate = AccessTools.Method(typeof(AnimationCurve), nameof(AnimationCurve.Evaluate),
+                new[] { typeof(float) });
+            var one = AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.one));
+            var multiply = AccessTools.Method(typeof(Vector3), "op_Multiply",
+                new[] { typeof(Vector3), typeof(float) });
+            var localScale = AccessTools.PropertySetter(typeof(Transform), nameof(Transform.localScale));
+            int evaluates = 0, audioScans = 0, shakeScans = 0, plays = 0, scales = 0, multiplies = 0,
+                pitches = 0, volumes = 0, amplitudes = 0;
+            int pitchLocal = -1, volumeLocal = -1, amplitudeLocal = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                CodeInstruction ins = code[i];
+                if (ins.Calls(evaluate)) evaluates++;
+                if (ins.opcode == OpCodes.Ldfld && ins.operand is FieldInfo load
+                    && load.DeclaringType == typeof(Gem_C_Responsibility)
+                    && (load.Name == nameof(Gem_C_Responsibility.pitchCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.volumeCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.shakeAmpCurve)))
+                {
+                    // 各曲線は strength（第2引数）だけを引数に評価され、結果はローカルへ入る。
+                    if (i + 3 >= code.Count || code[i + 1].opcode != OpCodes.Ldarg_2
+                        || !code[i + 2].Calls(evaluate) || !StoresLocal(code[i + 3], out int slot))
+                        return false;
+                    if (load.Name == nameof(Gem_C_Responsibility.pitchCurve))
+                    {
+                        if (pitchLocal >= 0) return false;
+                        pitchLocal = slot;
+                    }
+                    else if (load.Name == nameof(Gem_C_Responsibility.volumeCurve))
+                    {
+                        if (volumeLocal >= 0) return false;
+                        volumeLocal = slot;
+                    }
+                    else
+                    {
+                        if (amplitudeLocal >= 0) return false;
+                        amplitudeLocal = slot;
+                    }
+                }
+                else if (ins.opcode == OpCodes.Stfld && ins.operand is FieldInfo write)
+                {
+                    // 各フィールドへは対応する曲線の評価結果が渡される（型も合わせて確かめる）。
+                    if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.pitchMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], pitchLocal)) return false;
+                        pitches++;
+                    }
+                    else if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.volumeMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], volumeLocal)) return false;
+                        volumes++;
+                    }
+                    else if (write.DeclaringType == typeof(FxCameraShake)
+                        && write.Name == nameof(FxCameraShake.amplitude))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], amplitudeLocal)) return false;
+                        amplitudes++;
+                    }
+                }
+                else if (ins.operand is MethodInfo called)
+                {
+                    if (called.Name == "GetComponentsInChildrenNonAlloc")
+                    {
+                        // 2引数（走査対象 + out の扱い）＝ includeInactive を渡さない形。
+                        // bool を取る3引数のほうに切り替わったら本体の意味が変わる。
+                        if (!called.IsGenericMethod || called.GetParameters().Length != 2) return false;
+                        Type scanned = called.GetGenericArguments()[0];
+                        if (scanned == typeof(DewAudioSource)) audioScans++;
+                        else if (scanned == typeof(FxCameraShake)) shakeScans++;
+                        else return false;
+                        // 走査の対象は fxHit フィールド（ldarg.0 / ldfld fxHit / ldloca / call）。
+                        if (i < 3 || !IsLdloca(code[i - 1])
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit)
+                            || code[i - 3].opcode != OpCodes.Ldarg_0) return false;
+                    }
+                    else if (called.Name == "FxPlayNew" && called.GetParameters().Length == 2)
+                    {
+                        plays++;
+                        // FxPlayNew(fxHit, e)。第2引数が strength に替わっていても弾く。
+                        if (i < 2 || code[i - 1].opcode != OpCodes.Ldarg_1
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit))
+                            return false;
+                    }
+                    else if (ins.Calls(multiply))
+                    {
+                        multiplies++;
+                        // localScale へは Vector3.one * <volumeCurve の結果> を書く。
+                        if (i < 2 || i + 1 >= code.Count || !code[i - 2].Calls(one)
+                            || !LoadsLocal(code[i - 1], volumeLocal) || !code[i + 1].Calls(localScale))
+                            return false;
+                    }
+                    else if (ins.Calls(localScale)) scales++;
+                }
+            }
+            return evaluates == 3 && audioScans == 1 && shakeScans == 1 && plays == 1 && scales == 1
+                && multiplies == 1 && pitches == 1 && volumes == 1 && amplitudes == 1
+                && pitchLocal >= 0 && volumeLocal >= 0 && amplitudeLocal >= 0
+                && pitchLocal != volumeLocal && pitchLocal != amplitudeLocal && volumeLocal != amplitudeLocal;
+        }
+
+        private static bool StoresLocal(CodeInstruction ins, out int slot)
+        {
+            slot = -1;
+            if (ins.opcode != OpCodes.Stloc_0 && ins.opcode != OpCodes.Stloc_1
+                && ins.opcode != OpCodes.Stloc_2 && ins.opcode != OpCodes.Stloc_3
+                && ins.opcode != OpCodes.Stloc_S && ins.opcode != OpCodes.Stloc) return false;
+            slot = LocalIndex(ins);
+            return slot >= 0;
+        }
+
+        private static bool LoadsLocal(CodeInstruction ins, int slot)
+            => slot >= 0
+                && (ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Ldloc_1
+                    || ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Ldloc_3
+                    || ins.opcode == OpCodes.Ldloc_S || ins.opcode == OpCodes.Ldloc)
+                && LocalIndex(ins) == slot;
+
+        private static bool IsLdloca(CodeInstruction ins)
+            => ins.opcode == OpCodes.Ldloca_S || ins.opcode == OpCodes.Ldloca;
+
+        // 短い形式（ldloc.0 など）は operand が無く、長い形式は LocalBuilder（LocalVariableInfo
+        // の派生）で届く。どちらも同じローカルの番号へ読み替える。
+        private static int LocalIndex(CodeInstruction ins)
+            => ins.operand is LocalVariableInfo local ? local.LocalIndex
+                : ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Stloc_0 ? 0
+                : ins.opcode == OpCodes.Ldloc_1 || ins.opcode == OpCodes.Stloc_1 ? 1
+                : ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Stloc_2 ? 2
+                : ins.opcode == OpCodes.Ldloc_3 || ins.opcode == OpCodes.Stloc_3 ? 3
+                : -1;
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Gem_C_Responsibility __instance, Entity e, float strength)
+        {
+            if (_disabled || !NativePerfOptions.GemResponsibilityHitCache) return true;
+            GameObject fx;
+            try
+            {
+                fx = __instance.fxHit;
+                if (fx == null) return true;
+                if (!ReferenceEquals(_cachedFx, fx))
+                {
+                    _cachedAudio = fx.GetComponentsInChildren<DewAudioSource>();
+                    _cachedShake = fx.GetComponentsInChildren<FxCameraShake>();
+                    _cachedFx = fx;
+                }
+                float pitchMultiplier = __instance.pitchCurve.Evaluate(strength);
+                float volumeMultiplier = __instance.volumeCurve.Evaluate(strength);
+                float amplitude = __instance.shakeAmpCurve.Evaluate(strength);
+                DewAudioSource[] audioSources = _cachedAudio;
+                for (int i = 0; i < audioSources.Length; i++)
+                {
+                    audioSources[i].pitchMultiplier = pitchMultiplier;
+                    audioSources[i].volumeMultiplier = volumeMultiplier;
+                }
+                FxCameraShake[] shakes = _cachedShake;
+                for (int i = 0; i < shakes.Length; i++) shakes[i].amplitude = amplitude;
+                fx.transform.localScale = Vector3.one * volumeMultiplier;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                _cachedFx = null;
+                _cachedAudio = null;
+                _cachedShake = null;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                // ここまでの書き込みは冪等な同じ値の設定だけなので、本体の再実行と重なっても
+                // 結果は同じである。本体経路へ戻して本体に一からやらせる。
+                return true;
+            }
+            // FxPlayNew は try の外。この時点で本体相当の書き込みは済んでおり、ここで例外が
+            // 出たときに本体へ戻すと演出がもう1つ入る（または同じ例外がもう1回出る）。例外は
+            // そのまま伝播させ、本体が FxPlayNew の中で例外を出す場合と同じ挙動にする。
+            __instance.FxPlayNew(fx, e);
+            return false;
         }
     }
 

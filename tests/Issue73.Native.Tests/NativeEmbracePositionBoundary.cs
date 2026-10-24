@@ -30,6 +30,21 @@ namespace UnityEngine
     internal class GameObject
     {
         public Transform transform;
+        // NativeGemResponsibilityHitPerf の Prefix が初回だけ走らせる子走査の受け口。
+        // 実機と同じ includeInactive=false の意味。境界では子を children に置いた要素の
+        // うち T に当たるものを返し、走査回数も数える（GemResponsibilityHitPerfTests が
+        // キャッシュで再走査が起きないことの検証に使う）。
+        internal readonly System.Collections.Generic.List<Component> children
+            = new System.Collections.Generic.List<Component>();
+        internal int componentScans;
+        public T[] GetComponentsInChildren<T>() where T : Component
+        {
+            componentScans++;
+            System.Collections.Generic.List<T> found = null;
+            foreach (Component child in children)
+                if (child is T typed) (found ??= new System.Collections.Generic.List<T>()).Add(typed);
+            return found?.ToArray() ?? new T[0];
+        }
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
@@ -153,6 +168,7 @@ namespace SodRpg.Mod
             nativeChaosShrineChoiceCache = true,
             nativeChaosPetalIdle = true,
             nativeGamepadRumbleIdle = true,
+            nativeGemResponsibilityHitCache = true,
             nativeMusicSourceIdle = true,
             nativeTransitionIdle = true,
             nativeBossSoulShrineScan = true,
