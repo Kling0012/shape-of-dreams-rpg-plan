@@ -18,7 +18,7 @@ namespace Issue73.Native.Tests
     /// (2) 空中（y 速度≠0）・水平速度か回転が閾値以上・useGroundPlane=false・効果値が
     /// plateau 未満（ValueSetter の縮小が走っている）は静止扱いにならない、
     /// (2b) 縮小の開始で既についていた静止フラグが外れる、(3) 再爆発（DoBurst）の
-    /// Postfix（NativeGibsRestReset）がフラグをすべて消す、(4) 配列の長度が揃わない
+    /// Postfix（NativeGibsRestReset）がフラグをすべて消す、(4) 配列の長さが揃わない
     /// 再初期化状態で Prefix が古いフラグを残さない、(5) 設定が無効のときは
     /// ShouldSkip が常に false。Transpiler には本体 Update と同じ指紋の IL 見本
     /// （NativeEmbracePositionBoundary.cs の FxGibs_Kinematic.NativeLikeUpdate）を
@@ -229,7 +229,7 @@ namespace Issue73.Native.Tests
             Assert.Empty(Log.Warnings);
         }
 
-        // (4) 配列の長度が揃わない再初期化（DoBurst を経由しない作り直し）で Prefix が
+        // (4) 配列の長さが揃わない再初期化（DoBurst を経由しない作り直し）で Prefix が
         // early-return するとき、前のバーストの静止フラグを残さない。
         [Fact]
         public void ThePrefixDropsStaleFlagsWhenThePieceArraysDisagree()
