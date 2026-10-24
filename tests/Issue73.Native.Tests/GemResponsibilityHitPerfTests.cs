@@ -21,14 +21,16 @@ namespace Issue73.Native.Tests
     /// FxPlayNew(fx, e) の呼び出し引数が曲線の評価結果から本体（r1.4.1.2 の
     /// UserCode_RpcPlayHit__Entity__Single）と同じ式で導かれること、同じ fxHit では再走査が
     /// 起きないこと、参照が変わったときだけ作り直すこと、fxHit が無いとき・設定が無効のときは
-    /// 本体経路へ戻ること、例外ではこの修正だけを無効化して戻すことを確かめる。
+    /// 本体経路へ戻ること、書き込みまでの例外ではこの修正だけを無効化して戻すこと、
+    /// FxPlayNew の中の例外では戻さず伝播させることを確かめる。
     /// あわせて Prepare の指紋検査（ValidateShape）が本体の IL の形を受け入れ、
     /// 走査の型の替え間違い・includeInactive 明示の3引数・localScale へ別の曲線の結果・
     /// fxHit 以外の対象の走査・曲線の割当て替え・FxPlayNew の引数替えを弾くことを確かめる。
     /// 検査に渡す見本 IL（ShapeIl）が実物の本体 IL と同じ形であることは、実 DLL
     /// （Dew.Contents.dll r1.4.1.2）を Mono.Cecil で読んで、指紋検査が見る窓の並びを
     /// 見本と突き合わせ、検査全体が実物の命令列（ループの組み立てや dup を含む）を
-    /// 受け入れることで確かめる（ゲームの DLL が無い環境ではこの2件は飛ばす）。
+    /// 受け入れることで確かめる（ゲームの DLL が無い環境ではこの2件は合格ではなく
+    /// スキップとして報告する）。
     /// </summary>
     public sealed class GemResponsibilityHitPerfTests : IDisposable
     {
@@ -218,6 +220,39 @@ namespace Issue73.Native.Tests
             Assert.Single(Log.Warnings);
         }
 
+        [Fact]
+        public void PrefixPropagatesFxPlayNewExceptionWithoutDoublePlay()
+        {
+            Gem_C_Responsibility gem = NewGem(NewFx(), out DewAudioSource audio1,
+                out DewAudioSource audio2, out FxCameraShake shake);
+            gem.fxPlayNewException = new InvalidOperationException("fx play boom");
+            var victim = new Entity();
+
+            // FxPlayNew の中で例外が出たとき: Prefix は本体へ戻さず例外をそのまま伝播させる
+            // （リフレクション経由なので TargetInvocationException に包まれる）。本体が再実行
+            // されないため演出は1回だけで（戻すともう1つ入る）、try の外の呼び出しなので
+            // この修正は無効化も警告もしない。書き込みまでは曲線どおりに済んでいる。
+            TargetInvocationException thrown =
+                Assert.Throws<TargetInvocationException>(() => RunPrefix(gem, victim, 0.25f));
+            Assert.IsType<InvalidOperationException>(thrown.InnerException);
+            Assert.Equal("fx play boom", thrown.InnerException.Message);
+            Assert.Equal(1, gem.fxPlayNewCalls);
+            Assert.Same(gem.fxHit, gem.lastPlayedEffect);
+            Assert.Same(victim, gem.lastPlayedAttach);
+            Assert.False(PatchDisabled());
+            Assert.Empty(Log.Warnings);
+            Assert.Equal(0.75f, audio1.pitchMultiplier);
+            Assert.Equal(0.5f, audio2.volumeMultiplier);
+            Assert.Equal(2.75f, shake.amplitude);
+
+            // 無効化されていないため、例外を止めれば次の呼び出しは再び Prefix が処理する。
+            gem.fxPlayNewException = null;
+            Assert.False(RunPrefix(gem, victim, 0.5f));
+            Assert.Equal(2, gem.fxPlayNewCalls);
+            Assert.False(PatchDisabled());
+            Assert.Empty(Log.Warnings);
+        }
+
         // ---- Prepare の指紋検査（ValidateShape）の受理と拒否 ----
 
         private static readonly FieldInfo PitchCurveField
@@ -361,12 +396,32 @@ namespace Issue73.Native.Tests
 
         // 本体のマネージド DLL の場所は tests/repro の抽出スクリプトと同じ SOD_MANAGED で
         // 受け取る。ゲームの DLL が無い環境（CI など）では確認のしようが無いため、
-        // この2件は何も確かめずに終える（検証記録では未実行として扱う）。
-        private static Cecil.MethodBody NativeBody()
+        // この2件は NativeDllFact でスキップとして報告し、合格ではなく未確認だと
+        // テスト結果の上で分かるようにする。
+        private static string NativeDll()
         {
             string managed = Environment.GetEnvironmentVariable("SOD_MANAGED");
-            string dll = string.IsNullOrEmpty(managed) ? null : Path.Combine(managed, "Dew.Contents.dll");
-            if (dll == null || !File.Exists(dll)) return null;
+            if (string.IsNullOrEmpty(managed)) return null;
+            string dll = Path.Combine(managed, "Dew.Contents.dll");
+            return File.Exists(dll) ? dll : null;
+        }
+
+        // xunit v2 の FactAttribute.Skip は検証時に読めるため、DLL の有無をコンストラクタで
+        // 判定して与える（実行時スキップ）。SkippableFact の導入と同じ効果を追加の依存無しで
+        // 得るための小さな属性である。
+        private sealed class NativeDllFactAttribute : FactAttribute
+        {
+            public NativeDllFactAttribute()
+            {
+                if (NativeDll() == null)
+                    Skip = "SOD_MANAGED に Dew.Contents.dll が無いため、実 DLL との照合は未確認";
+            }
+        }
+
+        private static Cecil.MethodBody NativeBody()
+        {
+            string dll = NativeDll();
+            if (dll == null) return null;
             ModuleDefinition module = ModuleDefinition.ReadModule(dll);
             TypeDefinition type = module.GetType(nameof(Gem_C_Responsibility));
             Assert.NotNull(type);
@@ -533,7 +588,7 @@ namespace Issue73.Native.Tests
             return true;
         }
 
-        [Fact]
+        [NativeDllFact]
         public void ShapeAcceptsActualDewContentsR1412BodyIl()
         {
             Cecil.MethodBody body = NativeBody();
@@ -543,7 +598,7 @@ namespace Issue73.Native.Tests
                 + "受け入れるべきである");
         }
 
-        [Fact]
+        [NativeDllFact]
         public void ShapeIlWindowMatchesActualDewContentsR1412BodyIl()
         {
             Cecil.MethodBody body = NativeBody();

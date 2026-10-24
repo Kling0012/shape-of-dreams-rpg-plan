@@ -605,6 +605,8 @@ namespace SodRpg.Mod
     // 派生させる）。GemResponsibilityHitPerfTests が Prefix を直接呼び、書き込み値と
     // FxPlayNew の呼び出し引数が曲線の評価結果から意図どおり導かれるかを見るため、
     // FxPlayNew は引数を記録する。曲線の既定は null 参照を避けるため空の評価（0）。
+    // fxPlayNewException は FxPlayNew の中で例外が出る場面（Prefix が try の外から呼ぶ
+    // 境界）を作るためのスイッチで、null なら普通に null を返す。
     internal sealed class Gem_C_Responsibility : Actor
     {
         public GameObject fxHit;
@@ -616,11 +618,13 @@ namespace SodRpg.Mod
         internal int fxPlayNewCalls;
         internal GameObject lastPlayedEffect;
         internal Entity lastPlayedAttach;
+        internal Exception fxPlayNewException;
         public GameObject FxPlayNew(GameObject effect, Entity attach)
         {
             fxPlayNewCalls++;
             lastPlayedEffect = effect;
             lastPlayedAttach = attach;
+            if (fxPlayNewException != null) throw fxPlayNewException;
             return null;
         }
         private void UserCode_RpcPlayHit__Entity__Single(Entity e, float strength) { }
