@@ -70,6 +70,7 @@ namespace SodRpg.Mod
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
             NativePerfOptions.CastTelegraphIdle = config.nativeCastTelegraphIdle;
+            NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
         }
     }
@@ -129,6 +130,7 @@ namespace SodRpg.Mod
         internal static bool DamageShakeIdle = true;
         internal static bool AudioSetupIdle = true;
         internal static bool CastTelegraphIdle = true;
+        internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
     }
 
@@ -6640,6 +6642,145 @@ namespace SodRpg.Mod
         }
     }
 
+    // FxAttachToEntity.UpdatePosition runs for every attached visual effect on every client
+    // (the host and each guest render the effects the host spawns), throttled only to 1/160 s —
+    // at 60 fps that is every frame. Its final act is an unconditional transform write:
+    // localScale for the four entity-size scale modes, position for the DoNothing-rotation
+    // case, SetPositionAndRotation otherwise. Whenever the attach target stands still (and the
+    // camera yaw behind AlwaysIdentity/entityCamAngleRotation has not moved), the computed
+    // values equal what the transform already holds, so the write only re-dirties the effect's
+    // hierarchy. The wrappers below compare the fresh value against the current one and write
+    // only on a real change: an equal value cannot change what Unity renders, and nothing in
+    // the shipped game reads Transform.hasChanged on these transforms (same verification as
+    // the hero-weapon idle patch). External writers are respected because the comparison reads
+    // the transform every time — a scale or position an animation has moved to another value
+    // differs, so it is overwritten exactly when the native write would have been. The
+    // transpiler re-points only those call sites and demands the shipped shape (4 localScale,
+    // 1 position, 1 SetPositionAndRotation, all on Transform); any other shape leaves the
+    // method unmodified with one warning. A wrapper that hits a null or destroyed transform
+    // re-issues the unconditional native write (which throws the very exception the
+    // unpatched method would have thrown) and stays armed; any other exception disables the
+    // patch fail-soft through a warning flag of its own.
+    [HarmonyPatch]
+    internal static class NativeFxAttachIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+        private static bool _runtimeWarned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxAttachToEntity), "UpdatePosition", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int scale = 0, position = 0, posRot = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_localScale") scale++;
+                else if (method.Name == "set_position") position++;
+                else if (method.Name == "SetPositionAndRotation") posRot++;
+            }
+            if (scale != 4 || position != 1 || posRot != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "attached FX idle",
+                    "native UpdatePosition body changed (writes " + scale + "/" + position + "/" + posRot + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_localScale":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WriteLocalScale));
+                        break;
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WritePosition));
+                        break;
+                    case "SetPositionAndRotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WritePositionAndRotation));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        // Attached effects die mid-frame as a matter of course, so a null or destroyed
+        // transform is ordinary churn, not a patch failure: the native write would throw the
+        // very same exception, and one such write must not disarm the optimization for every
+        // other effect. Anything else is unexpected and disables fail-soft.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        private static void WriteLocalScale(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.localScale = value; return; }
+            try
+            {
+                Vector3 current = tr.localScale;
+                if (current.x != value.x || current.y != value.y || current.z != value.z) tr.localScale = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.localScale = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.localScale = value;
+            }
+        }
+
+        private static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (current.x != value.x || current.y != value.y || current.z != value.z) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.position = value;
+            }
+        }
+
+        private static void WritePositionAndRotation(Transform tr, Vector3 position, Quaternion rotation)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.SetPositionAndRotation(position, rotation); return; }
+            try
+            {
+                Vector3 currentPos = tr.position;
+                Quaternion currentRot = tr.rotation;
+                if (currentPos.x != position.x || currentPos.y != position.y || currentPos.z != position.z
+                    || currentRot.x != rotation.x || currentRot.y != rotation.y
+                    || currentRot.z != rotation.z || currentRot.w != rotation.w)
+                {
+                    tr.SetPositionAndRotation(position, rotation);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.SetPositionAndRotation(position, rotation); return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.SetPositionAndRotation(position, rotation);
+            }
+        }
+    }
+
     [HarmonyPatch]
     internal static class NativeCastTelegraphIdlePerf
     {
@@ -6773,9 +6914,9 @@ namespace SodRpg.Mod
         // restructuring the petals with an unchanged child count is undetectable but would
         // desync vanilla's own Start-time scales too; a shrunken hierarchy rebuilds the table
         // from the live order (what vanilla's GetChild would read) and hands frames back to the
-        // original once the live count no longer covers Start's capture — where vanilla throws
-        // ArgumentOutOfRangeException per frame and LogicUpdateManager already logs and swallows
-        // it, this patch detaches with one warning instead.
+        // original without warning once the live count no longer covers Start's capture. The
+        // patch stays enabled; vanilla's per-frame ArgumentOutOfRangeException is still logged
+        // and swallowed by LogicUpdateManager.
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals> PetalTable =
             new ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>();
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>.CreateValueCallback CreatePetals =

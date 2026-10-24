@@ -312,6 +312,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged cast-telegraph position/rotation rewrites every frame (host and guests) /\n詠唱テレグラフの同じ位置・向きの毎フレーム再書き込みを省く（ホストと参加者）")]
         public bool nativeCastTelegraphIdle = true;
 
+        [LabelText("Skip attached-FX transform rewrites whose values did not change (host and guests) /\n付属エフェクトの値が変わらない位置・向き・サイズの毎フレーム再書き込みを省く（ホストと参加者）")]
+        public bool nativeFxAttachIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

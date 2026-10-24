@@ -30,6 +30,8 @@ namespace UnityEngine
     // 基底の Component はここで宣言した部分宣言だけに書く（ほかの部分宣言は基底を書かない）。
     internal partial class Transform : Component
     {
+        // throwOnRead / throwOnWrite（FxAttachIdlePerfBoundary.cs の部分宣言の欄）は
+        // 破棄済み Transform へのアクセスを模すための検証用の鉤。null なら何もしない。
         private Quaternion _rotation;
         // （#1109）回転の書き込み回数も数える（NativeCastTelegraphIdlePerf が同じ値の
         // 書き込みを省くかどうかの検証に使う。CastIndicatorPerfBoundary.cs の
@@ -37,8 +39,8 @@ namespace UnityEngine
         internal int rotationWrites;
         internal Quaternion rotation
         {
-            get => _rotation;
-            set { _rotation = value; rotationWrites++; }
+            get { if (throwOnRead != null) throw throwOnRead; return _rotation; }
+            set { if (throwOnWrite != null) throw throwOnWrite; _rotation = value; rotationWrites++; }
         }
 
         // NativeMerchantPropIdlePerf の SetIfChanged が本体経路へ戻るときの受け口。実機は
