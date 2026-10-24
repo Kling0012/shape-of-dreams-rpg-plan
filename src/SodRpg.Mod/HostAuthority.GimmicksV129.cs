@@ -209,12 +209,17 @@ namespace SodRpg.Mod
             if (_rng.NextDouble() < Gimmicks.AddedCritProbability(originalChance, bonus)) critical = true;
         }
 
-        private void ApplyGimmickDamageV129(HeroRuntime rt, ref DamageData damage, Actor actor, Entity target, string memory)
+        private void ApplyGimmickDamageV129(HeroRuntime rt, ref DamageData damage, Actor actor, Entity target, Actor memorySource)
         {
-            if (memory == null || damage.HasAttr(DamageAttribute.IsCrit)
-                || actor != null && actor.firstEntity == rt.Hero
-                    && (damage.attackEffectType == AttackEffectType.BasicAttackMain || damage.attackEffectType == AttackEffectType.BasicAttackSub)
+            // 会心済み・自家の基本攻撃・生成ダメージは Weakspot の対象外。これらの門は副作用のない
+            // 読み取りだけなので、親連鎖の走査（MemorySource・firstEntity）より先に評価しても
+            // 判定と乱数を引く条件（bonus > 0）は変わらない。
+            if (damage.HasAttr(DamageAttribute.IsCrit)
+                || actor != null && (damage.attackEffectType == AttackEffectType.BasicAttackMain || damage.attackEffectType == AttackEffectType.BasicAttackSub)
+                    && actor.firstEntity == rt.Hero
                 || _gimmickDamageDepth != 0 || damage.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+            string memory = MemorySource(memorySource);
+            if (memory == null) return;
             float bonus = rt.Gimmicks.WeakspotPercent(target.GetInstanceID(), Time.time);
             // Attributed memory damage has no native universal critical roll; Weakspot supplies its own target-only roll.
             if (bonus > 0 && _rng.NextDouble() < bonus / 100f)
@@ -231,7 +236,9 @@ namespace SodRpg.Mod
             Hero hero = actor.FindFirstOfType<Hero>();
             if (hero == null || !Alive(hero) || !_runtimes.TryGetValue(hero, out var rt)
                 || target.GetRelation(hero) != EntityRelation.Enemy) return;
-            ApplyGimmickDamageV129(rt, ref damage, actor, target, MemorySource(damage.actor ?? actor));
+            // MemorySource の親連鎖走査（最大128段階）は Weakspot が働き得る damage だけに
+            // 行う。ソースは呼び出し前と同じ damage.actor 優先のまま渡す。
+            ApplyGimmickDamageV129(rt, ref damage, actor, target, damage.actor ?? actor);
         }
 
         private void ApplyGimmickV129(HeroRuntime rt, PendingGimmick pending)
