@@ -29,8 +29,11 @@ namespace Issue73.Native.Tests
     /// 検査に渡す見本 IL（ShapeIl）が実物の本体 IL と同じ形であることは、実 DLL
     /// （Dew.Contents.dll r1.4.1.2）を Mono.Cecil で読んで、指紋検査が見る窓の並びを
     /// 見本と突き合わせ、検査全体が実物の命令列（ループの組み立てや dup を含む）を
-    /// 受け入れることで確かめる（ゲームの DLL が無い環境ではこの2件は合格ではなく
-    /// スキップとして報告する）。
+    /// 受け入れることで確かめる。あわせて本体が呼ぶ2引数の GetComponentsInChildrenNonAlloc
+    /// が includeInactive=false を意味すること（拡張は bool を渡さず Unity の List だけの
+    /// オーバーロードへ任せ、その受け手は false を渡す）も Dew.Core.dll と
+    /// UnityEngine.CoreModule.dll から確かめる（ゲームの DLL が無い環境ではこれらは
+    /// 合格ではなくスキップとして報告する）。
     /// </summary>
     public sealed class GemResponsibilityHitPerfTests : IDisposable
     {
@@ -396,13 +399,16 @@ namespace Issue73.Native.Tests
 
         // 本体のマネージド DLL の場所は tests/repro の抽出スクリプトと同じ SOD_MANAGED で
         // 受け取る。ゲームの DLL が無い環境（CI など）では確認のしようが無いため、
-        // この2件は NativeDllFact でスキップとして報告し、合格ではなく未確認だと
-        // テスト結果の上で分かるようにする。
+        // この3件は NativeDllFact / NativeScanDllFact でスキップとして報告し、合格ではなく
+        // 未確認だとテスト結果の上で分かるようにする。
         private static string NativeDll()
+            => NativeDll("Dew.Contents.dll");
+
+        private static string NativeDll(string file)
         {
             string managed = Environment.GetEnvironmentVariable("SOD_MANAGED");
             if (string.IsNullOrEmpty(managed)) return null;
-            string dll = Path.Combine(managed, "Dew.Contents.dll");
+            string dll = Path.Combine(managed, file);
             return File.Exists(dll) ? dll : null;
         }
 
@@ -415,6 +421,23 @@ namespace Issue73.Native.Tests
             {
                 if (NativeDll() == null)
                     Skip = "SOD_MANAGED に Dew.Contents.dll が無いため、実 DLL との照合は未確認";
+            }
+        }
+
+        // ---- 走査の意味（2引数の GetComponentsInChildrenNonAlloc ＝ includeInactive=false）----
+        // レビュー指摘（修正ラウンド4）F1: 本体の受け口の IL には拡張の呼び出し（2引数）までしか
+        // 現れないため、拡張の内部で includeInactive に何が渡るかは Dew.Core.dll とその委譲先の
+        // UnityEngine.CoreModule.dll を読まなければ分からない。両方を確かめておかないと、
+        // Prefix の走査（GetComponentsInChildren<T>() ＝ includeInactive=false）が本体と同じ
+        // 要素を返すことの根拠が、呼び出し側の引数の数だけに載ることになる。意味の記録（IL）は
+        // spec（docs/specs/perf-loop/20261024-1529.md）に保存してある。
+        private sealed class NativeScanDllFactAttribute : FactAttribute
+        {
+            public NativeScanDllFactAttribute()
+            {
+                if (NativeDll("Dew.Core.dll") == null || NativeDll("UnityEngine.CoreModule.dll") == null)
+                    Skip = "SOD_MANAGED に Dew.Core.dll か UnityEngine.CoreModule.dll が無いため、"
+                        + "走査の意味の照合は未確認";
             }
         }
 
@@ -604,6 +627,78 @@ namespace Issue73.Native.Tests
             Cecil.MethodBody body = NativeBody();
             if (body == null) return;
             Assert.Equal(WindowOfShape(ShapeIl()), WindowOfNative(body));
+        }
+
+        // 本体が呼ぶ2引数の拡張と Prefix の走査が同じ意味（includeInactive=false）であることを、
+        // 実 DLL の両方から確かめる。拡張が bool を渡す形に変わるか Unity の下位オーバーロードが
+        // true を渡す形に変わったら、Prefix の走査は本体の走査と同じ要素を返さなくなる
+        // （fxHit の非アクティブな子がある場合に音程・音量・揺れが変わる）ため、この検査が
+        // 失敗した時点で指紋と Prefix の走査を見直すこと。
+        [NativeScanDllFact]
+        public void NativeScanOverloadMeansIncludeInactiveFalse()
+        {
+            // Dew.Core 側: 2引数（GameObject + out）の拡張は、bool を渡さず List だけを取る
+            // Unity のオーバーロードへ処理を任せる（3引数の拡張と違い includeInactive を
+            // 固定しない）。
+            ModuleDefinition dewCore = ModuleDefinition.ReadModule(NativeDll("Dew.Core.dll"));
+            TypeDefinition extension = dewCore.GetType("GetComponentsNonAllocExtension");
+            Assert.NotNull(extension);
+            MethodDefinition scan = extension.Methods.FirstOrDefault(m =>
+                m.Name == "GetComponentsInChildrenNonAlloc" && m.HasGenericParameters
+                && m.Parameters.Count == 2 && m.Parameters[0].ParameterType.Name == "GameObject");
+            Assert.NotNull(scan);
+            GenericInstanceMethod[] delegated = scan.Body.Instructions
+                .Select(i => i.Operand).OfType<GenericInstanceMethod>()
+                .Where(c => c.ElementMethod.Name == "GetComponentsInChildren").ToArray();
+            MethodReference unityCall = Assert.Single(delegated).ElementMethod;
+            Assert.Equal("GameObject", unityCall.DeclaringType.Name);
+            Assert.Single(unityCall.Parameters); // List だけ（bool を取らない）
+
+            // UnityEngine.CoreModule 側: 委譲先の List だけを取るオーバーロード（引数1つ）と、
+            // Prefix が使う引数なしのオーバーロード（引数0個）は、どちらも includeInactive に
+            // false を渡す。bool だけを取る1引数のオーバーロードもあるため、List 版は引数の
+            // 型（ジェネリックの List）で選ぶ。
+            ModuleDefinition coreModule =
+                ModuleDefinition.ReadModule(NativeDll("UnityEngine.CoreModule.dll"));
+            TypeDefinition gameObject = coreModule.GetType("UnityEngine.GameObject");
+            Assert.NotNull(gameObject);
+            Assert.False(NativeIncludeInactiveValue(gameObject,
+                    p => p.Parameters.Count == 1 && p.Parameters[0].ParameterType is GenericInstanceType),
+                "List だけを取る GetComponentsInChildren<T> は includeInactive に false を渡す"
+                + "べきである");
+            Assert.False(NativeIncludeInactiveValue(gameObject, p => p.Parameters.Count == 0),
+                "引数なしの GetComponentsInChildren<T>() は includeInactive に false を渡す"
+                + "べきである");
+        }
+
+        // UnityEngine.GameObject の GetComponentsInChildren<T> のうち、引数の形が matches に
+        // 当てはまるもの（List だけを取る版・引数なしの版）の本体から、bool 付きの下位
+        // オーバーロードへ渡す includeInactive の定数を読む。呼び出しの引数の並びでは bool が
+        // 一番底に積まれる（instance → bool → List の順）ため、呼び出しの位置から引数の数だけ
+        // 戻った命令がその定数である。定数が読み取れない形に変わった場合は例外で失敗させる。
+        private static bool NativeIncludeInactiveValue(TypeDefinition gameObject,
+            Func<MethodDefinition, bool> matches)
+        {
+            MethodDefinition overload = gameObject.Methods.FirstOrDefault(m =>
+                m.Name == "GetComponentsInChildren" && m.HasGenericParameters && matches(m));
+            Assert.NotNull(overload);
+            int callIndex = -1, calleeParameters = -1;
+            for (int i = 0; i < overload.Body.Instructions.Count; i++)
+            {
+                if (overload.Body.Instructions[i].Operand is GenericInstanceMethod callee
+                    && callee.ElementMethod.Name == "GetComponentsInChildren")
+                {
+                    Assert.Equal(-1, callIndex);
+                    callIndex = i;
+                    calleeParameters = callee.ElementMethod.Parameters.Count;
+                }
+            }
+            Assert.True(callIndex >= 0, "bool 付きの下位オーバーロードへの呼び出しが見つからない");
+            Assert.Equal(overload.Parameters.Count + 1, calleeParameters);
+            string constant = overload.Body.Instructions[callIndex - calleeParameters].OpCode.Name;
+            if (constant == "ldc.i4.0") return false;
+            if (constant == "ldc.i4.1") return true;
+            throw new InvalidOperationException("includeInactive の定数が読み取れない: " + constant);
         }
     }
 }

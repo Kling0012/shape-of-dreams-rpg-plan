@@ -7278,7 +7278,11 @@ namespace SodRpg.Mod
         // fxHit はシーンに置かれないプレハブアセットで、実行中に子の構成を変える処理は本体にも
         // この MOD にも無い（この受け口が書くのは pitchMultiplier・volumeMultiplier・amplitude・
         // localScale の値だけで、子の追加・削除・有効化はしない）。走査は includeInactive=false
-        // で毎回同じ要素を返すだけなので、被弾ごとの再走査とプールの出入りは無駄。Prefix は
+        // （本体が呼ぶ2引数の GetComponentsInChildrenNonAlloc は bool を渡さず Unity の
+        // List だけを取るオーバーロードへ任せ、その受け手は includeInactive に false を渡す。
+        // Dew.Core.dll と UnityEngine.CoreModule.dll の IL で確認、spec と
+        // GemResponsibilityHitPerfTests に記録）で毎回同じ要素を返すだけなので、被弾ごとの
+        // 再走査とプールの出入りは無駄。Prefix は
         // fxHit の参照が変わった最初の1回だけ本体と同じ走査で配列を作り、以後はその配列へ
         // 同じ値を同じ順で書く。曲線の評価・各コンポーネントへの書き込み・localScale・
         // FxPlayNew の呼び出しは本体と同じ式と順序なので、見た目も音も変わらない。
