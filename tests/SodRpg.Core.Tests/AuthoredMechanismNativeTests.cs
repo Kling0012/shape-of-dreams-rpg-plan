@@ -7,6 +7,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public sealed class AuthoredMechanismNativeTests
     {
         private const string Identity = "St_D_Resolve", Q = "St_Q_CruelSun";

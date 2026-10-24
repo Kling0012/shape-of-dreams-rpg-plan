@@ -16,6 +16,7 @@ namespace SodRpg.Core.Tests
     ///   _tracker = skill.TrackKills(6 s)   -> KillTracker subscribes skill.ActorEvent_OnDealDamage
     ///   skill.dealtDamageProcessor.Add(Amplify)
     /// </summary>
+    [Collection("DewPhysics")]
     public sealed class IdentityStrikeNativeTests
     {
         private sealed class DivineFaithSim

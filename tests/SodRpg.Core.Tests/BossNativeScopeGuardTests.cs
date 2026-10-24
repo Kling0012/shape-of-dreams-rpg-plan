@@ -14,6 +14,7 @@ using Xunit;
 // 退避・復元されることを確かめる。
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossNativeScopeGuardTests
     {
         private sealed class Rig

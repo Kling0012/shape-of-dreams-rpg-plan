@@ -10,6 +10,71 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.56 — Lighter host load during the White Night domain（2026-10-24）
+
+この版では、白夜の領域が出ているボス戦で毎フレーム繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated every frame during boss fights with the White Night domain.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 白夜の領域が出ている間、ゲームはホスト側で毎フレーム、領域の中にいちばん近い味方がいるかを調べ直していました。領域の中に味方が1人もいないときも同じで、一人で遊んでいるときは領域が消えるまでずっと続いていました。今は、領域の中に味方がいないときはこの調べ直しを省きます。味方が領域の外にいる間は、ホストの処理が軽くなる見込みです。味方が領域の中にいるときは、軽くなりません。領域の効果と、どの味方が対象になるかは変わりません。 / While the White Night domain was active, the game checked on the host every frame for the nearest ally inside the domain. It did this even when no ally was inside, and in solo play it kept doing so until the domain faded. The game now skips this check when no ally is inside the domain. While allies stay outside the domain, the host should run lighter. While an ally is inside, there is no gain. The domain's effect and which ally it picks are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.55 — Lighter cast warnings and codex search by translated names（2026-10-24）
+
+### 不具合の修正 / Bug fixes
+- 外部翻訳ファイルで表示される図鑑の名前を検索しても、該当項目が出ない問題を直しました。 / Fixed codex entries not appearing when searched by their names displayed through an external translation file.
+
+---
+
+## v3.8.54 — Lighter handling of effects attached to characters（2026-10-24）
+
+この版では、キャラクターに付いて表示される演出で毎フレーム繰り返していた無駄な処理を省き、演出が多い場面の負荷を減らしました。 / This version removes wasted work repeated every frame for effects attached to characters, reducing load in scenes with many effects.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- キャラクターに付いて表示される演出について、ゲームは毎フレーム、演出の位置と大きさを設定し直していました。演出が付いているキャラクターが止まっていて値が変わらないときも同じで、ホストと参加者の両方で起きていました。今は値が変わるときだけ設定し直します。状態異常が重なるボス戦のように演出が多い場面では、特に参加者側の処理が軽くなる見込みです。演出が付いているキャラクターが動き続けている間は、軽くなりません。演出の見た目と動きは変わりません。 / For effects attached to characters, the game reset each effect's position and size every frame, even when the character was standing still and nothing had changed. This happened on both the host and co-op players. The game now resets them only when the values change. In scenes with many effects, such as boss fights with stacked status effects, co-op players in particular should run lighter. While the character the effect is attached to keeps moving, there is no gain. How effects look and move is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.53 — Lighter boss beams, Hysteria claws, effects and shrine petals（2026-10-24）
+
+この版では、Beam of Balance・Hysteria の爪・WorldCracker の光線が当たるたびに繰り返していた無駄な処理を省きました。あわせて、演出の再生と、堕落した混沌の神殿の花びらのアニメーションでも同じ処理の繰り返しをやめ、戦闘中とステージ内の負荷を減らしました。 / This version removes wasted work repeated on every hit of Beam of Balance, Hysteria's claws and the WorldCracker beam. It also stops repeated work when effects play and in the petal animation of the Corrupted Chaos shrine, reducing load in combat and around stages.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Beam of Balance の光線が1体に当たるたびに、ホストのゲームは同じ確認を何度も繰り返していました。敵に当たると3回、味方に当たると2回です。今は1回の命中につき1回だけ確認します。光線の範囲には味方や召喚物も入るので、範囲内のキャラクターが多いほど、ホストの処理が軽くなる見込みです。光線の効果と結果は変わりません。 / Every time Beam of Balance hit a target, the host's game ran the same check several times: three times for an enemy and twice for an ally. It now checks only once per hit. The beam's area also covers allies and summons, so the more characters there are in range, the lighter the host should run. What the beam does is unchanged.
+- Hysteria の爪が当たるたびに、ホストのゲームは報酬の段階を2回確かめていました。今は1回で済ませます。爪が出たときや消えたときにも、確認が要らない場面では省くようにしました。Hysteria との戦闘中は、ホストの処理が少し軽くなる見込みです。報酬の段階ごとの効果は変わりません。 / Every time one of Hysteria's claws hit, the host's game checked the reward stage twice. It now checks once, and also skips the check when a claw appears or disappears if it is not needed. The host should run a little lighter while fighting Hysteria. What each reward stage does is unchanged.
+- WorldCracker の光線が敵にダメージを与えるたびに、ホストのゲームは同じ確認を続けて2回行っていました。今は1回だけ行います。光線は範囲内の敵すべてに繰り返し当たるため、敵が多いほどホストの処理が軽くなる見込みです。拍動の発生や段階の切り替わりなど、光の報酬の動きは変わりません。 / Every time the WorldCracker beam damaged an enemy, the host's game ran the same check twice in a row. It now runs it once. The beam hits every enemy in range repeatedly, so the more enemies there are, the lighter the host should run. How the light reward behaves, including its pulses and stage changes, is unchanged.
+- 演出が再生されるたびに、ゲームは霜に関わる演出かどうかを毎回最初から調べていました。霜と関係のない演出でも同じで、ホストと参加者の両方で起きていました。今は最初に調べた結果を覚えておき、2回目からは調べ直しません。演出の見た目と、霜の演出が消えるタイミングは変わりません。 / Every time an effect played, the game checked from scratch whether it was frost-related, even for effects unrelated to frost. This happened on both the host and co-op players. The game now remembers the first result and skips the check after that. How effects look and when frost effects disappear are unchanged.
+- 堕落した混沌の神殿の花びらのアニメーションで、ゲームは毎フレーム、花びらを1枚ずつ探し直していました。ホストと参加者の両方で起きていました。今は花びらを一度見つけたら覚えておきます。花びらの動きと大きさの変化は変わりません。 / In the petal animation of the Corrupted Chaos shrine, the game looked up each petal again every frame. This happened on both the host and co-op players. It now remembers the petals once found. How the petals move and change size is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.52 — Accessory sharing fix and lighter camera shake and Frozen Fists handling（2026-10-24）
 
 ### 不具合の修正 / Bug fixes

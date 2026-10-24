@@ -8,6 +8,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossStageB3NativeTests
     {
         private sealed class Rig

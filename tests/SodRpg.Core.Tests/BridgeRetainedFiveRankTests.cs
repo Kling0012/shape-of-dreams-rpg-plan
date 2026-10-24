@@ -17,6 +17,7 @@ namespace SodRpg.Core.Tests
     /// the AlliedWard bridge payload and the single documented exception to the three-rank limit.
     /// Definitions are the exact shapes tools/star-manifest/gen_cs.py emits.
     /// </summary>
+    [Collection("DewPhysics")]
     public sealed class BridgeRetainedFiveRankTests
     {
         private sealed class Case

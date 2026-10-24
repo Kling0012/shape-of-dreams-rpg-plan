@@ -69,8 +69,11 @@ namespace SodRpg.Mod
             NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
+            NativePerfOptions.CastTelegraphIdle = config.nativeCastTelegraphIdle;
+            NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GibsRestSkip = config.nativeGibsRestSkip;
+            NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
         }
     }
 
@@ -128,8 +131,11 @@ namespace SodRpg.Mod
         internal static bool MirageVolumeIdle = true;
         internal static bool DamageShakeIdle = true;
         internal static bool AudioSetupIdle = true;
+        internal static bool CastTelegraphIdle = true;
+        internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
         internal static bool GibsRestSkip = true;
+        internal static bool GamepadRumbleIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -6640,6 +6646,265 @@ namespace SodRpg.Mod
         }
     }
 
+    // FxAttachToEntity.UpdatePosition runs for every attached visual effect on every client
+    // (the host and each guest render the effects the host spawns), throttled only to 1/160 s —
+    // at 60 fps that is every frame. Its final act is an unconditional transform write:
+    // localScale for the four entity-size scale modes, position for the DoNothing-rotation
+    // case, SetPositionAndRotation otherwise. Whenever the attach target stands still (and the
+    // camera yaw behind AlwaysIdentity/entityCamAngleRotation has not moved), the computed
+    // values equal what the transform already holds, so the write only re-dirties the effect's
+    // hierarchy. The wrappers below compare the fresh value against the current one and write
+    // only on a real change: an equal value cannot change what Unity renders, and nothing in
+    // the shipped game reads Transform.hasChanged on these transforms (same verification as
+    // the hero-weapon idle patch). External writers are respected because the comparison reads
+    // the transform every time — a scale or position an animation has moved to another value
+    // differs, so it is overwritten exactly when the native write would have been. The
+    // transpiler re-points only those call sites and demands the shipped shape (4 localScale,
+    // 1 position, 1 SetPositionAndRotation, all on Transform); any other shape leaves the
+    // method unmodified with one warning. A wrapper that hits a null or destroyed transform
+    // re-issues the unconditional native write (which throws the very exception the
+    // unpatched method would have thrown) and stays armed; any other exception disables the
+    // patch fail-soft through a warning flag of its own.
+    [HarmonyPatch]
+    internal static class NativeFxAttachIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+        private static bool _runtimeWarned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxAttachToEntity), "UpdatePosition", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int scale = 0, position = 0, posRot = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_localScale") scale++;
+                else if (method.Name == "set_position") position++;
+                else if (method.Name == "SetPositionAndRotation") posRot++;
+            }
+            if (scale != 4 || position != 1 || posRot != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "attached FX idle",
+                    "native UpdatePosition body changed (writes " + scale + "/" + position + "/" + posRot + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_localScale":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WriteLocalScale));
+                        break;
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WritePosition));
+                        break;
+                    case "SetPositionAndRotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeFxAttachIdlePerf), nameof(WritePositionAndRotation));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        // Attached effects die mid-frame as a matter of course, so a null or destroyed
+        // transform is ordinary churn, not a patch failure: the native write would throw the
+        // very same exception, and one such write must not disarm the optimization for every
+        // other effect. Anything else is unexpected and disables fail-soft.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        private static void WriteLocalScale(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.localScale = value; return; }
+            try
+            {
+                Vector3 current = tr.localScale;
+                if (current.x != value.x || current.y != value.y || current.z != value.z) tr.localScale = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.localScale = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.localScale = value;
+            }
+        }
+
+        private static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (current.x != value.x || current.y != value.y || current.z != value.z) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.position = value;
+            }
+        }
+
+        private static void WritePositionAndRotation(Transform tr, Vector3 position, Quaternion rotation)
+        {
+            if (_disabled || !NativePerfOptions.FxAttachIdle) { tr.SetPositionAndRotation(position, rotation); return; }
+            try
+            {
+                Vector3 currentPos = tr.position;
+                Quaternion currentRot = tr.rotation;
+                if (currentPos.x != position.x || currentPos.y != position.y || currentPos.z != position.z
+                    || currentRot.x != rotation.x || currentRot.y != rotation.y
+                    || currentRot.z != rotation.z || currentRot.w != rotation.w)
+                {
+                    tr.SetPositionAndRotation(position, rotation);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.SetPositionAndRotation(position, rotation); return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
+                tr.SetPositionAndRotation(position, rotation);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCastTelegraphIdlePerf
+    {
+        // FxCastTelegraph.UpdatePosition runs every frame for every active cast telegraph on
+        // every client — DewEffect.PlayCastEffect sets the telegraph components up from the
+        // cast FX prefab on the host and on each guest alike, and the FrameUpdate keeps them
+        // glued to their caster or target point for the whole cast duration. Its final act is
+        // two unconditional transform writes: transform.position when the telegraph follows a
+        // position, transform.rotation when it follows a rotation. Point-targeted telegraphs
+        // (a fixed world point), cone/arrow telegraphs (rotation frozen at cast time) and
+        // telegraphs whose caster stands still while casting recompute the exact same values
+        // every frame, so each write only re-dirties the telegraph's transform hierarchy —
+        // several telegraphs are alive at once during a fight and every client, guests
+        // included, advances all of them. The wrappers below compare the fresh value against
+        // the current one bit-exactly (IEEE754 bits, so +0 and -0 are apart — the native
+        // write stores the sign bit too) and write only when the bits differ: a bit-equal
+        // value cannot change what Unity renders, and nothing in the shipped game reads
+        // Transform.hasChanged (same verification as the hero-weapon idle patch). External
+        // writers are respected because the comparison reads the transform every time — a
+        // transform an animation has moved elsewhere differs from the computed value and is
+        // overwritten exactly when the native write would have been. Values that read back
+        // with different bits — the world position of a parented transform, or a quaternion
+        // Unity normalizes on read — never match, so those keep writing every frame exactly
+        // like the native body; only a bit-identical read-back is skipped. NaN values
+        // compare unequal and are written, like in the native body. The transpiler
+        // re-points only those two call sites and
+        // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
+        // any other shape leaves the method unmodified with one warning.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxCastTelegraph), "UpdatePosition", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int position = 0, rotation = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+            }
+            if (position != 1 || rotation != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle",
+                    "native UpdatePosition body changed (writes " + position + "/" + rotation + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeCastTelegraphIdlePerf), nameof(WritePosition));
+                        break;
+                    case "set_rotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeCastTelegraphIdlePerf), nameof(WriteRotation));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        // float == reads 0f and -0f as equal while the native write would store the -0's
+        // sign bit, so the bit comparison decides; the != first keeps NaN never-equal
+        // (a NaN value writes every frame, like in the native body).
+        private static bool BitsDiffer(float a, float b)
+            => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
+
+        // Cast effects can die mid-frame too; preserve the native write's exception without
+        // disabling the optimization for every other telegraph.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        private static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
+                tr.position = value;
+            }
+        }
+
+        private static void WriteRotation(Transform tr, Quaternion value)
+        {
+            if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.rotation = value; return; }
+            try
+            {
+                Quaternion current = tr.rotation;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z) || BitsDiffer(current.w, value.w)) tr.rotation = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.rotation = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
+                tr.rotation = value;
+            }
+        }
+    }
+
     [HarmonyPatch]
     internal static class NativeChaosPetalIdlePerf
     {
@@ -6660,9 +6925,9 @@ namespace SodRpg.Mod
         // restructuring the petals with an unchanged child count is undetectable but would
         // desync vanilla's own Start-time scales too; a shrunken hierarchy rebuilds the table
         // from the live order (what vanilla's GetChild would read) and hands frames back to the
-        // original once the live count no longer covers Start's capture — where vanilla throws
-        // ArgumentOutOfRangeException per frame and LogicUpdateManager already logs and swallows
-        // it, this patch detaches with one warning instead.
+        // original without warning once the live count no longer covers Start's capture. The
+        // patch stays enabled; vanilla's per-frame ArgumentOutOfRangeException is still logged
+        // and swallowed by LogicUpdateManager.
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals> PetalTable =
             new ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>();
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>.CreateValueCallback CreatePetals =
@@ -7080,5 +7345,121 @@ namespace SodRpg.Mod
         private static MethodBase TargetMethod() => _target;
 
         private static void Postfix(FxGibs_Kinematic __instance) => NativeGibsRestPerf.ClearRest(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGamepadRumbleIdlePerf
+    {
+        // InputManager.DoRumbleFrameUpdate runs every frame on every machine (input handling is
+        // local, so guests pay it too). After folding the _shakes list it calls
+        // Gamepad.current.SetMotorSpeeds whenever a controller is connected — and the call is
+        // SetMotorSpeeds(0, 0) whenever no shake contributed: the values are forced to zero
+        // when the input mode is not gamepad
+        // (the common case of a keyboard-and-mouse player with a controller plugged in) and no
+        // accumulation happens while the list is empty or paused. The shipped Unity.InputSystem
+        // has no change detection on that path: Gamepad.SetMotorSpeeds delegates to
+        // DualMotorRumble.SetMotorSpeeds, which clamps and then builds a DualMotorRumbleCommand
+        // and runs device.ExecuteCommand — a native input-backend round trip per frame, even
+        // though the motors are already stopped and stay stopped.
+        //
+        // The prefix skips the body only while the shake list is empty AND the last body we let
+        // run verifiably wrote (0, 0); everything else runs vanilla. The postfix re-derives what
+        // the body just sent from state it can read: an empty list means the fold contributed
+        // nothing, a non-gamepad mode forces both values to zero, and a timeScale under 0.001
+        // skips the accumulation — only a shake list that still holds instances in gamepad mode
+        // on an unpaused frame can have contributed, so only that clears the flag and keeps the
+        // next frames on vanilla. Both descriptions were verified against the decompiled body
+        // (decompiled/sod-decomp/Dew.Core/InputManager.cs, DoRumbleFrameUpdate): expiry removal
+        // happens inside the fold regardless of mode or pause, the envelope holds full amplitude
+        // through attack and sustain (no ramp) and decays linearly, the high motor is always
+        // zero (amplitude * 0f), and the vibration strength only scales values and expires the
+        // window sooner — none of which moves the zero/non-zero split the flag depends on. The worst case is one extra (0, 0) write after the last shake
+        // expires, which is what vanilla writes on that frame anyway; motors already stopped
+        // being told to stay stopped has no device-observable effect.
+        //
+        // Residual assumption, same class as the other idle skips: a foreign mod driving rumble
+        // through Gamepad.SetMotorSpeeds directly is left alone in the idle state, where vanilla
+        // would silence it within a frame. The decompiled game has no such writer — InputManager
+        // is the only caller — so no in-game behavior depends on that cancellation.
+        private static AccessTools.FieldRef<InputManager, List<ShakeInstance>> _shakes;
+        private static MethodBase _target;
+        private static bool _lastSentZero;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(InputManager), "DoRumbleFrameUpdate", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _shakes = AccessTools.FieldRefAccess<InputManager, List<ShakeInstance>>("_shakes");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The two decisions below live as pure functions of their arguments so the tests
+        // (GamepadRumbleIdlePerfTests) can drive them directly; Prefix and Postfix only
+        // read the state and delegate here.
+
+        // The body may be skipped only on a frame where no shake is left (the list the
+        // prefix reads was already folded by the previous body run) and the last body run
+        // verifiably sent (0, 0). Everything else goes to the vanilla body untouched.
+        internal static bool ShouldSkip(int shakeCount, bool lastSentZero) => shakeCount == 0 && lastSentZero;
+
+        // Derivation of what the body just sent: the fold contributes nothing while the
+        // list is empty, a non-gamepad mode forces both values to zero, and a timeScale
+        // under 0.001 skips the accumulation — any one of these means (0, 0) was sent.
+        // Only gamepad-mode shakes held over from the fold on an unpaused frame can have
+        // contributed, so only that keeps the flag cleared.
+        internal static bool DeriveSentZero(int shakeCount, bool gamepadMode, float timeScale) =>
+            shakeCount == 0 || !gamepadMode || timeScale < 0.001f;
+
+        private static bool Prefix(InputManager __instance)
+        {
+            if (_disabled || !NativePerfOptions.GamepadRumbleIdle) return true;
+            try
+            {
+                // Only the known-zero idle state is skipped; any shake, or a flag the postfix
+                // could not vouch for, goes to the vanilla body untouched.
+                return !ShouldSkip(_shakes(__instance).Count, _lastSentZero);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+                return true;
+            }
+        }
+
+        private static void Postfix(InputManager __instance)
+        {
+            // The option check keeps the disabled path off the per-frame work entirely. A flag
+            // left stale while the option was off is harmless: the prefix above runs the body
+            // whenever the option is off, and the first postfix after re-enabling re-derives
+            // the flag from live state (a stale-true flag also only ever describes a motor
+            // already verified stopped, so even one skip on re-enable sends nothing new).
+            if (_disabled || !NativePerfOptions.GamepadRumbleIdle) return;
+            try
+            {
+                // What the body just sent is (0, 0) unless gamepad-mode shakes could have
+                // contributed on an unpaused frame; the same derivation holds on a skipped
+                // frame, where the list is empty and the state stays (0, 0).
+                _lastSentZero = DeriveSentZero(_shakes(__instance).Count,
+                    DewInput.currentMode == InputMode.Gamepad, Time.timeScale);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+            }
+        }
     }
 }

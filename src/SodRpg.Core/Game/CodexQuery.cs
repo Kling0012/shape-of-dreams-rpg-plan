@@ -39,7 +39,7 @@ namespace SodRpg.Core.Game
         private string _search;
         private int _searchLanguage;
 
-        /// <summary>検索用の小文字化した文字列（名前の3言語と、いまの言語の効果文）。言語が変わったら作り直す。
+        /// <summary>検索用の小文字化した文字列（名前の日英中・表示名と、いまの言語の効果文）。Loc.CacheKey が変わったら作り直す。
         /// 中国語では効果文が中国語で入るため、英語⇔中国語の切替でも作り直す（#992。真偽値の鍵だと古い方が残る）。</summary>
         public string SearchText
         {
@@ -357,7 +357,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 検索の対象文字列。名前（日英中）と効果の文を含める。見つけていない固有品・セット・固有効果は
+        /// 検索の対象文字列。名前（日英中・表示名）と効果の文を含める。見つけていない固有品・セット・固有効果は
         /// 名前も効果も隠すので、Filter 側で対象から外す。
         /// </summary>
         internal static string BuildSearch(CodexEntry e)
@@ -398,12 +398,12 @@ namespace SodRpg.Core.Game
             return sb.ToString();
         }
 
-        /// <summary>名前の3言語（日・英・中）を検索文字列へ足す。中国語の訳がないときは足さず、
-        /// 日英の検索は今までどおり効く（#1024。中国語表示で画面の名前をそのまま検索できるようにする）。</summary>
+        /// <summary>名前の日英中と現在の表示名を検索文字列へ足す（#1024、#1113）。</summary>
         private static void AppendName(System.Text.StringBuilder sb, Txt name)
         {
             sb.Append(name.Ja).Append(' ').Append(name.En).Append(' ');
             if (name.Zh != null) sb.Append(name.Zh).Append(' ');
+            sb.Append(name.ToString()).Append(' ');
         }
 
         /// <summary>

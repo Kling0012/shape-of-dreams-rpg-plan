@@ -7,6 +7,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossResourceBoundsTests
     {
         private sealed class Rig

@@ -280,6 +280,20 @@ namespace SodRpg.Mod
         private static bool InkInside(Hero hero,Vector3 center,float radius) => BossAlive(hero) && (hero.position-center).Flattened().sqrMagnitude<=radius*radius;
         private Hero InkNearestAlly(HeroRuntime rt,Vector3 center,float radius)
         {
+            // 位置だけの事前確認: 下のクエリの絞り込みは InkInside（中心からの距離）を要求するので、
+            // この条件を満たす英雄が1人もいなければクエリの結果も必ず空になる。成熟後の領域では
+            // この確認が毎フレーム走るため、味方が範囲に入るまでの間は物理クエリを丸ごと省ける。
+            var heroes=_am!=null?_am.allHeroes:null;
+            if(heroes!=null)
+            {
+                bool candidate=false;
+                for(int i=0;i<heroes.Count;i++)
+                {
+                    var hero=heroes[i];
+                    if(hero!=rt.Hero && InkInside(hero,center,radius) && !rt.Hero.CheckEnemyOrNeutral(hero)) { candidate=true; break; }
+                }
+                if(!candidate) return null;
+            }
             ListReturnHandle<Entity> handle;
             var entities=DewPhysics.OverlapCircleAllEntities(out handle,center,radius);
             Hero nearest=null; float best=float.MaxValue;
