@@ -139,9 +139,12 @@ namespace SodRpg.Mod
             if (!_memoryPrimedRelay.TryGetValue(hero, out var state) || !Alive(hero)
                 || !_memoryAttribution.IsCurrent(notification)) return;
             SynchronizeMemoryPrimedRelay(hero, state);
-            var source = WithPreparationEpoch(notification, state);
             if (!_authoredMechanisms.ContainsKey(hero))
             {
+                // The epoch-stamped event is only consumed by this fallback feed; authored
+                // mechanism owners reach OnSourceEvent from their own dispatch with a
+                // channel scope, so skip the per-notification epoch lookup for them.
+                var source = WithPreparationEpoch(notification, state);
                 state.Primed.OnSourceEvent(source, Time.time);
                 state.Relay.OnSourceEvent(source, Time.time);
             }
