@@ -168,5 +168,67 @@ namespace SodRpg.Mod.FxBudget.Tests
             Assert.Equal(50, Dew.Spawned);
             Assert.False(Disabled);
         }
+
+        // #1134 lightweightening: a participant (NetworkServer.active == false)
+        // must leave Tick without touching any state. Everything seeded here is
+        // state a host Tick would act on — an overdue queue entry (force-spawn),
+        // a widened level whose idle-narrow window has long elapsed, and a room
+        // switch with live diagnostics (room log + aggregate reset) — so if the
+        // participant early return were missing, this test would fail on the
+        // queue, the level, the room aggregates or the logs. Host behavior is
+        // covered by the three tests above.
+        [Fact]
+        public void Tick_OnParticipantLeavesQueueLevelAndRoomStatsUntouchedWithoutLogging()
+        {
+            NetworkServer.active = false;
+            var trackedRoom = new Room();
+            var nextRoom = new Room();
+            NetworkedManagerBase<ZoneManager>.softInstance = new ZoneManager { currentRoom = nextRoom };
+            Field("_room").SetValue(null, trackedRoom);
+            Field("_diagnostics").SetValue(null, true);
+            Field("_roomSpawnDeferred").SetValue(null, 5);
+            Field("_roomSpawnPeak").SetValue(null, 3);
+            Field("_roomSpawnMaxDelay").SetValue(null, 0.02f);
+            Field("_roomPowerCarryEvents").SetValue(null, 7);
+            Field("_roomPowerCarryPeak").SetValue(null, 4);
+            Field("_roomPowerMaxDelay").SetValue(null, 0.03f);
+            LevelField.SetValue(null, 2);
+            Field("_drainedSince").SetValue(null, 0f);
+            Field("_backlogSince").SetValue(null, 1f);
+            var deferredType = typeof(NativeProcSpawnSpread)
+                .GetNestedType("Deferred", BindingFlags.NonPublic);
+            var overdue = Activator.CreateInstance(deferredType); // QueuedAt = 0: overdue at t = 10
+            Queue.Add(overdue);
+            Log.Infos.Clear();
+            Log.Warnings.Clear();
+
+            try
+            {
+                TickAt(10.00f);
+                TickAt(10.05f);
+
+                Assert.Equal(1, Queue.Count); // the overdue entry was not force-spawned
+                Assert.Equal(0, Dew.Spawned); // and nothing was created either
+                Assert.Equal(2, Level); // the widened level survives the elapsed narrow window
+                Assert.Equal(0f, Field("_drainedSince").GetValue(null));
+                Assert.Equal(1f, Field("_backlogSince").GetValue(null));
+                Assert.False((bool)Field("_heavy").GetValue(null)); // the heavy verdict is not computed
+                Assert.Same(trackedRoom, Field("_room").GetValue(null)); // the room switch is not tracked
+                Assert.True((bool)Field("_diagnostics").GetValue(null));
+                Assert.Equal(5, Field("_roomSpawnDeferred").GetValue(null));
+                Assert.Equal(3, Field("_roomSpawnPeak").GetValue(null));
+                Assert.Equal(0.02f, Field("_roomSpawnMaxDelay").GetValue(null));
+                Assert.Equal(7, Field("_roomPowerCarryEvents").GetValue(null));
+                Assert.Equal(4, Field("_roomPowerCarryPeak").GetValue(null));
+                Assert.Equal(0.03f, Field("_roomPowerMaxDelay").GetValue(null));
+                Assert.Empty(Log.Infos); // no room diagnostics log for the seeded room switch
+                Assert.Empty(Log.Warnings); // no disable/warn path either
+                Assert.False(Disabled);
+            }
+            finally
+            {
+                NetworkedManagerBase<ZoneManager>.softInstance = null;
+            }
+        }
     }
 }

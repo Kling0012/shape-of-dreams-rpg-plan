@@ -324,6 +324,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged music volume/pitch rewrites every logic tick (host and guests) /\nBGM の同じ音量・ピッチの毎ロジックtick再書き込みを省く（ホストと参加者）")]
         public bool nativeMusicSourceIdle = true;
 
+        [LabelText("Skip the idle screen-fade bookkeeping every frame while no transition is active (host and guests) /\n場面転換が動いていないフレームの画面フェードの毎フレーム更新を省く（ホストと参加者）")]
+        public bool nativeTransitionIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

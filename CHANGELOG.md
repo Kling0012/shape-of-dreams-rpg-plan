@@ -10,6 +10,48 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.59 — Co-op players skip an unused per-frame task（2026-10-24）
+
+この版では、参加者の側で毎フレーム空回りしていた処理を省きました。 / This version removes work that co-op players' games repeated every frame for no effect.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 攻撃で追加の弾が出るとき、ゲームは弾がまとめて出ないように、出るタイミングを散らしています。この処理はホストでしか働きませんが、参加者の側でも毎フレーム動いていました。今は参加者の側ではこの処理を省きます。参加者の処理がごくわずかに軽くなる見込みですが、体感できるほどの差はほぼ出ない見込みです。ホストの側は変わりません。追加の弾が出るタイミング、見た目、当たり方は変わりません。 / When attacks spawn extra projectiles, the game staggers their timing so they don't all appear at once. This only does anything on the host, but it also ran every frame on co-op players. Co-op players now skip it. Co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. Nothing changes on the host. When extra projectiles appear, how they look, and how they hit are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.58 — Less wasted work in music, hits, and skill recovery（2026-10-24）
+
+この版では、BGM の再生、攻撃の命中、スキルの再同期などで繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated in music playback, attack hits, skill resyncs, and more.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- BGM は、フェードが終わって音量と高さが変わらない間も、同じ音量と高さを音源に書き直し続けていました。ホストと参加者の両方で起きていました。今は値が変わらないときは書き直しません。ホストと参加者の両方で、ごくわずかに処理が軽くなる見込みです。BGM の聞こえ方とフェードは変わりません。 / Music kept rewriting the same volume and pitch to its audio source even after a fade had finished and nothing was changing. This happened on both the host and co-op players. The game now skips the write when the values are unchanged. Both the host and co-op players should run very slightly lighter. How music sounds and fades is unchanged.
+- 参加者のスキルが使えなくなったときの復旧処理で、ホストはスキルのクールダウンとチャージを同じ値のまま2回送っていました。今は1回目が届けば2回目を送りません。復旧のときの通信が少なくなる見込みです。この復旧はめったに起きないため、普段の通信は変わりません。クールダウンとチャージの値は変わりません。 / When recovering a co-op player whose skills had become unusable, the host sent the same skill cooldown and charge values twice. The game now skips the second send when the first one goes through. Recovery should use less network traffic. This recovery is rare, so everyday traffic is unchanged. Cooldown and charge values are unchanged.
+- 参加者の側では、スキルや攻撃が終わるたびに、ホストでしか使わない会心の記録を片付ける処理が毎回走っていました。今は参加者の側ではこの処理を省きます。攻撃の多い戦闘では、参加者の処理がわずかに軽くなる見込みです。会心の出方は変わりません。 / On co-op players, each time a skill or attack ended, the game cleared critical-hit records that only the host uses. Co-op players now skip this. In attack-heavy fights, co-op players should run slightly lighter. Critical hits are unchanged.
+- 攻撃が当たるたびに、ゲームはホスト側で、弱点の仕掛け（Weakspot）が発動しないと決まっている命中まで調べていました。会心の命中や、自分の基本攻撃の命中などです。今はこうした命中ではこの調べを省きます。戦闘中はホストの処理が軽くなる見込みです。弱点の仕掛けの発動条件と発動率は変わりません。 / Each time an attack landed, the host ran extra checks for the Weakspot gimmick even on hits that could never trigger it, such as critical hits and your own basic attacks. The game now skips these checks for such hits. Fights should run lighter on the host. When Weakspot triggers and how often are unchanged.
+- 動的難易度は、接続しているプレイヤーの数を、命中や撃破のたびに数え直していました。そのたびに、一人ずつ一覧にいるかを確かめ直していました。今はこの確かめ直しを省きます。人数が多い協力プレイの戦闘では、ホストの処理が軽くなる見込みです。参加者の側は変わりません。人数の数え方と難易度は変わりません。 / Dynamic difficulty recounted connected players on hits, kills, and more, and each time it rechecked that every player was on the list. The game now skips that recheck. Co-op fights with more players should run lighter on the host. Nothing changes for co-op players. How players are counted and the difficulty itself are unchanged.
+- 近接の旅人の攻撃が当たるたびに、ゲームはホスト側で、崩しを付けるために基本攻撃が近接かどうかを毎回確かめ直していました。今は定期的に確かめた結果を使います。近接の旅人が多く当てる戦闘では、ホストの処理が軽くなる見込みです。崩しの付き方は変わりません。ただし基本攻撃を近接と遠距離で入れ替えた直後は、最大0.25秒だけ、入れ替える前の種類で崩しが決まります。 / Each time a melee traveler's attack landed, the host rechecked whether the basic attack was melee before applying Break. The game now reuses the result of a regular check. Fights where melee travelers land many hits should run lighter on the host. How Break is applied is unchanged, except that for up to 0.25 seconds after swapping a basic attack between melee and ranged, Break still follows the previous attack type.
+- 記憶が発動するたびに、ゲームはホスト側で、ほとんどの場合使わない発動の情報まで組み立てていました。今は使うときだけ組み立てます。攻撃を連打する戦闘では、ホストの処理がわずかに軽くなる見込みです。記憶の効果は変わりません。 / Each time a memory activated, the host built activation data that went unused in most cases. The game now builds it only when it is needed. Fights with rapid attacks should run slightly lighter on the host. Memory effects are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.57 — Lighter gamepad rumble and regular-enemy hit handling（2026-10-24）
 
 この版では、ゲームパッドの振動と通常の敵への攻撃で繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated for gamepad rumble and for hits on regular enemies.
