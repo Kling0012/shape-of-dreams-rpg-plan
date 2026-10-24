@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 
@@ -15,6 +16,18 @@ namespace SodRpg.Mod
         private static Func<IList, int, GameObject> _entryObject;
         private static Action<int> _destroyEntry;
         private static bool _disabled;
+        private static readonly ConditionalWeakTable<Mirror.NetworkIdentity, ParentFrost> _parentFrosts
+            = new ConditionalWeakTable<Mirror.NetworkIdentity, ParentFrost>();
+        private static readonly ConditionalWeakTable<Mirror.NetworkIdentity, ParentFrost>.CreateValueCallback
+            _createParentFrost = _ => new ParentFrost();
+
+        // A GameObject's component set is fixed at spawn (the game never AddComponent-s a Gem),
+        // so the parent's frost lookup can be memoized instead of paid on every playback.
+        private sealed class ParentFrost
+        {
+            internal bool Resolved;
+            internal Gem_R_Frost Frost;
+        }
 
         private static bool Prepare()
         {
@@ -63,7 +76,16 @@ namespace SodRpg.Mod
             if (_disabled || __result == null || parent == null) return;
             try
             {
-                var frost = parent.GetComponent<Gem_R_Frost>();
+                // Every FX playback in the game lands here with the playing behaviour's identity
+                // as parent; almost none of them are frost gems. Resolve the component once per
+                // parent so the overwhelming majority of playbacks skip the native GetComponent.
+                var cached = _parentFrosts.GetValue(parent, _createParentFrost);
+                if (!cached.Resolved)
+                {
+                    cached.Frost = parent.GetComponent<Gem_R_Frost>();
+                    cached.Resolved = true;
+                }
+                var frost = cached.Frost;
                 if (frost == null || template != frost.activateEffect) return;
                 var lifetime = __result.GetComponent<FrostFxLifetime>();
                 if (lifetime == null) lifetime = __result.AddComponent<FrostFxLifetime>();

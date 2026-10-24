@@ -213,6 +213,55 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Same(clone, DewEffect.Stopped.Single());
         }
 
+        /// <summary>
+        /// 親ごとの記憶への置き換えで追跡結果が変わらないこと。同じ親での2回目以降の再生も
+        /// 1回目と同じ追跡になり、霜コンポーネントを破棄した後の再生は追跡しない
+        /// （破棄後の偽 null は本物の Unity と同じ規約をスタブに持たせて確認する）。
+        /// </summary>
+        [Fact]
+        public void MemoizedParentFrostTracksIdenticallyAcrossPlaybacksAndStopsAfterComponentDestroy()
+        {
+            var (frost, hero, victim, identity) = CreateFrostScene(2f);
+            UnityEngine.Time.time = 10f;
+
+            // 1回目の再生: 親の GetComponent で解決して追跡する（ここで親ごとの記憶ができる）。
+            var first = DewEffect.PlayIntoPool(frost.activateEffect,
+                null, victim, false, default, default, identity);
+            Assert.IsType<FrostFxLifetime>(first.GetComponent<FrostFxLifetime>());
+
+            // 同じ親でもテンプレートが違う再生は、記憶した frost があっても追跡しない。
+            var stray = DewEffect.PlayIntoPool(new GameObject { name = "unrelated" },
+                null, victim, false, default, default, identity);
+            Assert.Null(stray.GetComponent<FrostFxLifetime>());
+
+            // 2回目の再生: 記憶からの解決でも1回目と同じ追跡になる。
+            var second = DewEffect.PlayIntoPool(frost.activateEffect,
+                null, victim, false, default, default, identity);
+            Assert.IsType<FrostFxLifetime>(second.GetComponent<FrostFxLifetime>());
+            Assert.Equal(3, EffectAutoDestroy._entries.Count);
+            Assert.Empty(EffectAutoDestroy.ReleasedClones);
+
+            // 両方の寿命管理が同じ frost を指す: 破棄イベントで両クローンとも回収される。
+            frost.RaiseClientActorDestroyed();
+            Assert.Equal(2, EffectAutoDestroy.ReleasedClones.Count);
+            Assert.Contains(first, EffectAutoDestroy.ReleasedClones);
+            Assert.Contains(second, EffectAutoDestroy.ReleasedClones);
+            Assert.Same(stray, Assert.Single(EffectAutoDestroy._entries).gameObject);
+            Assert.False(first.activeSelf);
+            Assert.False(second.activeSelf);
+
+            // コンポーネント破棄後の再生: 記憶に残った frost は偽 null と同じ扱いになり、追跡しない。
+            frost.Destroy();
+            identity.components.Remove(frost);
+            var afterDestroy = DewEffect.PlayIntoPool(frost.activateEffect,
+                null, victim, false, default, default, identity);
+            Assert.Null(afterDestroy.GetComponent<FrostFxLifetime>());
+            Assert.Equal(2, EffectAutoDestroy.ReleasedClones.Count);
+            Assert.Equal(2, EffectAutoDestroy._entries.Count);
+            Assert.True(afterDestroy.activeSelf);
+            Assert.DoesNotContain(Log.Warnings, message => message.Contains("Frost FX lifetime patch disabled"));
+        }
+
         // --- helpers ---
 
         private static (Gem_R_Frost frost, Hero hero, Entity victim, Mirror.NetworkIdentity identity) CreateFrostScene(
