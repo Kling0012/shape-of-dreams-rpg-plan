@@ -6658,9 +6658,9 @@ namespace SodRpg.Mod
         // restructuring the petals with an unchanged child count is undetectable but would
         // desync vanilla's own Start-time scales too; a shrunken hierarchy rebuilds the table
         // from the live order (what vanilla's GetChild would read) and hands frames back to the
-        // original once the live count no longer covers Start's capture — where vanilla throws
-        // ArgumentOutOfRangeException per frame and LogicUpdateManager already logs and swallows
-        // it, this patch detaches with one warning instead.
+        // original without warning once the live count no longer covers Start's capture. The
+        // patch stays enabled; vanilla's per-frame ArgumentOutOfRangeException is still logged
+        // and swallowed by LogicUpdateManager.
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals> PetalTable =
             new ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>();
         private static readonly ConditionalWeakTable<Shrine_CorruptedChaos_PetalAnimator, Petals>.CreateValueCallback CreatePetals =
