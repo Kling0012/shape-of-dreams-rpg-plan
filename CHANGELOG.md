@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.72 — Lighter skill swaps, waypoint tracking, and owner lookups（2026-10-25）
+
+この版では、スキルの付け替え、道標の受け持ちの確認、キャラクターの持ち主の確認で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from skill swaps, waypoint tracking, and looking up who owns each character.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 一度消えてまた現れたキャラクターでは、能力の変化を知らせる処理が、現れた回数だけ重ねて登録されていました。そのため、スキルを付け替えるたびに同じ処理が何度も走り、遊ぶ時間が長くなるほど回数が増えていました（長く遊ぶと数十回に達することもあると見ています）。今は何度現れても1回だけ処理します。ホストと参加者のどちらでも、長く遊んだときのスキルの付け替えが少し軽くなる見込みですが、実際の効果はまだ測っていません。スキルや能力の働きは変わりません。 / For characters that disappeared and later reappeared, the handler that reacts to ability changes was registered again each time they came back. As a result, every skill swap ran the same work many times over, and the count kept growing the longer you played (it may reach dozens in long sessions, by our estimate). The game now runs it only once, no matter how many times a character reappears. Both the host's and co-op players' games should handle skill swaps a little more lightly in long sessions, though the actual effect has not been measured yet. Skills and abilities work the same as before.
+- 道標を受け持つヒーローを毎フレーム確かめるとき、ホストのゲームは毎回小さな一時データを作っては捨てていました（60fps なら1秒に約120個）。今はこの一時データを作りません。ホストのゲームで後片付けの処理が起きる回数がわずかに減る見込みですが、目に見えるほどの差ではなく、実際の効果もまだ測っていません。道標の動きと参加者への通信は変わりません。 / When checking every frame which heroes the waypoints should track, the host's game created and threw away small pieces of temporary data each time (about 120 per second at 60fps). The game no longer creates them. Cleanup work on the host's game should run slightly less often, though the difference is too small to notice and has not been measured yet. Waypoint behavior and communication with co-op players are unchanged.
+- 協力プレイの参加者のゲームは、体力バー・ミニマップ・画面外の目印などでキャラクターの持ち主を確かめるたびに、毎回一から探し直していました。今は、持ち主が変わらない間は前に見つけた結果を使います。敵や味方が多い部屋で参加者のゲームが少し軽くなる見込みですが、1回ごとの節約は小さく効果は控えめで、実際の効果もまだ測っていません。表示と動作は変わりません。 / In co-op, players' games looked up each character's owner from scratch every time it was needed, for health bars, the minimap, off-screen markers, and so on. The game now reuses the earlier result as long as the owner stays the same. Co-op players' games should run a little lighter in rooms with many characters, though each saving is tiny, so the effect is modest and has not been measured yet. Display and behavior are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.71 — Lighter position sync, ability animations, gimmick reports, and room omens（2026-10-25）
 
 この版では、キャラクターの位置の同期、能力アニメーション、仕掛けの発動の知らせ、部屋の兆しによる敵の強化で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from character position syncing, ability animations, gimmick trigger reports, and room omens that empower enemies.
