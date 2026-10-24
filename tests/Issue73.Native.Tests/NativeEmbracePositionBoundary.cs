@@ -215,6 +215,73 @@ namespace SodRpg.Mod
             }
             if (currentValue <= 0f) DoBurst();
         }
+
+        // --- ここから下の2つは指紋と分岐の共有は本体と同じだが、continue の着地が
+        // ループ増分として検証できない形。Transpiler の着地検査（ldloc n・ldc.i4.1・
+        // add・stloc n の同一ローカル増分と、複製する添字 ldloc のローカル一致）が
+        // 警告1回・非適用へ落とすことの確認用。中身は走らない。
+
+        // continue の着地がループ増分ではなく再条件評価になる形（while(true) + break）。
+        // null 確認と activeSelf 確認は同じ着地を共有するが、着地の命令列は
+        // ldloc（条件の左辺）から始まるものの ldc.i4.1・add・stloc を伴わない。
+        internal void NativeLikeUpdateWithConditionLanding()
+        {
+            float dt = Time.deltaTime;
+            int i = 0;
+            while (true)
+            {
+                if (i >= _pieces.Length) break;
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+                i++;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // ループ増分されるローカル（n）と _pieces[i] の読み取りに使うローカル（i）が
+        // 一致しない形（逆順走査）。着地自体は正当な増分だが、挿入時に複製する添字
+        // ldloc が増分のローカルと異なるため、別のスロットを読む分岐になる。
+        internal void NativeLikeUpdateWithForeignIndexLocal()
+        {
+            float dt = Time.deltaTime;
+            for (int n = 0; n < _pieces.Length; n++)
+            {
+                int i = _pieces.Length - 1 - n;
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
     }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }

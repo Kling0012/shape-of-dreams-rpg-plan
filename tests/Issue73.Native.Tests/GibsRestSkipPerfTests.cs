@@ -23,9 +23,12 @@ namespace Issue73.Native.Tests
     /// ShouldSkip が常に false。Transpiler には本体 Update と同じ指紋の IL 見本
     /// （NativeEmbracePositionBoundary.cs の FxGibs_Kinematic.NativeLikeUpdate）を
     /// PatchProcessor.GetOriginalInstructions で読んで渡して、(6) 挿入位置と挿入される
-    /// 4命令、(6b) 指紋が一致しない見本では警告を1回出して元の IL がそのまま返ることを
-    /// 確かめる。continue 先の命令列が実際のループ増分であることの直接検証と、実 DLL
-    /// への適用はここで扱わない（実機での警告ログ確認は未実行事項）。
+    /// 4命令、(6b) 指紋が一致しない見本では警告を1回出して元の IL がそのまま返ること、
+    /// (6c) 指紋と分岐の共有は同じでも continue の着地がループ増分でない見本
+    /// （再条件評価への着地・増分と異なる添字ローカル）でも同じく警告1回・元の IL
+    /// のまま返ることを確かめる。着地が同一ローカルの増分であること（実 DLL の
+    /// IL_01d2 と同じ形）は (6) でも直接確かめる。実 DLL への適用はここで扱わない
+    /// （実機での警告ログ確認は未実行事項）。
     /// </summary>
     public sealed class GibsRestSkipPerfTests : IDisposable
     {
@@ -120,6 +123,58 @@ namespace Issue73.Native.Tests
 
         private static bool IsBrFalse(OpCode opcode)
             => opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
+
+        // Transpiler が数えるのと同じ指紋（NativePerfPatches.cs の NativeGibsRestPerf）。
+        // (6c) で「壊した見本の指紋は本体の見本と完全に一致する（壊れているのは
+        // continue 先の形だけ）」ことを確かめるのに使う。
+        private static (int ActiveSelf, int Rotate, int Bounds, int GetPosition, int SetPosition, int DoBurst, int PiecesElement)
+            FingerprintOf(IList<CodeInstruction> code)
+        {
+            int activeSelf = 0, rotate = 0, bounds = 0, getPosition = 0, setPosition = 0, doBurst = 0, piecesElement = 0;
+            var piecesField = AccessTools.Field(typeof(FxGibs_Kinematic), "_pieces");
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].operand is MethodInfo method)
+                {
+                    if (method.DeclaringType == typeof(GameObject) && method.Name == "get_activeSelf") activeSelf++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "Rotate") rotate++;
+                    if (method.DeclaringType == typeof(Renderer) && method.Name == "get_bounds") bounds++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "get_position") getPosition++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "set_position") setPosition++;
+                    if (method.DeclaringType == typeof(FxGibs_Kinematic) && method.Name == "DoBurst") doBurst++;
+                }
+                if (code[i].LoadsField(piecesField) && i + 2 < code.Count
+                    && IsLdloc(code[i + 1].opcode) && code[i + 2].opcode == OpCodes.Ldelem_Ref)
+                    piecesElement++;
+            }
+            return (activeSelf, rotate, bounds, getPosition, setPosition, doBurst, piecesElement);
+        }
+
+        // 分岐 operand（Label）が指す命令のインデックス（Transpiler の IndexOfLabel と同じ解決）。
+        private static int IndexOfLanding(IList<CodeInstruction> code, object operand)
+        {
+            for (int i = 0; i < code.Count; i++)
+                if (operand is Label target && code[i].labels.Contains(target)) return i;
+            return -1;
+        }
+
+        private static bool IsLdloc(OpCode opcode)
+        {
+            var name = opcode.Name;
+            return name.StartsWith("ldloc", StringComparison.Ordinal) && !name.StartsWith("ldloca", StringComparison.Ordinal);
+        }
+
+        private static bool IsStloc(OpCode opcode)
+            => opcode.Name.StartsWith("stloc", StringComparison.Ordinal);
+
+        // ldloc/stloc 命令が指すローカルのスロット（短形式 ldloc.0-3/stloc.0-3 はオペコード名に、
+        // それ以外は LocalBuilder の LocalIndex に載っている。Transpiler の LocalSlot と同じ解決）。
+        private static int SlotOf(CodeInstruction instruction)
+        {
+            var name = instruction.opcode.Name;
+            if (name.Length == 7 && name[5] == '.' && name[6] >= '0' && name[6] <= '3') return name[6] - '0';
+            return instruction.operand is LocalBuilder local ? local.LocalIndex : -1;
+        }
 
         // pieces 破片のギブを1つ作る。全破片に同じ速度（y 成分 vy、x/z 成分 hSpeed）と回転
         // spin を与え、接地は ground、効果値は value。破片の実体は Prefix が読む配列の
@@ -272,6 +327,18 @@ namespace Issue73.Native.Tests
             int branchIndex = activeIndex + 1;
             int indexLoadIndex = PiecesIndexLoadSite(original);
             Assert.True(indexLoadIndex >= 1);
+            // continue 先（brfalse の飛び先）は同一ローカルのループ増分
+            // （ldloc n・ldc.i4.1・add・stloc n。実 DLL の IL_01d2 と同じ形）で、
+            // 複製される添字 ldloc はそのローカルを指す。着地検査が本体の形を
+            // 通り抜けることを、見本の側からも固定しておく。
+            int landing = IndexOfLanding(original, original[branchIndex].operand);
+            Assert.True(landing >= 0 && landing + 3 < original.Count);
+            Assert.True(IsLdloc(original[landing].opcode));
+            Assert.Equal(OpCodes.Ldc_I4_1, original[landing + 1].opcode);
+            Assert.Equal(OpCodes.Add, original[landing + 2].opcode);
+            Assert.True(IsStloc(original[landing + 3].opcode));
+            Assert.Equal(SlotOf(original[landing]), SlotOf(original[landing + 3]));
+            Assert.Equal(SlotOf(original[landing]), SlotOf(original[indexLoadIndex]));
 
             var patched = TranspileOf(original);
 
@@ -310,6 +377,30 @@ namespace Issue73.Native.Tests
             var patched = TranspileOf(original);
 
             Assert.True(TranspilerWarned()); // 形が変わっていれば警告を1回出す
+            Assert.Single(Log.Warnings);
+            AssertUnchanged(patched, before);
+        }
+
+        // (6c) 指紋も分岐の共有も本体と同じだが、continue の着地がループ増分として
+        // 検証できない見本でも、警告を1回出して元の IL のまま返す。
+        // 見本ごとの壊し方: 着地が再条件評価になる形（while(true) + break。着地の命令列が
+        // ldloc n・ldc.i4.1・add・stloc n でない）、増分されるローカルと _pieces[i] の添字
+        // ローカルが異なる形（逆順走査。着地は正当な増分だが複製する ldloc が別スロット）。
+        // どちらも指紋は本体の見本と完全に一致する（壊れているのは continue 先の形だけ）
+        // なので、非適用の原因は着地検査にできる。
+        [Theory]
+        [InlineData(nameof(FxGibs_Kinematic.NativeLikeUpdateWithConditionLanding))]
+        [InlineData(nameof(FxGibs_Kinematic.NativeLikeUpdateWithForeignIndexLocal))]
+        public void TheTranspilerReturnsTheOriginalIlWhenTheLandingIsNotAVerifiedLoopIncrement(string shape)
+        {
+            var (original, before) = SnapshotOf(shape);
+            Assert.Equal(
+                FingerprintOf(InstructionsOf(nameof(FxGibs_Kinematic.NativeLikeUpdate))),
+                FingerprintOf(original));
+
+            var patched = TranspileOf(original);
+
+            Assert.True(TranspilerWarned()); // 着地が増分として検証できなければ警告を1回出す
             Assert.Single(Log.Warnings);
             AssertUnchanged(patched, before);
         }

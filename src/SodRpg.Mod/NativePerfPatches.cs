@@ -6957,7 +6957,15 @@ namespace SodRpg.Mod
             // to the insertion point. Harmony reads every branch as its own Label value
             // attached to the target instruction, so two branches to the same offset never
             // compare equal as labels: sharing is decided by the resolved landing index.
+            // The landing is then verified instruction by instruction to be the loop
+            // increment — ldloc n; ldc.i4.1; add; stloc n with the same local on both
+            // ends (real DLL IL_01d2: ldloc.1/ldc.i4.1/add/stloc.1) — and the cloned index
+            // load must address that same local n: a shared landing somewhere else (a
+            // condition re-check) or an index kept in another local would aim the injected
+            // branch at the wrong place or read the wrong slot.
             bool sharedTarget = false;
+            bool landingIsLoopIncrement = false;
+            int landingLocal = -1;
             if (branchIndex >= 0 && continueLabel != null)
             {
                 int continueIndex = IndexOfLabel(code, continueLabel);
@@ -6968,12 +6976,19 @@ namespace SodRpg.Mod
                         if (i == branchIndex || !IsBranch(code[i].opcode) || !(code[i].operand is Label label)) continue;
                         sharedTarget = IndexOfLabel(code, label) == continueIndex;
                     }
+                    landingIsLoopIncrement = continueIndex + 3 < code.Count
+                        && TryLdlocSlot(code[continueIndex], out landingLocal)
+                        && code[continueIndex + 1].opcode == OpCodes.Ldc_I4_1
+                        && code[continueIndex + 2].opcode == OpCodes.Add
+                        && TryStlocSlot(code[continueIndex + 3], out int storedLocal)
+                        && storedLocal == landingLocal;
                 }
             }
             if (activeSelfCount != 1 || branchIndex < 0 || branchIndex + 1 >= code.Count
-                || !sharedTarget || code[branchIndex + 1].labels.Count != 0
+                || !sharedTarget || !landingIsLoopIncrement || code[branchIndex + 1].labels.Count != 0
                 || rotateCount != 1 || boundsCount != 1 || getPositionCount != 2 || setPositionCount != 2
-                || doBurstCount != 1 || piecesElementCount != 1 || indexLoadIndex < 0)
+                || doBurstCount != 1 || piecesElementCount != 1 || indexLoadIndex < 0
+                || LocalSlot(code[indexLoadIndex]) != landingLocal)
             {
                 NativePerfPatch.Warn(ref _warned, "gib rest skip", "native physics loop changed or already patched");
                 return code;
@@ -7018,6 +7033,33 @@ namespace SodRpg.Mod
         {
             var name = opcode.Name;
             return name.StartsWith("ldloc", StringComparison.Ordinal) && !name.StartsWith("ldloca", StringComparison.Ordinal);
+        }
+
+        // Local slot an ldloc/stloc instruction addresses: the built-in short forms
+        // (ldloc.0-3/stloc.0-3) encode the slot in the opcode name, the other forms carry
+        // a LocalBuilder operand. -1 when the instruction addresses no local.
+        private static int LocalSlot(CodeInstruction instruction)
+        {
+            var name = instruction.opcode.Name;
+            if (name.Length == 7 && name[5] == '.' && name[6] >= '0' && name[6] <= '3') return name[6] - '0';
+            return instruction.operand is LocalBuilder local ? local.LocalIndex : -1;
+        }
+
+        private static bool TryLdlocSlot(CodeInstruction instruction, out int slot)
+        {
+            slot = -1;
+            if (!IsIndexLoad(instruction.opcode)) return false;
+            slot = LocalSlot(instruction);
+            return slot >= 0;
+        }
+
+        private static bool TryStlocSlot(CodeInstruction instruction, out int slot)
+        {
+            slot = -1;
+            var name = instruction.opcode.Name;
+            if (!name.StartsWith("stloc", StringComparison.Ordinal)) return false;
+            slot = LocalSlot(instruction);
+            return slot >= 0;
         }
     }
 
