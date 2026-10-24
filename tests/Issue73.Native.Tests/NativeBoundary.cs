@@ -906,6 +906,32 @@ namespace SodRpg.Mod
         internal void LogicUpdate(float dt) { }
         internal void DoCrossFade(DewMusicItem next, float fadeTime) { }
     }
+    // NativeTransitionIdlePerf の受け口。本体 Dew.Core TransitionManager（2026-10-24 実 DLL
+    // 逆コンパイル確認）の模倣: Prepare の DeclaredMethod 探索と Prefix の読み取りに必要な宣言
+    // に加え、TransitionIdlePerfTests が本体 FrameUpdate の呼び出し multiset の見本を作るための
+    // 宣言（TryGetNewTip・blocksRaycasts）。本体の state は自動実装プロパティ、screenFadeCg は
+    // public フィールド。CanvasGroup は本体 UnityEngine.CanvasGroup の受け口。throwOnRead
+    // （null なら何もしない）は Prefix の例外経路を起こす検証用の鉤（Transform の throwOnRead
+    // と同じ扱い）。
+    internal class CanvasGroup
+    {
+        internal Exception throwOnRead;
+        private float _alpha;
+        public float alpha
+        {
+            get { if (throwOnRead != null) throw throwOnRead; return _alpha; }
+            set { _alpha = value; }
+        }
+        public bool blocksRaycasts { get; set; }
+    }
+    internal sealed class TransitionManager
+    {
+        internal enum StateType { Normal, Loading }
+        internal StateType state { get; set; }
+        internal CanvasGroup screenFadeCg;
+        internal void FrameUpdate() { }
+        internal void TryGetNewTip() { }
+    }
     internal class AudioManager
     {
         public static int NextDynamicPriorityCalls;

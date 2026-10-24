@@ -74,6 +74,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
             NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
+            NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
         }
     }
 
@@ -136,6 +137,7 @@ namespace SodRpg.Mod
         internal static bool ChaosPetalIdle = true;
         internal static bool GamepadRumbleIdle = true;
         internal static bool MusicSourceIdle = true;
+        internal static bool TransitionIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -7258,6 +7260,113 @@ namespace SodRpg.Mod
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+            }
+        }
+    }
+
+    // TransitionManager.FrameUpdate is dispatched by LogicUpdateManager every rendered
+    // frame on every client for the whole session — gameplay and menus alike, guests
+    // included. Outside the brief fade windows (boot fade-out, scene loads, lobby returns)
+    // the steady state is state == Normal with screenFadeCg.alpha already at 0, and the
+    // shipped body then only repeats no-op work: MoveTowards(0, 0, dt) → set_alpha(0),
+    // set_blocksRaycasts(false) on a CanvasGroup nothing else writes, and SetActive(false)
+    // on an overlay that is already inactive — each Unity setter a native interop call
+    // that re-dirties the group even for an identical value. The prefix skips exactly that
+    // steady state. The skip condition reads the same two values the body reads (state and
+    // alpha), and nothing else in the shipped game references screenFadeCg (only
+    // TransitionManager touches the field; decompile + IL check r1.4.1.2), so the skipped
+    // writes would have written values the objects already hold. While a fade is running
+    // (state == Loading, or Normal with alpha still decaying from Start's initial 1f) the
+    // native body runs untouched, so every visible frame of every transition is unchanged;
+    // the skip engages only after MoveTowards has landed exactly on 0f, and FadeOut is the
+    // only way back into Loading. The body-shape check demands the shipped call multiset
+    // (r1.4.1.2, 15 calls: base FrameUpdate, 3× get_state, 2× get_alpha, set_alpha,
+    // set_blocksRaycasts, get_gameObject, SetActive, MoveTowards, get_unscaledDeltaTime,
+    // 2× GetKeyDown, TryGetNewTip); any other shape leaves the native body in place with
+    // one warning.
+    [HarmonyPatch]
+    internal static class NativeTransitionIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(TransitionManager), nameof(TransitionManager.FrameUpdate),
+                ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transition idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The shipped FrameUpdate (r1.4.1.2, 150 bytes) performs exactly these 15 calls and
+        // nothing else. A body whose call multiset differs may do observable work in the
+        // steady state this patch skips, so the patch stays off instead.
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var counts = new Dictionary<string, int>();
+            foreach (var instruction in code)
+            {
+                // Every MethodBase operand counts: call/callvirt, but also newobj, ldftn and
+                // jmp — a future body that grows a lambda or a redirect is a different body.
+                if (!(instruction.operand is MethodBase method)) continue;
+                string key = method.DeclaringType?.Name + "::" + method.Name;
+                counts.TryGetValue(key, out int n);
+                counts[key] = n + 1;
+            }
+            var expected = new Dictionary<string, int>
+            {
+                ["LogicBehaviour::FrameUpdate"] = 1,
+                ["TransitionManager::get_state"] = 3,
+                ["CanvasGroup::get_alpha"] = 2,
+                ["CanvasGroup::set_alpha"] = 1,
+                ["CanvasGroup::set_blocksRaycasts"] = 1,
+                ["Component::get_gameObject"] = 1,
+                ["GameObject::SetActive"] = 1,
+                ["Mathf::MoveTowards"] = 1,
+                ["Time::get_unscaledDeltaTime"] = 1,
+                ["Input::GetKeyDown"] = 2,
+                ["TransitionManager::TryGetNewTip"] = 1,
+            };
+            if (counts.Count == expected.Count)
+            {
+                bool all = true;
+                foreach (var kv in expected)
+                    all &= counts.TryGetValue(kv.Key, out int n) && n == kv.Value;
+                if (all) return true;
+            }
+            NativePerfPatch.Warn(ref _warned, "transition idle", "native FrameUpdate body changed");
+            return false;
+        }
+
+        // Runs before the body every frame. Deciding from the two live values alone means
+        // no bookkeeping of our own can drift from the game's: the option off, a missing
+        // CanvasGroup, or any surprise all fall through to the native body.
+        private static bool Prefix(TransitionManager __instance)
+        {
+            if (_disabled || !NativePerfOptions.TransitionIdle) return true;
+            try
+            {
+                var fade = __instance.screenFadeCg;
+                if (fade == null) return true;
+                if (__instance.state != TransitionManager.StateType.Normal) return true;
+                return fade.alpha != 0f;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transition idle", ex.Message);
+                return true;
             }
         }
     }
