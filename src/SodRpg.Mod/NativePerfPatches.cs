@@ -45,6 +45,7 @@ namespace SodRpg.Mod
             NativePerfOptions.UltChargeRpcIdle = config.nativeUltChargeRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
+            NativePerfOptions.SkillWorldModelCache = config.nativeSkillWorldModelCache;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
             NativePerfOptions.ChaosShrineChoice = config.nativeChaosShrineChoiceCache;
@@ -112,6 +113,7 @@ namespace SodRpg.Mod
         internal static bool UltChargeRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
+        internal static bool SkillWorldModelCache = true;
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ChaosShrineHitScan = true;
         internal static bool ChaosShrineChoice = true;
@@ -7911,6 +7913,109 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "transition idle", ex.Message);
                 return true;
             }
+        }
+    }
+
+    // SkillTrigger.OnStartClient runs on every client — host's local client and each
+    // participant — for every network spawn of a skill: the run-start burst equips six
+    // SkillTriggers per hero in one frame, and reward pedestals, identity memories and
+    // room reloads of ground skills each spawn more while playing. Every one of those
+    // spawns re-runs Resources.Load<GameObject>("WorldModels/Skill World Model"), a
+    // native asset lookup, before Instantiate. Resources.Load returns the same asset
+    // instance for the same path on every call, so remembering the first result and
+    // handing it back passes the identical GameObject reference into Instantiate and
+    // leaves the Instantiate / GetComponent / _worldModel assignment untouched. A null
+    // load (asset missing) is not cached, so the native code keeps hitting the same
+    // exception it would have hit anyway.
+    //
+    // Replacing the whole method with a Prefix would mean re-implementing the base
+    // Actor.OnStartClient / DewNetworkBehaviour.OnStartClient chain (child registration,
+    // OnCreate, delayed-start queue), so the transpiler swaps only the ldstr +
+    // Resources.Load<GameObject>(string) callsite. Prepare checks the native IL has
+    // exactly one such pair; a changed shape uninstalls just this fix with one warning.
+    [HarmonyPatch]
+    internal static class NativeSkillWorldModelLoadPerf
+    {
+        private const string WorldModelPath = "WorldModels/Skill World Model";
+        private static GameObject _cache;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(SkillTrigger), "OnStartClient", Type.EmptyTypes, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateCallsite(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int callsites = 0;
+            int loadIndex = -1;
+            for (int i = 0; i + 1 < code.Count; i++)
+            {
+                if (!IsWorldModelLoad(code[i], code[i + 1])) continue;
+                callsites++;
+                loadIndex = i + 1;
+            }
+            if (callsites != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load",
+                    "native OnStartClient load callsite changed or already patched");
+                return code;
+            }
+            code[loadIndex].operand = AccessTools.Method(
+                typeof(NativeSkillWorldModelLoadPerf), nameof(LoadCachedSkillWorldModel));
+            return code;
+        }
+
+        // The replacement keeps the same argument and return value and never changes the
+        // loaded value itself, so looking for exactly one ldstr+Load pair is enough.
+        private static bool ValidateCallsite(IList<CodeInstruction> code)
+        {
+            int pairs = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+                if (IsWorldModelLoad(code[i], code[i + 1])) pairs++;
+            if (pairs == 1) return true;
+            NativePerfPatch.Warn(ref _warned, "skill world model load", "native OnStartClient load callsite changed");
+            return false;
+        }
+
+        private static bool IsWorldModelLoad(CodeInstruction literal, CodeInstruction call)
+        {
+            if (literal.opcode != OpCodes.Ldstr || !Equals(literal.operand, WorldModelPath)) return false;
+            if (!(call.operand is MethodInfo called) || called.Name != "Load"
+                || called.DeclaringType == null || called.DeclaringType.Name != "Resources") return false;
+            return called.IsGenericMethod && called.GetGenericArguments().Length == 1
+                && called.GetGenericArguments()[0] == typeof(GameObject)
+                && called.GetParameters().Length == 1
+                && called.GetParameters()[0].ParameterType == typeof(string);
+        }
+
+        internal static GameObject LoadCachedSkillWorldModel(string path)
+        {
+            if (!NativePerfOptions.SkillWorldModelCache) return Resources.Load<GameObject>(path);
+            if (path != WorldModelPath)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load", "unexpected resource path; bypassing cache");
+                return Resources.Load<GameObject>(path);
+            }
+            GameObject cached = _cache;
+            if (cached != null) return cached;
+            cached = Resources.Load<GameObject>(path);
+            if (cached != null) _cache = cached;
+            return cached;
         }
     }
 }

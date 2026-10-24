@@ -237,6 +237,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged charge-count broadcasts (host) / 変わっていないチャージ数の全員への再送を省く（ホスト）")]
         public bool nativeChargeRpcIdle = true;
 
+        [LabelText("Cache the skill world-model prefab load on every skill spawn (host and guests) / スキルの出現ごとのワールドモデルプレハブのロードをキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeSkillWorldModelCache = true;
+
         [LabelText("Skip Chaos Shrine hit handling while no max-stack bonus is taken (host) / 混沌の神殿で光・闇の最大スタック強化を取っていない間、被弾ごとの処理を省く（ホスト）")]
         public bool nativeChaosShrineHitScan = true;
 
