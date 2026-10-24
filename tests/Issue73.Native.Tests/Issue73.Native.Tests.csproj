@@ -64,6 +64,8 @@
     <Compile Include="../../src/SodRpg.Mod/NetMessages.NetLite.cs" Link="ModUnderTest/NetMessages.NetLite.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.RunGrowth.cs" Link="ModUnderTest/NetMessages.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/BountyReportBatching.cs" Link="ModUnderTest/BountyReportBatching.cs" />
+    <!-- #1171: 仕掛け発動の報告の1秒間引き（Issue1171GimmickReportThrottleTests が確かめる）。 -->
+    <Compile Include="../../src/SodRpg.Mod/GimmickReportThrottle.cs" Link="ModUnderTest/GimmickReportThrottle.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
