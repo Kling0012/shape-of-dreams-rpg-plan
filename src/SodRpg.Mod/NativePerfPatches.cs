@@ -6767,9 +6767,14 @@ namespace SodRpg.Mod
         // gravity+bounds branch, so a skipped piece would hover as it shrinks. DoBurst,
         // FinishBurst, HidePieces, the whole fade-in/fade-out rescale, and airborne or
         // useGroundPlane=false pieces (which never rest) keep the vanilla behaviour, so
-        // burst shape, landing spots, the shrink-out seating and timing are unchanged;
-        // only the redundant native calls for visibly-static pieces at the plateau
-        // disappear, on every machine including guests (gibs spawn per kill locally).
+        // the burst and shrink-out paths keep running. This is a visual tolerance, not
+        // exact trajectory equivalence: skipping also freezes residual x/z velocity and
+        // spin instead of applying ground friction. At 60 fps with groundFriction=0.5,
+        // speed 0.0499 and spin 0.999 would add 1.663 mm and 0.0333 degrees in vanilla.
+        // That motion resumes when the flag clears; its total agrees only if dt and
+        // contact/friction conditions stay the same and enough frames remain to decay.
+        // The native-call reduction applies on every machine including guests (gibs
+        // spawn per kill locally).
         //
         // Residual assumptions: a foreign mod re-randomizing _velocities/_spins outside
         // DoBurst could freeze a piece mid-air (vanilla itself only reads those arrays); a
