@@ -345,6 +345,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the settled animation layer weight reads every frame (host and guests) /\n落ち着いた能力アニメのレイヤー重みの毎フレーム読み直しを省く（ホストと参加者）")]
         public bool nativeEntityAnimLayerWeightIdle = true;
 
+        [LabelText("Reuse the chaos-shrine bonus tooltip text while its values are unchanged (host and guests) /\n混沌の神殿の加護のツールチップ文を、値が変わらない間は使い回す（ホストと参加者）")]
+        public bool nativeChaosStatBonusTooltipCache = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
