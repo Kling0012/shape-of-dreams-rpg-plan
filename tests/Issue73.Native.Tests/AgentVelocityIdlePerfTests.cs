@@ -123,6 +123,7 @@ namespace Issue73.Native.Tests
         {
             WithPatch(false, () =>
             {
+                Log.Warnings.Clear();
                 var agent = new NavMeshAgent();
                 RunSetVelocity(agent, Vector3.zero);
                 RunSetVelocity(agent, Vector3.zero);
