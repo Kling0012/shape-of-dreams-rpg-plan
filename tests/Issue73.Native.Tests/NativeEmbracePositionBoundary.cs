@@ -53,6 +53,9 @@ namespace SodRpg.Mod
     // 本体 EntityVisual.model（EntityModel.holsteredWeapon）と付属エフェクトの最小限の形。
     internal class EntityModel { public Transform holsteredWeapon; }
     internal class FxAttachToEntity { }
+    // NativeCastTelegraphIdlePerf が typeof で参照するだけの本体 詠唱テレグラフの境界。
+    // Prepare は Harmony がパッチを当てるときだけ走るので、ここでは型の存在だけ。
+    internal class FxCastTelegraph { }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
     internal struct SyncMovementData
@@ -109,6 +112,7 @@ namespace SodRpg.Mod
             nativeMirageVolumeIdle = true,
             nativeDamageShakeIdle = true,
             nativeAudioSetupIdle = true,
+            nativeCastTelegraphIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,
