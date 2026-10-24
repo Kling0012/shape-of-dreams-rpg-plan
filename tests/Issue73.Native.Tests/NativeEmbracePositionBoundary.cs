@@ -109,6 +109,7 @@ namespace SodRpg.Mod
             nativeMirageVolumeIdle = true,
             nativeDamageShakeIdle = true,
             nativeAudioSetupIdle = true,
+            nativeFxAttachIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,
