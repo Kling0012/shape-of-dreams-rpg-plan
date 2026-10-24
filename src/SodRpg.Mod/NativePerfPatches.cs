@@ -6891,9 +6891,10 @@ namespace SodRpg.Mod
     internal static class NativeGamepadRumbleIdlePerf
     {
         // InputManager.DoRumbleFrameUpdate runs every frame on every machine (input handling is
-        // local, so guests pay it too). After folding the _shakes list it unconditionally calls
-        // Gamepad.current.SetMotorSpeeds — and the call is SetMotorSpeeds(0, 0) whenever no
-        // shake contributed: the values are forced to zero when the input mode is not gamepad
+        // local, so guests pay it too). After folding the _shakes list it calls
+        // Gamepad.current.SetMotorSpeeds whenever a controller is connected — and the call is
+        // SetMotorSpeeds(0, 0) whenever no shake contributed: the values are forced to zero
+        // when the input mode is not gamepad
         // (the common case of a keyboard-and-mouse player with a controller plugged in) and no
         // accumulation happens while the list is empty or paused. The shipped Unity.InputSystem
         // has no change detection on that path: Gamepad.SetMotorSpeeds delegates to
@@ -6907,7 +6908,12 @@ namespace SodRpg.Mod
         // nothing, a non-gamepad mode forces both values to zero, and a timeScale under 0.001
         // skips the accumulation — only a shake list that still holds instances in gamepad mode
         // on an unpaused frame can have contributed, so only that clears the flag and keeps the
-        // next frames on vanilla. The worst case is one extra (0, 0) write after the last shake
+        // next frames on vanilla. Both descriptions were verified against the decompiled body
+        // (decompiled/sod-decomp/Dew.Core/InputManager.cs, DoRumbleFrameUpdate): expiry removal
+        // happens inside the fold regardless of mode or pause, the envelope holds full amplitude
+        // through attack and sustain (no ramp) and decays linearly, the high motor is always
+        // zero (amplitude * 0f), and the vibration strength only scales values and expires the
+        // window sooner — none of which moves the zero/non-zero split the flag depends on. The worst case is one extra (0, 0) write after the last shake
         // expires, which is what vanilla writes on that frame anyway; motors already stopped
         // being told to stay stopped has no device-observable effect.
         //
@@ -6975,7 +6981,12 @@ namespace SodRpg.Mod
 
         private static void Postfix(InputManager __instance)
         {
-            if (_disabled) return;
+            // The option check keeps the disabled path off the per-frame work entirely. A flag
+            // left stale while the option was off is harmless: the prefix above runs the body
+            // whenever the option is off, and the first postfix after re-enabling re-derives
+            // the flag from live state (a stale-true flag also only ever describes a motor
+            // already verified stopped, so even one skip on re-enable sends nothing new).
+            if (_disabled || !NativePerfOptions.GamepadRumbleIdle) return;
             try
             {
                 // What the body just sent is (0, 0) unless gamepad-mode shakes could have
