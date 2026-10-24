@@ -160,7 +160,7 @@ namespace SodRpg.Mod
             if(!WorldCrackerCurrent(state)) { EndWorldCracker(beam); return; }
             RefreshWorldCrackerValidated(beam,state);
         }
-        // 呼び出し元が直前に WorldCrackerCurrent(state) を通した直後（間に何も走らない）用。
+        // 呼び出し元が辞書の同一性と WorldCrackerCurrent(state) を確認した直後用。
         // BossEnsure は ClearBossEffects 経由でこのバインディングを止め得るので、Ensure 後の再検証は残す。
         private void RefreshWorldCrackerValidated(Ai_U_WorldCracker beam,WorldCrackerBinding state)
         {
@@ -186,8 +186,11 @@ namespace SodRpg.Mod
             var scope=LightWorldCrackerNativeTick.Current;
             if(scope.Beam!=state.Beam || scope.Target!=info.victim || info.actor!=state.Beam || info.damage.amount<=0 || !info.chain.Equals(default(ReactionChain))
                 || AttributionGeneratedOrigin()!=GeneratedOrigin.None || !WorldCrackerCurrent(state)) return;
-            // 1行上の WorldCrackerCurrent と同一状態なので入口の再検証は省く（被弾ごとの重複計算を1回分減らす）。
-            RefreshWorldCrackerValidated(state.Beam,state);
+            // 辞書も同じ束縛なら、直前に済ませた有効性確認を再利用する。
+            if(_worldCrackers.TryGetValue(state.Beam,out var current) && current==state)
+                RefreshWorldCrackerValidated(state.Beam,state);
+            else
+                RefreshWorldCracker(state.Beam);
             if(state.Host!=this || state.Beam!=scope.Beam || state.Stage<3 || state.Epoch!=state.Runtime.ShieldEquipmentEpoch) return;
             var packet=NativeAttributedDamagePacket.Current;
             if(packet==null || packet.Actor!=state.Beam || packet.Victim!=info.victim || packet.Serial==state.LastPacket) return;
