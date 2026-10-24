@@ -76,6 +76,7 @@ namespace SodRpg.Mod
             NativePerfOptions.GemResponsibilityHitCache = config.nativeGemResponsibilityHitCache;
             NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
+            NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
         }
     }
 
@@ -140,6 +141,7 @@ namespace SodRpg.Mod
         internal static bool GemResponsibilityHitCache = true;
         internal static bool MusicSourceIdle = true;
         internal static bool TransitionIdle = true;
+        internal static bool AgentVelocityIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -582,6 +584,71 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    // EntityControl.DoMovementProcessorFrameUpdate — the per-frame movement integration for
+    // every entity whose movement this peer processes (the host for all monsters, summons and
+    // NPCs, a guest for its own hero) — starts its manual integration with
+    // `_agent.velocity = Vector3.zero`, unconditionally, once per entity per frame. The write
+    // stops the NavMeshAgent's self-motion so the method can move the agent through
+    // nextPosition. The agent never writes its own velocity (updatePosition/updateRotation are
+    // false since OnStart, and the real DLL IL has exactly one NavMeshAgent set_velocity in all
+    // of EntityControl — this callsite), so once the velocity is zero it stays zero until some
+    // code deliberately writes it, and every further frame re-stores the same value through a
+    // native setter. The Transpiler swaps that one callsite for a guard that reads the agent's
+    // current velocity component-wise and only reaches the native setter when it differs. When
+    // it differs the setter runs exactly as shipped; when it is equal, storing the same value is
+    // not observable through any reader of the property (the next reader is the same getter),
+    // so skipping it cannot change movement, avoidance, collisions or the synced state.
+    [HarmonyPatch]
+    internal static class NativeAgentVelocityIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(EntityControl), "DoMovementProcessorFrameUpdate", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setter = AccessTools.PropertySetter(typeof(NavMeshAgent), nameof(NavMeshAgent.velocity));
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(setter)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "agent velocity idle", "native setter callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeAgentVelocityIdlePerf), nameof(SetVelocity));
+            return code;
+        }
+
+        private static void SetVelocity(NavMeshAgent agent, Vector3 value)
+        {
+            if (!_disabled && NativePerfOptions.AgentVelocityIdle)
+            {
+                try
+                {
+                    Vector3 current = agent.velocity;
+                    if (current.x == value.x && current.y == value.y && current.z == value.z) return;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "agent velocity idle", ex.Message);
+                }
+            }
+            agent.velocity = value;
         }
     }
 

@@ -327,6 +327,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the idle screen-fade bookkeeping every frame while no transition is active (host and guests) /\n場面転換が動いていないフレームの画面フェードの毎フレーム更新を省く（ホストと参加者）")]
         public bool nativeTransitionIdle = true;
 
+        [LabelText("Skip the already-zero agent velocity rewrite in the movement integration (host and the local hero) /\n移動を自分で処理する実体の、すでにゼロのエージェント速度の毎フレーム再書き込みを省く（ホストと自分の英雄） /\n跳过移动整合中已为零的代理速度的每帧重写（主机与本地英雄）")]
+        public bool nativeAgentVelocityIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

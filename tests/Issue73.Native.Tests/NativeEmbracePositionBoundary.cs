@@ -10,6 +10,9 @@ namespace UnityEngine.AI
     internal class NavMeshAgent
     {
         public ObstacleAvoidanceType obstacleAvoidanceType { get; set; }
+        // NativeAgentVelocityIdlePerf の差し替え先 SetVelocity が読み書きする本体 API の形
+        // （実機 NavMeshAgent.velocity）。
+        public Vector3 velocity { get; set; }
     }
 }
 namespace UnityEngine
@@ -171,6 +174,7 @@ namespace SodRpg.Mod
             nativeGemResponsibilityHitCache = true,
             nativeMusicSourceIdle = true,
             nativeTransitionIdle = true,
+            nativeAgentVelocityIdle = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
         // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が読む設定。既定値は本物と同じ。
