@@ -595,6 +595,8 @@ namespace Issue73.Native.Tests
         // 稼働確認で例外が出た場面: TryBossShares は例外を呼び出し元へ伝え、FailBossShares の
         // 副作用（警告・失敗印）を出さない。速経路も冷経路（PrepareBossShares の try の外の
         // 稼働確認）も同じで、変更前の && 連鎖で投じていた伝わり方と一致する。
+        // 通常敵の冷経路は perf-loop/20261024-1221 から型とボスの判定で落ちて稼働確認に
+        // 届かないため、例外も出ない（これが軽量化の本体）。
         [Fact]
         public void TryBossShares_propagates_an_OwnershipRunning_exception_without_fail_side_effects()
         {
@@ -607,7 +609,6 @@ namespace Issue73.Native.Tests
             var boss = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f);
             var enemy = Spawn(host, 101); // 通常敵: 冷経路（Shares は null）
             Assert.NotNull(SharesOf(host, boss));
-            var cached = SharesOf(host, boss);
 
             var harmony = new Harmony("issue73.bossshares.throw." + Guid.NewGuid().ToString("N"));
             try
@@ -615,14 +616,97 @@ namespace Issue73.Native.Tests
                 harmony.Patch(typeof(HostAuthority).GetMethod("OwnershipRunning", Hidden),
                     prefix: new HarmonyMethod(typeof(BossSharesTests).GetMethod(nameof(ThrowFromOwnershipCheck), Hidden)));
                 Assert.Throws<InvalidOperationException>(() => TryShares(host, boss)); // 速経路（キャッシュ済み）
-                Assert.Throws<InvalidOperationException>(() => TryShares(host, enemy)); // 冷経路
+                Set(State(host, boss), "Shares", null); // ボスを冷経路に戻す
+                Assert.Throws<InvalidOperationException>(() => TryShares(host, boss)); // 冷経路（ボス）
+                var rejected = TryShares(host, enemy); // 冷経路（通常敵）: 稼働確認より前で落ちる
+                Assert.False(rejected.Result, "通常敵は例外ではなく不成立");
+                Assert.Null(rejected.Shares);
             }
             finally { harmony.UnpatchAll(harmony.Id); }
 
             // 例外は呼び出し元へ伝わっただけで、失敗印も警告も付かない。
-            Assert.Same(cached, SharesOf(host, boss));
-            Assert.False((bool)Get(cached, "Failed"));
+            Assert.Null(SharesOf(host, boss)); // 冷経路に戻したまま（失敗印は作らない）
             Assert.Null(SharesOf(host, enemy));
+            Assert.Empty(Log.Warnings);
+        }
+
+        // 冷経路の落とし方（perf-loop/20261024-1221）: 通常モンスター・Enemy が null の状態・
+        // 未稼働のボス・親を持つボスは、TryBossShares でも定期点検 ScanBossShares でも
+        // null を返し、state.Shares を null のまま変えない。通常モンスターと null は
+        // 稼働確認より前の純粋判定で落ちる（稼働確認が例外を出る状態でも通る）。
+        [Fact]
+        public void Cold_path_rejections_return_null_and_keep_Shares_null_for_both_entry_points()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            var b = Player(9);
+            BuildFor(host, b, 8, 40);
+            PatchNativeShareHooks();
+            var parent = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f); // 親側のボス（持ち分成立）
+            var ordinary = Spawn(host, 0, new Monster { netId = 101, type = Monster.MonsterType.Normal }); // 通常モンスター
+            var missing = Spawn(host, 102); // Enemy を null にする対象
+            Set(State(host, missing), "Enemy", null);
+            var child = Spawn(host, 0, new Monster { netId = 103, type = Monster.MonsterType.Boss, parentActor = parent }); // 親を持つボス
+            // 持ち分の前提（人数HPの捕捉）は親の記録経路では弾かれるため、台帳に直接置く。
+            ((Dictionary<Monster, StatBonus>)Get(host, "_bossNativeHealth"))[(Monster)child] = new StatBonus { maxHealthPercentage = 0 };
+            var idle = SharedBoss(host, Monster.MonsterType.Boss, 104, 0f); // 後で未稼働にするボス
+            Set(State(host, idle), "Shares", null); // 冷経路から確かめる
+            host.ConfigureEnemyOwnership(false); // 未稼働へ
+
+            // 被弾の入り口: どれも不成立・shares は null・Shares は null のまま。
+            foreach (var enemy in new Entity[] { ordinary, missing, child, idle })
+            {
+                var tried = TryShares(host, enemy);
+                Assert.False(tried.Result, enemy.netId + ": 不成立");
+                Assert.Null(tried.Shares);
+                Assert.NotNull(tried.State);
+                Assert.Null(SharesOf(host, enemy));
+            }
+
+            // 定期点検の入り口: 未稼働は持ち分を捨て、それ以外は null のまま。
+            Call(host, "ScanBossShares", State(host, ordinary), true, null);
+            Assert.Null(SharesOf(host, ordinary));
+            Call(host, "ScanBossShares", State(host, missing), true, null);
+            Assert.Null(SharesOf(host, missing));
+            Call(host, "ScanBossShares", State(host, child), true, null);
+            Assert.Null(SharesOf(host, child));
+            Call(host, "ScanBossShares", State(host, idle), false, null);
+            Assert.Null(SharesOf(host, idle)); // 未稼働の点検は持ち分を捨てる（契約どおり）
+            Assert.NotNull(SharesOf(host, parent)); // 親側の成立した持ち分は壊さない
+            Assert.Empty(Log.Warnings);
+        }
+
+        // 冷経路の純粋判定が稼働確認より前にあることの直接確認: 稼働確認が例外を出す状態で
+        // 通常モンスターと Enemy が null の状態を通しても例外にならない（稼働確認未評価）。
+        [Fact]
+        public void Cold_path_pure_rejections_do_not_evaluate_OwnershipRunning()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            BuildFor(host, a, 2, 0);
+            var b = Player(9);
+            BuildFor(host, b, 8, 40);
+            PatchNativeShareHooks();
+            var ordinary = Spawn(host, 0, new Monster { netId = 101, type = Monster.MonsterType.Normal });
+            var missing = Spawn(host, 102);
+            Set(State(host, missing), "Enemy", null);
+
+            var harmony = new Harmony("issue73.bossshares.coldguard." + Guid.NewGuid().ToString("N"));
+            try
+            {
+                harmony.Patch(typeof(HostAuthority).GetMethod("OwnershipRunning", Hidden),
+                    prefix: new HarmonyMethod(typeof(BossSharesTests).GetMethod(nameof(ThrowFromOwnershipCheck), Hidden)));
+                var triedMonster = TryShares(host, ordinary);
+                Assert.False(triedMonster.Result, "通常モンスターは不成立");
+                Assert.Null(triedMonster.Shares);
+                var triedNull = TryShares(host, missing);
+                Assert.False(triedNull.Result, "Enemy が null の状態も不成立");
+                Assert.Null(triedNull.Shares);
+            }
+            finally { harmony.UnpatchAll(harmony.Id); }
+            Assert.Null(SharesOf(host, ordinary));
+            Assert.Null(SharesOf(host, missing));
             Assert.Empty(Log.Warnings);
         }
 
