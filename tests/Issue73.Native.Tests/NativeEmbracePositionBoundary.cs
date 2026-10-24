@@ -46,6 +46,12 @@ namespace UnityEngine
             return found?.ToArray() ?? new T[0];
         }
     }
+    // NativeGemWorldModelLoadPerf が設定無効時のフォールバックで呼ぶ本体 Resources.Load の
+    // 境界。 prefab 参照は読まないので null を返すだけ。
+    internal static class Resources
+    {
+        public static T Load<T>(string path) => default;
+    }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
     // Log は NativeObliviaxKidnapLogPerf の差し替え先 MaybeLog が設定無効時に呼ぶ本体の呼び出し。
@@ -129,7 +135,7 @@ namespace SodRpg.Mod
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
-            nativeGemCooldownSync = true,
+            nativeGemCooldownSync = true, nativeGemWorldModelCache = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
             nativeGuestPublishLimit = true,
             nativeAttachFaceIdle = true, nativeAttachFaceSharedVerts = true,
