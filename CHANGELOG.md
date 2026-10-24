@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.57 — Lighter gamepad rumble and regular-enemy hit handling（2026-10-24）
+
+この版では、ゲームパッドの振動と通常の敵への攻撃で繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated for gamepad rumble and for hits on regular enemies.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- コントローラーがつながっていると、ゲームは振動していないときも毎フレーム「振動を止める」指示をコントローラーに送り直していました。キーボードとマウスで遊んでいるときも同じで、ホストと参加者の両方で起きていました。今は振動が止まっている間、この指示を送り直しません。振動していない間は処理が軽くなる見込みです。振動が続く戦闘中は、軽くなりません。振動の強さとタイミングは変わりません。 / With a controller connected, the game sent a "stop rumble" command to it every frame, even when nothing was vibrating. This also happened while playing with keyboard and mouse, on both the host and co-op players. The game no longer resends it while the rumble is already stopped. The game should run lighter while nothing is vibrating. During fights with constant rumble, there is no gain. Rumble strength and timing are unchanged.
+- 通常の敵に攻撃が当たるたびに、ゲームはホスト側でボスにしか使わない確認まで毎回行っていました。敵の状態を定期的に見直すときも、この確認を敵の数だけ繰り返していました。今は相手がボスでなければこの確認を省き、定期的な見直しでは1回だけ行います。攻撃が多い戦闘や敵の多い部屋では、ホストの処理が軽くなる見込みです。ボス戦の挙動と、通常の敵とボスへのダメージは変わりません。 / Each time an attack hit a regular enemy, the host also ran a check that only matters for bosses. The periodic review of enemies also repeated this check once per enemy. The game now skips it when the target is not a boss, and runs it only once per review. Fights with many hits and rooms with many enemies should run lighter on the host. Boss fights and damage to regular enemies and bosses are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.56 — Lighter host load during the White Night domain（2026-10-24）
 
 この版では、白夜の領域が出ているボス戦で毎フレーム繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated every frame during boss fights with the White Night domain.
