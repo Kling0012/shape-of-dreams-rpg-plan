@@ -53,9 +53,41 @@ namespace SodRpg.Mod
     // 本体 EntityVisual.model（EntityModel.holsteredWeapon）と付属エフェクトの最小限の形。
     internal class EntityModel { public Transform holsteredWeapon; }
     internal class FxAttachToEntity { }
-    // NativeCastTelegraphIdlePerf が typeof で参照するだけの本体 詠唱テレグラフの境界。
-    // Prepare は Harmony がパッチを当てるときだけ走るので、ここでは型の存在だけ。
-    internal class FxCastTelegraph { }
+    // NativeCastTelegraphIdlePerf の対象 FxCastTelegraph（本体 Dew.Core）の、
+    // Transpiler が見る書き込みの形だけの転写。実機の UpdatePosition は位置・向きの
+    // 追従計算を経て、最後に followPosition のとき transform.position へ、
+    // followRotation のとき transform.rotation へそれぞれ1回ずつ書く
+    // （docs/specs/perf-loop/20261024-0950.md。実 DLL の IL で set_position 1・
+    // set_rotation 1 を確認済み）。Transpiler は Transform への書き込みの数だけを
+    // チェックして差し替えるため、ここでは計算を省いてその形を再現する。
+    // UpdatePositionTwoSites は位置の書き込みが2つ並んだ拒否の見本
+    // （実行はせず、Transpiler に渡す IL の取り出しだけに使う）。
+    internal class FxCastTelegraph
+    {
+        public Transform transform = new Transform();
+        public bool followPosition = true, followRotation = true;
+        public Vector3 targetPosition;
+        public Quaternion targetRotation;
+
+        public void UpdatePosition()
+        {
+            if (followPosition)
+            {
+                transform.position = targetPosition;
+            }
+            if (followRotation)
+            {
+                transform.rotation = targetRotation;
+            }
+        }
+
+        internal void UpdatePositionTwoSites()
+        {
+            transform.position = targetPosition;
+            transform.position = targetPosition;
+            transform.rotation = targetRotation;
+        }
+    }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
     internal struct SyncMovementData
