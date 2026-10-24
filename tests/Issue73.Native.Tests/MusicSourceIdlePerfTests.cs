@@ -8,8 +8,10 @@ namespace Issue73.Native.Tests
     /// <summary>
     /// （#1124）BGM 音源への同じ音量・ピッチの毎ロジックtick再書き込みを省く
     /// NativeMusicSourceIdlePerf の GuardedVolume/GuardedPitch の検証。書き込み回数は
-    /// 境界（NativeBoundary.cs）の模倣 AudioSource のカウンタ（VolumeWrites/PitchWrites）
-    /// で数える。確かめる点: (1) 初回（キャッシュ NaN）は必ず書く、(2) 同値の再呼び出しは
+    /// 境界（NativeBoundary.cs）の模倣 AudioSource のカウンタ（VolumeWrites/PitchWrites、
+    /// 音源インスタンスごとの欄）で数える。各テストは自分が作った音源のカウンタだけを
+    /// 見るので、xUnit が既定でテストクラスを並列に走らせても数が混ざらない。確かめる点:
+    /// (1) 初回（キャッシュ NaN）は必ず書く、(2) 同値の再呼び出しは
     /// 書き込みを省く、(3) 異値は書く、(4) 設定が無効のときは同値でも書いてキャッシュを
     /// 更新する（有効へ戻したあと実際の値とずれない）、(5) 音源ごとのキャッシュは独立、
     /// (6) 2つの対象メソッドの片方だけが付け替わった状態では毎回書く（どちらのメソッドの
@@ -25,24 +27,21 @@ namespace Issue73.Native.Tests
         private readonly bool _savedOption;
 
         // パッチ側の静的な欄を毎テストで初期化する。フラグは両方立てて（実機で2メソッド
-        // とも付け替わった状態）、設定は既定の有効とし、カウンタはゼロから数える。
-        // Dispose で設定を戻し、フラグは適用前の false へ戻す。テスト間で持ち越すものは
-        // ない（音源は毎テスト作り直すので、キャッシュ表の欄も毎テスト新規になる）。
+        // とも付け替わった状態）、設定は既定の有効とする。Dispose で設定を戻し、フラグは
+        // 適用前の false へ戻す。カウンタは音源インスタンスごとの欄なので戻す必要がない
+        // （毎テスト新しい音源を作り、その音源の欄はゼロから始まる。キャッシュ表の欄も
+        // 毎テスト新規になる）。
         public MusicSourceIdlePerfTests()
         {
             _savedOption = NativePerfOptions.MusicSourceIdle;
             NativePerfOptions.MusicSourceIdle = true;
             SetFlags(true, true);
-            AudioSource.VolumeWrites = 0;
-            AudioSource.PitchWrites = 0;
         }
 
         public void Dispose()
         {
             NativePerfOptions.MusicSourceIdle = _savedOption;
             SetFlags(false, false);
-            AudioSource.VolumeWrites = 0;
-            AudioSource.PitchWrites = 0;
         }
 
         private static void SetFlags(bool logic, bool fade)
@@ -71,20 +70,20 @@ namespace Issue73.Native.Tests
 
             GuardedVolume(source, v);
             GuardedPitch(source, p);
-            Assert.Equal(1, AudioSource.VolumeWrites); // 初回（キャッシュ NaN）は必ず書く
-            Assert.Equal(1, AudioSource.PitchWrites);
+            Assert.Equal(1, source.VolumeWrites); // 初回（キャッシュ NaN）は必ず書く
+            Assert.Equal(1, source.PitchWrites);
             Assert.Equal(v, source.volume);
             Assert.Equal(p, source.pitch);
 
             GuardedVolume(source, v);
             GuardedPitch(source, p);
-            Assert.Equal(1, AudioSource.VolumeWrites); // 同値の2回目は省く
-            Assert.Equal(1, AudioSource.PitchWrites);
+            Assert.Equal(1, source.VolumeWrites); // 同値の2回目は省く
+            Assert.Equal(1, source.PitchWrites);
 
             GuardedVolume(source, 0.8f);
             GuardedPitch(source, 0.9f);
-            Assert.Equal(2, AudioSource.VolumeWrites); // 異値は書く
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(2, source.VolumeWrites); // 異値は書く
+            Assert.Equal(2, source.PitchWrites);
             Assert.Equal(0.8f, source.volume);
             Assert.Equal(0.9f, source.pitch);
         }
@@ -101,20 +100,20 @@ namespace Issue73.Native.Tests
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1.1f);
             GuardedPitch(source, 1.1f);
-            Assert.Equal(2, AudioSource.VolumeWrites); // 無効の間は同値でも毎回書く
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(2, source.VolumeWrites); // 無効の間は同値でも毎回書く
+            Assert.Equal(2, source.PitchWrites);
             Assert.Equal(0.5f, source.volume);
             Assert.Equal(1.1f, source.pitch);
 
             NativePerfOptions.MusicSourceIdle = true;
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1.1f);
-            Assert.Equal(2, AudioSource.VolumeWrites); // 戻しても実際の値とずれない
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(2, source.VolumeWrites); // 戻しても実際の値とずれない
+            Assert.Equal(2, source.PitchWrites);
             GuardedVolume(source, 0.75f);
             GuardedPitch(source, 0.95f);
-            Assert.Equal(3, AudioSource.VolumeWrites); // 異値は引き続き書く
-            Assert.Equal(3, AudioSource.PitchWrites);
+            Assert.Equal(3, source.VolumeWrites); // 異値は引き続き書く
+            Assert.Equal(3, source.PitchWrites);
         }
 
         // (6) 2つの対象メソッド（LogicUpdate/DoCrossFade）の片方だけが付け替わった状態では
@@ -129,21 +128,22 @@ namespace Issue73.Native.Tests
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1f);
             GuardedPitch(source, 1f);
-            Assert.Equal(2, AudioSource.VolumeWrites); // キャッシュ一致でも省かない
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(2, source.VolumeWrites); // キャッシュ一致でも省かない
+            Assert.Equal(2, source.PitchWrites);
 
             SetFlags(true, true); // 両方揃った
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1f);
-            Assert.Equal(2, AudioSource.VolumeWrites); // この時点で初めて省く（実値は 0.5/1 のまま）
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(2, source.VolumeWrites); // この時点で初めて省く（実値は 0.5/1 のまま）
+            Assert.Equal(2, source.PitchWrites);
             GuardedVolume(source, 0.6f);
-            Assert.Equal(3, AudioSource.VolumeWrites);
+            Assert.Equal(3, source.VolumeWrites);
             Assert.Equal(0.6f, source.volume);
         }
 
         // (5) 音源ごとのキャッシュは独立する。一方の音源への書き込みは、もう一方の同じ値の
-        // 書き込み（初回）を省かせず、省ける状態も崩さない。
+        // 書き込み（初回）を省かせず、省ける状態も崩さない。カウンタも音源ごとの欄なので、
+        // どちらの音源に書いたかが分かる。
         [Fact]
         public void TheCacheIsIndependentPerSource()
         {
@@ -151,18 +151,22 @@ namespace Issue73.Native.Tests
             var b = new AudioSource();
             GuardedVolume(a, 0.5f);
             GuardedPitch(a, 1f);
-            Assert.Equal(1, AudioSource.VolumeWrites);
-            Assert.Equal(1, AudioSource.PitchWrites);
+            Assert.Equal(1, a.VolumeWrites);
+            Assert.Equal(1, a.PitchWrites);
+            Assert.Equal(0, b.VolumeWrites); // b にはまだ書いていない
+            Assert.Equal(0, b.PitchWrites);
 
             GuardedVolume(b, 0.5f); // 別の音源は別のキャッシュ（初回 NaN）なので書く
             GuardedPitch(b, 1f);
-            Assert.Equal(2, AudioSource.VolumeWrites);
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(1, b.VolumeWrites);
+            Assert.Equal(1, b.PitchWrites);
 
             GuardedVolume(a, 0.5f); // a のキャッシュは b への書き込みの影響を受けない
             GuardedPitch(a, 1f);
-            Assert.Equal(2, AudioSource.VolumeWrites);
-            Assert.Equal(2, AudioSource.PitchWrites);
+            Assert.Equal(1, a.VolumeWrites);
+            Assert.Equal(1, a.PitchWrites);
+            Assert.Equal(1, b.VolumeWrites);
+            Assert.Equal(1, b.PitchWrites);
             Assert.Equal(0.5f, a.volume);
             Assert.Equal(0.5f, b.volume);
         }

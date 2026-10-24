@@ -882,12 +882,15 @@ namespace SodRpg.Mod
     internal enum DewAudioRollOffType : byte { Default, Loud, Unity }
     // NativeMusicSourceIdlePerf の GuardedVolume/GuardedPitch が書き込むプロパティの受け口。
     // 本体 AudioSource には volume・pitch の float プロパティがある（r1.4.1.2 逆コンパイル確認）。
-    // VolumeWrites/PitchWrites は AudioManager.NextDynamicPriorityCalls と同種の書き込みカウンタで、
-    // ガードが同値の書き込みを省いたか（省かないときに書いたか）を検証するためだけのもの。
+    // VolumeWrites/PitchWrites はガードが同値の書き込みを省いたか（省かないときに書いたか）を
+    // 検証するためだけの書き込みカウンタ。AudioManager.NextDynamicPriorityCalls と違う音源
+    // インスタンスごとの欄にしている（xUnit は既定でテストクラスを並列に走らせるので、共有の
+    // static カウンタだと同じ模倣の volume/pitch を書く別のテストクラスと数が混ざる。各テストは
+    // 自分が作った音源のカウンタだけを数えればよい）。
     internal class AudioSource
     {
-        public static int VolumeWrites;
-        public static int PitchWrites;
+        public int VolumeWrites;
+        public int PitchWrites;
         private float _volume;
         private float _pitch;
         public int priority { get; set; }
