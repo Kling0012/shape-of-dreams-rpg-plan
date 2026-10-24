@@ -1193,6 +1193,9 @@ namespace SodRpg.Mod
         public bool isEveryInfoSet;
         public string selectedSkin = "";
         public string selectedHeroType = "Hero_Mist";
+        // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が読む現在値。実機では SyncVar の
+        // 裏の字段を返す公開プロパティで、初期値は new された空のロードアウト。
+        public HeroLoadoutData selectedLoadout = new HeroLoadoutData();
         public readonly SyncList<string> selectedAccessories = new SyncList<string>();
         public List<string> ownedItems = new List<string>();
         public bool IsAllowedToUseItem(string itemName)
@@ -1253,6 +1256,25 @@ namespace SodRpg.Mod
         public string skillKey;
         public Func<float> valueGetter;
         internal int _id;
+    }
+    // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が同じ値かどうかを比べる本体のロードアウト。
+    // 実機ではグローバル名前空間の公開クラスで、スキル4つと星のリスト4つを持ち、Mirror の
+    // SyncVar はクラス既定の参照等値で比べる（実 DLL 逆コンパイル 2026-10-24）。本体では
+    // new されたインスタンスがそのまま代入されるため、この境界にも同じ字段の形だけを置く。
+    // 中身は呼ばれない（本体側の weaver 生成セッターは境界にないのでパッチは無効になる）ので、
+    // コンストラクターの既定値の形だけ合っていればよい。
+    internal struct LoadoutStarItem
+    {
+        public string name;
+        public int level;
+    }
+    internal sealed class HeroLoadoutData
+    {
+        public int skillQ, skillR, skillTrait, skillMovement;
+        public List<LoadoutStarItem> cDestruction = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cLife = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cImagination = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cFlexible = new List<LoadoutStarItem>();
     }
     // 被弾シェイク本体（実機ではグローバル名前空間 Dew.Core）。NativeDamageShakeIdlePerf の
     // Prepare が探す部位（OnClientTakeDamage・入れ子の Ad_DamageShake）と Prefix が読む公開

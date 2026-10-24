@@ -171,6 +171,7 @@ namespace SodRpg.Mod
             nativeGemResponsibilityHitCache = true,
             nativeMusicSourceIdle = true,
             nativeTransitionIdle = true,
+            nativeMidJoinLoadoutIdle = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
         // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が読む設定。既定値は本物と同じ。
