@@ -39,6 +39,7 @@ namespace SodRpg.Mod
             RegisterBountyCounts(actor);
             RegisterRoomOmens(actor);
             RegisterAutocastPressureCapability(actor);
+            RegisterSkillState(actor);
         }
 
         private void UnregisterHello(Actor actor)
@@ -50,6 +51,7 @@ namespace SodRpg.Mod
             UnregisterBountyCounts(actor);
             UnregisterRoomOmens(actor);
             UnregisterAutocastPressureCapability(actor);
+            UnregisterSkillState(actor);
         }
 
         private void ResetHello()

@@ -7,32 +7,17 @@ using Xunit;
 namespace Issue73.Native.Tests
 {
     /// <summary>
-    /// （#835）変わっていないチャージ数の全員への再送（RpcSetCharge）を省く
-    /// NativeChargeRpcIdlePerf の Prefix の検証。境界（NativeBoundary.cs）の
-    /// AbilityTrigger.currentCharges と Mirror.NetworkServer.active をテストから
-    /// 書き換えて、省く・送るの判定を動かす: (a) 同じ値の再送は2回目を省く、
-    /// (b) 値が変わったら送る、(c) 値が戻ったら（2→3→2）毎回送る、
-    /// (d) チャージ配列が別のインスタンスに差し替わったら同じ値でも送る
-    /// （Dew のプール再利用で OnStartServer が割り直す新しい命）、
-    /// (e) サーバでなければ常に送る、(f) 設定が無効なら常に送る、
-    /// (g) configIndex が範囲外か currentCharges が null なら常に送る、
-    /// (h) 未送信の目印は実値と衝突しない（最初に送る値が -1 でも
-    /// int.MinValue でも、初回の送信を省かない）、
-    /// (i) 設定を ON→OFF→ON と切り替えても（#1023）、ON に戻した直後の
-    /// 送信を古い記録だけでは省かない（3回目も送り、以後の同値は省く）。
+    /// 同値のチャージも本体へ戻す。送信記録だけではゲストへの到着を証明できず、
+    /// 復旧用の再送もこのメソッドを通るため、省略しない。
     /// </summary>
     public sealed class ChargeRpcIdlePerfTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-        // Prefix は静的な欄と NetworkServer.active・設定を読むため、毎テストで整えて
-        // Dispose で境界の既定（未接続・設定あり）へ戻す。最後に送った値の記録は
-        // ConditionalWeakTable がトリガー（毎テストで新しいインスタンス）ごとに持つため、
-        // テスト間で持ち越すものはない。
+        // 設定とサーバ状態はテストごとに戻す。
         public ChargeRpcIdlePerfTests()
         {
             var type = typeof(NativeChargeRpcIdlePerf);
-            type.GetField("_disabled", Hidden).SetValue(null, false);
             type.GetField("_warned", Hidden).SetValue(null, false);
             NativePerfOptions.ChargeRpcIdle = true;
             NetworkServer.active = true;
@@ -51,13 +36,13 @@ namespace Issue73.Native.Tests
         private static AbilityTrigger TriggerWithCharges(params int[] charges)
             => new AbilityTrigger { currentCharges = charges };
 
-        // (a) 同じ値を2回送ると、2回目の再送を省く。
+        // (a) 同じ値の2回目も本体へ渡す。
         [Fact]
-        public void ARepeatedChargeSkipsTheSecondBroadcast()
+        public void ARepeatedChargeKeepsTheSecondBroadcast()
         {
             var trigger = TriggerWithCharges(0, 0);
             Assert.True(Send(trigger, 0, 2));
-            Assert.False(Send(trigger, 0, 2));
+            Assert.True(Send(trigger, 0, 2));
         }
 
         // (b) 値が変わったら、そのたびに送る。
@@ -81,16 +66,16 @@ namespace Issue73.Native.Tests
         }
 
         // (d) currentCharges を別の配列インスタンスに差し替えると、同じ値でも送る。
-        // 差し替え後の記録は作り直すため、その後の同じ値の再送は再び省く。
+        // 差し替え後の同じ値も、本体へ渡す。
         [Fact]
         public void AFreshChargeArrayBroadcastsEvenTheSameValue()
         {
             var trigger = TriggerWithCharges(2);
             Assert.True(Send(trigger, 0, 2));
-            Assert.False(Send(trigger, 0, 2));
+            Assert.True(Send(trigger, 0, 2));
             trigger.currentCharges = new[] { 2 };
             Assert.True(Send(trigger, 0, 2));
-            Assert.False(Send(trigger, 0, 2));
+            Assert.True(Send(trigger, 0, 2));
         }
 
         // (e) NetworkServer.active が false なら（クライアント・未接続）、常に送る。
@@ -133,24 +118,19 @@ namespace Issue73.Native.Tests
             Assert.True(Send(trigger, 0, 2));
         }
 
-        // (h) 未送信の目印は null であり実値と衝突しない。最初に送る値が -1 や
-        // int.MinValue でも、目印と紛れて初回の送信を省かない。2回目以降の
-        // 同じ値の再送は今までどおり省く。
+        // (h) 負の値も、その繰り返しも本体へ渡す。
         [Fact]
         public void ANegativeFirstChargeIsNotTreatedAsUnsent()
         {
             var negative = TriggerWithCharges(0);
             Assert.True(Send(negative, 0, -1));
-            Assert.False(Send(negative, 0, -1));
+            Assert.True(Send(negative, 0, -1));
             var extreme = TriggerWithCharges(0);
             Assert.True(Send(extreme, 0, int.MinValue));
-            Assert.False(Send(extreme, 0, int.MinValue));
+            Assert.True(Send(extreme, 0, int.MinValue));
         }
 
-        // (i) 設定を ON→OFF→ON と切り替える（#1023）。OFF 中は常に元の RPC を
-        // 通すが記録が更新されないため、ON に戻した直後の値が OFF より前の古い
-        // 記録と一致すると、参加者への必要な送信が省かれる。3回目の 1 は送られ
-        // なければならず、その後の同値 1 の再送は今までどおり省く。
+        // (i) 設定の ON/OFF にかかわらず同値の再通知を本体へ渡す。
         [Fact]
         public void AReEnabledOptionBroadcastsAfterOnOffOnToggle()
         {
@@ -160,7 +140,7 @@ namespace Issue73.Native.Tests
             Assert.True(Send(trigger, 0, 0));
             NativePerfOptions.ChargeRpcIdle = true;
             Assert.True(Send(trigger, 0, 1));
-            Assert.False(Send(trigger, 0, 1));
+            Assert.True(Send(trigger, 0, 1));
         }
     }
 }

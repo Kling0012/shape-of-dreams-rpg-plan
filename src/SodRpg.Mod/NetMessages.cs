@@ -416,4 +416,50 @@ namespace SodRpg.Mod
         public int version = 1;
         public uint heroNetId;
     }
+
+    [Serializable]
+    public class DreamforgeSkillResyncCapabilityMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public DreamforgeSkillStateReplyMsg[] snapshots;
+    }
+
+    // Used only after the host advertises version 2. Observations never grant cast permission.
+    [Serializable]
+    public class DreamforgeSkillStateRequestMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public uint requestId;
+        public int slot;
+        public bool diagnose;
+        public string reason;
+        public DreamforgeSkillState state;
+    }
+
+    [Serializable]
+    public class DreamforgeSkillStateReplyMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public uint requestId;
+        public int slot;
+        public bool compared, different;
+        public DreamforgeSkillState state;
+        public string diagnostic;
+    }
+
+    [Serializable]
+    public class DreamforgeSkillState
+    {
+        public uint skillNetId, ownerNetId;
+        public int config, abilityIndex, maxCharges;
+        public bool active, configActive, casting, locksKnown, castLock, cooldownLock;
+        public bool abilityLock, validator, reservable;
+        public float mana, manaCost;
+        public int status, blockAbility, blockAbilityCancelable, blockDodge, blockDodgeCancelable;
+        public float[] cooldowns, delays;
+        public int[] charges;
+    }
 }

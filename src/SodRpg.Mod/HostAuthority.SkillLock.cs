@@ -14,6 +14,7 @@ namespace SodRpg.Mod
         private const float SkillResyncMinInterval = 8f;
 
         private Action<DreamforgeSkillResyncMsg, DewPlayer> _onSkillResync;
+        private Action<DreamforgeSkillStateRequestMsg, DewPlayer> _onSkillStateRequest;
         private readonly Dictionary<DewPlayer, float> _skillResyncNext = new Dictionary<DewPlayer, float>();
         private readonly HashSet<DewPlayer> _skillResyncLogged = new HashSet<DewPlayer>();
         private bool _skillResyncUnavailable;
@@ -28,6 +29,8 @@ namespace SodRpg.Mod
             {
                 if (_onSkillResync == null) _onSkillResync = OnSkillResync;
                 actor.CustomRpc_RegisterServerMessageHandler<DreamforgeSkillResyncMsg>(nameof(DreamforgeSkillResyncMsg), _onSkillResync);
+                if (_onSkillStateRequest == null) _onSkillStateRequest = OnSkillStateRequest;
+                actor.CustomRpc_RegisterServerMessageHandler<DreamforgeSkillStateRequestMsg>(nameof(DreamforgeSkillStateRequestMsg), _onSkillStateRequest);
             }
             catch (Exception ex)
             {
@@ -39,6 +42,8 @@ namespace SodRpg.Mod
         {
             if (actor != null && _onSkillResync != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeSkillResyncMsg>(_onSkillResync); } catch (Exception) { }
+            if (actor != null && _onSkillStateRequest != null)
+                try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeSkillStateRequestMsg>(_onSkillStateRequest); } catch (Exception) { }
             _skillResyncActor = null;
             _skillResyncNext.Clear();
             _skillResyncLogged.Clear();
@@ -72,11 +77,68 @@ namespace SodRpg.Mod
                 bool diagnose = _skillResyncLogged.Add(caller);
                 NativeSkillLockRecovery.ResendHero(hero);
                 ResendHeroSkills(hero, diagnose);
+                // The first v1 recovery also advertises support, with host snapshots so a
+                // guest that recovered immediately can still log its correlated result.
+                // Old guests ignore this new response type.
+                try
+                {
+                    var snapshots = new DreamforgeSkillStateReplyMsg[6];
+                    for (int slot = 0; slot < snapshots.Length; slot++)
+                    {
+                        var skill = hero.Skill?.GetSkill((HeroSkillLocation)slot);
+                        snapshots[slot] = new DreamforgeSkillStateReplyMsg
+                        {
+                            heroNetId = hero.netId, slot = slot,
+                            state = NativeSkillLockRecovery.Capture(hero, skill),
+                            diagnostic = NativeSkillLockRecovery.Diagnostic(hero, skill, slot),
+                        };
+                    }
+                    _skillResyncActor?.CustomRpc_SendMessageToClient(caller, new DreamforgeSkillResyncCapabilityMsg
+                    { heroNetId = hero.netId, snapshots = snapshots });
+                }
+                catch (Exception ex) { Log.Warn("Skill lock capability reply failed: " + ex.Message); }
             }
             catch (Exception ex)
             {
                 WarnSkillResyncUnavailable(ex.Message);
             }
+        }
+
+        private void OnSkillStateRequest(DreamforgeSkillStateRequestMsg msg, DewPlayer caller)
+        {
+            if (!NativeSkillLockRecovery.Enabled || _skillResyncUnavailable || msg == null || msg.version != 2
+                || msg.requestId == 0 || msg.slot < 0 || msg.slot >= 6 || caller == null || !caller.isHumanPlayer
+                || !_helloPeers.Contains(caller)) return;
+            var hero = caller.hero;
+            if (hero == null || !hero.isActive || !hero.isServer || hero.netId != msg.heroNetId || hero.Skill == null) return;
+            float now = Time.unscaledTime;
+            if (_skillResyncNext.TryGetValue(caller, out float next) && now < next) return;
+            if (!_skillResyncNext.ContainsKey(caller) && _skillResyncNext.Count >= 32) return;
+            _skillResyncNext[caller] = now + SkillResyncMinInterval;
+            try
+            {
+                var skill = hero.Skill.GetSkill((HeroSkillLocation)msg.slot);
+                DreamforgeSkillState state = null;
+                bool different = true;
+                string diagnostic = null;
+                // Diagnostic shape failures must not prevent authority resends.
+                try
+                {
+                    state = NativeSkillLockRecovery.Capture(hero, skill);
+                    different = NativeSkillLockRecovery.Different(msg.state, state);
+                    if (msg.diagnose) diagnostic = NativeSkillLockRecovery.Diagnostic(hero, skill, msg.slot);
+                }
+                catch (Exception ex) { diagnostic = "unavailable: " + ex.Message; }
+                // Also refresh equal snapshots: UI references and local input are not represented by arrays.
+                NativeSkillLockRecovery.ResendHero(hero);
+                ResendHeroSkills(hero, false);
+                _skillResyncActor?.CustomRpc_SendMessageToClient(caller, new DreamforgeSkillStateReplyMsg
+                {
+                    heroNetId = hero.netId, requestId = msg.requestId, slot = msg.slot,
+                    compared = state != null && msg.state != null, different = different, state = state, diagnostic = diagnostic,
+                });
+            }
+            catch (Exception ex) { Log.Warn("Skill lock state request failed: " + ex.Message); }
         }
 
         private static void ResendHeroSkills(Hero hero, bool diagnose)

@@ -130,6 +130,12 @@ namespace SodRpg.Mod
         // NativeSkillLockRecovery が FieldRef で解決する本体の私有字段。
         public readonly Mirror.SyncDictionary<int, SyncedNetworkBehaviour> _synedAbilities
             = new Mirror.SyncDictionary<int, SyncedNetworkBehaviour>();
+        public bool IsAbilityCastLocked(int index)
+        {
+            if (index < 0) return false;
+            if (index > 64) throw new InvalidOperationException("Ability index out of bounds");
+            return (Network_abilityCastLockBitmap & (1L << index)) != 0;
+        }
         public void SetDirty() { }
 
         // （#1174）本体 EntityAbility.OnStartClient のうち NativeEntityAbilitySubscribeDedup が

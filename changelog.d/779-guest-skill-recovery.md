@@ -1,0 +1,2 @@
+### 不具合の修正 / Bug fixes
+- 協力プレイのゲストでスキルが使えないまま残る場合に備え、復旧用のチャージ再送まで省いていた処理を直しました。必殺技の充填待ちもホストへ照合し、3回の確認後も間隔を空けて再送を続けます。対応するホストとゲストでは、ホストの値と回復の結果をログに残します。 / Fixed charge deduplication suppressing recovery resends for co-op guests whose skills remain unusable. Recovery now checks ultimate charge waits with the host and continues retrying at longer intervals after three attempts. Updated hosts and guests log the host state and the observed recovery result.
