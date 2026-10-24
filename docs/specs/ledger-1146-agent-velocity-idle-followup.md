@@ -31,3 +31,19 @@
 - velocity の setter に値の格納以外の副作用がないか（現行実装の前提）。
 
 前提が確認できたら改善案を実装する。確認できるまでは、いまの実装（毎フレーム getter で読み、等しいときだけ setter を省く）を維持する。
+
+## null・破棄済みエージェントと機能の無効化
+
+2026-10-24 の修正ラウンドで、別の F1 として getter の例外後の動作が指摘された。`SetVelocity` は例外の種類を問わず static の `_disabled` を true にする。null または破棄済みの `NavMeshAgent` の getter が1回例外を出すだけで、すべての実体でゲーム終了まで最適化が無効になる。
+
+catch のあとも元の `agent.velocity = value` は実行される。null・破棄済みエージェントでは setter も本体と同じように例外を出すため、移動結果は変わらない。失われるのは以後の軽量化の効果である。裁定は「影響は性能だけで、マージを妨げない」であり、CRITICAL / HIGH だけを修正する今回の指定に従って実装とテストは変更せず、未記録だった改善案をここに追加した。
+
+改善案は null・破棄済みエージェントを getter で読まず、元の setter にそのまま渡すことである。この経路では `_disabled` と `_warned` を変更せず、setter の例外を呼び出し元へ返す。使用可能なエージェントの予期しない getter 例外では、現行どおりこの機能だけを無効化して警告を1回出し、元の書き込みへ戻す。
+
+採用時には次の動作を確かめる。
+
+- null・破棄済みエージェントへの書き込みが本体と同じ例外を返しても、続く正常な実体では同じ速度の再書き込みを省けること。
+- null・破棄済みエージェントへの書き込みを成功扱いにせず、元の setter の例外を握りつぶさないこと。
+- 使用可能なエージェントの予期しない getter 例外では、従来の機能単位の無効化と書き込みへの復帰を維持すること。
+
+現行の既存テスト `GetterExceptionDisablesAndAlwaysWrites` は使用可能なエージェントの getter に `InvalidOperationException` を起こし、回復後も毎回書くことと警告が1回であることを確かめている。null・破棄済みエージェントを区別する検証ではない。今回、裁定と同じ `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests --filter FullyQualifiedName~AgentVelocityIdle` を実行し、このテストを含む6件の合格を確認した。
