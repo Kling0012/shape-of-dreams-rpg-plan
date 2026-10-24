@@ -276,6 +276,9 @@ namespace SodRpg.Mod
         [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
         public bool nativeRoomStartDependency = true;
 
+        [LabelText("Skip the whole-scene player-pathable-point scan on room load for guests, whose game never reads the list (guests) /\n部屋読み込み時に参加者側で走るシーン全体の歩行可能地点の走査を省く（参加者のゲームではこの一覧を読まない）")]
+        public bool nativeRoomPlayerPathableScan = true;
+
         [LabelText("Allocate no closure for the per-message chat mute check / チャット受信ごとのミュート判定でクロージャを確保しない")]
         public bool nativeChatMuteCheckAlloc = true;
 

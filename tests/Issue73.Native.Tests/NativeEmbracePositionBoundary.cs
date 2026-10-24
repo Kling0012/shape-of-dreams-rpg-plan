@@ -192,6 +192,7 @@ namespace SodRpg.Mod
             nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
             nativeRoomStartDependency = true,
+            nativeRoomPlayerPathableScan = true,
             nativeChatMuteCheckAlloc = true,
             nativeProxyPositionIdle = true,
             nativePickupIdle = true,
