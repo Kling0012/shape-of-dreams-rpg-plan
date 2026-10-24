@@ -348,6 +348,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse the chaos-shrine bonus tooltip text while its values are unchanged (host and guests) /\n混沌の神殿の加護のツールチップ文を、値が変わらない間は使い回す（ホストと参加者）")]
         public bool nativeChaosStatBonusTooltipCache = true;
 
+        [LabelText("Keep the entity ability-changed callback to one subscription when a pooled entity is reused (host and guests) /\nプールで再利用されたエンティティで、能力変化コールバックの購読が重複しないようにする（ホストと参加者）")]
+        public bool nativeEntityAbilitySubscribeDedup = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
