@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.70 — Lighter Chaos Shrine blessing tooltip（2026-10-25）
+
+この版では、混沌の神殿の加護の説明文を表示しているときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from showing the Chaos Shrine blessing's tooltip.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 混沌の神殿の加護の説明文は、ツールチップを表示している間、1秒に4回作り直されていました。内容が同じでも、毎回すべての文を一から組み立てていました。今は、加護の値と言語が変わらない間は、前に作った説明文を使い回します。加護を選び直したときや言語を切り替えたときは、これまでどおり新しい説明文を作ります。ホストと参加者のどちらでも、ツールチップを表示している間のゲームが少し軽くなる見込みですが、表示中だけの処理なので効果は小さく、実際の効果もまだ測っていません。説明文の内容と見た目は変わりません。 / While its tooltip is shown, the Chaos Shrine blessing's description was rebuilt four times per second. Even when nothing had changed, the whole text was assembled from scratch each time. The game now reuses the description it already built as long as the blessing's values and the language stay the same. Choosing a new blessing or switching languages still builds a fresh description as before. Both the host's and co-op players' games should run a little lighter while the tooltip is shown, though this only happens while it is displayed, so the effect is small and has not been measured yet. The description's content and appearance are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.69 — Lighter training stack updates and room loading for co-op players（2026-10-25）
 
 この版では、協力プレイの参加者側で、鍛錬スタックの更新を受け取るときと部屋を読み込むときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from co-op players receiving training stack updates and loading rooms.
