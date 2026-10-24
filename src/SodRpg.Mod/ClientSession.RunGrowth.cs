@@ -10,6 +10,7 @@ namespace SodRpg.Mod
     {
         private Action<DreamforgeRunGrowthMsg> _onRunGrowth;
         private readonly Dictionary<string, int> _growthStacks = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> _growthParseScratch = new Dictionary<string, int>(StringComparer.Ordinal); // OnRunGrowth の解析の置き場。changed のときしか届かない解析で毎回確保しないために使い回す。
         private string _growthRunId;
         private string _growthRawStacks; // 最後に適用した stacks の生の文字列。同じ内容の再送の解析を省く。
 
@@ -48,21 +49,30 @@ namespace SodRpg.Mod
             // RunGrowth.IsRemovedStar（起動時に固定の一覧）と Gimmicks.ValidStarId（文字種と長さの判定だけ）は
             // 実行中に結果が変わらないため、同じ文字列を後から解析し直しても同じ結果になる。
             if (msg.runId == _growthRunId && string.Equals(msg.stacks, _growthRawStacks, StringComparison.Ordinal)) return;
-            var parsed = new Dictionary<string, int>(StringComparer.Ordinal);
-            if (!string.IsNullOrEmpty(msg.stacks))
-                foreach (string part in msg.stacks.Split(','))
+            // 解析は changed のときだけ届く（ホストが0.5秒に1回以下）。Split や Substring で毎回確保しないため、
+            // 生の文字列を位置で切りながら、結果の辞書も前回のものを使い回す。末尾のコンマは Split と同じく空の要素になる。
+            var parsed = _growthParseScratch;
+            parsed.Clear();
+            string stacks = msg.stacks;
+            if (!string.IsNullOrEmpty(stacks))
+                for (int start = 0; start <= stacks.Length;)
                 {
+                    int comma = stacks.IndexOf(',', start);
+                    int end = comma >= 0 ? comma : stacks.Length;
+                    var part = stacks.AsSpan(start, end - start);
+                    start = end + 1;
                     int eq = part.IndexOf('=');
-                    string id = eq > 0 ? part.Substring(0, eq) : null;
+                    string id = eq > 0 ? part.Slice(0, eq).ToString() : null;
                     if (id != null && RunGrowth.IsRemovedStar(id)) continue;
                     if (eq <= 0 || !Gimmicks.ValidStarId(id)
-                        || !int.TryParse(part.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int stacks)
-                        || stacks < 0)
+                        || !int.TryParse(part.Slice(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int count)
+                        || count < 0)
                     {
                         Log.Warn("Client: rejected malformed run growth payload.");
                         return;
                     }
-                    parsed[id] = stacks;
+                    parsed[id] = count;
+                    if (comma < 0) break;
                 }
             bool changed = _growthRunId != msg.runId || parsed.Count != _growthStacks.Count;
             if (!changed)
