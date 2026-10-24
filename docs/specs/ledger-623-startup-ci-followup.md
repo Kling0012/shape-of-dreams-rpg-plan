@@ -15,7 +15,7 @@ PR 本文には、マージ前の CI で `InfinityLobbyStartTests.GenerationAdds
 既存コードでは次の順で Infinity の状態を接続する。
 
 1. `tests/SodRpg.Mod.Startup.Tests/InfinityServiceRoomTests.cs` の `StartServiceGraph` が `StartRevealGraph` を呼ぶ。
-2. `InfinityRevealTests.cs` の `StartRevealGraph` が `zone.GenerateWorldAuto()` を呼ぶ。
+2. `tests/SodRpg.Mod.Startup.Tests/InfinityRevealTests.cs` の `StartRevealGraph` が `zone.GenerateWorldAuto()` を呼ぶ。
 3. `src/SodRpg.Mod/InfinityMode.cs` の Harmony Postfix `InfinityGenerated.Postfix` が条件を満たすと `InfinityMode.OnGenerated` を呼ぶ。
 4. `OnGenerated` が `AttachInitialToHostRun` を呼び、ホストの Run に Infinity の初期状態を接続する。
 5. `StartServiceGraph` が戻り値の `session.Profile.Run.Infinity.Interval` を設定する。
