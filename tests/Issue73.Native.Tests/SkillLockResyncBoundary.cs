@@ -29,6 +29,15 @@ namespace Mirror
     // この形で、NativeSkillLockRecovery.ResendHero が TryGetValue とインデクサで読み書きする。
     internal class SyncDictionary<TKey, TValue>
     {
+        // （#1174）本体 Mirror SyncIDictionary が Callback で購読者へ渡す3つ組（操作・鍵・値）。
+        // 本体の列挙子はこれより多いが、NativeEntityAbilitySubscribeDedup の Prefix は
+        // 購読の Target と Method だけを見るため、シグネチャが合っていれば十分。
+        internal enum Operation { OP_ADD, OP_CLEAR, OP_REMOVE, OP_SET }
+
+        // （#1174）本体の Callback（event の裏欄）に相当する購読欄。Prefix はこの欄を
+        // 反射で読み書きするため、同じ名前のデリゲート欄として境界に置く。
+        public Action<Operation, TKey, TValue> Callback;
+
         private readonly Dictionary<TKey, TValue> items = new Dictionary<TKey, TValue>();
 
         public TValue this[TKey key] { get => items[key]; set => items[key] = value; }
@@ -112,6 +121,26 @@ namespace SodRpg.Mod
         public readonly Mirror.SyncDictionary<int, SyncedNetworkBehaviour> _synedAbilities
             = new Mirror.SyncDictionary<int, SyncedNetworkBehaviour>();
         public void SetDirty() { }
+
+        // （#1174）本体 EntityAbility.OnStartClient のうち NativeEntityAbilitySubscribeDedup が
+        // 触る範囲の転写。本体は NetworkBehaviour.OnStartClient の上書きで、初期化のあと
+        // _synedAbilities.Callback += OnAbilityChanged と再購読するだけ（外す処理は本体の
+        // どこにもない。実 DLL r1.4.1.2 の逆コンパイルで確認済み）。境界では継承なしの
+        // 同じ名前・同じ引数（無し）のメソッドとして置く。Prepare と Prefix はこの形で解決する。
+        public void OnStartClient()
+        {
+            _synedAbilities.Callback += OnAbilityChanged;
+        }
+
+        // 本体は渡された3つ組を ClientEvent_OnAbilityAdded / Removed と
+        // OnLocalHeroAbilityChanged へ配る。境界では呼ばれた回数と引数の観測だけを記録する。
+        private void OnAbilityChanged(Mirror.SyncDictionary<int, SyncedNetworkBehaviour>.Operation op, int key, SyncedNetworkBehaviour value)
+        {
+            AbilityChangedCalls.Add(op + " " + key);
+        }
+
+        // テストが変化1つあたりの配信回数を数えるための観測欄。
+        public readonly List<string> AbilityChangedCalls = new List<string>();
     }
 
     internal partial class EntityControl
