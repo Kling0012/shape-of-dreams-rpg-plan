@@ -58,6 +58,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
+            NativePerfOptions.RoomPlayerPathableScan = config.nativeRoomPlayerPathableScan;
             NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
             NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
             NativePerfOptions.PickupIdle = config.nativePickupIdle;
@@ -126,6 +127,7 @@ namespace SodRpg.Mod
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
         internal static bool RoomStartDependency = true;
+        internal static bool RoomPlayerPathableScan = true;
         internal static bool ChatMuteCheckAlloc = true;
         internal static bool ProxyPositionIdle = true;
         internal static bool PickupIdle = true;
@@ -5324,6 +5326,151 @@ namespace SodRpg.Mod
             if (sorted.Count < count)
                 throw new Exception("Circular dependency detected.");
             return sorted.ToArray();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomPlayerPathableScanPerf
+    {
+        // Room.OnStartClient runs on every room load — on the host when the room spawns and
+        // on every guest from the room's spawn. Its loop fills Room.playerPathablePoints by
+        // scanning the whole scene: Dew.FindInterfacesOfType<IPlayerPathablePoint>(true) is
+        // Object.FindObjectsOfType<Transform>(true) — every Transform, active or not — plus
+        // a GetComponents interface lookup on each Transform, then every hit adds a
+        // GetComponentInParent<Actor> walk and a NavMesh.SamplePosition
+        // (Dew.GetValidAgentPosition). The only readers of the list in the whole game
+        // (decompiled Dew.Core 2026-10-25) are ActorManager's stuck checks —
+        // DoStuckCheckLogicUpdate returns before reaching them unless NetworkServer.active —
+        // and no MOD code reads the list either, so on a pure guest the scan, the component
+        // walks and the navmesh sampling build data nothing ever reads, once per room.
+        //
+        // The transpiler swaps only that one FindInterfacesOfType call for the shim below;
+        // the foreach, its GetComponentInParent body and the base wiring
+        // (DewNetworkBehaviour.OnStartClient: OnStart, the late-start queue, the start
+        // event) stay native and run unchanged — on a guest they iterate an empty array.
+        // The shim keeps the native scan running whenever NetworkServer.active (host,
+        // including host-as-client) or the option is off, passing the call site's argument
+        // through. Patching the closed generic directly is not an option: Mono shares one
+        // JITted body across reference-type instantiations, so a detour there would also
+        // intercept the game's IBanCampsNearby / IPrewarm* scans, which the host does use.
+        // The nativeRoomPlayerPathableScan option turns the skip off; a missing native
+        // method, a missing IPlayerPathablePoint, or a Room.OnStartClient that no longer
+        // holds exactly one such call disables the patch with one warning. The name-only
+        // lookups stay: the mod never references these native members, and TypeByName
+        // resolves the harness stand-ins in tests exactly like the real classes in the
+        // game (NativeBossSoulShrineScanPerf does the same).
+        private static MethodBase _target;
+        private static Type _pathablePointType;
+        private static MethodInfo _closedScan;
+        private static bool _warned;
+
+        internal static bool TryPrepare(string scanTypeName, string scanMethodName, string roomTypeName, string pointTypeName)
+        {
+            try
+            {
+                var scanType = AccessTools.TypeByName(scanTypeName);
+                if (scanType == null)
+                    throw new MissingMemberException(scanTypeName + " unavailable");
+                var definition = AccessTools.DeclaredMethod(scanType, scanMethodName, new[] { typeof(bool) });
+                if (definition == null || !definition.IsGenericMethodDefinition || !definition.IsStatic
+                    || definition.GetGenericArguments().Length != 1)
+                    throw new MissingMethodException(scanTypeName + "." + scanMethodName + "<T>(bool)");
+                _pathablePointType = AccessTools.TypeByName(pointTypeName);
+                if (_pathablePointType == null || !_pathablePointType.IsInterface)
+                    throw new MissingMemberException(pointTypeName + " unavailable");
+                var roomType = AccessTools.TypeByName(roomTypeName);
+                var onStartClient = roomType == null ? null : AccessTools.DeclaredMethod(roomType, "OnStartClient");
+                if (onStartClient == null || onStartClient.GetMethodBody() == null)
+                    throw new MissingMethodException(roomTypeName + ".OnStartClient");
+                _closedScan = definition.MakeGenericMethod(_pathablePointType);
+                _target = onStartClient;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan", ex.Message);
+                return false;
+            }
+        }
+
+        private static bool Prepare() => TryPrepare("Dew", "FindInterfacesOfType", "Room", "IPlayerPathablePoint");
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int sites = 0;
+            int site = -1;
+            Type pointType = _pathablePointType;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo m) || m.Name != "FindInterfacesOfType"
+                    || !m.IsGenericMethod || m.IsGenericMethodDefinition
+                    || m.GetGenericArguments().Length != 1
+                    || m.GetGenericArguments()[0] != pointType) continue;
+                var parameters = m.GetParameters();
+                if (parameters.Length != 1 || parameters[0].ParameterType != typeof(bool)
+                    || m.ReturnType != pointType.MakeArrayType()) continue;
+                sites++;
+                site = i;
+            }
+            // The native body holds exactly one IPlayerPathablePoint scan call; any other
+            // count means the body changed shape or this transpiler already ran.
+            if (sites != 1 || site < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan",
+                    "native room start scan callsite changed or already patched");
+                return code;
+            }
+            code[site].operand = AccessTools.Method(typeof(NativeRoomPlayerPathableScanPerf), nameof(PathableScan))
+                .MakeGenericMethod(_pathablePointType);
+            return code;
+        }
+
+        // Same signature as the swapped call (bool in, point-type array out), so the IL
+        // around the site stays valid. Only a pure guest with the option on gets the
+        // empty array; the host (and the option-off path) always reaches the native scan
+        // through a delegate bound from Prepare's closed generic. The direct delegate
+        // call is deliberate: a throw from the scan itself propagates un-wrapped (no
+        // MethodInfo.Invoke / TargetInvocationException) exactly like the unpatched body,
+        // and nothing degrades — the next room runs the same native scan again instead of
+        // the host silently producing empty playerPathablePoints from then on.
+        private static T[] PathableScan<T>(bool includeInactive) where T : class
+        {
+            if (NativePerfOptions.RoomPlayerPathableScan && !Mirror.NetworkServer.active)
+                return Array.Empty<T>();
+            var scan = ClosedScan<T>.Scan;
+            if (scan == null)
+                scan = BindScan<T>();
+            return scan(includeInactive);
+        }
+
+        // The bound native scan per point-type instantiation, filled on the first room
+        // load (Prepare has resolved _closedScan by then). Held per-T so the shim's call
+        // stays a direct delegate invoke with no per-room Invoke boxing.
+        private static class ClosedScan<T> where T : class
+        {
+            internal static Func<bool, T[]> Scan;
+        }
+
+        private static Func<bool, T[]> BindScan<T>() where T : class
+        {
+            MethodInfo original = _closedScan
+                ?? throw new MissingMemberException("native FindInterfacesOfType unavailable");
+            try
+            {
+                return ClosedScan<T>.Scan = (Func<bool, T[]>)Delegate.CreateDelegate(typeof(Func<bool, T[]>), original);
+            }
+            catch (Exception ex)
+            {
+                // Binding has never failed against the game, but if it ever does the host
+                // keeps the native scan through raw reflection rather than an empty list.
+                // original is non-null here (checked above), so the scan itself is always
+                // reachable and a throw from it propagates, same as the unpatched body.
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan", "binding the native scan failed: " + ex.Message);
+                return ClosedScan<T>.Scan = includeInactive => (T[])original.Invoke(null, new object[] { includeInactive });
+            }
         }
     }
 
