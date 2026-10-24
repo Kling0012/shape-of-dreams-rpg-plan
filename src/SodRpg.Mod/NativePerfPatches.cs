@@ -7144,11 +7144,16 @@ namespace SodRpg.Mod
         // 同じ値を同じ順で書く。曲線の評価・各コンポーネントへの書き込み・localScale・
         // FxPlayNew の呼び出しは本体と同じ式と順序なので、見た目も音も変わらない。
         //
-        // Prefix が本体の丸ごとを置き換えるため、Prepare は本体 IL の形（Evaluate 3回・
-        // 子走査 2回・pitch/volume/amplitude への書き込み各1回・localScale 1回・
-        // FxPlayNew(GameObject, Entity) 1回）を数え、形が変わっていればこの修正だけを
-        // 外して警告する。本体が数えていない種類の文を追加した場合は検出できないため、
-        // その場合はゲーム更新のたびにこの指紋を見直すこと。
+        // Prefix が本体の丸ごとを置き換えるため、Prepare は本体 IL の形を検証する。単純な
+        // 出現回数ではなく値の流れまで見て、曲線3つが strength だけで評価されてそれぞれの
+        // ローカルに入り、pitchMultiplier・volumeMultiplier・amplitude への書き込みと
+        // localScale（Vector3.one * volumeCurve の結果）と FxPlayNew(fxHit, e) がその
+        // ローカルと fxHit フィールドから作られていること、子走査2回が bool を取らない
+        // 2引数の GetComponentsInChildrenNonAlloc（includeInactive=false の意味）で
+        // DewAudioSource・FxCameraShake それぞれに fxHit を渡して呼ばれていることを
+        // 確かめる。形が変わっていればこの修正だけを外して警告する。本体が数えていない
+        // 種類の文を追加した場合は検出できないため、その場合はゲーム更新のたびに
+        // この指紋を見直すこと。
         private static GameObject _cachedFx;
         private static DewAudioSource[] _cachedAudio;
         private static FxCameraShake[] _cachedShake;
@@ -7163,26 +7168,7 @@ namespace SodRpg.Mod
             if (_target == null) return false;
             try
             {
-                int evaluates = 0, scans = 0, plays = 0, scales = 0, pitches = 0, volumes = 0, amplitudes = 0;
-                foreach (var ins in PatchProcessor.GetOriginalInstructions(_target))
-                {
-                    switch (ins.operand)
-                    {
-                        case MethodInfo m:
-                            if (m.Name == "Evaluate" && m.DeclaringType == typeof(AnimationCurve)) evaluates++;
-                            else if (m.Name == "GetComponentsInChildrenNonAlloc") scans++;
-                            else if (m.Name == "FxPlayNew" && m.GetParameters().Length == 2) plays++;
-                            else if (m.Name == "set_localScale") scales++;
-                            break;
-                        case FieldInfo f:
-                            if (f.Name == "pitchMultiplier") pitches++;
-                            else if (f.Name == "volumeMultiplier") volumes++;
-                            else if (f.Name == "amplitude") amplitudes++;
-                            break;
-                    }
-                }
-                if (evaluates == 3 && scans == 2 && plays == 1 && scales == 1
-                    && pitches == 1 && volumes == 1 && amplitudes == 1) return true;
+                if (ValidateShape(PatchProcessor.GetOriginalInstructions(_target))) return true;
                 NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", "native body shape changed");
                 return false;
             }
@@ -7192,6 +7178,145 @@ namespace SodRpg.Mod
                 return false;
             }
         }
+
+        // 本体 r1.4.1.2 の UserCode_RpcPlayHit__Entity__Single の IL と同じ形かどうか。
+        // 値の流れ（どの曲線の評価結果がどの書き込みと localScale に入るか、走査と再生の
+        // 受け手が fxHit フィールドか）まで確かめるため、回数の一致に加えて命令の並びを見る。
+        // GemResponsibilityHitPerfTests が受理と拒否の見本で直接呼ぶため internal。
+        internal static bool ValidateShape(IList<CodeInstruction> code)
+        {
+            var fxHit = AccessTools.Field(typeof(Gem_C_Responsibility), nameof(Gem_C_Responsibility.fxHit));
+            var evaluate = AccessTools.Method(typeof(AnimationCurve), nameof(AnimationCurve.Evaluate),
+                new[] { typeof(float) });
+            var one = AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.one));
+            var multiply = AccessTools.Method(typeof(Vector3), "op_Multiply",
+                new[] { typeof(Vector3), typeof(float) });
+            var localScale = AccessTools.PropertySetter(typeof(Transform), nameof(Transform.localScale));
+            int evaluates = 0, audioScans = 0, shakeScans = 0, plays = 0, scales = 0, multiplies = 0,
+                pitches = 0, volumes = 0, amplitudes = 0;
+            int pitchLocal = -1, volumeLocal = -1, amplitudeLocal = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                CodeInstruction ins = code[i];
+                if (ins.Calls(evaluate)) evaluates++;
+                if (ins.opcode == OpCodes.Ldfld && ins.operand is FieldInfo load
+                    && load.DeclaringType == typeof(Gem_C_Responsibility)
+                    && (load.Name == nameof(Gem_C_Responsibility.pitchCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.volumeCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.shakeAmpCurve)))
+                {
+                    // 各曲線は strength（第2引数）だけを引数に評価され、結果はローカルへ入る。
+                    if (i + 3 >= code.Count || code[i + 1].opcode != OpCodes.Ldarg_2
+                        || !code[i + 2].Calls(evaluate) || !StoresLocal(code[i + 3], out int slot))
+                        return false;
+                    if (load.Name == nameof(Gem_C_Responsibility.pitchCurve))
+                    {
+                        if (pitchLocal >= 0) return false;
+                        pitchLocal = slot;
+                    }
+                    else if (load.Name == nameof(Gem_C_Responsibility.volumeCurve))
+                    {
+                        if (volumeLocal >= 0) return false;
+                        volumeLocal = slot;
+                    }
+                    else
+                    {
+                        if (amplitudeLocal >= 0) return false;
+                        amplitudeLocal = slot;
+                    }
+                }
+                else if (ins.opcode == OpCodes.Stfld && ins.operand is FieldInfo write)
+                {
+                    // 各フィールドへは対応する曲線の評価結果が渡される（型も合わせて確かめる）。
+                    if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.pitchMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], pitchLocal)) return false;
+                        pitches++;
+                    }
+                    else if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.volumeMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], volumeLocal)) return false;
+                        volumes++;
+                    }
+                    else if (write.DeclaringType == typeof(FxCameraShake)
+                        && write.Name == nameof(FxCameraShake.amplitude))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], amplitudeLocal)) return false;
+                        amplitudes++;
+                    }
+                }
+                else if (ins.operand is MethodInfo called)
+                {
+                    if (called.Name == "GetComponentsInChildrenNonAlloc")
+                    {
+                        // 2引数（走査対象 + out の扱い）＝ includeInactive を渡さない形。
+                        // bool を取る3引数のほうに切り替わったら本体の意味が変わる。
+                        if (!called.IsGenericMethod || called.GetParameters().Length != 2) return false;
+                        Type scanned = called.GetGenericArguments()[0];
+                        if (scanned == typeof(DewAudioSource)) audioScans++;
+                        else if (scanned == typeof(FxCameraShake)) shakeScans++;
+                        else return false;
+                        // 走査の対象は fxHit フィールド（ldarg.0 / ldfld fxHit / ldloca / call）。
+                        if (i < 3 || !IsLdloca(code[i - 1])
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit)
+                            || code[i - 3].opcode != OpCodes.Ldarg_0) return false;
+                    }
+                    else if (called.Name == "FxPlayNew" && called.GetParameters().Length == 2)
+                    {
+                        plays++;
+                        // FxPlayNew(fxHit, e)。第2引数が strength に替わっていても弾く。
+                        if (i < 2 || code[i - 1].opcode != OpCodes.Ldarg_1
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit))
+                            return false;
+                    }
+                    else if (ins.Calls(multiply))
+                    {
+                        multiplies++;
+                        // localScale へは Vector3.one * <volumeCurve の結果> を書く。
+                        if (i < 2 || i + 1 >= code.Count || !code[i - 2].Calls(one)
+                            || !LoadsLocal(code[i - 1], volumeLocal) || !code[i + 1].Calls(localScale))
+                            return false;
+                    }
+                    else if (ins.Calls(localScale)) scales++;
+                }
+            }
+            return evaluates == 3 && audioScans == 1 && shakeScans == 1 && plays == 1 && scales == 1
+                && multiplies == 1 && pitches == 1 && volumes == 1 && amplitudes == 1
+                && pitchLocal >= 0 && volumeLocal >= 0 && amplitudeLocal >= 0
+                && pitchLocal != volumeLocal && pitchLocal != amplitudeLocal && volumeLocal != amplitudeLocal;
+        }
+
+        private static bool StoresLocal(CodeInstruction ins, out int slot)
+        {
+            slot = -1;
+            if (ins.opcode != OpCodes.Stloc_0 && ins.opcode != OpCodes.Stloc_1
+                && ins.opcode != OpCodes.Stloc_2 && ins.opcode != OpCodes.Stloc_3
+                && ins.opcode != OpCodes.Stloc_S && ins.opcode != OpCodes.Stloc) return false;
+            slot = LocalIndex(ins);
+            return slot >= 0;
+        }
+
+        private static bool LoadsLocal(CodeInstruction ins, int slot)
+            => slot >= 0
+                && (ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Ldloc_1
+                    || ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Ldloc_3
+                    || ins.opcode == OpCodes.Ldloc_S || ins.opcode == OpCodes.Ldloc)
+                && LocalIndex(ins) == slot;
+
+        private static bool IsLdloca(CodeInstruction ins)
+            => ins.opcode == OpCodes.Ldloca_S || ins.opcode == OpCodes.Ldloca;
+
+        // 短い形式（ldloc.0 など）は operand が無く、長い形式は LocalBuilder（LocalVariableInfo
+        // の派生）で届く。どちらも同じローカルの番号へ読み替える。
+        private static int LocalIndex(CodeInstruction ins)
+            => ins.operand is LocalVariableInfo local ? local.LocalIndex
+                : ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Stloc_0 ? 0
+                : ins.opcode == OpCodes.Ldloc_1 || ins.opcode == OpCodes.Stloc_1 ? 1
+                : ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Stloc_2 ? 2
+                : ins.opcode == OpCodes.Ldloc_3 || ins.opcode == OpCodes.Stloc_3 ? 3
+                : -1;
 
         private static MethodBase TargetMethod() => _target;
 

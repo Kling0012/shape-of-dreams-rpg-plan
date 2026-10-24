@@ -599,15 +599,30 @@ namespace SodRpg.Mod
         public int quality;
     }
     // NativeGemResponsibilityHitPerf（NativePerfPatches.cs）が typeof と Prefix で参照する本体
-    // Gem_C_Responsibility（Dew.Contents。被弾演出 RPC の受け口）の境界。専用のテストは
-    // 作らない方針のため、Prepare の指紋検査が読む受け口メソッドと、Prefix が書き込む
-    // 字段と再生の呼び出しの形だけを置く（実機の基底は Gem だが、境界の Gem は sealed で、
-    // パッチは基底のメンバーを使わないため Actor から派生させる）。
+    // Gem_C_Responsibility（Dew.Contents。被弾演出 RPC の受け口）の境界。Prepare の指紋検査が
+    // 読む受け口メソッドと、Prefix が書き込む字段と再生の呼び出しの形を置く（実機の基底は
+    // Gem だが、境界の Gem は sealed で、パッチは基底のメンバーを使わないため Actor から
+    // 派生させる）。GemResponsibilityHitPerfTests が Prefix を直接呼び、書き込み値と
+    // FxPlayNew の呼び出し引数が曲線の評価結果から意図どおり導かれるかを見るため、
+    // FxPlayNew は引数を記録する。曲線の既定は null 参照を避けるため空の評価（0）。
     internal sealed class Gem_C_Responsibility : Actor
     {
         public GameObject fxHit;
-        public AnimationCurve pitchCurve, volumeCurve, shakeAmpCurve;
-        public GameObject FxPlayNew(GameObject effect, Entity attach) => null;
+        // 実機と同じく fxActivateInit も持つ（拒否の見本が fxHit と同じ型の別字段で
+        // 走査の受け替えを試すのに使う）。
+        public GameObject fxActivateInit;
+        public AnimationCurve pitchCurve = new AnimationCurve(), volumeCurve = new AnimationCurve(),
+            shakeAmpCurve = new AnimationCurve();
+        internal int fxPlayNewCalls;
+        internal GameObject lastPlayedEffect;
+        internal Entity lastPlayedAttach;
+        public GameObject FxPlayNew(GameObject effect, Entity attach)
+        {
+            fxPlayNewCalls++;
+            lastPlayedEffect = effect;
+            lastPlayedAttach = attach;
+            return null;
+        }
         private void UserCode_RpcPlayHit__Entity__Single(Entity e, float strength) { }
     }
     // Prefix が値を書き込む本体のエフェクト構成要素（Dew.Core。実物は MonoBehaviour 派生）。
@@ -620,6 +635,26 @@ namespace SodRpg.Mod
     internal class FxCameraShake : UnityEngine.Component
     {
         public float amplitude = 3f;
+    }
+    // 実機 Dew.Core の GetComponentsNonAllocExtension のうち、この受け口が使う子走査の
+    // 拡張メソッドと同じ引数の形の見本。GemResponsibilityHitPerfTests が指紋検査
+    // （ValidateShape）に渡す IL を組み立てるときに引数の形だけを使う（実行はしない）。
+    // 本体 r1.4.1.2 の受け口は2引数のほう（includeInactive を渡さない＝ false と同じ意味）
+    // を使う。ListReturnHandle<T> は StealthRevealOverlapPerfBoundary.cs の既存の境界を使う。
+    internal static class GetComponentsNonAllocExtension
+    {
+        public static List<T> GetComponentsInChildrenNonAlloc<T>(
+            GameObject gobj, out ListReturnHandle<T> handle)
+        {
+            handle = default;
+            return null;
+        }
+        public static List<T> GetComponentsInChildrenNonAlloc<T>(
+            GameObject gobj, bool includeInactive, out ListReturnHandle<T> handle)
+        {
+            handle = default;
+            return null;
+        }
     }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
