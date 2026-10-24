@@ -83,6 +83,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
             NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
             NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
+            NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
         }
     }
 
@@ -154,6 +155,7 @@ namespace SodRpg.Mod
         internal static bool AgentVelocityIdle = true;
         internal static bool MidJoinLoadoutIdle = true;
         internal static bool ChaosStatBonusTooltipCache = true;
+        internal static bool EntityAbilitySubscribeDedup = true;
     }
 
     internal static class NativePerfPatch
@@ -8563,6 +8565,92 @@ namespace SodRpg.Mod
             cached = Resources.Load<GameObject>(path);
             if (cached != null) _cache = cached;
             return cached;
+        }
+    }
+
+    // EntityAbility.OnStartClient runs again every time the client-side spawn pool hands
+    // back a reused Actor (monsters, bosses, pickups — every pooled entity): the game's
+    // registered despawn handler makes Mirror reset the identity (clientStarted cleared),
+    // so the next spawn payload re-runs OnStartClient on the same component. Its body
+    // re-subscribes _synedAbilities.Callback += OnAbilityChanged and nothing ever
+    // unsubscribes (no OnStopClient override; the pool's identity reset does not touch
+    // sync-object callbacks), so every reuse of that instance adds one more duplicate
+    // handler that lives as long as the instance itself. From then on each ability
+    // add/remove the host syncs mid-run — pedestal skill swaps via HeroSkill.EquipSkill
+    // (an unequip + equip pair), ability removal when the trigger object dies — invokes
+    // OnAbilityChanged once per past reuse, on the guest's receive path and on the host
+    // alike, re-dispatching ClientEvent_OnAbilityAdded / Removed (native StatusEffect
+    // do-ability bookkeeping) and OnLocalHeroAbilityChanged (skill button refresh) the
+    // same number of times, with the invocation list growing for the whole session.
+    // The Prefix drops every subscription of exactly that handler before
+    // the original adds one back, leaving the single subscription a fresh instance has:
+    // each subscriber still sees the same event per operation, in the same order, with
+    // the same values — only the redundant repeats disappear, and handlers added by
+    // anyone else on the same dictionary are untouched. Pure reflection on the Callback
+    // backing field (the mod never names the Mirror dictionary types here), so a native
+    // shape change skips just this fix with one warning.
+    [HarmonyPatch]
+    internal static class NativeEntityAbilitySubscribeDedup
+    {
+        private static FieldInfo _synedAbilities;
+        private static FieldInfo _callbackField;
+        private static MethodInfo _onAbilityChanged;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(EntityAbility), "OnStartClient", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _onAbilityChanged = AccessTools.DeclaredMethod(typeof(EntityAbility), "OnAbilityChanged");
+                if (_onAbilityChanged == null || _onAbilityChanged.GetMethodBody() == null)
+                    throw new MissingMethodException(typeof(EntityAbility).Name, "OnAbilityChanged");
+                _synedAbilities = AccessTools.DeclaredField(typeof(EntityAbility), "_synedAbilities");
+                if (_synedAbilities == null)
+                    throw new MissingFieldException(typeof(EntityAbility).Name, "_synedAbilities");
+                _callbackField = AccessTools.Field(_synedAbilities.FieldType, "Callback");
+                if (_callbackField == null || !typeof(Delegate).IsAssignableFrom(_callbackField.FieldType))
+                    throw new MissingFieldException(_synedAbilities.FieldType.Name, "Callback");
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity ability subscription dedup", ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Prefix(EntityAbility __instance)
+        {
+            if (!NativePerfOptions.EntityAbilitySubscribeDedup) return;
+            try
+            {
+                var dict = _synedAbilities.GetValue(__instance);
+                if (dict == null) return;
+                var current = _callbackField.GetValue(dict) as Delegate;
+                if (current == null) return;
+                var list = current.GetInvocationList();
+                Delegate result = current;
+                bool removed = false;
+                for (int i = 0; i < list.Length; i++)
+                {
+                    var existing = list[i];
+                    if (ReferenceEquals(existing.Target, __instance) && Equals(existing.Method, _onAbilityChanged))
+                    {
+                        result = Delegate.Remove(result, existing);
+                        removed = true;
+                    }
+                }
+                if (removed) _callbackField.SetValue(dict, result);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity ability subscription dedup", ex.Message);
+            }
         }
     }
 }
