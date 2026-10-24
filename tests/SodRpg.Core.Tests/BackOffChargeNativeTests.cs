@@ -57,6 +57,7 @@ namespace SodRpg.Mod
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public sealed class BackOffChargeNativeTests
     {
         private static (HostAuthority Host, HostAuthority.HeroRuntime Runtime, Hero Hero, SkillTrigger Skill, Entity Enemy)

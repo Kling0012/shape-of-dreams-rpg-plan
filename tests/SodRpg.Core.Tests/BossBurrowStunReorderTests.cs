@@ -31,6 +31,7 @@ namespace SodRpg.Mod
 }
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossBurrowStunReorderTests
     {
         private sealed class Rig

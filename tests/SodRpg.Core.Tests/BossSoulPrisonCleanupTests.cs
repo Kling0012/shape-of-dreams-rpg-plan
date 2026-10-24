@@ -12,6 +12,7 @@ using Xunit;
 // change. Native consumption switches the keep rule but must not destroy the barriers.
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossSoulPrisonCleanupTests
     {
         // BossEnsure frames per cleanup cycle are a handful; 64 nested entries means the
