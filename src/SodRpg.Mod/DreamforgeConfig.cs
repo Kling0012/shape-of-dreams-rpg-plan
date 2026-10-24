@@ -151,6 +151,9 @@ namespace SodRpg.Mod
         [LabelText("Gem cooldown sync: 0.5 seconds (host) / 宝石のクールダウンを0.5秒間隔で同期（ホスト）")]
         public bool nativeGemCooldownSync = true;
 
+        [LabelText("Cache the gem world-model prefab load on every gem spawn (host and guests) /\n宝石の出現ごとのワールドモデルプレハブのロードをキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeGemWorldModelCache = true;
+
         [LabelText("Skip unused weapon FX work / 結果に影響しない武器FXの処理を省く")]
         public bool nativeWeaponFxScan = true;
 

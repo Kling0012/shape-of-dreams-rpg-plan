@@ -73,9 +73,11 @@ namespace UnityEngine
             return found?.ToArray() ?? new T[0];
         }
     }
-    // NativeSkillWorldModelLoadPerf が初回の読み込みと設定無効時のフォールバックで呼ぶ本体
-    // Resources.Load の境界。prefab 参照は中身を読まないので、返す値（next。既定は null）
-    // と呼ばれた回数・パス（loads）の記録だけを持つ。
+    // NativeSkillWorldModelLoadPerf と NativeGemWorldModelLoadPerf が初回の読み込みと
+    // 設定無効時のフォールバックで呼ぶ本体 Resources.Load の境界。prefab 参照は中身を
+    // 読まないので、返す値（next。既定は null）と呼ばれた回数・パス（loads）の記録だけを持つ。
+    // GemWorldModelLoadPerfTests がこの記録で、キャッシュが Load を呼ばずに同じ参照を
+    // 返すこと・null を保持しないこと・設定無効時に毎回呼ぶことを確かめる。
     internal static class Resources
     {
         internal static GameObject next;
@@ -170,7 +172,7 @@ namespace SodRpg.Mod
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
-            nativeGemCooldownSync = true,
+            nativeGemCooldownSync = true, nativeGemWorldModelCache = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
             nativeGuestPublishLimit = true,
             nativeAttachFaceIdle = true, nativeAttachFaceSharedVerts = true,
