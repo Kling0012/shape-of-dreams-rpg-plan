@@ -597,10 +597,13 @@ namespace SodRpg.Mod
     // of EntityControl — this callsite), so once the velocity is zero it stays zero until some
     // code deliberately writes it, and every further frame re-stores the same value through a
     // native setter. The Transpiler swaps that one callsite for a guard that reads the agent's
-    // current velocity component-wise and only reaches the native setter when it differs. When
-    // it differs the setter runs exactly as shipped; when it is equal, storing the same value is
-    // not observable through any reader of the property (the next reader is the same getter),
-    // so skipping it cannot change movement, avoidance, collisions or the synced state.
+    // current velocity and only reaches the native setter when it differs from the written value
+    // by component-wise float == equality (the written value is always zero, so the -0/+0 and
+    // NaN corners of == cannot arise here). While it differs the native traffic is one getter
+    // plus one setter instead of the shipped single setter; when it is equal, the setter call
+    // becomes a getter call and storing the same value is not observable through any reader of
+    // the property (the next reader is the same getter), so skipping it cannot change movement,
+    // avoidance, collisions or the synced state.
     [HarmonyPatch]
     internal static class NativeAgentVelocityIdlePerf
     {
