@@ -80,6 +80,20 @@ namespace Mirror
             hook?.Invoke(value);
         }
     }
+    // NativeEntityOwnerSyncVarPerf（リンク）が owner SyncVar の解決済み参照の一致判定で読む
+    // 本体 Mirror API。実物は netId（スポーン中の NetworkIdentity で一意、despawn で 0 化）と
+    // componentIndex（InitializeNetworkBehaviours が NetworkBehaviours の添字を入れる）の
+    // 2 字段の struct。テストでは Prefix を通さない（本体 Entity の owner は字段のため
+    // Prepare が外れる）ため、形だけ置く。
+    internal class NetworkIdentity
+    {
+        public uint netId;
+    }
+    internal struct NetworkBehaviourSyncVar
+    {
+        public uint netId;
+        public byte componentIndex;
+    }
     // 同じく形検査が Mirror.NetworkWriterPool の Get・Return という名前で数えるための境界。
     // 呼び出しの有無は IL で確かめるため、中身は空でよい。
     internal static class NetworkWriterPool
@@ -1182,6 +1196,10 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> allHumanPlayers = new List<DewPlayer>();
         public string playerName;
         public uint netId;
+        // NativeEntityOwnerSyncVarPerf（リンク）の Prefix が owner SyncVar の一致判定で読む
+        // NetworkBehaviour の字段。実物は InitializeNetworkBehaviours が NetworkBehaviours の
+        // 添字を入れる。テストでは Prefix を通さないため形だけ。
+        public byte ComponentIndex;
         public string guid;
         public bool isHumanPlayer = true;
         public int gold, dreamDust;
