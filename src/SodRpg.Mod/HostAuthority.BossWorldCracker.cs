@@ -158,6 +158,12 @@ namespace SodRpg.Mod
         {
             if(!_worldCrackers.TryGetValue(beam,out var state)) return;
             if(!WorldCrackerCurrent(state)) { EndWorldCracker(beam); return; }
+            RefreshWorldCrackerValidated(beam,state);
+        }
+        // 呼び出し元が直前に WorldCrackerCurrent(state) を通した直後（間に何も走らない）用。
+        // BossEnsure は ClearBossEffects 経由でこのバインディングを止め得るので、Ensure 後の再検証は残す。
+        private void RefreshWorldCrackerValidated(Ai_U_WorldCracker beam,WorldCrackerBinding state)
+        {
             BossEnsure(state.Runtime);
             if(!_worldCrackers.TryGetValue(beam,out var current) || current!=state) return;
             if(!WorldCrackerCurrent(state)) { EndWorldCracker(beam); return; }
@@ -180,7 +186,8 @@ namespace SodRpg.Mod
             var scope=LightWorldCrackerNativeTick.Current;
             if(scope.Beam!=state.Beam || scope.Target!=info.victim || info.actor!=state.Beam || info.damage.amount<=0 || !info.chain.Equals(default(ReactionChain))
                 || AttributionGeneratedOrigin()!=GeneratedOrigin.None || !WorldCrackerCurrent(state)) return;
-            RefreshWorldCracker(state.Beam);
+            // 1行上の WorldCrackerCurrent と同一状態なので入口の再検証は省く（被弾ごとの重複計算を1回分減らす）。
+            RefreshWorldCrackerValidated(state.Beam,state);
             if(state.Host!=this || state.Beam!=scope.Beam || state.Stage<3 || state.Epoch!=state.Runtime.ShieldEquipmentEpoch) return;
             var packet=NativeAttributedDamagePacket.Current;
             if(packet==null || packet.Actor!=state.Beam || packet.Victim!=info.victim || packet.Serial==state.LastPacket) return;
