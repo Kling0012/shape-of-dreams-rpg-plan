@@ -5429,25 +5429,48 @@ namespace SodRpg.Mod
         }
 
         // Same signature as the swapped call (bool in, point-type array out), so the IL
-        // around the site stays valid. The host path reaches the native scan through the
-        // closed generic kept from Prepare — once per room, so the Invoke boxing is noise.
+        // around the site stays valid. Only a pure guest with the option on gets the
+        // empty array; the host (and the option-off path) always reaches the native scan
+        // through a delegate bound from Prepare's closed generic. The direct delegate
+        // call is deliberate: a throw from the scan itself propagates un-wrapped (no
+        // MethodInfo.Invoke / TargetInvocationException) exactly like the unpatched body,
+        // and nothing degrades — the next room runs the same native scan again instead of
+        // the host silently producing empty playerPathablePoints from then on.
         private static T[] PathableScan<T>(bool includeInactive) where T : class
         {
-            MethodInfo original = _closedScan;
-            if (original == null || !NativePerfOptions.RoomPlayerPathableScan || Mirror.NetworkServer.active)
+            if (NativePerfOptions.RoomPlayerPathableScan && !Mirror.NetworkServer.active)
+                return Array.Empty<T>();
+            var scan = ClosedScan<T>.Scan;
+            if (scan == null)
+                scan = BindScan<T>();
+            return scan(includeInactive);
+        }
+
+        // The bound native scan per point-type instantiation, filled on the first room
+        // load (Prepare has resolved _closedScan by then). Held per-T so the shim's call
+        // stays a direct delegate invoke with no per-room Invoke boxing.
+        private static class ClosedScan<T> where T : class
+        {
+            internal static Func<bool, T[]> Scan;
+        }
+
+        private static Func<bool, T[]> BindScan<T>() where T : class
+        {
+            MethodInfo original = _closedScan
+                ?? throw new MissingMemberException("native FindInterfacesOfType unavailable");
+            try
             {
-                try
-                {
-                    return (T[])original.Invoke(null, new object[] { includeInactive });
-                }
-                catch (Exception ex)
-                {
-                    _closedScan = null;
-                    NativePerfPatch.Warn(ref _warned, "room player pathable scan", ex.Message);
-                    return Array.Empty<T>();
-                }
+                return ClosedScan<T>.Scan = (Func<bool, T[]>)Delegate.CreateDelegate(typeof(Func<bool, T[]>), original);
             }
-            return Array.Empty<T>();
+            catch (Exception ex)
+            {
+                // Binding has never failed against the game, but if it ever does the host
+                // keeps the native scan through raw reflection rather than an empty list.
+                // original is non-null here (checked above), so the scan itself is always
+                // reachable and a throw from it propagates, same as the unpatched body.
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan", "binding the native scan failed: " + ex.Message);
+                return ClosedScan<T>.Scan = includeInactive => (T[])original.Invoke(null, new object[] { includeInactive });
+            }
         }
     }
 
