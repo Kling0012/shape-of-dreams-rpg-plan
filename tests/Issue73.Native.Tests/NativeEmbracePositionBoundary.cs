@@ -46,11 +46,21 @@ namespace UnityEngine
             return found?.ToArray() ?? new T[0];
         }
     }
-    // NativeGemWorldModelLoadPerf が設定無効時のフォールバックで呼ぶ本体 Resources.Load の
-    // 境界。 prefab 参照は読まないので null を返すだけ。
+    // NativeGemWorldModelLoadPerf が初回の読み込みと設定無効時のフォールバックで呼ぶ本体
+    // Resources.Load の境界。 prefab 参照は中身を読まないので、返す値（next。既定は null）
+    // と呼ばれた回数・パス（loads）の記録だけを持つ。GemWorldModelLoadPerfTests がこの
+    // 記録で、キャッシュが Load を呼ばずに同じ参照を返すこと・null を保持しないこと・
+    // 設定無効時に毎回呼ぶことを確かめる。
     internal static class Resources
     {
-        public static T Load<T>(string path) => default;
+        internal static GameObject next;
+        internal static readonly System.Collections.Generic.List<string> loads
+            = new System.Collections.Generic.List<string>();
+        public static T Load<T>(string path)
+        {
+            loads.Add(path);
+            return next is T typed ? typed : default;
+        }
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
