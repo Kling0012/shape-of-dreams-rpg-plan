@@ -82,6 +82,7 @@ namespace SodRpg.Mod
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
             NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
             NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
+            NativePerfOptions.EntityAnimationLayerWeightIdle = config.nativeEntityAnimLayerWeightIdle;
             NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
         }
     }
@@ -153,6 +154,7 @@ namespace SodRpg.Mod
         internal static bool TransitionIdle = true;
         internal static bool AgentVelocityIdle = true;
         internal static bool MidJoinLoadoutIdle = true;
+        internal static bool EntityAnimationLayerWeightIdle = true;
         internal static bool ChaosStatBonusTooltipCache = true;
     }
 
@@ -8563,6 +8565,206 @@ namespace SodRpg.Mod
             cached = Resources.Load<GameObject>(path);
             if (cached != null) _cache = cached;
             return cached;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityAnimationLayerWeightIdlePerf
+    {
+        // EntityAnimation reads Animator.GetLayerWeight(1) unconditionally twice per frame —
+        // once in FrameUpdateAnimations to steer the ability layer's weight toward
+        // isPlaying ? 1 : 0, and again in LateUpdate to decide whether the spine rotation fix
+        // runs. Both are external Unity ICall traffic that runs for every awake, non-sleeping
+        // entity even while nothing plays, when the weight sits at its settled value forever.
+        // The Transpiler swaps each of those two callsites (one per method, ldarg.0 appended so
+        // the replacement can see the component) for a guard that only reaches the native
+        // getter while the weight can still move.
+        //
+        // Correctness: within the game's own code, layer 1 is written by exactly two places,
+        // both inside EntityAnimation — FrameUpdateAnimations' SetLayerWeight(1,
+        // MoveTowards(actual, isPlaying ? 1 : 0, ...)) (which stops writing once it reaches
+        // that target, a fixed point of MoveTowards) and UserCode_RpcPlayAbilityAnimation's
+        // SetLayerWeight(1, 1f), always preceded by abilityAnimStatus.isPlaying = true in the
+        // same method body. While the cached value differs from the target the guard reads the
+        // real weight (the transition is live, so the getter runs exactly as often as the
+        // original) and records it; once the recorded value equals the target the weight
+        // cannot move again without the target changing first, so returning the recorded value
+        // is indistinguishable from reading it. LateUpdate runs after FrameUpdate's guard saw
+        // the same frame. A new Animator instance gets a NaN box (NaN == target is false),
+        // forcing one real read, so model swaps re-sync themselves.
+        //
+        // Writes that bypass the guard are handled by NativeEntityAnimationLayerWeightReset:
+        // the ability-animation RPC can flip isPlaying back to false before the same frame's
+        // layer-weight read (FrameUpdateAnimations clears it early on !entity.isActive, a clip
+        // no longer than one frame's deltaTime, or the walk-cancel grace), Animator.Rebind
+        // resets layer weights to the controller defaults, and assigning
+        // runtimeAnimatorController rebinds internally (InitAnimator does that on every
+        // SetupModel). Each gets a Postfix that NaNs the box (Invalidate below). GameObject
+        // disable/re-enable needs no hook: InitAnimator itself forces
+        // keepAnimatorStateOnDisable = true on the tracked animator, so its weights survive.
+        // Third-party mods writing layer 1 outside these paths would still not be seen while
+        // idle; the nativeEntityAnimLayerWeightIdle option turns the guard off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static readonly ConditionalWeakTable<Animator, StrongBox<float>> Weights =
+            new ConditionalWeakTable<Animator, StrongBox<float>>();
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(2);
+            var frame = NativePerfPatch.Find(typeof(EntityAnimation), "FrameUpdateAnimations", ref _warned);
+            if (frame != null && !frame.IsStatic) targets.Add(frame);
+            var late = NativePerfPatch.Find(typeof(EntityAnimation), "LateUpdate", ref _warned);
+            if (late != null && !late.IsStatic) targets.Add(late);
+            _targets = targets.ToArray();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var getter = AccessTools.Method(typeof(Animator), nameof(Animator.GetLayerWeight));
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(getter)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle",
+                    original.Name + ": GetLayerWeight callsite changed or already patched");
+                return code;
+            }
+            code.Insert(site, new CodeInstruction(OpCodes.Ldarg_0));
+            code[site + 1].opcode = OpCodes.Call;
+            code[site + 1].operand = AccessTools.Method(typeof(NativeEntityAnimationLayerWeightIdlePerf), nameof(GetWeight));
+            return code;
+        }
+
+        private static float GetWeight(Animator animator, int layer, EntityAnimation instance)
+        {
+            if (layer != 1 || _disabled || !NativePerfOptions.EntityAnimationLayerWeightIdle
+                || animator == null || instance == null)
+                return animator.GetLayerWeight(layer);
+            try
+            {
+                float target = instance.abilityAnimStatus.isPlaying ? 1f : 0f;
+                var box = Weights.GetValue(animator, static _ => new StrongBox<float>(float.NaN));
+                float cached = box.Value;
+                if (cached == target) return cached;
+                float actual = animator.GetLayerWeight(1);
+                box.Value = actual;
+                return actual;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle", ex.Message);
+                return animator.GetLayerWeight(layer);
+            }
+        }
+
+        // NaN the box (NaN equals no target) so the next guard read is a real read.
+        // Called after writes that bypass the guard; see NativeEntityAnimationLayerWeightReset.
+        internal static void Invalidate(Animator animator)
+        {
+            if (animator == null) return;
+            if (Weights.TryGetValue(animator, out var box)) box.Value = float.NaN;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityAnimationLayerWeightReset
+    {
+        // Companion to NativeEntityAnimationLayerWeightIdlePerf: the guard there trusts "the
+        // weight cannot move while the recorded value equals the target", and three paths can
+        // break that premise without going through the guard. Each gets a Postfix that calls
+        // NativeEntityAnimationLayerWeightIdlePerf.Invalidate on the affected animator, so the
+        // next guard read is a real read and the weight re-syncs (or decays) exactly like the
+        // unpatched body:
+        // - UserCode_RpcPlayAbilityAnimation writes SetLayerWeight(1, 1f) directly, and the
+        //   same frame's FrameUpdateAnimations can flip isPlaying back to false BEFORE its
+        //   layer-weight read (the decompiled body clears isPlaying early on a non-finite
+        //   elapsed/normalized time, on elapsedTime >= duration || !entity.isActive, and on
+        //   the walk-cancel grace), which would otherwise leave the real weight at 1 while the
+        //   box already matches the 0 target forever.
+        // - Animator.Rebind() resets every layer weight to the controller's defaults.
+        // - Assigning Animator.runtimeAnimatorController rebinds internally; EntityAnimation's
+        //   own InitAnimator does that on every SetupModel (model swaps included).
+        // GameObject disable/re-enable is deliberately not hooked: InitAnimator forces
+        // keepAnimatorStateOnDisable = true on exactly the animator being tracked, so its
+        // weights survive re-enabling, and Animator exposes no managed OnEnable to patch.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(3);
+            var play = FindByName(typeof(EntityAnimation),
+                "UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single");
+            if (play != null) targets.Add(play);
+            var rebind = FindByName(typeof(Animator), "Rebind");
+            if (rebind != null) targets.Add(rebind);
+            try
+            {
+                var setController = AccessTools.PropertySetter(typeof(Animator), "runtimeAnimatorController");
+                if (setController == null || setController.GetMethodBody() == null)
+                    NativePerfPatch.Warn(ref _warned, "Animator.runtimeAnimatorController", "native method unavailable");
+                else
+                    targets.Add(setController);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight reset", ex.Message);
+            }
+            _targets = targets.ToArray();
+            return _targets.Length > 0;
+        }
+
+        // The game's RpcPlayAbilityAnimation user code takes (DewAnimationClip, int, float)
+        // and Rebind comes in a public Rebind() plus private Rebind(bool) pair, so resolve
+        // both by name alone and take whichever managed overload exists.
+        private static MethodBase FindByName(Type type, string method)
+        {
+            try
+            {
+                MethodBase found = null;
+                foreach (var candidate in type.GetMethods(BindingFlags.Instance
+                         | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                {
+                    if (candidate.IsStatic || candidate.Name != method || candidate.GetMethodBody() == null)
+                        continue;
+                    found = candidate;
+                    if (candidate.GetParameters().Length > 0) break; // the parameterful overload when both exist
+                }
+                if (found == null)
+                    NativePerfPatch.Warn(ref _warned, type.Name + "." + method, "native method unavailable");
+                return found;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, type.Name + "." + method, ex.Message);
+                return null;
+            }
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(object __instance)
+        {
+            try
+            {
+                if (__instance is EntityAnimation entityAnimation)
+                    NativeEntityAnimationLayerWeightIdlePerf.Invalidate(entityAnimation.animator);
+                else if (__instance is Animator animator)
+                    NativeEntityAnimationLayerWeightIdlePerf.Invalidate(animator);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight reset", ex.Message);
+            }
         }
     }
 }
