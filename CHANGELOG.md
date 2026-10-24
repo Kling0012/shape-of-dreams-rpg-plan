@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.62 — Lighter co-op while a player waits to join mid-game（2026-10-24）
+
+この版では、協力プレイで途中参加を待っている人がいる間、変わらない情報を毎フレーム送り直していた処理を省きました。 / This version removes data that co-op games kept resending every frame while a player was waiting to join mid-game.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、途中から参加し直す人が入れる時を待っている間、ホストは中身の変わらない空の装備選択を毎フレーム書き直し、参加者全員へ送り直していました。ボス戦の間ずっと待つことが多いため、待ち時間が長いほど無駄が積み重なっていました。受け取った参加者の側でも、そのたびに同じ更新の処理が走っていました。今は中身が空のまま変わらないときは送り直しません。ホストと参加者の両方で、待っている人がいる間の処理と通信が少し軽くなる見込みです。待ち時間が長いほど効きますが、体感できるほどの差は出ない見込みです。一人で遊ぶときは変わりません。途中参加の流れと、装備の選び方・反映のされ方は変わりません。 / In co-op, while a player was waiting for a chance to rejoin mid-game, the host rewrote the same empty loadout selection every frame and resent it to every player. Because the wait often lasts through an entire boss fight, the waste added up the longer it went on, and every player who received it ran the same update each time. The game now stops resending the loadout while it stays empty and unchanged. Both the host and co-op players should run a little lighter, with less network traffic, while someone is waiting. The longer the wait, the more this helps, though the difference is unlikely to be noticeable. Nothing changes in solo play. How mid-game joining works, and how loadouts are chosen and applied, is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.61 — Lighter Responsibility hit effects, keystone damage, equip screen, and Seedling Seed healing（2026-10-24）
 
 この版では、責任の宝石の被弾演出、刻印のダメージ計算、宝石の装着画面、芽吹きの種の回復で、同じ処理を繰り返していた部分をまとめました。 / This version trims repeated work in Responsibility gem hit effects, keystone damage calculations, the gem equip screen, and Seedling Seed healing.
