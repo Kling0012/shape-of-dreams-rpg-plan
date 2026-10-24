@@ -62,10 +62,16 @@ namespace SodRpg.Mod
             }
         }
 
+        /// <summary>Build 適用で HeroRuntime を作った直後に呼ぶ。イベント登録から初回走査
+        /// （最大 ScanSeconds 後）までの命中でも、崩しの判定が既定値 false のまま近接を
+        /// 見逃さないように、近接種別を先に確定させる（#1130）。</summary>
+        internal void InitializeMeleeTraveler(HeroRuntime rt) => rt.IsMeleeTraveler = TravelerCombatNative.IsMelee(rt.Hero);
+
         private void ScanMeleeCoop(HeroRuntime rt, bool alive)
         {
             // 崩しの命中経路はこの判定を使い回す（被弾・攻撃ごとに攻撃アセットを読み直さない）。
-            // 差し替えは次の走査で反映され、MeleeGuard と同じ間隔になる。
+            // 差し替えは次の走査で反映され、MeleeGuard と同じ間隔になる。どの機能の有効フラグ
+            // （射程→攻撃速度変換・崩し・踏み込み）にも載せず、走査のたびに必ず更新する。
             rt.IsMeleeTraveler = TravelerCombatNative.IsMelee(rt.Hero);
             bool melee = alive && rt.IsMeleeTraveler;
             try
@@ -135,8 +141,10 @@ namespace SodRpg.Mod
             if (!_meleeBreakEnabled || !Alive(hero)
                 || victim == null || !victim.isActive || victim.currentHealth <= 0f
                 || victim.GetRelation(hero) != EntityRelation.Enemy) return;
-            Debug.Assert(TravelerCombatNative.IsMelee(hero),
-                "MarkMeleeBreak on a traveler whose basic attack is not melee; callers must check the melee traveler first");
+            // The caller's gate is the scanned classification, which may lag a basic-attack swap
+            // by up to ScanSeconds, so check the swap-invariant traveler designation (#542, #1130).
+            Debug.Assert(TravelerCombat.IsMelee(hero.GetType().Name, true),
+                "MarkMeleeBreak on a traveler who is never melee; callers must check the melee classification first");
             try
             {
                 if (!_meleeBreaks.TryGetValue(victim, out var state))

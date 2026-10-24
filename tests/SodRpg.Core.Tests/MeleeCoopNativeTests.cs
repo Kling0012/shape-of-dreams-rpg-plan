@@ -141,6 +141,36 @@ namespace SodRpg.Core.Tests
             Assert.False(TravelerCombatNative.IsMelee(vesper));
         }
 
+        // 崩しの命中判定（OnMemoryDamage）は走査済みの IsMeleeTraveler を使う（#1130）。
+        // 生成直後の初期化と走査ごとの更新が、即時評価 TravelerCombatNative.IsMelee と一致することを固定する。
+        [Fact]
+        public void Cached_melee_classification_matches_the_immediate_check_from_creation_to_each_scan()
+        {
+            var host = new HostAuthority();
+            var aurena = new Hero_Aurena();
+            var rt = Runtime(aurena);
+            // 生成直後の初期化（本番は Build 適用時に呼ぶ）：初回走査（0.25秒後）を待たず一致する
+            host.InitializeMeleeTraveler(rt);
+            Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
+            Assert.False(rt.IsMeleeTraveler); // 未構成の基本攻撃は近接ではない
+            SetBasicAttack(aurena, new MeleeAttackInstance());
+            host.ScanMeleeCoopForTest(rt, alive: true);
+            Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
+            Assert.True(rt.IsMeleeTraveler);
+            // 近接→遠距離の差し替えは次の走査で追いつく（最大 ScanSeconds の窓は MeleeGuard と同じ契約）
+            SetBasicAttack(aurena, new AttackProjectile());
+            host.ScanMeleeCoopForTest(rt, alive: true);
+            Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
+            Assert.False(rt.IsMeleeTraveler);
+            // 崩しだけが有効な構成でも死亡中でも、分類の更新は他機能の有効フラグに依らず走る
+            host.ConfigureMeleeCoop(rangeToSpeed: false, distanceFalloff: false, meleeBreak: true, meleeGuard: false);
+            SetBasicAttack(aurena, new MeleeAttackInstance());
+            host.ScanMeleeCoopForTest(rt, alive: false);
+            Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
+            Assert.True(rt.IsMeleeTraveler);
+            host.ConfigureMeleeCoop(true, true, true, true); // 静的な距離減衰の状態を他のテストへ残さない
+        }
+
         [Fact]
         public void Melee_descriptions_state_the_balance_numbers_in_both_languages()
         {

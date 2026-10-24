@@ -82,7 +82,7 @@ namespace SodRpg.Mod
             public readonly HashSet<string> LinkEssences = new HashSet<string>();
             public float ConvertedAttackRange;
             public bool MeleeGuard;
-            // 近接種別の判定（ScanMeleeCoop が走査ごとに更新）。命中ごとに攻撃アセットを読み直さない。
+            // 近接種別の判定（生成直後と ScanMeleeCoop の走査ごとに更新）。命中ごとに攻撃アセットを読み直さない。
             public bool IsMeleeTraveler;
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             public string BountyRunId;
@@ -1640,6 +1640,9 @@ namespace SodRpg.Mod
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
+                // 崩しの命中判定はこの保存値を見る。イベントを登録する前に確定させて、
+                // 初回走査までの命中が既定値 false で近接を見逃さないようにする（#1130）。
+                InitializeMeleeTraveler(rt);
                 RefreshMemoryAttributionEquipment(hero);
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
