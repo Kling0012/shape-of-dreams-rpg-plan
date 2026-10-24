@@ -179,6 +179,10 @@ namespace Mirror
         // BossSegmentPlacement（リンク。#890 のボス予告線分の矩形・回転）が参照する本体 API。
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public const float Rad2Deg = (float)(180.0 / Math.PI);
+        // BossSegmentPlacement.RotationAroundPivot（リンク。#1153 のピボット回転行列）が参照する
+        // 本体 API。実 Unity Mathf と同じ式（float → double で Math.Cos へ、定数は同じ値）。
+        public static float Cos(float f) => (float)Math.Cos(f);
+        public const float Deg2Rad = (float)(Math.PI / 180.0);
         public static float DeltaAngle(float current, float target)
         {
             float delta = target - current;
