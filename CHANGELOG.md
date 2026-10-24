@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.54 — Lighter handling of effects attached to characters（2026-10-24）
+
+この版では、キャラクターに付いて表示される演出で毎フレーム繰り返していた無駄な処理を省き、演出が多い場面の負荷を減らしました。 / This version removes wasted work repeated every frame for effects attached to characters, reducing load in scenes with many effects.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- キャラクターに付いて表示される演出について、ゲームは毎フレーム、演出の位置と大きさを設定し直していました。演出が付いているキャラクターが止まっていて値が変わらないときも同じで、ホストと参加者の両方で起きていました。今は値が変わるときだけ設定し直します。状態異常が重なるボス戦のように演出が多い場面では、特に参加者側の処理が軽くなる見込みです。演出が付いているキャラクターが動き続けている間は、軽くなりません。演出の見た目と動きは変わりません。 / For effects attached to characters, the game reset each effect's position and size every frame, even when the character was standing still and nothing had changed. This happened on both the host and co-op players. The game now resets them only when the values change. In scenes with many effects, such as boss fights with stacked status effects, co-op players in particular should run lighter. While the character the effect is attached to keeps moving, there is no gain. How effects look and move is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.53 — Lighter boss beams, Hysteria claws, effects and shrine petals（2026-10-24）
 
 この版では、Beam of Balance・Hysteria の爪・WorldCracker の光線が当たるたびに繰り返していた無駄な処理を省きました。あわせて、演出の再生と、堕落した混沌の神殿の花びらのアニメーションでも同じ処理の繰り返しをやめ、戦闘中とステージ内の負荷を減らしました。 / This version removes wasted work repeated on every hit of Beam of Balance, Hysteria's claws and the WorldCracker beam. It also stops repeated work when effects play and in the petal animation of the Corrupted Chaos shrine, reducing load in combat and around stages.
