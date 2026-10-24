@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.69 — Lighter training stack updates and room loading for co-op players（2026-10-25）
+
+この版では、協力プレイの参加者側で、鍛錬スタックの更新を受け取るときと部屋を読み込むときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from co-op players receiving training stack updates and loading rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの参加者は、鍛錬スタックが変わるたびにホストから知らせを受け取ります。これまでは受け取るたびに、内容を読み取るための一時的なデータを何個も作っていました。今はそれらを作らずに読み取ります。スタックが増え続ける長い冒険で参加者のゲームが少し軽くなる見込みですが、知らせはもともと頻繁には届かないため効果は小さく、実際の効果もまだ測っていません。鍛錬スタックの数え方と表示は変わりません。 / In co-op, players receive an update from the host each time their training stacks change. Until now, each update created several pieces of temporary data just to read it. The game now reads updates without creating them. Co-op players' games should run a little lighter on long runs where stacks keep growing, though updates were never frequent, so the effect is small and has not been measured yet. How training stacks are counted and displayed is unchanged.
+- 協力プレイの参加者のゲームは、部屋を読み込むたびに、部屋全体から歩ける地点を探し出していました。この一覧はホストだけが使うもので、参加者側では使われていませんでした。今は参加者側でこの探索を省きます。部屋を移るときの参加者のゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。ホスト側の動きと、部屋での遊び方は変わりません。 / In co-op, players' games searched the whole room for walkable spots every time a room loaded. That list is only used by the host and was never used on the joining players' side. The game now skips this search for joining players. Co-op players' games should run a little lighter when moving between rooms, though the actual effect has not been measured yet. The host's behavior and how rooms play are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.68 — Lighter gem slot checks and co-op dividend handling（2026-10-25）
 
 この版では、ジェム枠の表示と、協力プレイで参加者が配当を受け取るときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the gem slot display and from co-op players receiving dividends.
