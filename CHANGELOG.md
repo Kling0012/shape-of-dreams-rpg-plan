@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.64 — Lighter movement handling and gem appearances（2026-10-24）
+
+この版では、敵や仲間の移動の処理と、宝石が出てくるときの処理から、結果の変わらないやり直しを省きました。 / This version removes repeated work that could not change anything from movement handling and from gem appearances.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 移動を受け持つ側のゲームは、受け持つ相手が止まっていても、その動きの速さを毎フレーム「止まっている」と書き直していました。ホストではモンスター、召喚したもの、NPC がこの対象で、参加者では自分の英雄が対象です。今は、すでに止まっている相手には書き直しを省きます。止まっている相手が多い場面ほど処理が少し軽くなる見込みですが、体感できるほどの差は出ない見込みです。動いている間はほとんど変わりません。動き方、止まる位置、止まるタイミングは変わりません。 / The game handling movement kept rewriting a stopped speed every frame, even for things that were already standing still. On the host this covers monsters, summons, and NPCs; for co-op players it covers their own hero. The game now skips that rewrite for anything that is already stopped. It should run a little lighter when many things are standing still, though the difference is unlikely to be noticeable. Little changes while things are moving. How things move, where they stop, and when they stop are unchanged.
+- 宝石が出てくるたびに、ホストと参加者全員のゲームが宝石の見た目のデータを毎回探し直していました。敵を続けて倒して宝石がまとめて出ると、同じ探し直しが同じ瞬間に何度も重なっていました。今は最初に見つけたデータを使い回します。宝石がまとめて出る瞬間の処理が少し軽くなる見込みですが、体感できるほどの差は出ない見込みです。宝石の見た目と出てくるタイミング、協力プレイでの見え方は変わりません。 / Every time a gem appeared, the host and every co-op player looked up the gem's model data again. When several gems dropped at once, for example after defeating enemies in quick succession, the same lookup was repeated many times in the same moment. The game now reuses the data it found the first time. Moments when many gems appear at once should run a little lighter, though the difference is unlikely to be noticeable. How gems look, when they appear, and how they show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.63 — Lighter host checks during Infinity runs（2026-10-24）
 
 この版では、Infinity の遠征中に、結果が変わらない進行の確認をホストが毎フレームやり直していた処理を省きました。 / This version removes progress checks that the host repeated every frame during Infinity runs even though they could not change anything.
