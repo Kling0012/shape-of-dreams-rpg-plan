@@ -90,7 +90,7 @@ namespace Mirror
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; public static float deltaTime; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; public static float deltaTime; public static float timeScale; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
@@ -1730,4 +1730,37 @@ internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Componen
                 * (1f + Mathf.Sin(Time.time * sin0Time + (float)i * sin0Offset) * sin0Mag
                      + Mathf.Sin(Time.time * sin1Time + (float)i * sin1Offset) * sin1Mag);
     }
+}
+
+// 本体 Dew.Core InputManager（入力管理、ManagerBase の子孫）と振動シェイクの境界。
+// NativeGamepadRumbleIdlePerf（リンク）が NativePerfPatch.Find と FieldRefAccess の
+// 型引数で参照するため、コンパイルを通すための最小の形。実物と同じグローバル
+// 名前空間に置く。振動パッチ自体は Harmony 依存でテストから駆動しないので、
+// Prepare が読む _shakes フィールドの形だけを実物
+// （decompiled/sod-decomp/Dew.Core/InputManager.cs）に合わせて持つ。
+internal sealed class ShakeInstance
+{
+    public float startTime;
+    public float attackTime;
+    public float sustainTime;
+    public float decayTime;
+    public float amplitude;
+}
+
+internal enum InputMode
+{
+    KeyboardAndMouse,
+    Gamepad
+}
+
+internal sealed class InputManager
+{
+    internal List<ShakeInstance> _shakes = new List<ShakeInstance>();
+}
+
+// NativeGamepadRumbleIdlePerf の Postfix が読む本体 DewInput.currentMode の境界。
+// 実物は public static InputMode currentMode { get; private set; } の自動プロパティ。
+internal static class DewInput
+{
+    public static InputMode currentMode { get; private set; }
 }

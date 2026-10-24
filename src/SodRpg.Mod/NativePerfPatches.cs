@@ -71,6 +71,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
             NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
+            NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
         }
     }
 
@@ -130,6 +131,7 @@ namespace SodRpg.Mod
         internal static bool AudioSetupIdle = true;
         internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
+        internal static bool GamepadRumbleIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -6882,6 +6884,96 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "chaos petal idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGamepadRumbleIdlePerf
+    {
+        // InputManager.DoRumbleFrameUpdate runs every frame on every machine (input handling is
+        // local, so guests pay it too). After folding the _shakes list it unconditionally calls
+        // Gamepad.current.SetMotorSpeeds — and the call is SetMotorSpeeds(0, 0) whenever no
+        // shake contributed: the values are forced to zero when the input mode is not gamepad
+        // (the common case of a keyboard-and-mouse player with a controller plugged in) and no
+        // accumulation happens while the list is empty or paused. The shipped Unity.InputSystem
+        // has no change detection on that path: Gamepad.SetMotorSpeeds delegates to
+        // DualMotorRumble.SetMotorSpeeds, which clamps and then builds a DualMotorRumbleCommand
+        // and runs device.ExecuteCommand — a native input-backend round trip per frame, even
+        // though the motors are already stopped and stay stopped.
+        //
+        // The prefix skips the body only while the shake list is empty AND the last body we let
+        // run verifiably wrote (0, 0); everything else runs vanilla. The postfix re-derives what
+        // the body just sent from state it can read: an empty list means the fold contributed
+        // nothing, a non-gamepad mode forces both values to zero, and a timeScale under 0.001
+        // skips the accumulation — only a shake list that still holds instances in gamepad mode
+        // on an unpaused frame can have contributed, so only that clears the flag and keeps the
+        // next frames on vanilla. The worst case is one extra (0, 0) write after the last shake
+        // expires, which is what vanilla writes on that frame anyway; motors already stopped
+        // being told to stay stopped has no device-observable effect.
+        //
+        // Residual assumption, same class as the other idle skips: a foreign mod driving rumble
+        // through Gamepad.SetMotorSpeeds directly is left alone in the idle state, where vanilla
+        // would silence it within a frame. The decompiled game has no such writer — InputManager
+        // is the only caller — so no in-game behavior depends on that cancellation.
+        private static AccessTools.FieldRef<InputManager, List<ShakeInstance>> _shakes;
+        private static MethodBase _target;
+        private static bool _lastSentZero;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(InputManager), "DoRumbleFrameUpdate", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _shakes = AccessTools.FieldRefAccess<InputManager, List<ShakeInstance>>("_shakes");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(InputManager __instance)
+        {
+            if (_disabled || !NativePerfOptions.GamepadRumbleIdle) return true;
+            try
+            {
+                // Only the known-zero idle state is skipped; any shake, or a flag the postfix
+                // could not vouch for, goes to the vanilla body untouched.
+                if (_shakes(__instance).Count > 0 || !_lastSentZero) return true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+                return true;
+            }
+        }
+
+        private static void Postfix(InputManager __instance)
+        {
+            if (_disabled) return;
+            try
+            {
+                // What the body just sent is (0, 0) unless gamepad-mode shakes could have
+                // contributed on an unpaused frame; the same derivation holds on a skipped
+                // frame, where the list is empty and the state stays (0, 0).
+                _lastSentZero = _shakes(__instance).Count == 0
+                    || DewInput.currentMode != InputMode.Gamepad
+                    || Time.timeScale < 0.001f;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+            }
         }
     }
 }
