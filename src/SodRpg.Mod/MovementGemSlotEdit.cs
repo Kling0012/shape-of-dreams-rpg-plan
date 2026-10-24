@@ -262,17 +262,24 @@ namespace SodRpg.Mod
             foreach (var button in array)
             {
                 if (count >= MaxColumns) break;
-                if (button == null || button == movement || button.transform.parent == null) continue;
+                if (button == null || button == movement) continue;
+                var parent = button.transform.parent;
+                if (parent == null) continue;
                 if (!button.gameObject.activeInHierarchy) continue;
-                _columns[count++] = button.transform.parent;
+                _columns[count++] = parent;
             }
             if (count < 2) return;
-            for (int i = 0; i < count; i++) _xs[i] = _columns[i].position.x;
+            // 各列のワールド座標は1回だけ読み、x と y を同じ値から取る（毎フレームのネイティブ呼び出しを半分にする）。
+            float y = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 p = _columns[i].position;
+                _xs[i] = p.x;
+                y += p.y;
+            }
             Array.Sort(_xs, 0, count);
             float spacing = MedianGap(_xs, count, _gaps);
             if (spacing <= 0.0001f) return;
-            float y = 0f;
-            for (int i = 0; i < count; i++) y += _columns[i].position.y;
             y /= count;
             // 技列と同じキャンバスの世界座標で収まりを見る（1920x1080 のオーバーレイではピクセルに一致する）。
             var canvas = buttons.transform.root as RectTransform;
