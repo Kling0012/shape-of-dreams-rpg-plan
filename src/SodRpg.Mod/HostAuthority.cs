@@ -1039,6 +1039,8 @@ namespace SodRpg.Mod
             // 夢の圧が高いほど悪夢化しやすい。インフィニティは対象外。
             double pressureMult = InfinityMode.State == null ? _pressure.NightmareChanceMultiplier : 1.0;
             double mult = (DailyDream.Get(dailyId)?.NightmareMult ?? 1.0) * PartyGearChanceMult() * pressureMult;
+            // 部屋の兆しの敵係数は隊の構成から1まとめで1回だけ計算する（-1=未計算）。
+            float omenScale = -1f;
             for (int i = _spawnQueue.Count - 1; i >= 0; i--)
             {
                 var m = _spawnQueue[i].Key;
@@ -1056,7 +1058,7 @@ namespace SodRpg.Mod
                 if (m.owner == null || m.owner.isHumanPlayer) { _spawnQueue.RemoveAt(i); continue; }
                 if (!_monsters.TryGetValue(m, out var rt)) { _spawnQueue.RemoveAt(i); continue; }
                 ApplyPressure(rt);
-                ApplyRoomOmenMonster(rt);
+                ApplyRoomOmenMonster(rt, ref omenScale);
                 // Pressure is already active; give the initial depth build time to arrive.
                 // A co-op ward must classify its initial enemies before their first received hit.
                 if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f
