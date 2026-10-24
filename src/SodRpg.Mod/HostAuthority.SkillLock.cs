@@ -93,9 +93,12 @@ namespace SodRpg.Mod
 
         private static void Resend(Hero hero, SkillTrigger skill, int slot, bool diagnose)
         {
-            if (!skill.IsNullOrInactive() && skill.isServer)
+            if (!skill.IsNullOrInactive() && skill.isServer
+                // 全配列 RPC が同じ sanitize 済みの値を同じ reliable チャネルで先に送るので、
+                // 送れたときは要素ごとの再送（RpcSetCooldownTime / RpcSetMinimumDelay / RpcSetCharge）は
+                // 受け手の状態を変えないため省く。配列 RPC を送れなかったときだけ要素ごとに送る。
+                && !NativeSkillLockRecovery.ResendSkill(skill))
             {
-                NativeSkillLockRecovery.ResendSkill(skill);
                 NativeCooldownSafety.ResendAuthoritative(skill);
             }
             if (diagnose) NativeSkillLockRecovery.LogSnapshot(hero, skill, slot, "Skill lock host: ");

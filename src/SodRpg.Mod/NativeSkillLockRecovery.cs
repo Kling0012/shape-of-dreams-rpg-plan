@@ -133,10 +133,12 @@ namespace SodRpg.Mod
             catch (Exception ex) { Fail(ref _abilitiesFailed, "ability references", ex); }
         }
 
-        internal static void ResendSkill(AbilityTrigger skill)
+        // Returns true when the full-array RPC went out. The caller then skips the
+        // per-index resends of the same sanitized values (NativeCooldownSafety.ResendAuthoritative).
+        internal static bool ResendSkill(AbilityTrigger skill)
         {
             skill.SetDirty();
-            ResendArrays(skill);
+            bool arraysSent = ResendArrays(skill);
             if (!_configFailed)
             {
                 try
@@ -146,15 +148,16 @@ namespace SodRpg.Mod
                 }
                 catch (Exception ex) { Fail(ref _configFailed, "config RPC", ex); }
             }
-            if (_locksFailed) return;
+            if (_locksFailed) return arraysSent;
             try
             {
                 if (CastLocks == null || CooldownLocks == null || QueueLock == null)
-                { Fail(ref _locksFailed, "config locks"); return; }
+                { Fail(ref _locksFailed, "config locks"); return arraysSent; }
                 ResendLocks(CastLocks(skill));
                 ResendLocks(CooldownLocks(skill));
             }
             catch (Exception ex) { Fail(ref _locksFailed, "config locks", ex); }
+            return arraysSent;
         }
 
         private static void ResendLocks(SyncList<bool> list)
@@ -165,18 +168,18 @@ namespace SodRpg.Mod
                 QueueLock(list, SyncList<bool>.Operation.OP_SET, i, list[i], list[i], true);
         }
 
-        private static void ResendArrays(AbilityTrigger skill)
+        private static bool ResendArrays(AbilityTrigger skill)
         {
-            if (_arraysFailed) return;
+            if (_arraysFailed) return false;
             try
             {
-                if (ArrayRpc == null) { Fail(ref _arraysFailed, "array RPC"); return; }
+                if (ArrayRpc == null) { Fail(ref _arraysFailed, "array RPC"); return false; }
                 int count = skill.configs?.Length ?? 0;
                 var times = skill.currentUnscaledCooldownTimes;
                 var charges = skill.currentCharges;
                 var delays = skill.currentMinimumDelays;
                 if (count == 0 || times == null || charges == null || delays == null
-                    || times.Length != count || charges.Length != count || delays.Length != count) return;
+                    || times.Length != count || charges.Length != count || delays.Length != count) return false;
                 // Rare recovery only; the native full-array RPC also repairs a guest's array lengths.
                 var safeTimes = new float[count];
                 var safeCharges = new int[count];
@@ -188,8 +191,9 @@ namespace SodRpg.Mod
                     safeDelays[i] = SafeTime(delays[i]);
                 }
                 ArrayRpc(skill, safeTimes, safeCharges, safeDelays);
+                return true;
             }
-            catch (Exception ex) { Fail(ref _arraysFailed, "array RPC", ex); }
+            catch (Exception ex) { Fail(ref _arraysFailed, "array RPC", ex); return false; }
         }
 
         private static float SafeTime(float value) => value >= 0f && !float.IsInfinity(value) ? value : 0f;
