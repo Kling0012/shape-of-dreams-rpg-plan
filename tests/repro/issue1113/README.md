@@ -45,3 +45,42 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
 - .NET 8 ランタイムでのテスト実行。ランタイムが未導入のため。
 - 全テスト。依頼に従い、関連するテストだけを実行したため。
 - 修正後の検証。製品コードの修正は次の工程が担当するため。
+
+## 修正工程の検証
+
+2026-10-24、実装工程でも修正前の製品コードをビルドし、再現テストの3件失敗・5件成功を確認した。`CodexQuery.AppendName` に `name.ToString()` を追加すると、全8件が成功した。テストの追加・変更はしていない。
+
+追加した1行を一時的に外してビルドし直すと、`initial`・`switch`・`reload` の3件が再び68行目で失敗した。修正を戻してビルドすると全8件が成功した。これにより、修正を一時的に戻すと再現テストが失敗し、戻すと成功することを確認した。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj --no-restore -p:PythonCommand=python3 --filter FullyQualifiedName~Issue1113ReproTests --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue1113-implementation-restored.trx' --results-directory /tmp/issue1113-implementation-results -v:q -clp:ErrorsOnly
+```
+
+修正後はフランス語の表示名で `weapon.chain_sword` が残る。英語から外部言語への切替、別の外部辞書への切替、同じ `fr` の辞書を再解析して差し替える3ケースで成功した。日英中の検索名が使え、切替前の訳が残らず、未発見の固有品・セット・固有効果・銘品・組は外部訳で検索しても出ないことも確認した。
+
+既存の `CodexQueryTests`・`Issue1024ReproTests`・`CodexNamedCategoriesTests`・`CodexTextConsistencyTests` は全13件成功、終了コード0。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~CodexQueryTests|FullyQualifiedName~Issue1024ReproTests|FullyQualifiedName~CodexNamedCategoriesTests|FullyQualifiedName~CodexTextConsistencyTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue1113-existing-codex.trx' --results-directory /tmp/issue1113-implementation-results
+```
+
+TRX は `/tmp/issue1113-implementation-results/` に記録した。
+
+- `issue1113-implementation-before.trx`、`issue1113-implementation-before-confirm.trx`: 修正前。3件失敗・5件成功、終了コード1。後者は指定された `--no-build --no-restore` のコマンドでも確認した記録。
+- `issue1113-implementation-fixed.trx`: 最初の修正後。8件成功、終了コード0。
+- `issue1113-implementation-reverted.trx`: 修正を一時的に外した状態。3件失敗・5件成功、終了コード1。
+- `issue1113-implementation-restored.trx`: 修正を戻した状態。8件成功、終了コード0。
+- `issue1113-existing-codex.trx`: 既存の関連テスト。13件成功、終了コード0。
+
+### 秘匿と再読込の確認
+
+`CodexQuery.Filter` の `searchable` 判定は変えていない。未発見の秘密項目は `SearchText` を評価する前に除外されるため、表示名を加えても検索から漏れない。
+
+`LocExternal` は生成するたびに新しい `CacheKey` を割り当てる。`Loc.CacheKey` がその値を返し、`CodexEntry.SearchText` はキーが変わると作り直される。MOD 側も `DreamforgeMod.OnConfigChanged` で `ExternalLanguages.Reload` のあとに `config.ResolveLanguage(ExternalLanguages.Select)` を呼び、新しく読み込んだ辞書を選び直している。同じ言語で再読込しても古いキーが残る問題はコード上で見つからず、キャッシュ処理の変更は不要と判断した。
+
+### 実装工程での未実行
+
+- Unity・ゲーム実機での表示・検索・言語切替。ゲームを起動できない環境のため。
+- 実ファイル `fr.json` の読込と MOD の `ExternalLanguages.Reload` の実行。Core の JSON 解析・辞書差し替えと行表示の既存テストで確認し、MOD の呼出経路はコードを読んで確認したため。
+- .NET 8 ランタイムでの実行。未導入のため、`DOTNET_ROLL_FORWARD=Major` で導入済みの .NET 10.0.11 を使った。
+- 全テスト・遅いテスト・MOD 全体のゲーム DLL を参照するビルド。依頼の範囲に従い、変更に関係するテストとそのビルドだけを実行したため。
