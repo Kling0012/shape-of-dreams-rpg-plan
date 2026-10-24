@@ -164,11 +164,17 @@ namespace SodRpg.Core.Tests
             Assert.False(rt.IsMeleeTraveler);
             // 崩しだけが有効な構成でも死亡中でも、分類の更新は他機能の有効フラグに依らず走る
             host.ConfigureMeleeCoop(rangeToSpeed: false, distanceFalloff: false, meleeBreak: true, meleeGuard: false);
-            SetBasicAttack(aurena, new MeleeAttackInstance());
-            host.ScanMeleeCoopForTest(rt, alive: false);
-            Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
-            Assert.True(rt.IsMeleeTraveler);
-            host.ConfigureMeleeCoop(true, true, true, true); // 静的な距離減衰の状態を他のテストへ残さない
+            try
+            {
+                SetBasicAttack(aurena, new MeleeAttackInstance());
+                host.ScanMeleeCoopForTest(rt, alive: false);
+                Assert.Equal(TravelerCombatNative.IsMelee(aurena), rt.IsMeleeTraveler);
+                Assert.True(rt.IsMeleeTraveler);
+            }
+            finally
+            {
+                host.ConfigureMeleeCoop(true, true, true, true); // 静的な距離減衰の状態を他のテストへ残さない
+            }
         }
 
         [Fact]
