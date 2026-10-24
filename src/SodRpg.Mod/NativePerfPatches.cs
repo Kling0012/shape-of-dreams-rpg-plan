@@ -69,6 +69,7 @@ namespace SodRpg.Mod
             NativePerfOptions.MirageVolumeIdle = config.nativeMirageVolumeIdle;
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
+            NativePerfOptions.CastTelegraphIdle = config.nativeCastTelegraphIdle;
             NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
         }
@@ -128,6 +129,7 @@ namespace SodRpg.Mod
         internal static bool MirageVolumeIdle = true;
         internal static bool DamageShakeIdle = true;
         internal static bool AudioSetupIdle = true;
+        internal static bool CastTelegraphIdle = true;
         internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
     }
@@ -6775,6 +6777,126 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _runtimeWarned, "attached FX idle", ex.Message);
                 tr.SetPositionAndRotation(position, rotation);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCastTelegraphIdlePerf
+    {
+        // FxCastTelegraph.UpdatePosition runs every frame for every active cast telegraph on
+        // every client — DewEffect.PlayCastEffect sets the telegraph components up from the
+        // cast FX prefab on the host and on each guest alike, and the FrameUpdate keeps them
+        // glued to their caster or target point for the whole cast duration. Its final act is
+        // two unconditional transform writes: transform.position when the telegraph follows a
+        // position, transform.rotation when it follows a rotation. Point-targeted telegraphs
+        // (a fixed world point), cone/arrow telegraphs (rotation frozen at cast time) and
+        // telegraphs whose caster stands still while casting recompute the exact same values
+        // every frame, so each write only re-dirties the telegraph's transform hierarchy —
+        // several telegraphs are alive at once during a fight and every client, guests
+        // included, advances all of them. The wrappers below compare the fresh value against
+        // the current one bit-exactly (IEEE754 bits, so +0 and -0 are apart — the native
+        // write stores the sign bit too) and write only when the bits differ: a bit-equal
+        // value cannot change what Unity renders, and nothing in the shipped game reads
+        // Transform.hasChanged (same verification as the hero-weapon idle patch). External
+        // writers are respected because the comparison reads the transform every time — a
+        // transform an animation has moved elsewhere differs from the computed value and is
+        // overwritten exactly when the native write would have been. Values that read back
+        // with different bits — the world position of a parented transform, or a quaternion
+        // Unity normalizes on read — never match, so those keep writing every frame exactly
+        // like the native body; only a bit-identical read-back is skipped. NaN values
+        // compare unequal and are written, like in the native body. The transpiler
+        // re-points only those two call sites and
+        // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
+        // any other shape leaves the method unmodified with one warning.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxCastTelegraph), "UpdatePosition", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int position = 0, rotation = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+            }
+            if (position != 1 || rotation != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle",
+                    "native UpdatePosition body changed (writes " + position + "/" + rotation + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeCastTelegraphIdlePerf), nameof(WritePosition));
+                        break;
+                    case "set_rotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeCastTelegraphIdlePerf), nameof(WriteRotation));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        // float == reads 0f and -0f as equal while the native write would store the -0's
+        // sign bit, so the bit comparison decides; the != first keeps NaN never-equal
+        // (a NaN value writes every frame, like in the native body).
+        private static bool BitsDiffer(float a, float b)
+            => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
+
+        // Cast effects can die mid-frame too; preserve the native write's exception without
+        // disabling the optimization for every other telegraph.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        private static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
+                tr.position = value;
+            }
+        }
+
+        private static void WriteRotation(Transform tr, Quaternion value)
+        {
+            if (_disabled || !NativePerfOptions.CastTelegraphIdle) { tr.rotation = value; return; }
+            try
+            {
+                Quaternion current = tr.rotation;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z) || BitsDiffer(current.w, value.w)) tr.rotation = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.rotation = value; return; }
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast telegraph idle", ex.Message);
+                tr.rotation = value;
             }
         }
     }
