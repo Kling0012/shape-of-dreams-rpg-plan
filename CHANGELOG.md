@@ -10,6 +10,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.71 — Lighter position sync, ability animations, gimmick reports, and room omens（2026-10-25）
+
+この版では、キャラクターの位置の同期、能力アニメーション、仕掛けの発動の知らせ、部屋の兆しによる敵の強化で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from character position syncing, ability animations, gimmick trigger reports, and room omens that empower enemies.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- キャラクターが立ち止まって動きが落ち着いた後も、ゲームは同じ位置・向き・大きさを毎回書き直していました。今は、すでに同じ値になっているときは書き直しを省きます。キャラクターが動いたときやワープしたときは、これまでどおり新しい位置を反映します。ホストと参加者のどちらでも、止まっているキャラクターが多い場面でゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。キャラクターの動きと見た目は変わりません。 / Even after a character stopped and settled, the game kept rewriting the same position, rotation, and scale every time. The game now skips the rewrite when the values are already the same. When a character moves or warps, its new position is applied as before. Both the host's and co-op players' games should run a little lighter when many characters are standing still, though the actual effect has not been measured yet. Character movement and appearance are unchanged.
+- 能力のアニメーションを再生していないキャラクターでも、ゲームはその混ぜ具合を毎フレーム2回読み直していました。今は、アニメーションの切り替わりが落ち着いている間は読み直しを省きます。能力を使い始めたときや終わったときの切り替わりは、これまでどおり毎フレーム追いかけます。ホストと参加者のどちらでも、戦闘中のゲームが少し軽くなる見込みですが、1回ごとの節約は小さく効果は控えめで、実際の効果もまだ測っていません。アニメーションの見た目とタイミングは変わりません。 / Even for characters not playing an ability animation, the game re-read how strongly that animation was blended twice every frame. The game now skips this while the animation has settled. Transitions when an ability starts or ends are still followed every frame as before. Both the host's and co-op players' games should run a little lighter in combat, though each saving is tiny, so the effect is modest and has not been measured yet. Animation appearance and timing are unchanged.
+- 協力プレイで仕掛けや組コンボが発動し続ける戦闘では、ホストが発動の知らせを参加者へ毎フレーム送っていました（60fps なら1秒に最大60通）。今は1秒に1回にまとめて送ります。キャラクターが抜ける直前には、まだ送っていない分をすぐに送ります。参加者のゲームとホストの通信が少し軽くなる見込みですが、実際の効果はまだ測っていません。数えられる発動の合計は変わりませんが、仕掛けを発動させる依頼の進み具合は、最大1秒遅れて反映されることがあります。 / In co-op battles where gimmicks and combos keep triggering, the host sent trigger reports to co-op players every frame (up to 60 per second at 60fps). The host now bundles them into one report per second. Any unsent reports are sent right away just before a character leaves. Co-op players' games and the host's networking should run a little lighter, though the actual effect has not been measured yet. The total number of triggers counted is unchanged, but progress on bounties for triggering gimmicks may show up to one second later.
+- 「昂る敵」「頑強な敵」の兆しが出た部屋では、敵に補正を乗せるとき、パーティー全体で共通の倍率を敵1体ごとに計算し直していました。今は敵がまとめて出てくるたびに1回だけ計算します。こうした部屋で敵が出てくるときのホストのゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。敵の強さと兆しの効果は変わりません。 / In rooms with the Restless Enemies or Sturdy Enemies omen, the game recalculated the party-wide multiplier for every single enemy when applying the omen's bonus. It now calculates it once per group of enemies that appear. The host's game should run a little lighter when enemies appear in these rooms, though the actual effect has not been measured yet. Enemy strength and the omen's effect are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.70 — Lighter Chaos Shrine blessing tooltip（2026-10-25）
 
 この版では、混沌の神殿の加護の説明文を表示しているときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from showing the Chaos Shrine blessing's tooltip.
