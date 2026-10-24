@@ -4507,19 +4507,21 @@ namespace SodRpg.Mod
         // at the call site stays (gen0, one small object); the SyncVar churn, the network
         // resync and the hook storms are what disappear. The nativeMidJoinLoadoutIdle
         // option turns the skip off; a renamed or missing weaver property — or a
-        // HeroLoadoutData whose public fields no longer match the emptiness check below —
+        // HeroLoadoutData whose instance fields no longer match the emptiness check below —
         // disables the patch with one warning.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
 
         // IsEmpty sees exactly the fields Mirror's weaver-generated writer serializes for
-        // HeroLoadoutData: the four skill ints and the four star lists, all public instance
-        // fields (decompiled Dew.Core 2026-10-24 — the type has no others). A game update
-        // that adds, renames or drops one would silently narrow "empty" to a subset of the
-        // synced payload and could skip an assignment that changes the unseen field, so
-        // Prepare re-checks this shape at runtime and disables the patch when the public
-        // fields no longer match by count and name.
+        // HeroLoadoutData: the four skill ints and the four star lists (decompiled
+        // Dew.Core 2026-10-24 — the type holds no other instance field, public or not).
+        // A game update that adds, renames or drops one would silently narrow "empty" to
+        // a subset of the synced payload and could skip an assignment that changes the
+        // unseen field, so Prepare re-checks this shape at runtime and disables the patch
+        // when the instance fields no longer match by count and name. Non-public fields
+        // count too, because Mirror's weaver can sync a [SyncVar] the game declares
+        // non-public; a hidden extra field must fail the guard, not slip past IsEmpty.
         internal static readonly string[] EmptyCheckFields =
         {
             "skillQ", "skillR", "skillTrait", "skillMovement",
@@ -4528,7 +4530,7 @@ namespace SodRpg.Mod
 
         internal static bool LoadoutShapeMatches(Type loadoutType)
         {
-            var fields = loadoutType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = loadoutType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (fields.Length != EmptyCheckFields.Length) return false;
             var expected = new HashSet<string>(EmptyCheckFields);
             foreach (var field in fields)
@@ -4536,10 +4538,10 @@ namespace SodRpg.Mod
             return true;
         }
 
-        private static string PublicFieldNames(Type type)
+        private static string InstanceFieldNames(Type type)
         {
             var names = new List<string>();
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                 names.Add(field.Name);
             return string.Join(",", names);
         }
@@ -4553,8 +4555,8 @@ namespace SodRpg.Mod
                 if (_target == null || _target.GetMethodBody() == null)
                     throw new MissingMethodException("DewPlayer.Network_<selectedLoadout>k__BackingField.set");
                 if (!LoadoutShapeMatches(typeof(HeroLoadoutData)))
-                    throw new MissingFieldException("HeroLoadoutData public fields ["
-                        + PublicFieldNames(typeof(HeroLoadoutData)) + "] != emptiness check ["
+                    throw new MissingFieldException("HeroLoadoutData instance fields ["
+                        + InstanceFieldNames(typeof(HeroLoadoutData)) + "] != emptiness check ["
                         + string.Join(",", EmptyCheckFields) + "]");
                 return true;
             }
@@ -4570,7 +4572,7 @@ namespace SodRpg.Mod
         // True only when the value mirrors the HeroLoadoutData() constructor's state: the
         // ints the weaver serializes first and the four star lists empty or absent. Null
         // is deliberately NOT empty so every null transition keeps reaching the setter.
-        // Prepare's shape check guarantees this enumeration covers every public field the
+        // Prepare's shape check guarantees this enumeration covers every instance field the
         // weaver serializes, so "empty" can never miss a synced field it does not know.
         private static bool IsEmpty(HeroLoadoutData data)
             => data != null && data.skillQ == 0 && data.skillR == 0 && data.skillTrait == 0 && data.skillMovement == 0

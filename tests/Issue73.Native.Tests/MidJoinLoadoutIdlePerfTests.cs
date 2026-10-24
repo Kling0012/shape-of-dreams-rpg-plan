@@ -18,9 +18,10 @@ namespace Issue73.Native.Tests
     /// 同じ。星のリストが null の「空」も両側で同じ扱い）、(2) 内容の変わる代入
     /// （空 → 非空・非空 → 空・null が絡む両方向）はすべて本体のセッターに通る、
     /// (3) 設定が無効のときは「空 → 空」も通る、(4) Prepare の字段照合
-    /// （HeroLoadoutData の公開字段が空判定の8項目と数・名前で一致するか）は実機と同じ
-    /// 字段構成で通り、字段が増えた・名前が変わった・減った型では false を返す
-    /// （ゲーム更新で字段が増えたとき、警告1回で無効になる側）。
+    /// （HeroLoadoutData のインスタンス字段（公開・非公開とも）が空判定の8項目と数・名前で
+    /// 一致するか）は実機と同じ字段構成で通り、字段が増えた（非公開字段の追加を含む）・
+    /// 名前が変わった・減った型では false を返す（ゲーム更新で字段が増えたとき、警告1回で
+    /// 無効になる側）。
     /// </summary>
     public sealed class MidJoinLoadoutIdlePerfTests : IDisposable
     {
@@ -213,6 +214,16 @@ namespace Issue73.Native.Tests
             public int skillQ, skillR, skillTrait;
             public List<LoadoutStarItem> cDestruction, cLife, cImagination, cFlexible;
         }
+        // 公開8項目はそのままに非公開字段が1つ増えただけの型（#1144 レビュー F1）。
+        // Mirror の weaver は非公開字段への [SyncVar] も同期対象にできるため、公開字段
+        // だけの照合ではこの形がすり抜け、追加字段だけが変わる代入を「空 → 空」と誤って
+        // 飛ばし得る。照合は非公開字段も数・名前に入れるので false になる。
+        private sealed class LoadoutWithHiddenSyncVar
+        {
+            public int skillQ, skillR, skillTrait, skillMovement;
+            public List<LoadoutStarItem> cDestruction, cLife, cImagination, cFlexible;
+            internal int syncedQuietly;
+        }
 
         [Fact]
         public void TheShapeGuardAcceptsTheVanillaFieldsAndRejectsAnyDrift()
@@ -221,6 +232,7 @@ namespace Issue73.Native.Tests
             Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithExtraField)));
             Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithRenamedField)));
             Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutMissingAField)));
+            Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithHiddenSyncVar)));
         }
     }
 }
