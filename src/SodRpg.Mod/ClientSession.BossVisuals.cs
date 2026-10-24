@@ -431,6 +431,8 @@ namespace SodRpg.Mod
             // This world projection must not inherit the inventory UI's logical-canvas transform.
             GUI.matrix = Matrix4x4.identity;
 #if DEBUG
+            // Check the drawing base installed above, not the caller's oldMatrix.
+            // Only the clip-depth assertion checks the inherited GUI context.
             AssertBossGuiContext();
 #endif
             for (int visualIndex = 0; visualIndex < _bossRenderCount; visualIndex++)
