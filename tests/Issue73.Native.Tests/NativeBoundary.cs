@@ -83,7 +83,7 @@ namespace Mirror
     // NativeEntityOwnerSyncVarPerf（リンク）が owner SyncVar の解決済み参照の一致判定で読む
     // 本体 Mirror API。実物は netId（スポーン中の NetworkIdentity で一意、despawn で 0 化）と
     // componentIndex（InitializeNetworkBehaviours が NetworkBehaviours の添字を入れる）の
-    // 2 字段の struct。テストでは Prefix を通さない（本体 Entity の owner は字段のため
+    // 2 フィールドの struct。テストでは Prefix を通さない（本体 Entity の owner はフィールドのため
     // Prepare が外れる）ため、形だけ置く。
     internal class NetworkIdentity
     {
@@ -1197,7 +1197,7 @@ namespace SodRpg.Mod
         public string playerName;
         public uint netId;
         // NativeEntityOwnerSyncVarPerf（リンク）の Prefix が owner SyncVar の一致判定で読む
-        // NetworkBehaviour の字段。実物は InitializeNetworkBehaviours が NetworkBehaviours の
+        // NetworkBehaviour のフィールド。実物は InitializeNetworkBehaviours が NetworkBehaviours の
         // 添字を入れる。テストでは Prefix を通さないため形だけ。
         public byte ComponentIndex;
         public string guid;
