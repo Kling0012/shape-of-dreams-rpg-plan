@@ -342,6 +342,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the per-frame empty-loadout re-sync while a player waits to rejoin (host) /\n途中参加の待機中に空のロードアウトを毎フレーム同期し直すのを省く（ホスト）")]
         public bool nativeMidJoinLoadoutIdle = true;
 
+        [LabelText("Skip the settled animation layer weight reads every frame (host and guests) /\n落ち着いた能力アニメのレイヤー重みの毎フレーム読み直しを省く（ホストと参加者）")]
+        public bool nativeEntityAnimLayerWeightIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
