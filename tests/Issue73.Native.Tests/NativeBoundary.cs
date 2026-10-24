@@ -1686,30 +1686,48 @@ namespace TMPro
     }
 }
 
-// NativeChaosPetalIdlePerf（NativePerfPatches.cs、堕落した混沌の神殿の花びらアニメ）が
-// 読む Transform の子の数と子Transform。実機では神殿の花びらの固定階層を読むだけだが、
-// この境界では値を持たせるだけ（テストはこのパッチを直接動かさない。NativePerfPatches.cs
-// をこのプロジェクトでコンパイルするために必要な形だけ）。
+// NativeChaosPetalIdlePerf（NativePerfPatches.cs、堕落した混沌の神殿の花びらアニメ）と
+// ChaosPetalIdlePerfTests が読む Transform の子の数と子Transform。境界では子の一覧を
+// List で持ち、GetChild(index) が index 番目の子を返す（実機の Transform.GetChild と同じ
+// 意味。範囲外は実機と同じく例外になる）。localScale は既存の部分宣言
+// （CastIndicatorPerfBoundary.cs。書き込み回数も数える）のものを使う。
 namespace UnityEngine
 {
     internal sealed partial class Transform
     {
-        internal int childCount { get; set; }
-        internal Transform GetChild(int index) => this;
+        internal readonly List<Transform> children = new List<Transform>();
+        internal int childCount => children.Count;
+        internal Transform GetChild(int index) => children[index];
     }
 }
 
 // 本体 Dew.Contents Shrine_CorruptedChaos_PetalAnimator（堕落した混沌の神殿の花びら
-// アニメ、LogicBehaviour の子孫）のうち NativeChaosPetalIdlePerf が触る範囲の模倣:
-// FrameUpdate の宣言（Prepare の DeclaredMethod 探索用。中身は呼ばれないので空）と、
-// Prefix が読む公開フィールド群と Start が一度だけ書く _originalLocalScales。
-// 実物と同じグローバル名前空間に置く。基底は境界の UnityEngine.Component（transform を
-// 持つ最小のもの。実機の LogicBehaviour に相当する境界型は無い）。テストはこのパッチを
-// 直接動かさない。NativePerfPatches.cs がこの型を typeof で参照するための、コンパイル用の形。
+// アニメ、LogicBehaviour の子孫）の模倣。公開フィールド群・Start が一度だけ書く
+// _originalLocalScales・FrameUpdate の式と順序は、実 DLL 逆コンパイル
+// （reflection-dump decompiled/sod-decomp/Dew.Contents/Shrine_CorruptedChaos_PetalAnimator.cs）
+// と同じ形。base.FrameUpdate() は実機では空の本体で副作用が無いため省く。Start は
+// 実機では private の Unity 呼び出しだが、テストから駆動するためここでは public にする。
+// ChaosPetalIdlePerfTests の「パッチ無効側」（本体と同じ式の転写）として動く。実物と
+// 同じグローバル名前空間に置く。基底は境界の UnityEngine.Component（transform を持つ
+// 最小のもの。実機の LogicBehaviour に相当する境界型は LogicUpdate しか持たない）。
 internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Component
 {
     public float sin0Time, sin0Offset, sin0Mag;
     public float sin1Time, sin1Offset, sin1Mag;
     private Vector3[] _originalLocalScales;
-    public void FrameUpdate() { }
+
+    public void Start()
+    {
+        _originalLocalScales = new Vector3[transform.childCount];
+        for (int i = 0; i < transform.childCount; i++)
+            _originalLocalScales[i] = transform.GetChild(i).localScale;
+    }
+
+    public void FrameUpdate()
+    {
+        for (int i = 0; i < _originalLocalScales.Length; i++)
+            transform.GetChild(i).localScale = _originalLocalScales[i]
+                * (1f + Mathf.Sin(Time.time * sin0Time + (float)i * sin0Offset) * sin0Mag
+                     + Mathf.Sin(Time.time * sin1Time + (float)i * sin1Offset) * sin1Mag);
+    }
 }

@@ -6673,19 +6673,23 @@ namespace SodRpg.Mod
         private sealed class Petals
         {
             public Transform[] Items;
+            public int BuiltCount;
 
             // Returns the cached petal Transforms, rebuilt when the live child count no longer
-            // matches Start's capture (the vanilla loop would read the same shifted children
-            // through GetChild). Null when the hierarchy shrank: GetChild would throw past the
-            // capture length, so the caller hands the frame back to the original.
+            // matches the count the cache was built from (the vanilla loop would read the same
+            // shifted children through GetChild). Null when the hierarchy shrank below Start's
+            // capture: GetChild would throw past the capture length, so the caller hands the
+            // frame back to the original.
             public Transform[] Get(Transform root, int expected)
             {
                 Transform[] items = Items;
-                if (items != null && items.Length == expected) return items;
-                if (root.childCount < expected) return null;
+                int live = root.childCount;
+                if (items != null && BuiltCount == live) return items;
+                if (live < expected) return null;
                 items = new Transform[expected];
                 for (int i = 0; i < expected; i++) items[i] = root.GetChild(i);
                 Items = items;
+                BuiltCount = live;
                 return items;
             }
         }
