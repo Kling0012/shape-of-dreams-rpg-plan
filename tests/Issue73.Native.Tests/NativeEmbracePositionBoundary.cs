@@ -54,6 +54,22 @@ namespace SodRpg.Mod
     internal class EntityModel { public Transform holsteredWeapon; }
     internal class FxAttachToEntity { }
 
+    // 本体 Dew.Core FxGibs_Kinematic（2026-10-24 逆コンパイル確認）の、NativeGibsRestPerf が
+    // 掴む範囲の模倣: Update／DoBurst は DeclaredMethod 探索の受け口（中身は呼ばれないので空）、
+    // useGroundPlane は Prefix が読む公開フィールド、_pieces／_velocities／_spins／_burst は
+    // FieldRef の受け口。本来は FxInterpolatedEffectBase 経由の MonoBehaviour だが、この境界では
+    // Component で足りる（基底の補間はパッチが触らないため）。
+    internal sealed class FxGibs_Kinematic : Component
+    {
+        public bool useGroundPlane = true;
+        internal Transform[] _pieces;
+        internal Vector3[] _velocities;
+        internal float[] _spins;
+        internal bool _burst;
+        internal void Update() { }
+        private void DoBurst() { }
+    }
+
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
     internal struct SyncMovementData
     {
@@ -113,6 +129,7 @@ namespace SodRpg.Mod
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,
             nativeChaosPetalIdle = true,
+            nativeGibsRestSkip = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
         // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が読む設定。既定値は本物と同じ。

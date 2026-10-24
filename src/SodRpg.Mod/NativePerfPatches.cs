@@ -70,6 +70,7 @@ namespace SodRpg.Mod
             NativePerfOptions.DamageShakeIdle = config.nativeDamageShakeIdle;
             NativePerfOptions.AudioSetupIdle = config.nativeAudioSetupIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
+            NativePerfOptions.GibsRestSkip = config.nativeGibsRestSkip;
         }
     }
 
@@ -128,6 +129,7 @@ namespace SodRpg.Mod
         internal static bool DamageShakeIdle = true;
         internal static bool AudioSetupIdle = true;
         internal static bool ChaosPetalIdle = true;
+        internal static bool GibsRestSkip = true;
     }
 
     internal static class NativePerfPatch
@@ -6742,5 +6744,245 @@ namespace SodRpg.Mod
             }
             return true;
         }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGibsRestPerf
+    {
+        // FxGibs_Kinematic.Update simulates every burst piece every frame: gravity, a
+        // position move, Transform.Rotate and a Renderer.bounds ground check — six native
+        // interop calls per piece. Once a grounded piece has bled its horizontal speed and
+        // spin through the bounce code's friction, every further frame is visually a no-op:
+        // the piece sinks by gravity*dt and is snapped straight back by the bounce branch
+        // (net displacement zero, rendered position unchanged), the sub-0.4 y velocity the
+        // bounce leaves is zeroed again next frame, and the remaining x/z drift and spin
+        // stay below what a moving camera or the shrink-out can show. This patch lets the
+        // native loop skip such pieces: a managed-only prefix re-derives per-piece rest
+        // flags from the velocities the previous frame's native loop left behind (y exactly
+        // 0 happens only through the bounce rule), and an injected branch after the piece's
+        // null/active checks jumps to the loop increment for flagged pieces. The shrink-out
+        // (ValueSetter), DoBurst, FinishBurst and HidePieces keep touching every piece, and
+        // airborne or useGroundPlane=false pieces never rest, so burst shape, landing spots
+        // and timing are unchanged; only the redundant native calls for visibly-static
+        // pieces disappear, on every machine including guests (gibs spawn per kill locally).
+        //
+        // Residual assumptions: a foreign mod re-randomizing _velocities/_spins outside
+        // DoBurst could freeze a piece mid-air (vanilla itself only reads those arrays); a
+        // piece nudged by a foreign transform write wakes on no frame — the same class of
+        // risk as the other cached-transform skips. Thresholds sit an order of magnitude
+        // below vanilla's own rest bar (it zeroes |vy| < 0.4, i.e. ~6.7 mm/frame).
+        private const float MaxRestSpeedSq = 0.0025f;
+        private const float MaxRestSpin = 1f;
+
+        private sealed class Rest
+        {
+            public bool[] Flags;
+        }
+
+        private static readonly ConditionalWeakTable<FxGibs_Kinematic, Rest> RestTable =
+            new ConditionalWeakTable<FxGibs_Kinematic, Rest>();
+        private static readonly ConditionalWeakTable<FxGibs_Kinematic, Rest>.CreateValueCallback CreateRest =
+            _ => new Rest();
+
+        private static AccessTools.FieldRef<FxGibs_Kinematic, Transform[]> _pieces;
+        private static AccessTools.FieldRef<FxGibs_Kinematic, Vector3[]> _velocities;
+        private static AccessTools.FieldRef<FxGibs_Kinematic, float[]> _spins;
+        private static AccessTools.FieldRef<FxGibs_Kinematic, bool> _burst;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxGibs_Kinematic), "Update", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _pieces = AccessTools.FieldRefAccess<FxGibs_Kinematic, Transform[]>("_pieces");
+                _velocities = AccessTools.FieldRefAccess<FxGibs_Kinematic, Vector3[]>("_velocities");
+                _spins = AccessTools.FieldRefAccess<FxGibs_Kinematic, float[]>("_spins");
+                _burst = AccessTools.FieldRefAccess<FxGibs_Kinematic, bool>("_burst");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gib rest skip", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Prefix(FxGibs_Kinematic __instance)
+        {
+            if (_disabled || !NativePerfOptions.GibsRestSkip) return;
+            try
+            {
+                if (!_burst(__instance)) return;
+                Transform[] pieces = _pieces(__instance);
+                Vector3[] velocities = _velocities(__instance);
+                float[] spins = _spins(__instance);
+                if (pieces == null || velocities == null || spins == null
+                    || pieces.Length == 0 || velocities.Length != pieces.Length || spins.Length != pieces.Length)
+                {
+                    return;
+                }
+                Rest rest = RestTable.GetValue(__instance, CreateRest);
+                bool[] flags = rest.Flags;
+                if (flags == null || flags.Length != pieces.Length) flags = rest.Flags = new bool[pieces.Length];
+                bool ground = __instance.useGroundPlane;
+                for (int i = 0; i < pieces.Length; i++)
+                {
+                    Vector3 v = velocities[i];
+                    flags[i] = ground
+                        && v.y == 0f
+                        && v.x * v.x + v.z * v.z < MaxRestSpeedSq
+                        && Mathf.Abs(spins[i]) < MaxRestSpin;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gib rest skip", ex.Message);
+            }
+        }
+
+        // Consulted from the injected branch inside the native physics loop, after the
+        // piece's null/active checks. Any fallback path returns false and keeps the
+        // untouched native behaviour for that piece.
+        private static bool ShouldSkip(FxGibs_Kinematic fx, int index)
+        {
+            if (_disabled || !NativePerfOptions.GibsRestSkip) return false;
+            return RestTable.TryGetValue(fx, out Rest rest)
+                && rest.Flags != null && (uint)index < (uint)rest.Flags.Length && rest.Flags[index];
+        }
+
+        internal static void ClearRest(FxGibs_Kinematic fx)
+        {
+            if (_disabled) return;
+            try
+            {
+                if (RestTable.TryGetValue(fx, out Rest rest) && rest.Flags != null)
+                {
+                    Array.Clear(rest.Flags, 0, rest.Flags.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gib rest skip", ex.Message);
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var piecesField = AccessTools.Field(typeof(FxGibs_Kinematic), "_pieces");
+            var rotate = AccessTools.Method(typeof(Transform), "Rotate");
+            var doBurst = AccessTools.Method(typeof(FxGibs_Kinematic), "DoBurst");
+            var shouldSkip = AccessTools.Method(typeof(NativeGibsRestPerf), nameof(ShouldSkip));
+            if (piecesField == null || rotate == null || doBurst == null || shouldSkip == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "gib rest skip", "native members unavailable");
+                return code;
+            }
+            int activeSelfCount = 0, rotateCount = 0, boundsCount = 0, getPositionCount = 0;
+            int setPositionCount = 0, doBurstCount = 0, piecesElementCount = 0;
+            int branchIndex = -1, indexLoadIndex = -1;
+            object continueLabel = null;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].operand is MethodInfo method)
+                {
+                    // Fingerprint of the 512-byte native body: one activeSelf continue
+                    // check, one Rotate, one bounds read, two position get/set pairs (move
+                    // and bounce snap), one DoBurst call and exactly one _pieces[i] load.
+                    if (method.DeclaringType == typeof(GameObject) && method.Name == "get_activeSelf") activeSelfCount++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "Rotate") rotateCount++;
+                    if (method.DeclaringType == typeof(Renderer) && method.Name == "get_bounds") boundsCount++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "get_position") getPositionCount++;
+                    if (method.DeclaringType == typeof(Transform) && method.Name == "set_position") setPositionCount++;
+                    if (method == doBurst) doBurstCount++;
+                }
+                if (code[i].LoadsField(piecesField) && i + 2 < code.Count
+                    && IsIndexLoad(code[i + 1].opcode)
+                    && code[i + 2].opcode == OpCodes.Ldelem_Ref)
+                {
+                    piecesElementCount++;
+                    indexLoadIndex = i + 1;
+                }
+                if (code[i].operand is MethodInfo activeSelfGet && activeSelfGet.DeclaringType == typeof(GameObject)
+                    && activeSelfGet.Name == "get_activeSelf"
+                    && i + 1 < code.Count && IsBranch(code[i + 1].opcode) && code[i + 1].operand != null)
+                {
+                    branchIndex = i + 1;
+                    continueLabel = code[i + 1].operand;
+                }
+            }
+            // The activeSelf check must end in the continue branch, another branch must
+            // share its target (the null-check continue proving the label is the loop
+            // increment), and nothing else may be bound to the insertion point.
+            bool sharedTarget = false;
+            if (continueLabel is Label target)
+            {
+                foreach (var instruction in code)
+                {
+                    if (instruction.operand is Label label && target.Equals(label) && IsBranch(instruction.opcode))
+                    {
+                        sharedTarget = true;
+                        break;
+                    }
+                }
+            }
+            if (activeSelfCount != 1 || branchIndex < 0 || branchIndex + 1 >= code.Count
+                || !sharedTarget || code[branchIndex + 1].labels.Count != 0
+                || rotateCount != 1 || boundsCount != 1 || getPositionCount != 2 || setPositionCount != 2
+                || doBurstCount != 1 || piecesElementCount != 1 || indexLoadIndex < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "gib rest skip", "native physics loop changed or already patched");
+                return code;
+            }
+            // ldarg.0; ldloc.<index>; call ShouldSkip; brtrue <loop increment>
+            var injection = new[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(code[indexLoadIndex]),
+                new CodeInstruction(OpCodes.Call, shouldSkip),
+                new CodeInstruction(OpCodes.Brtrue, continueLabel),
+            };
+            code.InsertRange(branchIndex + 1, injection);
+            return code;
+        }
+
+        private static bool IsBranch(OpCode opcode)
+        {
+            return opcode == OpCodes.Brtrue || opcode == OpCodes.Brtrue_S
+                || opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
+        }
+
+        private static bool IsIndexLoad(OpCode opcode)
+        {
+            var name = opcode.Name;
+            return name.StartsWith("ldloc", StringComparison.Ordinal) && !name.StartsWith("ldloca", StringComparison.Ordinal);
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGibsRestReset
+    {
+        // A fresh burst re-randomizes every velocity and spin inside DoBurst, so stale rest
+        // flags from the previous burst must not skip pieces on their first flying frames.
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(FxGibs_Kinematic), "DoBurst", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Postfix(FxGibs_Kinematic __instance) => NativeGibsRestPerf.ClearRest(__instance);
     }
 }
