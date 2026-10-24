@@ -76,6 +76,7 @@ namespace SodRpg.Mod
             NativePerfOptions.GemResponsibilityHitCache = config.nativeGemResponsibilityHitCache;
             NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
+            NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
         }
     }
 
@@ -140,6 +141,7 @@ namespace SodRpg.Mod
         internal static bool GemResponsibilityHitCache = true;
         internal static bool MusicSourceIdle = true;
         internal static bool TransitionIdle = true;
+        internal static bool MidJoinLoadoutIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -4468,6 +4470,130 @@ namespace SodRpg.Mod
                 // cannot suppress a send that matters — still logged once, since an
                 // exception here is the only sign the bookkeeping is misbehaving.
                 NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer forget", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeMidJoinLoadoutIdlePerf
+    {
+        // DewPlayer.LogicUpdate_MidJoin's tail runs every logic frame for a lobby-parked
+        // player that has rejoin data while a game is running with mid-joins allowed, and
+        // its last statement is an unconditional assignment of a fresh empty HeroLoadoutData:
+        //
+        //     Network_<selectedLoadout>k__BackingField = new HeroLoadoutData();
+        //
+        // HeroLoadoutData is a plain class, so Mirror's GeneratedSyncVarSetter compares
+        // instances by reference: the fresh empty never equals the previous frame's fresh
+        // empty, so while the player waits (midJoinWaitType is non-None for the whole
+        // boss-fight window: BeforeBossFight/FightingBoss/AfterBossFight are set by
+        // BossMonster itself) the SyncVar is re-dirtied every frame, Mirror re-serializes
+        // and re-sends identical empty-loadout bytes to every observer on every sync tick,
+        // and OnLoadoutChanged/ClientEvent_OnSelectedLoadoutChanged fire on the host each
+        // frame and on every client each received tick — all with content that never
+        // changed. The game's other writers of the same SyncVar are CmdSetHeroType_Imp
+        // (clears an invalid loadout) and CmdSetHeroLoadoutData_Imp; no other call sites
+        // exist and nothing mutates the live instance in place, so "empty over empty"
+        // is the exact shape of the idle loop.
+        //
+        // This prefix therefore skips the generated setter only when BOTH the incoming
+        // value and the field's current value are content-empty (the four skill ints are
+        // zero and all four star lists are null-or-empty). Anything non-empty passes
+        // untouched, the first real clear (non-empty -> empty) passes, and a null on
+        // either side passes so the native setter keeps full authority over every
+        // content change, every hook and every resync — the receiver-visible state after
+        // each call is exactly what vanilla would hold, minus the duplicate resends of
+        // data the receiver already has. The per-frame `new HeroLoadoutData()` allocation
+        // at the call site stays (gen0, one small object); the SyncVar churn, the network
+        // resync and the hook storms are what disappear. The nativeMidJoinLoadoutIdle
+        // option turns the skip off; a renamed or missing weaver property — or a
+        // HeroLoadoutData whose instance fields no longer match the emptiness check below —
+        // disables the patch with one warning.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        // IsEmpty sees exactly the fields Mirror's weaver-generated writer serializes for
+        // HeroLoadoutData: the four skill ints and the four star lists (decompiled
+        // Dew.Core 2026-10-24 — the type holds no other instance field, public or not).
+        // A game update that adds, renames or drops one would silently narrow "empty" to
+        // a subset of the synced payload and could skip an assignment that changes the
+        // unseen field, so Prepare re-checks this shape at runtime and disables the patch
+        // when the instance fields no longer match by count and name. Non-public fields
+        // count too, because Mirror's weaver can sync a [SyncVar] the game declares
+        // non-public; a hidden extra field must fail the guard, not slip past IsEmpty.
+        internal static readonly string[] EmptyCheckFields =
+        {
+            "skillQ", "skillR", "skillTrait", "skillMovement",
+            "cDestruction", "cLife", "cImagination", "cFlexible",
+        };
+
+        internal static bool LoadoutShapeMatches(Type loadoutType)
+        {
+            var fields = loadoutType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fields.Length != EmptyCheckFields.Length) return false;
+            var expected = new HashSet<string>(EmptyCheckFields);
+            foreach (var field in fields)
+                if (!expected.Remove(field.Name)) return false;
+            return true;
+        }
+
+        private static string InstanceFieldNames(Type type)
+        {
+            var names = new List<string>();
+            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                names.Add(field.Name);
+            return string.Join(",", names);
+        }
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.PropertySetter(typeof(DewPlayer),
+                    "Network_003CselectedLoadout_003Ek__BackingField");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("DewPlayer.Network_<selectedLoadout>k__BackingField.set");
+                if (!LoadoutShapeMatches(typeof(HeroLoadoutData)))
+                    throw new MissingFieldException("HeroLoadoutData instance fields ["
+                        + InstanceFieldNames(typeof(HeroLoadoutData)) + "] != emptiness check ["
+                        + string.Join(",", EmptyCheckFields) + "]");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "mid-join empty loadout re-sync", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // True only when the value mirrors the HeroLoadoutData() constructor's state: the
+        // ints the weaver serializes first and the four star lists empty or absent. Null
+        // is deliberately NOT empty so every null transition keeps reaching the setter.
+        // Prepare's shape check guarantees this enumeration covers every instance field the
+        // weaver serializes, so "empty" can never miss a synced field it does not know.
+        private static bool IsEmpty(HeroLoadoutData data)
+            => data != null && data.skillQ == 0 && data.skillR == 0 && data.skillTrait == 0 && data.skillMovement == 0
+            && IsEmptyList(data.cDestruction) && IsEmptyList(data.cLife)
+            && IsEmptyList(data.cImagination) && IsEmptyList(data.cFlexible);
+
+        private static bool IsEmptyList(List<LoadoutStarItem> list) => list == null || list.Count == 0;
+
+        private static bool Prefix(DewPlayer __instance, HeroLoadoutData value)
+        {
+            if (!NativePerfOptions.MidJoinLoadoutIdle || _disabled) return true;
+            try
+            {
+                if (IsEmpty(value) && IsEmpty(__instance.selectedLoadout)) return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "mid-join empty loadout re-sync", ex.Message);
+                return true;
             }
         }
     }
