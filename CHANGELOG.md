@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.59 — Co-op players skip an unused per-frame task（2026-10-24）
+
+この版では、参加者の側で毎フレーム空回りしていた処理を省きました。 / This version removes work that co-op players' games repeated every frame for no effect.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 攻撃で追加の弾が出るとき、ゲームは弾がまとめて出ないように、出るタイミングを散らしています。この処理はホストでしか働きませんが、参加者の側でも毎フレーム動いていました。今は参加者の側ではこの処理を省きます。参加者の処理がごくわずかに軽くなる見込みですが、体感できるほどの差はほぼ出ない見込みです。ホストの側は変わりません。追加の弾が出るタイミング、見た目、当たり方は変わりません。 / When attacks spawn extra projectiles, the game staggers their timing so they don't all appear at once. This only does anything on the host, but it also ran every frame on co-op players. Co-op players now skip it. Co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. Nothing changes on the host. When extra projectiles appear, how they look, and how they hit are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.58 — Less wasted work in music, hits, and skill recovery（2026-10-24）
 
 この版では、BGM の再生、攻撃の命中、スキルの再同期などで繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated in music playback, attack hits, skill resyncs, and more.
