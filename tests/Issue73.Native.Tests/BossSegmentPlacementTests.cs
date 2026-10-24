@@ -336,4 +336,111 @@ namespace Issue73.Native.Tests
             return (camera.Projections, drawn);
         }
     }
+
+    /// <summary>
+    /// （#1153）ボス予告の線分描画の軽量化（セグメントごとの GUIUtility.RotateAroundPivot を
+    /// sincos からの直接の行列構成に置き換える）の等価性の検証。実ソースからリンクした
+    /// BossSegmentPlacement.RotationAroundPivot そのものに、単位行列を基準にした
+    /// GUIUtility.RotateAroundPivot の結果と同じ T(pivot)・R(angle)・T(-pivot) ができていることを
+    /// 確かめる（0° で単位行列・任意の角度でピボットが不動・90°/180°/-90° で既知の点が手計算の
+    /// 座標へ移る・成分が回転行列 [[cos,-sin],[sin,cos]] とピボットの平行移動の参照実装に一致）。
+    /// GUI.matrix への設定はテストから呼べないため、得られた6成分を Matrix4x4 へ書き込む部分
+    /// （単位行列の残りの成分は既定のまま）だけが検証の外に残る。
+    /// </summary>
+    public sealed class BossSegmentRotationTests
+    {
+        // Matrix4x4 の2行分を GUI の頂点変換と同じ形で点に適用する。
+        private static Vector2 Apply(BossSegmentPlacement.PivotRotation rotation, Vector2 point)
+            => new Vector2(rotation.M00 * point.x + rotation.M01 * point.y + rotation.M03,
+                rotation.M10 * point.x + rotation.M11 * point.y + rotation.M13);
+
+        // 参照実装: R(angle)・(p - pivot) + pivot。回転は [[cos,-sin],[sin,cos]]、倍精度で計算する。
+        private static Vector2 Reference(float angleDegrees, Vector2 pivot, Vector2 point)
+        {
+            double radians = angleDegrees * Math.PI / 180.0;
+            double c = Math.Cos(radians), s = Math.Sin(radians);
+            double dx = point.x - pivot.x, dy = point.y - pivot.y;
+            return new Vector2((float)(c * dx - s * dy + pivot.x), (float)(s * dx + c * dy + pivot.y));
+        }
+
+        private static void AssertNear(float expected, float actual, string what)
+            => Assert.True(Math.Abs(expected - actual) <= .01f, $"{what}: 期待 {expected}、実際 {actual}");
+
+        [Fact]
+        public void ZeroAngleIsTheIdentityMembers()
+        {
+            var rotation = BossSegmentPlacement.RotationAroundPivot(0f, new Vector2(960f, 540f));
+            Assert.Equal(1f, rotation.M00);
+            Assert.Equal(0f, rotation.M01);
+            Assert.Equal(0f, rotation.M03);
+            Assert.Equal(0f, rotation.M10);
+            Assert.Equal(1f, rotation.M11);
+            Assert.Equal(0f, rotation.M13);
+        }
+
+        [Fact]
+        public void PivotStaysFixedForArbitraryAngles()
+        {
+            var pivot = new Vector2(731.5f, 268.25f);
+            foreach (float angle in new[] { 37.5f, -122.25f, 200f, 359.9f })
+            {
+                var rotation = BossSegmentPlacement.RotationAroundPivot(angle, pivot);
+                var moved = Apply(rotation, pivot);
+                AssertNear(pivot.x, moved.x, $"角度 {angle} のピボット X");
+                AssertNear(pivot.y, moved.y, $"角度 {angle} のピボット Y");
+            }
+        }
+
+        [Fact]
+        public void QuarterHalfAndNegativeQuarterTurnsMoveKnownPointsAsHandComputed()
+        {
+            var pivot = new Vector2(960f, 540f);
+            // 90°: ピボットから右へ 100px の点は下へ 100px へ移る（GUI の Y 軸は下向きで、正の角度は
+            // 画面上では時計回り。RotateAroundPivot と同じ向き）。
+            var quarter = BossSegmentPlacement.RotationAroundPivot(90f, pivot);
+            var moved = Apply(quarter, new Vector2(1060f, 540f));
+            AssertNear(960f, moved.x, "90° の X");
+            AssertNear(640f, moved.y, "90° の Y");
+            // 180°: 右へ 100px・下へ 40px の点は左へ 100px・上へ 40px へ。
+            var half = BossSegmentPlacement.RotationAroundPivot(180f, pivot);
+            moved = Apply(half, new Vector2(1060f, 580f));
+            AssertNear(860f, moved.x, "180° の X");
+            AssertNear(500f, moved.y, "180° の Y");
+            // -90°: 下へ 40px の点は右へ 40px へ。
+            var negative = BossSegmentPlacement.RotationAroundPivot(-90f, pivot);
+            moved = Apply(negative, new Vector2(960f, 580f));
+            AssertNear(1000f, moved.x, "-90° の X");
+            AssertNear(540f, moved.y, "-90° の Y");
+        }
+
+        [Fact]
+        public void MembersMatchTheTranslateRotateUntranslateReference()
+        {
+            var pivots = new[] { new Vector2(0f, 0f), new Vector2(960f, 540f), new Vector2(123.75f, 1027.5f) };
+            float[] angles = { 0f, 1f, 37.5f, 90f, 143.75f, 180f, 270f, -45.5f, -122.25f, 359.9f };
+            foreach (var pivot in pivots)
+            foreach (float angle in angles)
+            {
+                var rotation = BossSegmentPlacement.RotationAroundPivot(angle, pivot);
+                // 成分そのものが回転行列 [[cos,-sin],[sin,cos]] とピボットの平行移動に一致する。
+                double radians = angle * Math.PI / 180.0;
+                double c = Math.Cos(radians), s = Math.Sin(radians);
+                AssertNear((float)c, rotation.M00, $"角度 {angle} の m00");
+                AssertNear((float)-s, rotation.M01, $"角度 {angle} の m01");
+                AssertNear((float)s, rotation.M10, $"角度 {angle} の m10");
+                AssertNear((float)c, rotation.M11, $"角度 {angle} の m11");
+                AssertNear((float)(pivot.x - (c * pivot.x - s * pivot.y)), rotation.M03, $"角度 {angle} の m03");
+                AssertNear((float)(pivot.y - (s * pivot.x + c * pivot.y)), rotation.M13, $"角度 {angle} の m13");
+                // 点への適用も参照実装（T(pivot)・R(angle)・T(-pivot)）と同じところへ移す。
+                var points = new[] { pivot, new Vector2(0f, 0f), new Vector2(1919f, 1079f), new Vector2(444.25f, 666.5f) };
+                foreach (var point in points)
+                {
+                    var expected = Reference(angle, pivot, point);
+                    var actual = Apply(rotation, point);
+                    AssertNear(expected.x, actual.x, $"角度 {angle}・点 ({point.x}, {point.y}) の X");
+                    AssertNear(expected.y, actual.y, $"角度 {angle}・点 ({point.x}, {point.y}) の Y");
+                }
+            }
+        }
+    }
 }

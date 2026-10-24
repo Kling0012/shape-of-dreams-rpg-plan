@@ -573,7 +573,18 @@ namespace SodRpg.Mod
             _bossSegmentsLeft--;
             if (!BossSegmentPlacement.TryPlace(a, b, width, _bossScreenWidth, _bossScreenHeight,
                 out var pivot, out float angle, out var rect)) return;
-            GUIUtility.RotateAroundPivot(angle, pivot);
+            // GUIUtility.RotateAroundPivot spends two TRS passes, two matrix multiplies, a GUI.matrix
+            // read-back, an Unclip of the pivot and two extra native matrix writes per segment. With the
+            // identity base this tail assumes (installed by DrawBossEffects, restored below) and the root
+            // full-screen clip the mod's OnGUI entry holds, the same translate·rotate·untranslate matrix
+            // is composed from sincos in BossSegmentPlacement.RotationAroundPivot (pinned by the test
+            // project, which compiles that file); assigning it costs a single native write and the drawn
+            // pixels are unchanged.
+            var rotation = BossSegmentPlacement.RotationAroundPivot(angle, pivot);
+            var rotated = Matrix4x4.identity;
+            rotated.m00 = rotation.M00; rotated.m01 = rotation.M01; rotated.m03 = rotation.M03;
+            rotated.m10 = rotation.M10; rotated.m11 = rotation.M11; rotated.m13 = rotation.M13;
+            GUI.matrix = rotated;
             GUI.DrawTexture(rect, _bossWhiteTexture);
             GUI.matrix = Matrix4x4.identity; // the base installed by DrawBossEffects; reading GUI.matrix back per line was a native call
         }
