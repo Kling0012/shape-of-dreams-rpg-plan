@@ -143,6 +143,52 @@ namespace SodRpg.Core.Tests
             Assert.Empty(add);
         }
 
+        // perf-loop/20261025-0644: 追加した List<T> 版 Diff は IEnumerable<T> 版と同じ論理を複製している。
+        // 同じ入力（null 要素・不適格・追跡だけ・隊だけ）を両オーバーロードへ渡し、
+        // toAdd / toRemove の要素と順序が一致することを機械的に確かめる。
+        [Fact]
+        public void WaypointRosterListDiffMatchesEnumerableDiff()
+        {
+            var shared = new Hero(); var onlyTracked = new Hero(); var onlyRoster = new Hero(); var ineligible = new Hero();
+            var tracked = new List<Hero> { onlyTracked, null, shared, ineligible };
+            var roster = new List<Hero> { shared, null, onlyRoster, ineligible };
+            Func<Hero, bool> isEligible = h => h != ineligible;
+
+            var addList = new List<Hero>(); var removeList = new List<Hero>();
+            // List<Hero> を渡すと C# のオーバーロード解決で List<T> 版（完全一致）が選ばれる。
+            WaypointRoster.Diff(tracked, roster, isEligible, addList, removeList,
+                new HashSet<Hero>(), new HashSet<Hero>());
+            var addSeq = new List<Hero>(); var removeSeq = new List<Hero>();
+            // 同じ List を IEnumerable<Hero> に明示的に落として IEnumerable<T> 版を選ばせる。
+            WaypointRoster.Diff((IEnumerable<Hero>)tracked, (IEnumerable<Hero>)roster, isEligible, addSeq, removeSeq,
+                new HashSet<Hero>(), new HashSet<Hero>());
+
+            Assert.Equal(addSeq, addList);
+            Assert.Equal(removeSeq, removeList);
+            // 両版が同じ間違いをしていても気づけるよう、固定の期待値（追跡順どおりの除去順）も確かめる。
+            Assert.Equal(new[] { onlyRoster }, addList);
+            Assert.Equal(new[] { onlyTracked, null, ineligible }, removeList);
+        }
+
+        // perf-loop/20261025-0644: 既存テストの配列入力を List に替えた版。List 引数では
+        // List<T> 版 Diff が選ばれ（identity 変換が IEnumerable<T> への変換より常に良い）、
+        // ホストの毎フレーム経路（HostAuthority.Waypoints の呼び出し）と同じ枝が実行される。
+        [Fact]
+        public void WaypointRosterListOverloadIncludesHeroWithoutBuildAndDropsInactive()
+        {
+            var modded = new Hero(); var vanilla = new Hero(); var gone = new Hero();
+            var tracked = new List<Hero> { modded, gone };
+            var roster = new List<Hero> { modded, vanilla };
+            var add = new List<Hero>(); var remove = new List<Hero>();
+            var eligible = new HashSet<Hero>(); var known = new HashSet<Hero>();
+            WaypointRoster.Diff(tracked, roster, h => true, add, remove, eligible, known);
+            Assert.Equal(new[] { vanilla }, add);
+            Assert.Equal(new[] { gone }, remove);
+            add.Clear(); remove.Clear();
+            WaypointRoster.Diff(tracked, roster, h => h != vanilla, add, remove, eligible, known);
+            Assert.Empty(add);
+        }
+
         // Findings 7 and 8: owned effects are released in isolation; foreign ones are untouched.
         private sealed class Owner { }
         private sealed class Curse { public bool Live = true; public bool Throws; }

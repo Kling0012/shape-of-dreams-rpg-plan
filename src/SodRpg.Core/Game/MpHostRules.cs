@@ -204,6 +204,29 @@ namespace SodRpg.Core.Game
     /// <summary>Waypoint receiver membership follows the active hero roster, not which heroes have an accepted Build.</summary>
     public static class WaypointRoster
     {
+        // Host's per-frame tick path: iterate the concrete lists directly so no IEnumerable
+        // enumerator (List<T>.Enumerator / KeyCollection.Enumerator) is boxed every frame.
+        public static void Diff<T>(List<T> tracked, List<T> roster, Func<T, bool> isEligible,
+            List<T> toAdd, List<T> toRemove, HashSet<T> eligible, HashSet<T> known) where T : class
+        {
+            eligible.Clear();
+            known.Clear();
+            for (int i = 0; i < roster.Count; i++)
+            {
+                var hero = roster[i];
+                if (hero != null && isEligible(hero)) eligible.Add(hero);
+            }
+            for (int i = 0; i < tracked.Count; i++)
+            {
+                var hero = tracked[i];
+                known.Add(hero);
+                if (hero == null || !eligible.Contains(hero)) toRemove.Add(hero);
+            }
+            foreach (var hero in eligible) if (!known.Contains(hero)) toAdd.Add(hero);
+            eligible.Clear();
+            known.Clear();
+        }
+
         public static void Diff<T>(IEnumerable<T> tracked, IEnumerable<T> roster, Func<T, bool> isEligible,
             List<T> toAdd, List<T> toRemove, HashSet<T> eligible, HashSet<T> known) where T : class
         {
