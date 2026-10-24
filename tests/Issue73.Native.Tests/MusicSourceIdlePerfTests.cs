@@ -31,6 +31,10 @@ namespace Issue73.Native.Tests
         // 適用前の false へ戻す。カウンタは音源インスタンスごとの欄なので戻す必要がない
         // （毎テスト新しい音源を作り、その音源の欄はゼロから始まる。キャッシュ表の欄も
         // 毎テスト新規になる）。
+        // この静的な欄（設定と両フラグ）を書くテストはこのアセンブリ内ではこのクラスだけ
+        // （設定を映す ApplyNativePerfConfig を呼ぶテストもない）なので、並列クラスが
+        // 途中で値を変える筋道はない。今後この欄を書くテストを足すときは、このクラスと
+        // 同じ [Collection] に入れて直列に走らせること。
         public MusicSourceIdlePerfTests()
         {
             _savedOption = NativePerfOptions.MusicSourceIdle;
@@ -118,12 +122,13 @@ namespace Issue73.Native.Tests
 
         // (6) 2つの対象メソッド（LogicUpdate/DoCrossFade）の片方だけが付け替わった状態では
         // 毎回書く（付け替わっていない側の直接書き込みをキャッシュが見られないため）。
-        // この間もキャッシュは更新されるので、両方揃った後に同値を省いても実値とずれない。
+        // 逆向きも含めて両方の半適用状態で確かめる。この間もキャッシュは更新されるので、
+        // 両方揃った後に同値を省いても実値とずれない。
         [Fact]
         public void TheGuardWritesEveryCallWhileOnlyOneMethodIsRepointed()
         {
             var source = new AudioSource();
-            SetFlags(false, true); // LogicUpdate だけが付け替わった想定
+            SetFlags(false, true); // DoCrossFade だけが付け替わった想定
             GuardedVolume(source, 0.5f);
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1f);
@@ -131,13 +136,19 @@ namespace Issue73.Native.Tests
             Assert.Equal(2, source.VolumeWrites); // キャッシュ一致でも省かない
             Assert.Equal(2, source.PitchWrites);
 
+            SetFlags(true, false); // LogicUpdate だけが付け替わった想定（逆向きの半適用）
+            GuardedVolume(source, 0.5f);
+            GuardedPitch(source, 1f);
+            Assert.Equal(3, source.VolumeWrites); // 逆向きでもやはり毎回書く
+            Assert.Equal(3, source.PitchWrites);
+
             SetFlags(true, true); // 両方揃った
             GuardedVolume(source, 0.5f);
             GuardedPitch(source, 1f);
-            Assert.Equal(2, source.VolumeWrites); // この時点で初めて省く（実値は 0.5/1 のまま）
-            Assert.Equal(2, source.PitchWrites);
+            Assert.Equal(3, source.VolumeWrites); // この時点で初めて省く（実値は 0.5/1 のまま）
+            Assert.Equal(3, source.PitchWrites);
             GuardedVolume(source, 0.6f);
-            Assert.Equal(3, source.VolumeWrites);
+            Assert.Equal(4, source.VolumeWrites);
             Assert.Equal(0.6f, source.volume);
         }
 
