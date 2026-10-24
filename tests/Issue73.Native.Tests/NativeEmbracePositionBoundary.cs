@@ -73,6 +73,22 @@ namespace UnityEngine
             return found?.ToArray() ?? new T[0];
         }
     }
+    // NativeGemWorldModelLoadPerf が初回の読み込みと設定無効時のフォールバックで呼ぶ本体
+    // Resources.Load の境界。 prefab 参照は中身を読まないので、返す値（next。既定は null）
+    // と呼ばれた回数・パス（loads）の記録だけを持つ。GemWorldModelLoadPerfTests がこの
+    // 記録で、キャッシュが Load を呼ばずに同じ参照を返すこと・null を保持しないこと・
+    // 設定無効時に毎回呼ぶことを確かめる。
+    internal static class Resources
+    {
+        internal static GameObject next;
+        internal static readonly System.Collections.Generic.List<string> loads
+            = new System.Collections.Generic.List<string>();
+        public static T Load<T>(string path)
+        {
+            loads.Add(path);
+            return next is T typed ? typed : default;
+        }
+    }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
     // Log は NativeObliviaxKidnapLogPerf の差し替え先 MaybeLog が設定無効時に呼ぶ本体の呼び出し。
@@ -156,7 +172,7 @@ namespace SodRpg.Mod
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
-            nativeGemCooldownSync = true,
+            nativeGemCooldownSync = true, nativeGemWorldModelCache = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
             nativeGuestPublishLimit = true,
             nativeAttachFaceIdle = true, nativeAttachFaceSharedVerts = true,
