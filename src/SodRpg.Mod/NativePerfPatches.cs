@@ -7962,18 +7962,21 @@ namespace SodRpg.Mod
         {
             var code = new List<CodeInstruction>(instructions);
             int callsites = 0;
+            int loadIndex = -1;
             for (int i = 0; i + 1 < code.Count; i++)
             {
                 if (!IsWorldModelLoad(code[i], code[i + 1])) continue;
                 callsites++;
-                code[i + 1].operand = AccessTools.Method(
-                    typeof(NativeSkillWorldModelLoadPerf), nameof(LoadCachedSkillWorldModel));
+                loadIndex = i + 1;
             }
             if (callsites != 1)
             {
                 NativePerfPatch.Warn(ref _warned, "skill world model load",
                     "native OnStartClient load callsite changed or already patched");
+                return code;
             }
+            code[loadIndex].operand = AccessTools.Method(
+                typeof(NativeSkillWorldModelLoadPerf), nameof(LoadCachedSkillWorldModel));
             return code;
         }
 
@@ -8003,6 +8006,11 @@ namespace SodRpg.Mod
         internal static GameObject LoadCachedSkillWorldModel(string path)
         {
             if (!NativePerfOptions.SkillWorldModelCache) return Resources.Load<GameObject>(path);
+            if (path != WorldModelPath)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load", "unexpected resource path; bypassing cache");
+                return Resources.Load<GameObject>(path);
+            }
             GameObject cached = _cache;
             if (cached != null) return cached;
             cached = Resources.Load<GameObject>(path);

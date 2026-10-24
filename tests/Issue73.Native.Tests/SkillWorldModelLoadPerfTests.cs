@@ -27,15 +27,19 @@ namespace Issue73.Native.Tests
 
         private readonly GameObject savedNext;
         private readonly List<string> savedLoads;
+        private readonly List<string> savedWarnings;
         private readonly GameObject savedCache;
         private readonly bool savedOption;
+        private readonly bool savedWarned;
 
         public SkillWorldModelLoadPerfTests()
         {
             savedNext = Resources.next;
             savedLoads = Resources.loads.ToList();
+            savedWarnings = Log.Warnings.ToList();
             savedCache = Cache();
             savedOption = NativePerfOptions.SkillWorldModelCache;
+            savedWarned = (bool)typeof(NativeSkillWorldModelLoadPerf).GetField("_warned", Hidden).GetValue(null);
             Resources.next = null;
             Resources.loads.Clear();
             SetCache(null);
@@ -46,8 +50,11 @@ namespace Issue73.Native.Tests
             Resources.next = savedNext;
             Resources.loads.Clear();
             Resources.loads.AddRange(savedLoads);
+            Log.Warnings.Clear();
+            Log.Warnings.AddRange(savedWarnings);
             SetCache(savedCache);
             NativePerfOptions.SkillWorldModelCache = savedOption;
+            typeof(NativeSkillWorldModelLoadPerf).GetField("_warned", Hidden).SetValue(null, savedWarned);
         }
 
         private static GameObject Cache()
@@ -74,6 +81,14 @@ namespace Issue73.Native.Tests
             Assert.Same(loaded, RunLoad(Path)); // 2 回目以降は最初の結果のまま
             Assert.Single(Resources.loads); // Load は最初の 1 回だけ
             Assert.Equal(Path, Resources.loads[0]); // パスは引数のまま渡される
+
+            var other = new GameObject();
+            Resources.next = other;
+            Assert.Same(other, RunLoad("WorldModels/Other Model"));
+            Assert.Equal(2, Resources.loads.Count);
+            Assert.Equal("WorldModels/Other Model", Resources.loads[1]);
+            Assert.Same(loaded, RunLoad(Path));
+            Assert.Equal(2, Resources.loads.Count);
         }
 
         // 設定有効でも Load が null のときは保持せず、次回ももう一度 Load を呼ぶ。
