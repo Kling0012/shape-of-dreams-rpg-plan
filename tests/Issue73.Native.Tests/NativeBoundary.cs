@@ -1860,7 +1860,11 @@ namespace UnityEngine
     internal sealed class Animator
     {
         public int GetLayerWeightCalls;
+        // Rebind / コントローラ再設定がレイヤー1を戻す既定値（本体のコントローラ既定の代わり）。
+        public float rebindLayer1Weight;
         private float _layer1Weight;
+        // 読み出し回数を乱さずに値を確かめるための覗き口（テスト用）。
+        public float layer1Weight => _layer1Weight;
         public float GetLayerWeight(int layer)
         {
             GetLayerWeightCalls++;
@@ -1870,6 +1874,24 @@ namespace UnityEngine
         {
             if (layer == 1) _layer1Weight = value;
         }
+        // 本体 Animator.Rebind: 全レイヤーの重みをコントローラの既定へ戻す（模倣ではレイヤー1だけ）。
+        // 本体には private Rebind(bool) もあるが、模倣は public Rebind() だけで
+        // NativeEntityAnimationLayerWeightReset の FindByName が名前で拾える形にする。
+        public void Rebind()
+        {
+            _layer1Weight = rebindLayer1Weight;
+        }
+        // 本体と同じくコントローラの再設定は内部で再バインドを起こし、重みを既定へ戻す。
+        public object runtimeAnimatorController
+        {
+            get => _controller;
+            set
+            {
+                _controller = value;
+                _layer1Weight = rebindLayer1Weight;
+            }
+        }
+        private object _controller = new object();
     }
 }
 
@@ -1936,6 +1958,16 @@ internal sealed class EntityAnimation
         if (animator.GetLayerWeight(1) > 0f)
         {
         }
+    }
+
+    // 本体 UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single（RPC 受信部）の
+    // うち上半身レイヤーを1にする経路の転写: isPlaying を true にしてから
+    // SetLayerWeight(1, 1f) を書く。NativeEntityAnimationLayerWeightReset の Postfix 対象。
+    // 引数（DewAnimationClip・int・float）は省いて名前だけ合わせる（Postfix は __instance しか読まない）。
+    private void UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single()
+    {
+        abilityAnimStatus.isPlaying = true;
+        animator.SetLayerWeight(1, 1f);
     }
 }
 
