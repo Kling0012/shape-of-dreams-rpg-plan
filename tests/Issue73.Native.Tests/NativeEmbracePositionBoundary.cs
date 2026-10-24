@@ -256,6 +256,7 @@ namespace SodRpg.Mod
             nativeTransitionIdle = true,
             nativeAgentVelocityIdle = true,
             nativeMidJoinLoadoutIdle = true,
+            nativeEntityAnimLayerWeightIdle = true,
             nativeChaosStatBonusTooltipCache = true,
             nativeEntityAbilitySubscribeDedup = true,
             nativeBossSoulShrineScan = true,
