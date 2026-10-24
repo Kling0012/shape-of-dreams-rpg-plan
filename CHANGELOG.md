@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.60 — Skip idle work in screen fades and Sacrifice shields（2026-10-24）
+
+この版では、画面の暗転と犠牲のシールドで、何もしない間も繰り返していた処理を省きました。 / This version removes work that screen fades and Sacrifice shields repeated even when nothing was happening.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 場面転換のときの画面の暗転は、暗転が明けて画面が落ち着いた後も、毎フレーム同じ表示の設定を書き直していました。ホストと参加者の両方で起きていました。今は暗転していない間はこの書き直しを省きます。ホストと参加者の両方で、処理がごくわずかに軽くなる見込みです。体感できるほどの差は出ない見込みです。暗転の見え方と画面の切り替わり方は変わりません。 / Even after a scene-transition fade had cleared, the game kept rewriting the same display settings for it every frame. This happened on both the host and co-op players. The game now skips the rewrite while no fade is in progress. Both the host and co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. How fades look and how scenes switch are unchanged.
+- ホストは、犠牲で得るシールドを渡す予定が無いときも、渡すための準備を毎回繰り返していました。今は渡す予定があるときだけ準備します。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。シールドの付き方は変わりません。 / The host kept preparing to hand out Sacrifice shields even when none were due. It now prepares only when a shield is actually due. The host should run very slightly lighter. Nothing changes for co-op players. How shields are granted is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.59 — Co-op players skip an unused per-frame task（2026-10-24）
 
 この版では、参加者の側で毎フレーム空回りしていた処理を省きました。 / This version removes work that co-op players' games repeated every frame for no effect.
