@@ -368,7 +368,7 @@ namespace SodRpg.Mod
         public void InvokeOnKill() { }
         public void ClearPooledEventsAndProcessors() { }
     }
-    internal class Entity : Actor
+    internal partial class Entity : Actor
     {
         public uint netId;
         public bool isActive = true;
@@ -532,12 +532,12 @@ namespace SodRpg.Mod
         // NativeWeaponFxPerf が nameof(Hero.FrameUpdate) で対象を解決するための本体 API。
         public void FrameUpdate() { }
     }
-    internal sealed class HeroSkill
+    internal sealed partial class HeroSkill
     {
         public readonly Dictionary<HeroSkillLocation, SkillTrigger> Slots = new Dictionary<HeroSkillLocation, SkillTrigger>();
         public SkillTrigger GetSkill(HeroSkillLocation location) => Slots.TryGetValue(location, out var skill) ? skill : null;
     }
-    internal sealed class EntityAbility
+    internal sealed partial class EntityAbility
     {
         public Entity entity;
         public EntityAbility(Hero hero) { entity = hero; }
@@ -550,11 +550,11 @@ namespace SodRpg.Mod
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum EntityRelation { Enemy, Ally }
-    internal class TriggerConfig
+    internal partial class TriggerConfig
     {
         public int maxCharges;
     }
-    internal class AbilityTrigger : Actor
+    internal partial class AbilityTrigger : Actor
     {
         public Entity owner;
         public TriggerConfig[] configs;
@@ -586,7 +586,7 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
+    internal partial class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor
     {
         // NativePerfPatches.cs の Gem クールダウン系パッチが参照する本体 API。
@@ -627,7 +627,7 @@ namespace SodRpg.Mod
     internal sealed class EntityVisual { public bool isSpawning; public EntityModel model; }
     internal sealed class Hero_Mist : Hero { }
     internal sealed class Ai_Q_Fleche_Dash { public void OnCancel() { } }
-    internal class EntityControl
+    internal partial class EntityControl
     {
         public Entity entity;
         // 本体の Transform。NativeEntityRotationIdlePerf の Prefix が読み、検証では向きを設定して使う。
@@ -946,7 +946,7 @@ namespace SodRpg.Mod
         public int updateVolumeCalls;
         public void UpdateVolume() { updateVolumeCalls++; }
     }
-    internal static class ManagerBase<T> { public static T softInstance; }
+    internal static partial class ManagerBase<T> { public static T softInstance; }
     // （#763）本体と同じ意味のカメラ角度。実物は get が public のプロパティで、セッターが
     // entityCamAngleRotation へ Euler(0, 角度, 0) を同じ式で保持する（CameraManager.cs:122-132）。
     // 角度・保持値ともシリアライズ対象外のため、境界も同じ不変だけを保つ。

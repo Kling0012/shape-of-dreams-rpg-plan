@@ -158,8 +158,8 @@ namespace SodRpg.Mod
         public AutoSalvageRarity autoSalvageRarity = AutoSalvageRarity.None;
         public int toastMaxLines = 7;
     }
-    // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
-    internal static class NativeSkillLockRecovery { internal static bool Enabled = true; }
+    // （#1123 以降）NativeSkillLockRecovery は本物（リンク）がコンパイルされるため、
+    // ここに Enabled だけの模倣は置かない。
     public partial class DreamforgeMod
     {
         internal DreamforgeConfig config = new DreamforgeConfig();

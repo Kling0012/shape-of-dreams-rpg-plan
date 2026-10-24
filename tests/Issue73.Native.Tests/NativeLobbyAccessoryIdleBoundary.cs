@@ -10,7 +10,7 @@ namespace Mirror
 {
     // 本体 Mirror SyncList<T> の境界。NativeLobbyAccessoryIdle（リンク）と PlayLobby_Character の
     // 境界は Count・インデクサ・要素の列挙だけを使う。
-    internal class SyncList<T> : IEnumerable<T>
+    internal partial class SyncList<T> : IEnumerable<T>
     {
         private readonly List<T> items = new List<T>();
 
