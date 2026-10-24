@@ -321,6 +321,9 @@ namespace SodRpg.Mod
         [LabelText("Cache the Responsibility gem's hit-effect component scans on every RPC receive (host and guests) /\nGem_C_Responsibility の被弾演出RPCを受けるたびの子コンポーネント全走査をキャッシュに置き換える（ホストと参加者）")]
         public bool nativeGemResponsibilityHitCache = true;
 
+        [LabelText("Skip unchanged music volume/pitch rewrites every logic tick (host and guests) /\nBGM の同じ音量・ピッチの毎ロジックtick再書き込みを省く（ホストと参加者）")]
+        public bool nativeMusicSourceIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

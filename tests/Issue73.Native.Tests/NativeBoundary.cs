@@ -938,7 +938,32 @@ namespace SodRpg.Mod
     internal enum AudioType : byte { UI = 0, Music = 1, SFX = 2, GameBoss = 3, GameSelf = 4, GameOtherPlayers = 7, GameOthers = 5, GameEnvironment = 6 }
     internal enum AudioSpaceType { Normal, Global }
     internal enum DewAudioRollOffType : byte { Default, Loud, Unity }
-    internal class AudioSource { public int priority { get; set; } }
+    // NativeMusicSourceIdlePerf の GuardedVolume/GuardedPitch が書き込むプロパティの受け口。
+    // 本体 AudioSource には volume・pitch の float プロパティがある（r1.4.1.2 逆コンパイル確認）。
+    // VolumeWrites/PitchWrites はガードが同値の書き込みを省いたか（省かないときに書いたか）を
+    // 検証するためだけの書き込みカウンタ。AudioManager.NextDynamicPriorityCalls と違う音源
+    // インスタンスごとの欄にしている（xUnit は既定でテストクラスを並列に走らせるので、共有の
+    // static カウンタだと同じ模倣の volume/pitch を書く別のテストクラスと数が混ざる。各テストは
+    // 自分が作った音源のカウンタだけを数えればよい）。
+    internal class AudioSource
+    {
+        public int VolumeWrites;
+        public int PitchWrites;
+        private float _volume;
+        private float _pitch;
+        public int priority { get; set; }
+        public float volume { get => _volume; set { _volume = value; VolumeWrites++; } }
+        public float pitch { get => _pitch; set { _pitch = value; PitchWrites++; } }
+    }
+    // NativeMusicSourceIdlePerf の Prepare が typeof と nameof で参照する本体型の宣言だけ。
+    // Find はゲーム内の Harmony 適用時にしか走らないので、模倣は名前と署名のみでよい
+    // （本体 Dew.Core r1.4.1.2 と同じ引数形）。
+    internal sealed class DewMusicItem { }
+    internal sealed class MusicManager
+    {
+        internal void LogicUpdate(float dt) { }
+        internal void DoCrossFade(DewMusicItem next, float fadeTime) { }
+    }
     internal class AudioManager
     {
         public static int NextDynamicPriorityCalls;
