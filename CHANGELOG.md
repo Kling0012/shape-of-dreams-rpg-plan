@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.67 — Maintenance update with no gameplay changes（2026-10-25）
+
+この版では、プレイヤーから見える変化はありません。今後の修正に備えて、開発用の確認を足しただけの版です。 / This version has no changes players will notice. It only adds a development-side check to prepare for future fixes.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版の内容 / What's in this version
+
+- 今回は新機能も不具合の修正もありません。ボス戦の攻撃予告などの見た目、ゲームの遊び方、協力プレイでの見え方は変わりません。 / There are no new features or bug fixes this time. Boss attack warnings and other visuals, gameplay, and how things show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.66 — Lighter skill appearances（2026-10-25）
 
 この版では、スキルが出てくるときの処理から、結果の変わらない探し直しを省きました。 / This version removes repeated lookups that could not change anything from skill appearances.
