@@ -12,7 +12,7 @@ using UnityEngine;
 //    上の3つの部分宣言のプロパティが参照する。null なら何もしないので、既存のテストの
 //    挙動は変わらない）
 //  - FxAttachToEntity の書き込み指紋の見本（本体 UpdatePosition の末尾と同じ 4/1/1 並びの
-//    見本と、set_position を1つ増らした拒否の見本。実行はしない——Transpiler に渡す IL の
+//    見本と、set_position を1つ増やした拒否の見本。実行はしない——Transpiler に渡す IL の
 //    取り出しだけに使う）
 namespace UnityEngine
 {
