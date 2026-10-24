@@ -705,6 +705,8 @@ namespace SodRpg.Mod
         public WorldNodeData[] GeneratedNodes;
         public int[] GeneratedDistances;
         public Zone RejectTravelTo, FailGenerationFor;
+        // Keep this small stub callable through Harmony even when callers are JIT-compiled between fixtures.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public void GenerateWorldAuto()
         {
             GenerateWorldAutoCalls++;
