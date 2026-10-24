@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.63 — Lighter host checks during Infinity runs（2026-10-24）
+
+この版では、Infinity の遠征中に、結果が変わらない進行の確認をホストが毎フレームやり直していた処理を省きました。 / This version removes progress checks that the host repeated every frame during Infinity runs even though they could not change anything.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Infinity の遠征中、ホストは選んだ内容が反映された後も、全員がそろったかの確認と、倒した敵の記録の見直しを毎フレームやり直していました。ところが、その結果を受けて何かが起きるのは、次へ進む切り替わりの短い間だけでした。遠征のほとんどを占める戦闘中や選択待ちの間は、確認しても何も起きないのに、そのたびに全員の分と記録の全部を見直していました。今は、何も起きない間はこの確認を省きます。ホストの処理が少し軽くなる見込みです。倒した敵が多い戦闘ほど効きますが、体感できるほどの差は出ない見込みです。参加者の側は変わりません。次へ進むタイミングと、他の人を待つ流れ、選んだ内容の効き方は変わりません。 / During Infinity runs, after a choice had been applied, the host kept re-checking every frame whether all players were ready and re-reviewing its records of defeated enemies. Those checks only matter during the short moment of moving on to the next stage. For most of a run, during fights and while waiting for a choice, the host went through every player and every record each frame even though nothing could happen. The game now skips these checks while they cannot lead to anything. The host should run a little lighter. It helps more in fights with many defeated enemies, though the difference is unlikely to be noticeable. Nothing changes for co-op players. When the run moves on, how it waits for other players, and how choices take effect are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.62 — Lighter co-op while a player waits to join mid-game（2026-10-24）
 
 この版では、協力プレイで途中参加を待っている人がいる間、変わらない情報を毎フレーム送り直していた処理を省きました。 / This version removes data that co-op games kept resending every frame while a player was waiting to join mid-game.
