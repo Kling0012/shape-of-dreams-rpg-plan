@@ -93,6 +93,13 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(AbilityInstance), "OnDisable")]
     internal static class PilingLuckForgetPooledCast
     {
-        private static void Prefix(AbilityInstance __instance) => PilingLuckGuarantees.Forget(__instance);
+        // Casts への書き込み（Capture）と読み取り（TryRead/TryReadChance の各呼び出し元）は
+        // どちらも NetworkServer.active 下でしか起こらない。ゲスト側では表が常に空なので、
+        // プール返却ごとの参照を丸ごと省く。ホスト側の後片付けは変わらない。
+        private static void Prefix(AbilityInstance __instance)
+        {
+            if (!NetworkServer.active) return;
+            PilingLuckGuarantees.Forget(__instance);
+        }
     }
 }
