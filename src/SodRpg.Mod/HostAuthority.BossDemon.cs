@@ -245,7 +245,9 @@ namespace SodRpg.Mod
 
         private void BossHysteriaClaw(HeroRuntime rt, long stateLife, long clawLife, bool right, bool success, Vector3 point, bool completed)
         {
-            if (!BossEnsure(rt) || BossRewardStage(rt, BossProfiles.DemonRewardId) == 0 || stateLife == 0 || clawLife == 0) return;
+            if (!BossEnsure(rt) || stateLife == 0 || clawLife == 0) return;
+            int stage = BossRewardStage(rt, BossProfiles.DemonRewardId);
+            if (stage == 0) return;
             var s = rt.Boss; float now = Time.time;
             if (s.HysteriaState != stateLife) { s.ClawPairs.Clear(); s.HysteriaState = stateLife; s.PreviousClawLeft = false; }
             int pairIndex = -1;
@@ -277,7 +279,7 @@ namespace SodRpg.Mod
             {
                 if (first) pair.FirstHit = true; else pair.SecondHit = true;
                 pair.Point = point;
-                int stage = BossRewardStage(rt, BossProfiles.DemonRewardId);
+                // stage はこの呼び出しの冒頭で判定済みで、装備・Build はこの間に変わらないため再計算しない。
                 if (stage >= 2)
                 {
                     if (!right) BossPlantGrove(rt, point, now);
