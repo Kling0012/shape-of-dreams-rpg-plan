@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.65 — Lighter drawing of boss attack warnings（2026-10-25）
+
+この版では、ボスの攻撃予告を描くときの処理から、結果の変わらない回り道を省きました。 / This version removes roundabout work from drawing boss attack warnings without changing how they look.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボス戦で地面に出る攻撃予告（輪、扇形、帯、放射状の線、矢印など）は、細かい線の組み合わせで描いています。これまでは線を1本描くたびに、向きを合わせる計算を回り道の方法でやり直していました。予告がたくさん並ぶ場面では、画面を描くたびに数百本から千本を超える線でこの回り道が重なっていました。今は、同じ向きをより少ない手間で直接求めます。予告が多く並ぶボス戦ほど画面の描画が少し軽くなる見込みです。ただし実際の効果はまだ測っていません。ホストと参加者のどちらのゲームにも効きます。予告の形、位置、向き、太さは変わりません。 / During boss fights, the attack warnings drawn on the ground (rings, fan shapes, bands, radiating lines, arrows, and so on) are built from many small line pieces. Until now, the game redid the calculation that sets each piece's direction in a roundabout way, once for every piece. When many warnings were on screen, that extra work added up across hundreds to over a thousand pieces each time the screen was drawn. The game now works out the same direction directly, with less work. Drawing should run a little lighter in boss fights with many warnings on screen, though the actual effect has not been measured yet. This applies to both the host and co-op players. The shape, position, direction, and thickness of the warnings are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.64 — Lighter movement handling and gem appearances（2026-10-24）
 
 この版では、敵や仲間の移動の処理と、宝石が出てくるときの処理から、結果の変わらないやり直しを省きました。 / This version removes repeated work that could not change anything from movement handling and from gem appearances.
