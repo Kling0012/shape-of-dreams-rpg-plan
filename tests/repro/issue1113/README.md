@@ -84,3 +84,32 @@ TRX は `/tmp/issue1113-implementation-results/` に記録した。
 - 実ファイル `fr.json` の読込と MOD の `ExternalLanguages.Reload` の実行。Core の JSON 解析・辞書差し替えと行表示の既存テストで確認し、MOD の呼出経路はコードを読んで確認したため。
 - .NET 8 ランタイムでの実行。未導入のため、`DOTNET_ROLL_FORWARD=Major` で導入済みの .NET 10.0.11 を使った。
 - 全テスト・遅いテスト・MOD 全体のゲーム DLL を参照するビルド。依頼の範囲に従い、変更に関係するテストとそのビルドだけを実行したため。
+
+## 追加コメントを受けた再確認
+
+2026-10-24、[追加コメント](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/1116#issuecomment-6378653033)と PR 全体の差分を確認した。コメントは既存コミットの CI で plan と shard 1〜7 が成功したという通知で、仕様変更や追加の修正要求はなかった。今回は製品コードとテストを変更せず、再確認の結果を追記した。
+
+受け付け審査の懸念も再確認した。`CodexQuery.cs:448` の秘匿判定は `SearchText` の評価前に適用される。辞書は `LocExternal.cs:18` で生成ごとに新しいキーを持ち、`Content.cs:57` と `CodexQuery.cs:48` がそのキーで検索キャッシュを作り直す。`DreamforgeMod.cs:128` の再読込後は129行目の `ResolveLanguage(ExternalLanguages.Select)` で新しい辞書を選び直す。秘匿と同じ言語での再読込に追加修正は不要と判断した。
+
+このラウンドで既存の再現テスト8件と関連テスト13件を実行し、すべて成功した。表示名・行表示が `Épée chaînée` になることを確認してから同じ名前で検索する3ケース、日英中の検索、古い訳の除去、未発見5カテゴリの秘匿を確認した。
+
+さらに `AppendName` の表示名を追加する1行を一時的に外してビルドすると、`initial`・`switch`・`reload` の3件が68行目の `Assert.Contains` で失敗し、検索結果は空になった。残る5件は成功した。1行を戻してビルドし、再現テストと関連テストを合わせた21件がすべて成功した。製品コードには元のコミットからの差分がない。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj --no-restore -p:PythonCommand=python3 --filter 'FullyQualifiedName~Issue1113ReproTests|FullyQualifiedName~CodexQueryTests|FullyQualifiedName~Issue1024ReproTests|FullyQualifiedName~CodexNamedCategoriesTests|FullyQualifiedName~CodexTextConsistencyTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue1113-revision-restored.trx' --results-directory /tmp/issue1113-revision-results -v:q -clp:ErrorsOnly
+```
+
+TRX は `/tmp/issue1113-revision-results/` に記録した。
+
+- `issue1113-revision-repro.trx`: 最初の再現テスト8件成功、終了コード0。
+- `issue1113-revision-existing.trx`: 関連テスト13件成功、終了コード0。
+- `issue1113-revision-reverted.trx`: 表示名の追加を一時的に外した状態。3件失敗・5件成功、終了コード1。
+- `issue1113-revision-restored.trx`: 元の修正を戻した状態。21件成功、終了コード0。
+
+### このラウンドの未実行
+
+- Unity・ゲーム実機での表示・検索・言語切替・再読込。ゲームを起動できない環境のため。
+- 実ファイル `fr.json` の読込と MOD の `ExternalLanguages.Reload` の実行。Core の JSON 解析・辞書差し替えと行表示を既存テストで確認し、MOD の呼出経路はコードで確認したため。
+- .NET 8 ランタイムでの実行。未導入のため、導入済みの .NET 10.0.11 で実行した。
+- 全テスト・遅いテスト・ゲーム DLL を参照する MOD 全体のビルド。依頼に従い、関連テストとそのビルドだけを実行したため。
+- GitHub Actions の再実行。追加コメントの既存 CI 結果を確認し、このラウンドではローカルの関連テストを実行したため。
