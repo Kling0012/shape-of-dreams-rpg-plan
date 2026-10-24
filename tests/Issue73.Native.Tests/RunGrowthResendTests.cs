@@ -9,6 +9,9 @@ namespace Issue73.Native.Tests
     /// OnRunGrowth は同じ内容の再送を解析し直さない。NativePersistence.targets が ClientSession.RunGrowth.cs
     /// から抽出した本物の受信・リセットで、同一再送・runId の切り替え・Reset 後の再適用・
     /// 壊れた形式の再送・並び順だけ違う再送の結果が従来と同じであることを確かめる。
+    /// perf-loop/20261025-0048 での Split から IndexOf の位置切り出しへの切り替えに合わせ、
+    /// 末尾のコンマと連続したコンマは空の要素として拒否し、末尾の要素が削除済みの星なら
+    /// 読み飛ばして残りを適用するループの境界も確かめる。
     /// </summary>
     public sealed class RunGrowthResendTests
     {
@@ -121,6 +124,51 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, session.RunGrowthVersion);
             Assert.Equal(3, session.GrowthStacks("mist.t1"));
             Assert.Equal(1, session.GrowthStacks("husk.t2"));
+        }
+
+        [Fact]
+        public void Trailing_comma_is_rejected_and_keeps_the_last_good_state()
+        {
+            var session = Guest();
+            Receive(session, "run-a", "mist.t1=3");
+            int version = session.RunGrowthVersion;
+            int warnings = Log.Warnings.Count;
+
+            Receive(session, "run-a", "mist.t1=3,"); // 末尾のコンマは Split と同じく空の要素になる
+            Assert.Equal(1, Log.Warnings.Count - warnings);
+            Assert.Equal(version, session.RunGrowthVersion);
+            Assert.Equal(3, session.GrowthStacks("mist.t1"));
+        }
+
+        [Fact]
+        public void Consecutive_commas_are_rejected_and_keep_the_last_good_state()
+        {
+            var session = Guest();
+            Receive(session, "run-a", "mist.t1=3");
+            int version = session.RunGrowthVersion;
+            int warnings = Log.Warnings.Count;
+
+            Receive(session, "run-a", "mist.t1=3,,husk.t2=1"); // 連続したコンマも空の要素になる
+            Assert.Equal(1, Log.Warnings.Count - warnings);
+            Assert.Equal(version, session.RunGrowthVersion);
+            Assert.Equal(3, session.GrowthStacks("mist.t1"));
+            Assert.Equal(0, session.GrowthStacks("husk.t2"));
+        }
+
+        [Fact]
+        public void Removed_star_at_the_end_is_skipped_and_the_rest_applies()
+        {
+            var session = Guest();
+            int warnings = Log.Warnings.Count;
+
+            Receive(session, "run-a", "mist.t1=3,husk.run.g1=2"); // 末尾の削除済みの星は読み飛ばす
+            Assert.Equal(1, session.RunGrowthVersion);
+            Assert.Equal(3, session.GrowthStacks("mist.t1"));
+            Assert.Equal(0, session.GrowthStacks("husk.run.g1"));
+            Assert.Equal(warnings, Log.Warnings.Count); // 読み飛ばしは拒否ではない
+
+            Receive(session, "run-a", "mist.t1=3,husk.run.g1=2"); // 同じ内容の再送は解析し直さない
+            Assert.Equal(1, session.RunGrowthVersion);
         }
     }
 }
