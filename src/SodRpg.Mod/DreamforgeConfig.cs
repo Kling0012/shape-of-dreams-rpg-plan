@@ -240,6 +240,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse the selected chaos-shrine reward across edit-mode UI frames / 混沌の神殿で選んだ報酬の解決を編集モードUIの毎フレームで使い回す")]
         public bool nativeChaosShrineChoiceCache = true;
 
+        [LabelText("Reuse the corrupted-chaos shrine's petal transforms across animation frames / 堕落した混沌の神殿（Shrine_CorruptedChaos）の花びらアニメで、毎フレームの子Transform探しをキャッシュに置き換える")]
+        public bool nativeChaosPetalIdle = true;
+
         [LabelText("Allocate no LINQ enumerator for the boss-soul shrine's boss-presence scan (local) / ボスソウルの神殿のボス存在走査で呼び出しごとのLINQ列挙子を確保しない（各端末）")]
         public bool nativeBossSoulShrineScan = true;
 
