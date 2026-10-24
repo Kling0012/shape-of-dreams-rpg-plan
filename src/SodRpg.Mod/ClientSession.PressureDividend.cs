@@ -45,7 +45,8 @@ namespace SodRpg.Mod
             // already deduplicated them); budget and satchel change only once agreement recovers.
             if (Profile.Run.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
             // 毎フレーム呼ばれるので、通知用のデリゲートは一度だけ作る。
-            if (_emitPressureDividend == null) _emitPressureDividend = e => Emit(new[] { e });
+            // 単体の Emit(GameEvent) に直接結び付け、精算ごとの1要素配列の確保をなくす。
+            if (_emitPressureDividend == null) _emitPressureDividend = Emit;
             int awarded = _pendingPressureDividends.Drain(Profile, _emitPressureDividend);
             if (awarded > 0) DeferKillSave();
         }
