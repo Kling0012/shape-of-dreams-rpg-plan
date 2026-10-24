@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using Mirror;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -84,6 +85,7 @@ namespace SodRpg.Mod
             NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
             NativePerfOptions.EntityAnimationLayerWeightIdle = config.nativeEntityAnimLayerWeightIdle;
             NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
+            NativePerfOptions.EntityOwnerClientFast = config.nativeEntityOwnerClientFast;
         }
     }
 
@@ -156,6 +158,7 @@ namespace SodRpg.Mod
         internal static bool MidJoinLoadoutIdle = true;
         internal static bool EntityAnimationLayerWeightIdle = true;
         internal static bool ChaosStatBonusTooltipCache = true;
+        internal static bool EntityOwnerClientFast = true;
     }
 
     internal static class NativePerfPatch
@@ -8765,6 +8768,85 @@ namespace SodRpg.Mod
             {
                 NativePerfPatch.Warn(ref _warned, "entity animation layer weight reset", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityOwnerSyncVarPerf
+    {
+        // Entity.owner は Mirror 生成の SyncVar 参照で、getter は GetSyncVarNetworkBehaviour
+        // (____ownerNetId, ref _owner) を通る。この Mirror の実装はホスト（isServer）では
+        // SetSyncVarNetworkBehaviour が書いた _owner をそのまま返す O(1) だが、純クライアント
+        // （参加者）では NetworkClient.spawned の辞書引きと NetworkBehaviours[componentIndex]
+        // の配列アクセスとキャストを呼び出しごとにやり直して _owner に書き戻すだけで、
+        // 読み取りは決してキャッシュから返らない。
+        //
+        // owner はゲストでも毎フレームの経路から触られる: UI_HealthBar_Simple.LateUpdate が
+        // 表示中の簡易ヘルスバーごとに DewPlayer.local.GetTeamRelation(target) →
+        // target.owner を読み、ミニマップの項目 (UI_InGame_Map_Item_Entity.OnSetup) と
+        // 画面外インジケータの定期処理も GetTeamRelation 経由で owner を読む。MOD 側も
+        // 撃破ごとの GetRelation で読む。エンティティが多い部屋では参加者で毎フレーム
+        // 数十〜百回超の辞書引きになる（回数は推定）。
+        //
+        // Prefix は純クライアントのときだけ、解決済みの _owner が今の ____ownerNetId と
+        // 一致するならそれをそのまま返す。一致の判定は (netId, componentIndex) の比較で、
+        // netId はスポーン中の NetworkIdentity の間だけ一意（Mirror は despawn で
+        // DestroyGameObject か Reset() の netId=0 化のどちらかを必ず行う。Mirror.dll の
+        // NetworkClient.DestroyObject / NetworkIdentity.OnDestroy で確認）、componentIndex は
+        // InitializeNetworkBehaviours が NetworkBehaviours の添字と同じ値を入れるため、
+        // 一致するなら元の実装が返すオブジェクトと同一である。未解決・所有者の despawn・
+        // ID 変化のときは判定が偽になり本体に任せて解決させる（結果は本体と同じ）。
+        // ホストは対象外（本体がすでに O(1)）。設定 DreamforgeConfig の
+        // nativeEntityOwnerClientFast（既定は有効）で切れる。フィールドの形が違うときは
+        // Prepare で1回だけ警告を出してこの修正だけ外れる（fail-soft）。
+        private static Func<Entity, DewPlayer> _ownerGetter;
+        private static Func<Entity, NetworkBehaviourSyncVar> _netIdGetter;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = AccessTools.PropertyGetter(typeof(Entity), "owner");
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity owner client fast path", "Entity.owner getter unavailable");
+                return false;
+            }
+            try
+            {
+                _ownerGetter = FieldReader<DewPlayer>(AccessTools.Field(typeof(Entity), "_owner"));
+                _netIdGetter = FieldReader<NetworkBehaviourSyncVar>(AccessTools.Field(typeof(Entity), "____ownerNetId"));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity owner client fast path", ex.Message);
+                return false;
+            }
+        }
+
+        private static Func<Entity, T> FieldReader<T>(FieldInfo field)
+        {
+            if (field == null)
+                throw new MissingMemberException(typeof(Entity).Name + " owner syncvar field unavailable");
+            var p = Expression.Parameter(typeof(Entity));
+            return Expression.Lambda<Func<Entity, T>>(Expression.Field(p, field), p).Compile();
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Entity __instance, ref DewPlayer __result)
+        {
+            if (!NativePerfOptions.EntityOwnerClientFast) return true;
+            if (__instance.netIdentity == null || __instance.isServer || !__instance.isClient) return true;
+            DewPlayer cached = _ownerGetter(__instance);
+            if (cached == null) return true;
+            NetworkBehaviourSyncVar syncId = _netIdGetter(__instance);
+            if (syncId.netId == 0
+                || cached.netId != syncId.netId
+                || cached.ComponentIndex != syncId.componentIndex) return true;
+            __result = cached;
+            return false;
         }
     }
 }
