@@ -195,6 +195,9 @@ namespace SodRpg.Mod
         [LabelText("Skip transform sync of stationary actors (host) / 動いていないアクターの座標同期を省く（ホスト）")]
         public bool nativeTransformSyncIdle = true;
 
+        [LabelText("Skip transform writes whose value is bit-identical to what the transform already holds (host and guests) / 同じ値の Transform 再書き込みを省く（ホストと参加者）")]
+        public bool nativeTransformSyncWriteSkip = true;
+
         [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
         public bool nativeSleepPositionReuse = true;
 

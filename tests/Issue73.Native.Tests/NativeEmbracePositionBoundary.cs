@@ -179,6 +179,7 @@ namespace SodRpg.Mod
             nativeAttachFaceIdle = true, nativeAttachFaceSharedVerts = true,
             nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
+            nativeTransformSyncWriteSkip = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCastIndicatorLine = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
