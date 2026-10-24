@@ -31,6 +31,7 @@ namespace Issue73.Native.Tests
         {
             ResetPatchState();
             NativePerfOptions.GibsRestSkip = true;
+            Log.Warnings.Clear();
             Assert.True((bool)typeof(NativeGibsRestPerf).GetMethod("Prepare", Hidden).Invoke(null, null));
         }
 
