@@ -155,6 +155,7 @@ namespace SodRpg.Mod
             internal StatBonus BaseBonus = new StatBonus();
             internal float ConvertedAttackRange;
             internal bool MeleeGuard;
+            internal bool IsMeleeTraveler;
             internal readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             internal readonly Dictionary<int, float> MemoryHitAmounts = new Dictionary<int, float>();
         }
