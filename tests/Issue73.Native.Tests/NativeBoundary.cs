@@ -90,7 +90,7 @@ namespace Mirror
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; public static float deltaTime; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; public static float deltaTime; public static float timeScale; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
@@ -1730,4 +1730,89 @@ internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Componen
                 * (1f + Mathf.Sin(Time.time * sin0Time + (float)i * sin0Offset) * sin0Mag
                      + Mathf.Sin(Time.time * sin1Time + (float)i * sin1Offset) * sin1Mag);
     }
+}
+
+// 本体 Dew.Core InputManager（入力管理、ManagerBase の子孫）と振動シェイクの境界。
+// NativeGamepadRumbleIdlePerf（リンク）が NativePerfPatch.Find と FieldRefAccess の
+// 型引数で参照するため、コンパイルを通すための最小の形。実物と同じグローバル
+// 名前空間に置く。スキップ判定の本体（ShouldSkip・DeriveSentZero）は純粋な静的関数で
+// GamepadRumbleIdlePerfTests から直接駆動する。Prepare が読む _shakes フィールドの形は
+// 実物（decompiled/sod-decomp/Dew.Core/InputManager.cs）に合わせて持つ。シェイクの
+// フィールド並びはテストの本体模擬（エンベロープの畳み込み）も読む。
+internal sealed class ShakeInstance
+{
+    public float startTime;
+    public float attackTime;
+    public float sustainTime;
+    public float decayTime;
+    public float amplitude;
+}
+
+internal enum InputMode
+{
+    KeyboardAndMouse,
+    Gamepad
+}
+
+// DoRumbleFrameUpdate は同じ逆コンパイル（decompiled/sod-decomp/Dew.Core/InputManager.cs）
+// の転写で、GamepadRumbleIdlePerfTests の配線検証から Prefix/Postfix と合わせて駆動する
+// （Harmony そのものは介さず、メソッドを直接呼ぶ）。実物が Gamepad.current で見る接続
+// 有無は gamepadPresent、SetMotorSpeeds の送信は sendCount・sentLow・sentHigh に記録する。
+// 振動強度は実物では DewSave.profileMain.gameplay.gamepadVibrationStrength を毎フレーム
+// 読むが、境界に DewSave は置かないため gamepadVibrationStrength フィールド（既定 1）で
+// 代える。実機では private の Unity 呼び出しだが、テストから駆動するため public にする。
+internal sealed class InputManager
+{
+    internal List<ShakeInstance> _shakes = new List<ShakeInstance>();
+
+    public float gamepadVibrationStrength = 1f;
+    public bool gamepadPresent = true;
+    public int sendCount;
+    public float sentLow, sentHigh;
+
+    public void DoRumbleFrameUpdate()
+    {
+        float low = 0f;
+        float high = 0f;
+        float scale = 2.5f * gamepadVibrationStrength;
+        for (int i = _shakes.Count - 1; i >= 0; i--)
+        {
+            ShakeInstance s = _shakes[i];
+            float t = Time.time - s.startTime;
+            if (gamepadVibrationStrength < 1f)
+                t /= 0.5f + gamepadVibrationStrength * 0.5f;
+            if (t > s.attackTime + s.sustainTime + s.decayTime)
+            {
+                _shakes.RemoveAt(i);
+            }
+            else if (!(Time.timeScale < 0.001f))
+            {
+                float env = (t < s.attackTime) ? 1f
+                    : (!(t < s.attackTime + s.sustainTime))
+                        ? 1f - (t - s.attackTime - s.sustainTime) / s.decayTime
+                        : 1f;
+                low += s.amplitude * 0.1f * env * scale;
+                high += s.amplitude * 0f * env * scale;
+            }
+        }
+        if (DewInput.currentMode != InputMode.Gamepad)
+        {
+            low = 0f;
+            high = 0f;
+        }
+        if (gamepadPresent)
+        {
+            sendCount++;
+            sentLow = low;
+            sentHigh = high;
+        }
+    }
+}
+
+// NativeGamepadRumbleIdlePerf の Postfix が読む本体 DewInput.currentMode の境界。
+// 実物は public static InputMode currentMode { get; private set; } の自動プロパティ。
+// 配線検証のテストからは reflection で private setter に書く（実物の形を保つため）。
+internal static class DewInput
+{
+    public static InputMode currentMode { get; private set; }
 }
