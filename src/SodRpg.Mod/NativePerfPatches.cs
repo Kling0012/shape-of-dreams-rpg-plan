@@ -81,6 +81,7 @@ namespace SodRpg.Mod
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
             NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
             NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
+            NativePerfOptions.EntityAnimationLayerWeightIdle = config.nativeEntityAnimLayerWeightIdle;
         }
     }
 
@@ -150,6 +151,7 @@ namespace SodRpg.Mod
         internal static bool TransitionIdle = true;
         internal static bool AgentVelocityIdle = true;
         internal static bool MidJoinLoadoutIdle = true;
+        internal static bool EntityAnimationLayerWeightIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -8163,6 +8165,99 @@ namespace SodRpg.Mod
             cached = Resources.Load<GameObject>(path);
             if (cached != null) _cache = cached;
             return cached;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityAnimationLayerWeightIdlePerf
+    {
+        // EntityAnimation reads Animator.GetLayerWeight(1) unconditionally twice per frame —
+        // once in FrameUpdateAnimations to steer the ability layer's weight toward
+        // isPlaying ? 1 : 0, and again in LateUpdate to decide whether the spine rotation fix
+        // runs. Both are external Unity ICall traffic that runs for every awake, non-sleeping
+        // entity even while nothing plays, when the weight sits at its settled value forever.
+        // The Transpiler swaps each of those two callsites (one per method, ldarg.0 appended so
+        // the replacement can see the component) for a guard that only reaches the native
+        // getter while the weight can still move.
+        //
+        // Correctness: layer 1 is written by exactly two places, both inside EntityAnimation —
+        // FrameUpdateAnimations' SetLayerWeight(1, MoveTowards(actual, isPlaying ? 1 : 0, ...))
+        // (which stops writing once it reaches that target, a fixed point of MoveTowards) and
+        // UserCode_RpcPlayAbilityAnimation's SetLayerWeight(1, 1f), which is always preceded by
+        // abilityAnimStatus.isPlaying = true in the same method body. So the target
+        // instance.abilityAnimStatus.isPlaying ? 1 : 0 (the same expression the original uses)
+        // can only change in step with a write that moves the real weight toward itself. While
+        // the cached value differs from the target the guard reads the real weight (the
+        // transition is live, so the getter is exactly as often as the original) and records it;
+        // once the recorded value equals the target the weight can never change again without
+        // first changing the target, so returning the recorded value is indistinguishable from
+        // reading it. LateUpdate runs after FrameUpdate's guard saw the same frame, and a
+        // mid-frame RPC write either keeps the value at the already-recorded 1f or flips
+        // isPlaying, which makes cached != target and forces a real read. A new Animator
+        // instance gets a NaN box (NaN == target is false), forcing one real read, so model
+        // swaps re-sync themselves. Third-party mods writing layer 1 outside EntityAnimation
+        // would not be seen while idle; the nativeEntityAnimLayerWeightIdle option turns the
+        // guard off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static readonly ConditionalWeakTable<Animator, StrongBox<float>> Weights =
+            new ConditionalWeakTable<Animator, StrongBox<float>>();
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(2);
+            var frame = NativePerfPatch.Find(typeof(EntityAnimation), "FrameUpdateAnimations", ref _warned);
+            if (frame != null && !frame.IsStatic) targets.Add(frame);
+            var late = NativePerfPatch.Find(typeof(EntityAnimation), "LateUpdate", ref _warned);
+            if (late != null && !late.IsStatic) targets.Add(late);
+            _targets = targets.ToArray();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var getter = AccessTools.Method(typeof(Animator), nameof(Animator.GetLayerWeight));
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(getter)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle",
+                    original.Name + ": GetLayerWeight callsite changed or already patched");
+                return code;
+            }
+            code.Insert(site, new CodeInstruction(OpCodes.Ldarg_0));
+            code[site + 1].opcode = OpCodes.Call;
+            code[site + 1].operand = AccessTools.Method(typeof(NativeEntityAnimationLayerWeightIdlePerf), nameof(GetWeight));
+            return code;
+        }
+
+        private static float GetWeight(Animator animator, int layer, EntityAnimation instance)
+        {
+            if (layer != 1 || _disabled || !NativePerfOptions.EntityAnimationLayerWeightIdle
+                || animator == null || instance == null)
+                return animator.GetLayerWeight(layer);
+            try
+            {
+                float target = instance.abilityAnimStatus.isPlaying ? 1f : 0f;
+                var box = Weights.GetValue(animator, static _ => new StrongBox<float>(float.NaN));
+                float cached = box.Value;
+                if (cached == target) return cached;
+                float actual = animator.GetLayerWeight(1);
+                box.Value = actual;
+                return actual;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle", ex.Message);
+                return animator.GetLayerWeight(layer);
+            }
         }
     }
 }
