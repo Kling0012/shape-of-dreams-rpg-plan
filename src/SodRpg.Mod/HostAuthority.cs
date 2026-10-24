@@ -232,6 +232,8 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
         private float _nextBountyFlush;
+        // 仕掛け発動の報告（GimmicksTriggered）の間引き送信の次回時刻。TickBountyReports と同じ1秒間隔。
+        private float _nextGimmickReportFlush;
         private readonly HashSet<Power> _triggeredPowers = new HashSet<Power>();
         private readonly HashSet<Shrine> _shrines = new HashSet<Shrine>();
         private readonly Action<Actor> _onActorAdd;
@@ -429,6 +431,11 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
             // #161: 仕掛け発動の報告はティックごとに1通にまとめる（合計は不変）。
+            // 発動が続く戦闘ではこの形でも毎フレーム1通になり参加者の受信が増えるので、
+            // 依頼カウント（TickBountyReports）と同じ1秒間隔にまとめる。合計は不変で、
+            // 外す直前のフラッシュ（Unhook）は即時のまま落とさない。
+            if (_tickNow < _nextGimmickReportFlush) return;
+            _nextGimmickReportFlush = _tickNow + BountyFlushSeconds;
             foreach (var rt in _runtimes.Values) FlushGimmickReports(rt);
         }
 
