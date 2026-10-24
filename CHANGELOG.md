@@ -10,6 +10,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.61 — Lighter Responsibility hit effects, keystone damage, equip screen, and Seedling Seed healing（2026-10-24）
+
+この版では、責任の宝石の被弾演出、刻印のダメージ計算、宝石の装着画面、芽吹きの種の回復で、同じ処理を繰り返していた部分をまとめました。 / This version trims repeated work in Responsibility gem hit effects, keystone damage calculations, the gem equip screen, and Seedling Seed healing.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 責任の宝石の被弾演出は、届くたびに、音と画面の揺れに使う部品を演出の中から毎回探し直していました。ホストと参加者の両方で起きていました。今は最初の1回だけ探して、以後はその結果を使い回します。ホストと参加者の両方で、処理がごくわずかに軽くなる見込みです。体感できるほどの差は出ない見込みです。被弾演出の見た目、音、画面の揺れは変わりません。 / Each time a Responsibility gem hit effect arrived, the game searched the effect again for the parts that drive its sound and screen shake. This happened on both the host and co-op players. The game now searches once and reuses the result. Both the host and co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. How the hit effect looks, sounds, and shakes the screen is unchanged.
+- 刻印を持って戦うとき、ホストはダメージを計算するたびに、同じ下準備を毎回作り直していました。今は1つを作り置きして使い回します。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。与えるダメージは変わりません。 / When fighting with keystones, the host rebuilt the same setup for every damage calculation. It now builds it once and reuses it. The host should run very slightly lighter. Nothing changes for co-op players. Damage dealt is unchanged.
+- 宝石の装着画面を開いている間、回避の列を並べる処理は、毎フレーム同じ位置を何度も読み直していました。今は1回だけ読んで使い回します。装着画面を開いている間の処理がごくわずかに軽くなる見込みです。画面を閉じているときは変わりません。列の並び方は変わりません。 / While the gem equip screen was open, the code that lays out the dodge row re-read the same positions several times every frame. It now reads them once. The game should run very slightly lighter while the equip screen is open. Nothing changes while it is closed. How the rows are arranged is unchanged.
+- 芽吹きの種が5体倒すごとに味方を回復するとき、ホストは味方1人ごとに同じ距離の計算を2回していました。今は1回で済ませます。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。回復する相手と回復量は変わりません。 / When the Seedling Seed heals allies every 5 kills, the host calculated the same distance twice for each ally. It now calculates it once. The host should run very slightly lighter. Nothing changes for co-op players. Who gets healed and by how much is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.60 — Skip idle work in screen fades and Sacrifice shields（2026-10-24）
 
 この版では、画面の暗転と犠牲のシールドで、何もしない間も繰り返していた処理を省きました。 / This version removes work that screen fades and Sacrifice shields repeated even when nothing was happening.
