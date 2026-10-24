@@ -18,6 +18,7 @@ namespace SodRpg.Mod
         {
             NativePerfOptions.StatusDuration = config.nativeStatusDurationSync;
             NativePerfOptions.GemCooldown = config.nativeGemCooldownSync;
+            NativePerfOptions.GemWorldModelCache = config.nativeGemWorldModelCache;
             NativePerfOptions.WeaponFx = config.nativeWeaponFxScan;
             NativePerfOptions.ObstacleAvoidance = config.nativeObstacleAvoidance;
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
@@ -85,6 +86,7 @@ namespace SodRpg.Mod
     {
         internal static bool StatusDuration = true;
         internal static bool GemCooldown = true;
+        internal static bool GemWorldModelCache = true;
         internal static bool WeaponFx = true;
         internal static bool ObstacleAvoidance = true;
         internal static bool AggroPropagation = true;
@@ -5103,6 +5105,100 @@ namespace SodRpg.Mod
         private static MethodBase TargetMethod() => _target;
         private static void Prefix(Gem __instance) => NativeGemCooldownPerf.Publishing(__instance);
         private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
+    }
+
+    // Gem.OnStartClient は宝石がネットワーク出現するたびに全クライアント（ホストのローカル
+    // クライアントと各参加者）で走り、そのたびに Resources.Load で "WorldModels/Gem World
+    // Model" を読み直してから Instantiate する。Resources.Load は同じアセットへの 2 回目以降も
+    // ネイティブのアセット検索を通るため、敵の連続撃破などの出現の固まりで同じ検索を同じ
+    // フレームに繰り返す。Load の戻り値は同じアセットの同一インスタンスなので、最初の 1 回の
+    // 結果を静的に覚えて返すだけで同じ GameObject 参照が渡り、Instantiate・GetComponent・
+    // _worldModel への代入は本体と同じ式と順序のまま変わらない。読み込みが null のとき
+    // （アセット無し）はキャッシュせずそのまま返すので、本体と同じく後続の Instantiate が
+    // 同じ例外を出す。
+    //
+    // Prefix での丸ごと置き換えは基底の Actor.OnStartClient／DewNetworkBehaviour.OnStartClient
+    // （子の登録・OnCreate・遅延開始キュー）まで再実装することになって指紋が巨大化するため、
+    // Transpiler で ldstr＋Resources.Load<GameObject>(string) の呼び出し点だけを差し替える。
+    // Prepare は本体 IL（r1.4.1.2、実 DLL で確認）のうちパス文字列と Load 呼び出しの組が
+    // 1 組だけあることを確かめ、形が変わっていればこの修正だけを外して警告する。
+    [HarmonyPatch]
+    internal static class NativeGemWorldModelLoadPerf
+    {
+        private const string WorldModelPath = "WorldModels/Gem World Model";
+        private static GameObject _cache;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem), "OnStartClient", Type.EmptyTypes, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateCallsite(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem world model load", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int callsites = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+            {
+                if (!IsWorldModelLoad(code[i], code[i + 1])) continue;
+                callsites++;
+                code[i + 1].operand = AccessTools.Method(
+                    typeof(NativeGemWorldModelLoadPerf), nameof(LoadCachedGemWorldModel));
+            }
+            if (callsites != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem world model load",
+                    "native OnStartClient load callsite changed or already patched");
+            }
+            return code;
+        }
+
+        // 置き換えは同じ引数・同じ戻り値で受け先の値を変えないので、Load の呼び出し点
+        // （パス文字列の ldstr の直後）が 1 組あることだけを見る。呼び出し結果の流れ先まで
+        // 見る必要はない。
+        private static bool ValidateCallsite(IList<CodeInstruction> code)
+        {
+            int pairs = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+                if (IsWorldModelLoad(code[i], code[i + 1])) pairs++;
+            if (pairs == 1) return true;
+            NativePerfPatch.Warn(ref _warned, "gem world model load", "native OnStartClient load callsite changed");
+            return false;
+        }
+
+        private static bool IsWorldModelLoad(CodeInstruction literal, CodeInstruction call)
+        {
+            if (literal.opcode != OpCodes.Ldstr || !Equals(literal.operand, WorldModelPath)) return false;
+            if (!(call.operand is MethodInfo called) || called.Name != "Load"
+                || called.DeclaringType == null || called.DeclaringType.Name != "Resources") return false;
+            return called.IsGenericMethod && called.GetGenericArguments().Length == 1
+                && called.GetGenericArguments()[0] == typeof(GameObject)
+                && called.GetParameters().Length == 1
+                && called.GetParameters()[0].ParameterType == typeof(string);
+        }
+
+        internal static GameObject LoadCachedGemWorldModel(string path)
+        {
+            if (!NativePerfOptions.GemWorldModelCache) return Resources.Load<GameObject>(path);
+            GameObject cached = _cache;
+            if (cached != null) return cached;
+            cached = Resources.Load<GameObject>(path);
+            if (cached != null) _cache = cached;
+            return cached;
+        }
     }
 
     [HarmonyPatch]
