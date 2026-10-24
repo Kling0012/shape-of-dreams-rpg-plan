@@ -401,7 +401,7 @@ namespace SodRpg.Core.Tests
             Assert.True(HitPrepared(closed));
             SodRpg.Mod.InkBeamNativeHit.Current = new SodRpg.Mod.InkBeamNativeHit.Scope { Beam = closed.Beam, Target = closed.Enemy, Enemy = true };
             var closeScope = typeof(SodRpg.Mod.InkBeamNativeHit).GetMethod("Finalizer", BindingFlags.NonPublic | BindingFlags.Static);
-            closeScope.Invoke(null, new object[] { default(SodRpg.Mod.InkBeamNativeHit.Scope) });
+            closeScope.Invoke(null, new object[] { closed.Beam, default(SodRpg.Mod.InkBeamNativeHit.Scope) });
             Assert.False(HitPrepared(closed), "closing the hit scope must drop the reused verdict");
             Assert.Null(SodRpg.Mod.InkBeamNativeHit.Current.Beam);
 

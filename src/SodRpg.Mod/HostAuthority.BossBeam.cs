@@ -56,11 +56,11 @@ namespace SodRpg.Mod
                 ? new Scope{Beam=__instance,Target=e}:default(Scope);
             if(NetworkServer.active) HostAuthority.NativeInstance?.PrepareInkBeamHit(__instance);
         }
-        private static void Finalizer(Scope __state)
+        private static void Finalizer(Ai_U_BeamOfBalance_Beam __instance,Scope __state)
         {
-            // The scope closes here (finally position): drop the per-Hit verdict with it so the
-            // reuse cannot cross a Hit boundary even if Current kept this beam's values.
-            if(NetworkServer.active) HostAuthority.NativeInstance?.FinishInkBeamHit(Current.Beam);
+            // The scope closes here (finally position): drop the per-Hit verdict for the actual
+            // instance even when Prefix left Current empty.
+            if(NetworkServer.active) HostAuthority.NativeInstance?.FinishInkBeamHit(__instance);
             Current=__state;
         }
     }
