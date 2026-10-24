@@ -379,6 +379,39 @@ namespace SodRpg.Mod
             for (int i = _bossRenderCount; i < _bossRenderVisuals.Length; i++) _bossRenderVisuals[i] = null;
         }
 
+#if DEBUG
+        private static Func<int> _bossGuiClipCount;
+        private static bool _bossGuiClipCountResolved;
+
+        private static void AssertBossGuiContext()
+        {
+            System.Diagnostics.Debug.Assert(GUI.matrix.isIdentity,
+                "Boss effect segments require an identity GUI.matrix base.");
+            try
+            {
+                // Resolve once; invoking the cached delegate allocates nothing per Repaint.
+                if (!_bossGuiClipCountResolved)
+                {
+                    _bossGuiClipCountResolved = true;
+                    var method = typeof(GUI).Assembly.GetType("UnityEngine.GUIClip", true)
+                        .GetMethod("Internal_GetCount", System.Reflection.BindingFlags.Static
+                            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                            null, Type.EmptyTypes, null);
+                    if (method == null) throw new MissingMethodException("UnityEngine.GUIClip", "Internal_GetCount");
+                    _bossGuiClipCount = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), method);
+                }
+                if (_bossGuiClipCount != null)
+                    System.Diagnostics.Debug.Assert(_bossGuiClipCount() == 0,
+                        "Boss effect segments require the root GUI clip; do not draw inside a group or scroll view.");
+            }
+            catch (Exception ex)
+            {
+                _bossGuiClipCount = null;
+                Log.Warn("Boss effect GUI clip diagnostic unavailable; drawing continues: " + ex.Message);
+            }
+        }
+#endif
+
         internal void DrawBossEffects()
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -397,6 +430,9 @@ namespace SodRpg.Mod
             var oldMatrix = GUI.matrix;
             // This world projection must not inherit the inventory UI's logical-canvas transform.
             GUI.matrix = Matrix4x4.identity;
+#if DEBUG
+            AssertBossGuiContext();
+#endif
             for (int visualIndex = 0; visualIndex < _bossRenderCount; visualIndex++)
                 {
                     var visual = _bossRenderVisuals[visualIndex];
