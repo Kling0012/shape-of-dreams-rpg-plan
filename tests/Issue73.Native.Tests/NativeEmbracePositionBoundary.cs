@@ -22,14 +22,26 @@ namespace UnityEngine
     internal partial class Transform
     {
         internal Transform parent { get; set; }
+        // （#1112）ギブ静止スキップの Transpiler 検証が IL 見本で通る分。実機では
+        // UnityEngine.Component の公開プロパティ gameObject（その部品が属する GameObject）。
+        // 境界では自分用に遅延確保するだけでよい（見本の中身は走らない）。
+        internal GameObject gameObject => _gameObject ??= new GameObject();
+        private GameObject _gameObject;
+        // （#1112）実機 UnityEngine.Transform.Rotate の受け口。NativeGibsRestPerf の
+        // Transpiler が AccessTools.Method でこの名前を解決し、IL 見本の呼び出しが
+        // 指紋の「Rotate 1回」に数えられる（中身は呼ばれないので空）。
+        internal void Rotate(Vector3 eulers) { }
     }
     // NativeProjectileIdleRpcPerf の Prefix が読む効果プレハブ字段の境界。実機では
     // UnityEngine.GameObject（ prefab 参照）。中身は読まない。
     // （#983）PropEnt_Merchant_Base の境界ループが各 props の transform を読むため、
     // 自身の Transform を返す受け口を足した（実機の GameObject.transform と同じ意味）。
+    // （#1112）activeSelf は実機 GameObject.activeSelf と同じ名前の受け口。
+    // NativeGibsRestPerf の Transpiler の指紋がこの getter の呼び出しを数える。
     internal class GameObject
     {
         public Transform transform;
+        public bool activeSelf { get; set; }
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
@@ -88,6 +100,224 @@ namespace SodRpg.Mod
             transform.position = targetPosition;
             transform.position = targetPosition;
             transform.rotation = targetRotation;
+        }
+    }
+
+    // 本体 Dew.Core FxGibs_Kinematic（2026-10-24 逆コンパイル確認）の、NativeGibsRestPerf が
+    // 掴む範囲の模倣: Update／DoBurst は DeclaredMethod 探索の受け口（中身は呼ばれないので空）、
+    // useGroundPlane と currentValue は Prefix が読む公開メンバー（currentValue は実機では
+    // 基底 FxInterpolatedEffectBase の公開プロパティで、ValueSetter の縮小がこの値で駆動される）、
+    // _pieces／_velocities／_spins／_burst は FieldRef の受け口。本来は
+    // FxInterpolatedEffectBase 経由の MonoBehaviour だが、この境界では Component
+    // で足りる（基底の補間はパッチが触らないため）。
+    internal sealed class FxGibs_Kinematic : Component
+    {
+        public bool useGroundPlane = true;
+        public float currentValue { get; set; }
+        internal Transform[] _pieces;
+        internal Vector3[] _velocities;
+        internal float[] _spins;
+        internal bool _burst;
+        internal void Update() { }
+        private void DoBurst() { }
+
+        // --- （#1112）NativeGibsRestPerf.Transpiler に渡す IL 見本（CameraZoomIlShapes と
+        // 同じ扱い）。本体 Dew.Core FxGibs_Kinematic.Update が持つのと同じ指紋
+        // （docs/specs/perf-loop/20261024-1019.md の逆アセンブル確認: activeSelf 確認1回・
+        // Rotate 1回・bounds 1回・position の取得と設定が各2回・DoBurst 1回・_pieces[i] の
+        // 読み取り1回）と分岐の形（null 確認の分岐と activeSelf の brfalse が同じ continue
+        // 先を共有する `if (piece == null || !activeSelf) continue;`）を再現する。本体の
+        // 全訳ではなく、指紋の数えと挿入位置の確認に必要な並びだけを置く。中身は走らない。
+        // レンダラーの取得は実機の GetComponent の代わりに RendererOf を通す（指紋は
+        // Renderer.bounds の読み取りだけを数えるため、取得経路は数えない）。
+        internal void NativeLikeUpdate()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        private static Renderer RendererOf(Transform piece) => null;
+
+        // 指紋が壊れた見本（Transpiler が適用せず元の IL を返すことの確認用）。
+        // activeSelf 確認が2回になる形（実物の指紋は1回だけ）。
+        internal void NativeLikeUpdateWithTwoActiveChecks()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                if (!piece.gameObject.activeSelf) return;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // null 確認と activeSelf 確認が continue を共有しない形（else 連鎖）。activeSelf 枝の
+        // 飛び先を共有するほかの分岐が無くなる（または枝が brfalse でなくなる）。
+        internal void NativeLikeUpdateWithoutSharedContinue()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null)
+                {
+                    _velocities[i] = Vector3.zero;
+                }
+                else if (!piece.gameObject.activeSelf)
+                {
+                    _spins[i] = 0f;
+                }
+                else
+                {
+                    Vector3 velocity = _velocities[i];
+                    velocity.y -= 20f * dt;
+                    Vector3 position = piece.position;
+                    position += velocity * dt;
+                    piece.position = position;
+                    piece.Rotate(Vector3.up * (_spins[i] * dt));
+                    Bounds bounds = RendererOf(piece).bounds;
+                    if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                    {
+                        velocity.y = 0f;
+                        Vector3 snapped = piece.position;
+                        snapped.y -= bounds.center.y - bounds.extents.y;
+                        piece.position = snapped;
+                    }
+                    _velocities[i] = velocity;
+                }
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // Rotate が2回になる形（実物の指紋は1回だけ）。
+        internal void NativeLikeUpdateWithTwoRotates()
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _pieces.Length; i++)
+            {
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                piece.Rotate(Vector3.zero);
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // --- ここから下の2つは指紋と分岐の共有は本体と同じだが、continue の着地が
+        // ループ増分として検証できない形。Transpiler の着地検査（ldloc n・ldc.i4.1・
+        // add・stloc n の同一ローカル増分と、複製する添字 ldloc のローカル一致）が
+        // 警告1回・非適用へ落とすことの確認用。中身は走らない。
+
+        // continue の着地がループ増分ではなく再条件評価になる形（while(true) + break）。
+        // null 確認と activeSelf 確認は同じ着地を共有するが、着地の命令列は
+        // ldloc（条件の左辺）から始まるものの ldc.i4.1・add・stloc を伴わない。
+        internal void NativeLikeUpdateWithConditionLanding()
+        {
+            float dt = Time.deltaTime;
+            int i = 0;
+            while (true)
+            {
+                if (i >= _pieces.Length) break;
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+                i++;
+            }
+            if (currentValue <= 0f) DoBurst();
+        }
+
+        // ループ増分されるローカル（n）と _pieces[i] の読み取りに使うローカル（i）が
+        // 一致しない形（逆順走査）。着地自体は正当な増分だが、挿入時に複製する添字
+        // ldloc が増分のローカルと異なるため、別のスロットを読む分岐になる。
+        internal void NativeLikeUpdateWithForeignIndexLocal()
+        {
+            float dt = Time.deltaTime;
+            for (int n = 0; n < _pieces.Length; n++)
+            {
+                int i = _pieces.Length - 1 - n;
+                Transform piece = _pieces[i];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                Vector3 velocity = _velocities[i];
+                velocity.y -= 20f * dt;
+                Vector3 position = piece.position;
+                position += velocity * dt;
+                piece.position = position;
+                piece.Rotate(Vector3.up * (_spins[i] * dt));
+                Bounds bounds = RendererOf(piece).bounds;
+                if (useGroundPlane && bounds.center.y - bounds.extents.y < 0f)
+                {
+                    velocity.y = 0f;
+                    Vector3 snapped = piece.position;
+                    snapped.y -= bounds.center.y - bounds.extents.y;
+                    piece.position = snapped;
+                }
+                _velocities[i] = velocity;
+            }
+            if (currentValue <= 0f) DoBurst();
         }
     }
 
@@ -152,6 +382,7 @@ namespace SodRpg.Mod
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,
             nativeChaosPetalIdle = true,
+            nativeGibsRestSkip = true,
             nativeGamepadRumbleIdle = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
