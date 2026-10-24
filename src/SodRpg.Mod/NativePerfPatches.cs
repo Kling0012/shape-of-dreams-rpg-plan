@@ -3823,6 +3823,12 @@ namespace SodRpg.Mod
         private static bool _disabled;
         private static bool _warned;
 
+        // Set by the Prefix when it returned the cached string (and skipped the original), so
+        // the Postfix — which Harmony still runs — knows the inputs and result are unchanged
+        // and can skip its own reads. Per thread: tooltip updates and the game logic that
+        // changes the values live on different threads.
+        [ThreadStatic] private static bool _servedFromCache;
+
         private static bool Prepare() => TryPrepare("Se_Shrine_Chaos_StatBonus");
 
         // Type-name parameter, same shape as NativeChaosShrineHitScanPerf.TryPrepare: the
@@ -3902,6 +3908,7 @@ namespace SodRpg.Mod
 
         private static bool Prefix(object __instance, ref string __result)
         {
+            _servedFromCache = false;
             if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache) return true;
             try
             {
@@ -3909,6 +3916,7 @@ namespace SodRpg.Mod
                 if (entry.valid && Matches(__instance, entry))
                 {
                     __result = entry.text;
+                    _servedFromCache = true;
                     return false;
                 }
             }
@@ -3922,6 +3930,15 @@ namespace SodRpg.Mod
 
         private static void Postfix(object __instance, string __result)
         {
+            // Harmony runs the Postfix even when the Prefix returned the cache and skipped the
+            // original. In that case inputs and result are unchanged by definition, so the
+            // 23-value re-read and the Snapshot are skipped (they would only re-write the
+            // same values and double the reads on every cache hit).
+            if (_servedFromCache)
+            {
+                _servedFromCache = false;
+                return;
+            }
             if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache || __result == null) return;
             try
             {
