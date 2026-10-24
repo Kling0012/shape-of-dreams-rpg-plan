@@ -108,10 +108,12 @@ namespace SodRpg.Mod
             state = null;
             shares = null;
             if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out state)) return false;
-            // One OwnershipRunning() evaluation per TryBossShares call: the cached-shares path
-            // checks it here, the cold path passes it into PrepareBossShares (ScanBossShares
-            // passes the value its scan already computed, so a scan pays for it once, not
-            // once per enemy). The guard order keeps pure type checks before the run check.
+            // One OwnershipRunning() evaluation per TryBossShares call that can reach it:
+            // the cached-shares path checks it here, the cold path passes it into
+            // PrepareBossShares (ScanBossShares passes the value its scan already computed,
+            // so a scan pays for it once, not once per enemy). Ordinary enemies are dropped
+            // by the same pure type/boss guard first: C# evaluates arguments before the call,
+            // so without this early return they would still pay for the run check on every hit.
             if (state.Shares != null)
             {
                 // Same cached-shares judgment as PrepareBossShares (CachedBossShares);
@@ -119,6 +121,7 @@ namespace SodRpg.Mod
                 shares = OwnershipRunning() ? CachedBossShares(state) : null;
                 return shares != null;
             }
+            if (!(state.Enemy is Monster monster) || !monster.IsAnyBoss()) return false;
             shares = PrepareBossShares(state, OwnershipRunning());
             return shares != null;
         }
