@@ -99,6 +99,11 @@ namespace SodRpg.Mod
         public bool isOwned = true;
         public float currentMana;
         public void SetDirty() { }
+        // NativeEntityOwnerSyncVarPerf（リンク）の Prefix が読む NetworkBehaviour 継承面。
+        // 実機の isClient は netIdentity.isClient、netIdentity は identity の
+        // InitializeNetworkBehaviours で設定される。テストでは Prefix を通さないため形だけ。
+        public bool isClient;
+        public NetworkIdentity netIdentity;
     }
 
     internal partial class AbilityInstance

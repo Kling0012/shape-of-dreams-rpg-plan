@@ -258,6 +258,7 @@ namespace SodRpg.Mod
             nativeMidJoinLoadoutIdle = true,
             nativeEntityAnimLayerWeightIdle = true,
             nativeChaosStatBonusTooltipCache = true,
+            nativeEntityOwnerClientFast = true,
             nativeEntityAbilitySubscribeDedup = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
