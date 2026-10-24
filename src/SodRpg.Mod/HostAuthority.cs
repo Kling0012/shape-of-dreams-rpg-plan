@@ -82,6 +82,8 @@ namespace SodRpg.Mod
             public readonly HashSet<string> LinkEssences = new HashSet<string>();
             public float ConvertedAttackRange;
             public bool MeleeGuard;
+            // 近接種別の判定（ScanMeleeCoop が走査ごとに更新）。命中ごとに攻撃アセットを読み直さない。
+            public bool IsMeleeTraveler;
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             public string BountyRunId;
             public int ReportedLinks;
@@ -2416,8 +2418,9 @@ namespace SodRpg.Mod
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
-                // Check the cheap gates before the up-to-128-level ancestry walk.
-                if (_meleeBreakEnabled && TravelerCombatNative.IsMelee(rt.Hero)
+                // Check the cheap gates before the up-to-128-level ancestry walk. The melee
+                // classification is the one ScanMeleeCoop refreshed (up to ScanSeconds old).
+                if (_meleeBreakEnabled && rt.IsMeleeTraveler
                     && (memory != null || IsNativeBasicDamage(info.actor))) MarkMeleeBreak(rt.Hero, info.victim);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)

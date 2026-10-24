@@ -54,6 +54,7 @@ namespace SodRpg.Mod
             public StatBonus BaseBonus;
             public float ConvertedAttackRange;
             public bool MeleeGuard;
+            public bool IsMeleeTraveler;
         }
         // 本体 HostAuthority.cs と同じ敵数え上げ（スタブの DewPhysics で動く）。
         private static int CountEnemiesNear(Hero hero, float radius)

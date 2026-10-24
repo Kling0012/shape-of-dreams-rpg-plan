@@ -64,7 +64,10 @@ namespace SodRpg.Mod
 
         private void ScanMeleeCoop(HeroRuntime rt, bool alive)
         {
-            bool melee = alive && TravelerCombatNative.IsMelee(rt.Hero);
+            // 崩しの命中経路はこの判定を使い回す（被弾・攻撃ごとに攻撃アセットを読み直さない）。
+            // 差し替えは次の走査で反映され、MeleeGuard と同じ間隔になる。
+            rt.IsMeleeTraveler = TravelerCombatNative.IsMelee(rt.Hero);
+            bool melee = alive && rt.IsMeleeTraveler;
             try
             {
                 float converted = _rangeToSpeedEnabled && melee
