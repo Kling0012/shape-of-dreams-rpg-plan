@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.56 — Lighter host load during the White Night domain（2026-10-24）
+
+この版では、白夜の領域が出ているボス戦で毎フレーム繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated every frame during boss fights with the White Night domain.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 白夜の領域が出ている間、ゲームはホスト側で毎フレーム、領域の中にいちばん近い味方がいるかを調べ直していました。領域の中に味方が1人もいないときも同じで、一人で遊んでいるときは領域が消えるまでずっと続いていました。今は、領域の中に味方がいないときはこの調べ直しを省きます。味方が領域の外にいる間は、ホストの処理が軽くなる見込みです。味方が領域の中にいるときは、軽くなりません。領域の効果と、どの味方が対象になるかは変わりません。 / While the White Night domain was active, the game checked on the host every frame for the nearest ally inside the domain. It did this even when no ally was inside, and in solo play it kept doing so until the domain faded. The game now skips this check when no ally is inside the domain. While allies stay outside the domain, the host should run lighter. While an ally is inside, there is no gain. The domain's effect and which ally it picks are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.55 — Lighter cast warnings and codex search by translated names（2026-10-24）
 
 ### 不具合の修正 / Bug fixes
