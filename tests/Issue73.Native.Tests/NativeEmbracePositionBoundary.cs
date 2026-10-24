@@ -159,11 +159,48 @@ namespace SodRpg.Mod
         public Vector3 position, velocity;
         public Quaternion rotation;
         public Vector3 angularVelocity, scale, scaleVelocity;
+        // チャンネルの有無を確かめる本体 API。NativeTransformSyncWriteSkipPerf の
+        // ValidateBody はこのメソッドを名前で解決して IL 命令で呼び出し回数を数える
+        // （実機の FrameUpdate / LogicUpdate は3回使う）。中身は本体と同じ channels の
+        // ビット判定で、テストから実行しても同じ意味で動く。
+        public bool Has(SyncTransformChannel channel) => (channels & channel) != SyncTransformChannel.None;
     }
     internal class ActorTransformSync
     {
         private SyncMovementData _syncData;
         public SyncMovementData Network_syncData { get => _syncData; set => _syncData = value; }
+    }
+
+    // NativeTransformSyncWriteSkipPerf の ValidateBody / Apply に渡す IL の見本。
+    // WritesLikeShippedUpdate は本体 Dew.Core r1.4.1.2 の FrameUpdate / LogicUpdate と
+    // 同じ書き込みの形（SyncMovementData.Has が3つ、Transform への set_position /
+    // set_rotation / set_localScale が各1つ。docs/specs/perf-loop/20261025-0353.md で
+    // 実 DLL の IL を確認）。SecondPositionWrite は set_position を2つに増やした拒否の
+    // 見本、TwoHasCalls は Has の呼び出しを2つに減らした拒否の見本
+    // （どちらも実行はせず、IL の取り出しだけに使う）。
+    internal static class TransformSyncWriteSkipIlShapes
+    {
+        internal static void WritesLikeShippedUpdate(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            if (data.Has(SyncTransformChannel.Scale)) tr.localScale = data.scale;
+        }
+
+        internal static void SecondPositionWrite(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            if (data.Has(SyncTransformChannel.Scale)) tr.localScale = data.scale;
+            tr.position = data.position;
+        }
+
+        internal static void TwoHasCalls(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            tr.localScale = data.scale;
+        }
     }
 
     // NativePerfPatches.cs の DreamforgeMod 部分が設定を読むための最小限の形。
