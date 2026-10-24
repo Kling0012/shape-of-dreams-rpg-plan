@@ -42,11 +42,14 @@ namespace UnityEngine
         private Vector3 _position;
         internal List<Vector3> positionWriteLog;
 
+        // throwOnRead / throwOnWrite（FxAttachIdlePerfBoundary.cs の部分宣言の欄）は
+        // 破棄済み Transform へのアクセスを模すための検証用の鉤。null なら何もしない。
         public Vector3 position
         {
-            get => _position;
+            get { if (throwOnRead != null) throw throwOnRead; return _position; }
             set
             {
+                if (throwOnWrite != null) throw throwOnWrite;
                 _position = value;
                 if (positionWriteLog == null) positionWriteLog = new List<Vector3>();
                 positionWriteLog.Add(value);
