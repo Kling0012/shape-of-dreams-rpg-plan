@@ -32,6 +32,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
             NativeSkillLockRecovery.Enabled = config.guestSkillLockRecovery;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
+            NativePerfOptions.TransformSyncWriteSkip = config.nativeTransformSyncWriteSkip;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CastIndicatorLine = config.nativeCastIndicatorLine;
@@ -102,6 +103,7 @@ namespace SodRpg.Mod
         internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
         internal static bool TransformSyncIdle = true;
+        internal static bool TransformSyncWriteSkip = true;
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CastIndicatorLine = true;
@@ -1430,6 +1432,211 @@ namespace SodRpg.Mod
             }
             return true;
         }
+    }
+
+    // ActorTransformSync は座標サンプル（SyncVar の _syncData）を2つの経路で Transform へ
+    // 書き戻す。サーバは LogicUpdate ごと（最大30Hz）に受信済みサンプルを再適用し、
+    // それ以外の全クライアント（ホストと参加者）は FrameUpdate ごとに補間値の
+    // _renderPos / _renderRot / _renderScale を書く。対象が静止して補間が収束した後は
+    // SmoothDamp の出力が毎フレーム同じビット列になるため、これらの書き込みは
+    // 全アクター×毎フレームの「同じ値の再書き込み」になる。実機の Transform の setter は
+    // 値を比較しないので、同一値でも階層の変更印の付け直しというネイティブ呼び出しが
+    // 毎回走る（同一値の書き込みでも Transform.hasChanged が立つ。ゲーム内コードは
+    // hasChanged を読んでいないことを逆コンパイル全体で確認済み）。
+    //
+    // そこで LogicUpdate と FrameUpdate の中の set_position / set_rotation / set_localScale
+    // （実 DLL r1.4.1.2 の IL で各1箇所）を、読み戻した現在値と書く値がビット単位で一致する
+    // ときだけ書き込みを省く静的メソッドへ置き換える。SyncMovementData.Has の分岐は本体の
+    // ままなので、無効チャンネルや teleport の扱いには触れない。比較は Unity の Vector3 /
+    // Quaternion の ==（許容差つき）ではなくビット一致にする（NativeCastTelegraphIdlePerf と
+    // 同じ理由。近似一致で省くと本体なら書けたビット列を Transform が保持しないままになる）。
+    // 動いている・ワープした・初回サンプルでは値が違うので、本体と同じ書き込みがそのまま走る。
+    // 外部（アニメーション等）が Transform を動かした後も毎回読み戻すため、その値と
+    // 異なれば書き直る。破壊済みアクターの読み書きで出る NullReferenceException /
+    // MissingReferenceException は本体と同じ例外としてそのまま投げる（他のアクター分の
+    // 最適化を止めない）。
+    //
+    // 形の検証: SharedPrepare で両メソッドの IL を数え、Transform への setter が各1・
+    // SyncMovementData.Has が3でなければ、この2つのパッチだけを外して1回警告する。
+    [HarmonyPatch]
+    internal static class NativeTransformSyncWriteSkipPerf
+    {
+        private const string Feature = "transform sync write skip";
+
+        private static MethodBase _frame;
+        private static MethodBase _logic;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static void WarnOnce(string reason) => NativePerfPatch.Warn(ref _warned, Feature, reason);
+
+        // Shared by both patch classes below so a rejected shape keeps the render side and
+        // the server re-apply side off together.
+        internal static bool SharedPrepare()
+        {
+            if (_disabled) return false;
+            if (_frame != null && _logic != null) return true;
+            _disabled = true;
+            try
+            {
+                _frame = NativePerfPatch.Find(typeof(ActorTransformSync), "FrameUpdate", ref _warned);
+                if (_frame == null) return false;
+                _logic = NativePerfPatch.Find(typeof(ActorTransformSync), "LogicUpdate", new[] { typeof(float) }, ref _warned);
+                if (_logic == null) return false;
+                if (!ValidateBody(PatchProcessor.GetOriginalInstructions(_frame))
+                    || !ValidateBody(PatchProcessor.GetOriginalInstructions(_logic)))
+                    return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(ex.Message);
+                return false;
+            }
+        }
+
+        // LogicUpdate と FrameUpdate はどちらも SyncMovementData.Has ×3 と、Transform への
+        // set_position / set_rotation / set_localScale を各1回だけ含む。数が違うときは本体の
+        // 形が変わっているので、何も置き換えずに外れる。
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var has = AccessTools.Method(typeof(SyncMovementData), "Has");
+            int hasCount = 0, position = 0, rotation = 0, scale = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (has != null && code[i].Calls(has)) hasCount++;
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+                else if (method.Name == "set_localScale") scale++;
+            }
+            if (hasCount == 3 && position == 1 && rotation == 1 && scale == 1) return true;
+            WarnOnce("native sync write body changed (has " + hasCount + ", writes " + position + "/" + rotation + "/" + scale + ")");
+            return false;
+        }
+
+        internal static MethodBase LogicTarget => _logic;
+
+        private static bool Prepare() => SharedPrepare();
+
+        private static MethodBase TargetMethod() => _frame;
+
+        internal static IEnumerable<CodeInstruction> Apply(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int position = 0, rotation = 0, scale = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+                else if (method.Name == "set_localScale") scale++;
+            }
+            if (position != 1 || rotation != 1 || scale != 1)
+            {
+                WarnOnce("native sync write body changed (writes " + position + "/" + rotation + "/" + scale + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WritePosition));
+                        break;
+                    case "set_rotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WriteRotation));
+                        break;
+                    case "set_localScale":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WriteLocalScale));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            => Apply(instructions);
+
+        // float == reads 0f and -0f as equal while the native write would store the -0's
+        // sign bit, so the bit comparison decides; the != first keeps NaN never-equal
+        // (a NaN value writes every frame, like in the native body).
+        private static bool BitsDiffer(float a, float b)
+            => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
+
+        // Actors can die mid-frame too; preserve the native write's exception without
+        // disabling the optimization for every other actor.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        // 以下は置き換え先。本体が書くはずの値を Transform がすでにビット単位で保持している
+        // ときだけ書き込みを省く。設定OFF・無効化後は本体と同じ無条件の書き込みへ落ちる。
+        internal static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.position = value;
+            }
+        }
+
+        internal static void WriteRotation(Transform tr, Quaternion value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.rotation = value; return; }
+            try
+            {
+                Quaternion current = tr.rotation;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z) || BitsDiffer(current.w, value.w)) tr.rotation = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.rotation = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.rotation = value;
+            }
+        }
+
+        internal static void WriteLocalScale(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.localScale = value; return; }
+            try
+            {
+                Vector3 current = tr.localScale;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.localScale = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.localScale = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.localScale = value;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncWriteSkipLogic
+    {
+        private static bool Prepare() => NativeTransformSyncWriteSkipPerf.SharedPrepare();
+
+        private static MethodBase TargetMethod() => NativeTransformSyncWriteSkipPerf.LogicTarget;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            => NativeTransformSyncWriteSkipPerf.Apply(instructions);
     }
 
     [HarmonyPatch]
