@@ -318,6 +318,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the per-frame gamepad rumble-off command while no shake is active (host and guests) /\n振動が動いていないフレームに毎フレーム送っているゲームパッド振動オフのコマンドを省く（ホストと参加者）")]
         public bool nativeGamepadRumbleIdle = true;
 
+        [LabelText("Cache the Responsibility gem's hit-effect component scans on every RPC receive (host and guests) /\nGem_C_Responsibility の被弾演出RPCを受けるたびの子コンポーネント全走査をキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeGemResponsibilityHitCache = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

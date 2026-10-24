@@ -598,6 +598,29 @@ namespace SodRpg.Mod
         public Hero owner;
         public int quality;
     }
+    // NativeGemResponsibilityHitPerf（NativePerfPatches.cs）が typeof と Prefix で参照する本体
+    // Gem_C_Responsibility（Dew.Contents。被弾演出 RPC の受け口）の境界。専用のテストは
+    // 作らない方針のため、Prepare の指紋検査が読む受け口メソッドと、Prefix が書き込む
+    // 字段と再生の呼び出しの形だけを置く（実機の基底は Gem だが、境界の Gem は sealed で、
+    // パッチは基底のメンバーを使わないため Actor から派生させる）。
+    internal sealed class Gem_C_Responsibility : Actor
+    {
+        public GameObject fxHit;
+        public AnimationCurve pitchCurve, volumeCurve, shakeAmpCurve;
+        public GameObject FxPlayNew(GameObject effect, Entity attach) => null;
+        private void UserCode_RpcPlayHit__Entity__Single(Entity e, float strength) { }
+    }
+    // Prefix が値を書き込む本体のエフェクト構成要素（Dew.Core。実物は MonoBehaviour 派生）。
+    // 書き込み先の字段の形だけを持つ。
+    internal class DewAudioSource : UnityEngine.Component
+    {
+        public float volumeMultiplier = 1f;
+        public float pitchMultiplier = 1f;
+    }
+    internal class FxCameraShake : UnityEngine.Component
+    {
+        public float amplitude = 3f;
+    }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
     {

@@ -73,6 +73,7 @@ namespace SodRpg.Mod
             NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
+            NativePerfOptions.GemResponsibilityHitCache = config.nativeGemResponsibilityHitCache;
         }
     }
 
@@ -134,6 +135,7 @@ namespace SodRpg.Mod
         internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
         internal static bool GamepadRumbleIdle = true;
+        internal static bool GemResponsibilityHitCache = true;
     }
 
     internal static class NativePerfPatch
@@ -7121,6 +7123,114 @@ namespace SodRpg.Mod
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGemResponsibilityHitPerf
+    {
+        // Gem_C_Responsibility の被弾演出 RPC の受け口 UserCode_RpcPlayHit__Entity__Single は、
+        // ホストが被害者ごとに送るたび、それを受け取った全クライアント（ホスト自身のローカル
+        // クライアントと各参加者）で走る。本体は3つの曲線を評価した後、fxHit プレハブの子孫を
+        // GetComponentsInChildrenNonAlloc で2回（DewAudioSource と FxCameraShake）全走査して
+        // プールのリストを出し入れし、その結果へ値を書いてから FxPlayNew で再生する。
+        //
+        // fxHit はシーンに置かれないプレハブアセットで、実行中に子の構成を変える処理は本体にも
+        // この MOD にも無い（この受け口が書くのは pitchMultiplier・volumeMultiplier・amplitude・
+        // localScale の値だけで、子の追加・削除・有効化はしない）。走査は includeInactive=false
+        // で毎回同じ要素を返すだけなので、被弾ごとの再走査とプールの出入りは無駄。Prefix は
+        // fxHit の参照が変わった最初の1回だけ本体と同じ走査で配列を作り、以後はその配列へ
+        // 同じ値を同じ順で書く。曲線の評価・各コンポーネントへの書き込み・localScale・
+        // FxPlayNew の呼び出しは本体と同じ式と順序なので、見た目も音も変わらない。
+        //
+        // Prefix が本体の丸ごとを置き換えるため、Prepare は本体 IL の形（Evaluate 3回・
+        // 子走査 2回・pitch/volume/amplitude への書き込み各1回・localScale 1回・
+        // FxPlayNew(GameObject, Entity) 1回）を数え、形が変わっていればこの修正だけを
+        // 外して警告する。本体が数えていない種類の文を追加した場合は検出できないため、
+        // その場合はゲーム更新のたびにこの指紋を見直すこと。
+        private static GameObject _cachedFx;
+        private static DewAudioSource[] _cachedAudio;
+        private static FxCameraShake[] _cachedShake;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem_C_Responsibility), "UserCode_RpcPlayHit__Entity__Single",
+                new[] { typeof(Entity), typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                int evaluates = 0, scans = 0, plays = 0, scales = 0, pitches = 0, volumes = 0, amplitudes = 0;
+                foreach (var ins in PatchProcessor.GetOriginalInstructions(_target))
+                {
+                    switch (ins.operand)
+                    {
+                        case MethodInfo m:
+                            if (m.Name == "Evaluate" && m.DeclaringType == typeof(AnimationCurve)) evaluates++;
+                            else if (m.Name == "GetComponentsInChildrenNonAlloc") scans++;
+                            else if (m.Name == "FxPlayNew" && m.GetParameters().Length == 2) plays++;
+                            else if (m.Name == "set_localScale") scales++;
+                            break;
+                        case FieldInfo f:
+                            if (f.Name == "pitchMultiplier") pitches++;
+                            else if (f.Name == "volumeMultiplier") volumes++;
+                            else if (f.Name == "amplitude") amplitudes++;
+                            break;
+                    }
+                }
+                if (evaluates == 3 && scans == 2 && plays == 1 && scales == 1
+                    && pitches == 1 && volumes == 1 && amplitudes == 1) return true;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", "native body shape changed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Gem_C_Responsibility __instance, Entity e, float strength)
+        {
+            if (_disabled || !NativePerfOptions.GemResponsibilityHitCache) return true;
+            try
+            {
+                GameObject fx = __instance.fxHit;
+                if (fx == null) return true;
+                if (!ReferenceEquals(_cachedFx, fx))
+                {
+                    _cachedAudio = fx.GetComponentsInChildren<DewAudioSource>();
+                    _cachedShake = fx.GetComponentsInChildren<FxCameraShake>();
+                    _cachedFx = fx;
+                }
+                float pitchMultiplier = __instance.pitchCurve.Evaluate(strength);
+                float volumeMultiplier = __instance.volumeCurve.Evaluate(strength);
+                float amplitude = __instance.shakeAmpCurve.Evaluate(strength);
+                DewAudioSource[] audioSources = _cachedAudio;
+                for (int i = 0; i < audioSources.Length; i++)
+                {
+                    audioSources[i].pitchMultiplier = pitchMultiplier;
+                    audioSources[i].volumeMultiplier = volumeMultiplier;
+                }
+                FxCameraShake[] shakes = _cachedShake;
+                for (int i = 0; i < shakes.Length; i++) shakes[i].amplitude = amplitude;
+                fx.transform.localScale = Vector3.one * volumeMultiplier;
+                __instance.FxPlayNew(fx, e);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                _cachedFx = null;
+                _cachedAudio = null;
+                _cachedShake = null;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                return true;
             }
         }
     }
