@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.55 — Lighter cast warnings and codex search by translated names（2026-10-24）
+
+### 不具合の修正 / Bug fixes
+- 外部翻訳ファイルで表示される図鑑の名前を検索しても、該当項目が出ない問題を直しました。 / Fixed codex entries not appearing when searched by their names displayed through an external translation file.
+
+---
+
 ## v3.8.54 — Lighter handling of effects attached to characters（2026-10-24）
 
 この版では、キャラクターに付いて表示される演出で毎フレーム繰り返していた無駄な処理を省き、演出が多い場面の負荷を減らしました。 / This version removes wasted work repeated every frame for effects attached to characters, reducing load in scenes with many effects.
