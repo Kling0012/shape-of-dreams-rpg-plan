@@ -56,12 +56,15 @@ namespace SodRpg.Mod
 
     // 本体 Dew.Core FxGibs_Kinematic（2026-10-24 逆コンパイル確認）の、NativeGibsRestPerf が
     // 掴む範囲の模倣: Update／DoBurst は DeclaredMethod 探索の受け口（中身は呼ばれないので空）、
-    // useGroundPlane は Prefix が読む公開フィールド、_pieces／_velocities／_spins／_burst は
-    // FieldRef の受け口。本来は FxInterpolatedEffectBase 経由の MonoBehaviour だが、この境界では
-    // Component で足りる（基底の補間はパッチが触らないため）。
+    // useGroundPlane と currentValue は Prefix が読む公開メンバー（currentValue は実機では
+    // 基底 FxInterpolatedEffectBase の公開プロパティで、ValueSetter の縮小がこの値で駆動される）、
+    // _pieces／_velocities／_spins／_burst は FieldRef の受け口。本来は
+    // FxInterpolatedEffectBase 経由の MonoBehaviour だが、この境界では Component
+    // で足りる（基底の補間はパッチが触らないため）。
     internal sealed class FxGibs_Kinematic : Component
     {
         public bool useGroundPlane = true;
+        public float currentValue { get; set; }
         internal Transform[] _pieces;
         internal Vector3[] _velocities;
         internal float[] _spins;

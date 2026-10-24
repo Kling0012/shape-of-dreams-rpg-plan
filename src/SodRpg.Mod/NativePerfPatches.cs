@@ -6760,11 +6760,16 @@ namespace SodRpg.Mod
         // native loop skip such pieces: a managed-only prefix re-derives per-piece rest
         // flags from the velocities the previous frame's native loop left behind (y exactly
         // 0 happens only through the bounce rule), and an injected branch after the piece's
-        // null/active checks jumps to the loop increment for flagged pieces. The shrink-out
-        // (ValueSetter), DoBurst, FinishBurst and HidePieces keep touching every piece, and
-        // airborne or useGroundPlane=false pieces never rest, so burst shape, landing spots
-        // and timing are unchanged; only the redundant native calls for visibly-static
-        // pieces disappear, on every machine including guests (gibs spawn per kill locally).
+        // null/active checks jumps to the loop increment for flagged pieces. Rest is
+        // limited to frames while the effect value sits at its full-scale plateau: the
+        // shrink-out (ValueSetter) rescales every piece while the value is below the
+        // plateau, and vanilla re-seats a shrinking piece on the ground through the same
+        // gravity+bounds branch, so a skipped piece would hover as it shrinks. DoBurst,
+        // FinishBurst, HidePieces, the whole fade-in/fade-out rescale, and airborne or
+        // useGroundPlane=false pieces (which never rest) keep the vanilla behaviour, so
+        // burst shape, landing spots, the shrink-out seating and timing are unchanged;
+        // only the redundant native calls for visibly-static pieces at the plateau
+        // disappear, on every machine including guests (gibs spawn per kill locally).
         //
         // Residual assumptions: a foreign mod re-randomizing _velocities/_spins outside
         // DoBurst could freeze a piece mid-air (vanilla itself only reads those arrays); a
@@ -6773,6 +6778,13 @@ namespace SodRpg.Mod
         // below vanilla's own rest bar (it zeroes |vy| < 0.4, i.e. ~6.7 mm/frame).
         private const float MaxRestSpeedSq = 0.0025f;
         private const float MaxRestSpin = 1f;
+        // ValueSetter rescales pieces whenever currentValue is below the plateau, so rest
+        // requires (near-)full scale. The easeInOutSine plateau itself evaluates to
+        // exactly 1.0f, but a rounding difference in Mathf.Cos must not silently disable
+        // the skip, so the bar sits at 0.999: the largest permitted rescale is then 0.1%
+        // of a piece — a sub-pixel gap for at most the one frame the prefix's value read
+        // lags the first shrinking frame behind.
+        private const float MinRestScaleValue = 0.999f;
 
         private sealed class Rest
         {
@@ -6825,16 +6837,30 @@ namespace SodRpg.Mod
                 if (pieces == null || velocities == null || spins == null
                     || pieces.Length == 0 || velocities.Length != pieces.Length || spins.Length != pieces.Length)
                 {
+                    // DoBurst's postfix is the normal clearing point, but a re-init that
+                    // resized the arrays without going through DoBurst must not leave the
+                    // previous burst's flags skipping freshly flying pieces.
+                    if (RestTable.TryGetValue(__instance, out Rest stale) && stale.Flags != null)
+                    {
+                        Array.Clear(stale.Flags, 0, stale.Flags.Length);
+                    }
                     return;
                 }
                 Rest rest = RestTable.GetValue(__instance, CreateRest);
                 bool[] flags = rest.Flags;
                 if (flags == null || flags.Length != pieces.Length) flags = rest.Flags = new bool[pieces.Length];
                 bool ground = __instance.useGroundPlane;
+                // Below the plateau the shrink-out is rescaling pieces; a skipped piece
+                // would not re-seat on the ground while it shrinks (vanilla re-seats it
+                // every frame through the gravity+bounds branch), so it must keep running
+                // the full physics. The value read here is the one the previous frame left
+                // behind, so at most the first shrinking frame is still skipped.
+                bool fullScale = __instance.currentValue >= MinRestScaleValue;
                 for (int i = 0; i < pieces.Length; i++)
                 {
                     Vector3 v = velocities[i];
                     flags[i] = ground
+                        && fullScale
                         && v.y == 0f
                         && v.x * v.x + v.z * v.z < MaxRestSpeedSq
                         && Mathf.Abs(spins[i]) < MaxRestSpin;
@@ -6913,21 +6939,24 @@ namespace SodRpg.Mod
                 }
                 if (code[i].operand is MethodInfo activeSelfGet && activeSelfGet.DeclaringType == typeof(GameObject)
                     && activeSelfGet.Name == "get_activeSelf"
-                    && i + 1 < code.Count && IsBranch(code[i + 1].opcode) && code[i + 1].operand != null)
+                    && i + 1 < code.Count && IsBrFalse(code[i + 1].opcode) && code[i + 1].operand != null)
                 {
                     branchIndex = i + 1;
                     continueLabel = code[i + 1].operand;
                 }
             }
-            // The activeSelf check must end in the continue branch, another branch must
-            // share its target (the null-check continue proving the label is the loop
-            // increment), and nothing else may be bound to the insertion point.
+            // The activeSelf check must end in a brfalse continue branch, a different
+            // branch must share its target (the null-check brtrue continue proving the
+            // label is the loop increment — the continue branch itself is excluded, it
+            // always matches its own target), and nothing else may be bound to the
+            // insertion point.
             bool sharedTarget = false;
-            if (continueLabel is Label target)
+            if (branchIndex >= 0 && continueLabel is Label target)
             {
-                foreach (var instruction in code)
+                for (int i = 0; i < code.Count; i++)
                 {
-                    if (instruction.operand is Label label && target.Equals(label) && IsBranch(instruction.opcode))
+                    if (i == branchIndex) continue;
+                    if (code[i].operand is Label label && target.Equals(label) && IsBranch(code[i].opcode))
                     {
                         sharedTarget = true;
                         break;
@@ -6942,11 +6971,13 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "gib rest skip", "native physics loop changed or already patched");
                 return code;
             }
-            // ldarg.0; ldloc.<index>; call ShouldSkip; brtrue <loop increment>
+            // ldarg.0; ldloc.<index>; call ShouldSkip; brtrue <loop increment>. The index
+            // load is cloned as opcode+operand only: the copy constructor would duplicate
+            // labels and blocks too, and a duplicated label fails IL generation.
             var injection = new[]
             {
                 new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(code[indexLoadIndex]),
+                new CodeInstruction(code[indexLoadIndex].opcode, code[indexLoadIndex].operand),
                 new CodeInstruction(OpCodes.Call, shouldSkip),
                 new CodeInstruction(OpCodes.Brtrue, continueLabel),
             };
@@ -6958,6 +6989,14 @@ namespace SodRpg.Mod
         {
             return opcode == OpCodes.Brtrue || opcode == OpCodes.Brtrue_S
                 || opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
+        }
+
+        // The vanilla loop's continue check is `if (piece == null || !activeSelf) continue;`,
+        // whose activeSelf branch is a brfalse (real DLL IL_0057: brfalse IL_01d2); a brtrue
+        // there would belong to a different body shape whose target is not the loop increment.
+        private static bool IsBrFalse(OpCode opcode)
+        {
+            return opcode == OpCodes.Brfalse || opcode == OpCodes.Brfalse_S;
         }
 
         private static bool IsIndexLoad(OpCode opcode)
