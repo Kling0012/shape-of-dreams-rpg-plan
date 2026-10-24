@@ -44,9 +44,14 @@ namespace SodRpg.Mod
                     if (actors == null) return;
                     foreach (var hero in actors.allHeroes)
                         if (hero != null && hero.isActive && hero.currentHealth > 0f && !hero.isKnockedOut &&
-                            (hero == Owner || hero.GetRelation(Owner) == EntityRelation.Ally) &&
-                            CoopDistanceNative.Coefficient(Owner, hero) > 0f)
-                            Skill.Heal(hero.maxHealth * 0.08f * CoopDistanceNative.Coefficient(Owner, hero)).Dispatch(hero);
+                            (hero == Owner || hero.GetRelation(Owner) == EntityRelation.Ally))
+                        {
+                            // One coefficient per pair: the second call repeated the same sqrt and
+                            // tracker update within the same frame and returned the same value.
+                            float coefficient = CoopDistanceNative.Coefficient(Owner, hero);
+                            if (coefficient > 0f)
+                                Skill.Heal(hero.maxHealth * 0.08f * coefficient).Dispatch(hero);
+                        }
                 }
                 catch (Exception ex) { Fail(true, ex); Unbind(); }
             }
