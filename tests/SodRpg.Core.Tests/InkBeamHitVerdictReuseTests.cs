@@ -14,6 +14,7 @@ using Xunit;
 // 立たず処理が止まること、dispatch の間にビーム・親・術者が消えたときは処理が止まることを確認する。
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class InkBeamHitVerdictReuseTests
     {
         private const string HeroKey = "Hero_A";

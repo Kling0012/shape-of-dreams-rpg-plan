@@ -73,6 +73,7 @@ namespace SodRpg.Mod
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public sealed class MeleeCoopNativeTests
     {
         public MeleeCoopNativeTests()

@@ -12,6 +12,7 @@ using Xunit;
 // double（BossNativeRuntimeApi.cs）経由で検証する。Hysteria以外の証跡は各ボス側テストの担当。
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossRuntimeNativeTests
     {
         private const string HeroKey = "Hero_A";

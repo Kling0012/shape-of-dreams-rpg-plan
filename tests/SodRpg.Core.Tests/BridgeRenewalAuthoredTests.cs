@@ -19,6 +19,7 @@ namespace SodRpg.Core.Tests
     /// pair, Mist renewal is a receiver-only bridge with explicitly declared ownership and no pair at all.
     /// Definitions are the exact shapes tools/star-manifest/gen_cs.py emits.
     /// </summary>
+    [Collection("DewPhysics")]
     public sealed class BridgeRenewalAuthoredTests
     {
         private const string Bismuth = "Hero_Bismuth", BismuthBridge = "h.bismuth.ring.renewal", BismuthPair = "h.bismuth.pair.8";

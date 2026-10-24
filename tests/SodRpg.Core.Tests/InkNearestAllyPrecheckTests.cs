@@ -19,6 +19,18 @@ using Xunit;
 // （InkBeamHitVerdictReuseTests と同じ、同じ実行バイナリ内での比較手法）。
 namespace SodRpg.Core.Tests
 {
+    // DewPhysics.Entities（物理クエリのテスト double が返す、プロセス全体で共有する一覧）を
+    // Clear/Add するテストクラスをまとめる Collection（#1115 レビュー F1）。この一覧を書き換える
+    // クラス同士が並列に走ると互いの Clear・Add が混ざるため、DisableParallelization で直列にする。
+    // 現在は AssemblyInfo の CollectionBehavior(DisableTestParallelization) でアセンブリ全体が
+    // すでに直列だが、共有状態の直列性をこの Collection の設定だけでも担保しておく
+    // （BossEternalFlameNativeTests と同じやり方。BossEternalFlameNativeTests 自身は
+    // DewPhysics.Entities のほかに NativeInstance・LiveStatusEffects も書き換えるため、
+    // 同じく直列を保証する専用の Collection のままにしている）。
+    [CollectionDefinition("DewPhysics", DisableParallelization = true)]
+    public class DewPhysicsCollection { }
+
+    [Collection("DewPhysics")]
     public class InkNearestAllyPrecheckTests
     {
         private sealed class Rig

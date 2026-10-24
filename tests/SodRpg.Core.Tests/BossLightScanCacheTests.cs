@@ -16,6 +16,7 @@ using Xunit;
 // 作らないことを、実API相当の double（BossNativeRuntimeApi.cs）経由で確かめる。
 namespace SodRpg.Core.Tests
 {
+    [Collection("DewPhysics")]
     public class BossLightScanCacheTests
     {
         private static readonly string[] Profiles = (string[])typeof(HostAuthority)
