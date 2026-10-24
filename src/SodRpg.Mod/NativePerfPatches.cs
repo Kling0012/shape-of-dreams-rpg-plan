@@ -6668,7 +6668,10 @@ namespace SodRpg.Mod
     // SetupAudioSource only runs on them once in Start, before the first guarded write —
     // its fresh NaN entry makes that first guarded write unconditional. The transpiler
     // demands the shipped shape per method (LogicUpdate 3 volume + 1 pitch stores,
-    // DoCrossFade 1 + 1); any other shape leaves that method unmodified with one warning.
+    // DoCrossFade 1 + 1); any other shape leaves that method unmodified with one warning,
+    // and the guards stay disarmed: while either method still writes the source directly
+    // the cache cannot see those writes, so until both methods are confirmed re-pointed
+    // the guards write unconditionally (exactly the unpatched behavior).
     [HarmonyPatch]
     internal static class NativeMusicSourceIdlePerf
     {
@@ -6683,6 +6686,15 @@ namespace SodRpg.Mod
 
         private static MethodBase[] _targets = Array.Empty<MethodBase>();
         private static bool _warned;
+        // Flipped by the transpiler as each method's writes are re-pointed. A skip is only
+        // safe while both are set: a shape mismatch leaves that method's native writes in
+        // place, invisible to the cache, so skipping on a cache hit could then drop a
+        // needed write (the re-pointed method would believe the source already holds the
+        // value the un-re-pointed one overwrote). Both flags flip once, during Harmony's
+        // synchronous patching at startup; until then (and forever in a half-patched
+        // state) the guards write every call, which is the unpatched behavior.
+        private static volatile bool _logicPatched;
+        private static volatile bool _fadePatched;
 
         private static bool Prepare()
         {
@@ -6737,27 +6749,35 @@ namespace SodRpg.Mod
                     code[i].operand = guardedPitch;
                 }
             }
+            if (logicUpdate) _logicPatched = true; else _fadePatched = true;
             return code;
         }
 
-        // The cache is maintained on every write in every option state, so toggling the
-        // option (or one of the two methods failing to patch) can never leave it disagreeing
-        // with the source: a skipped write always means the source already holds the value,
-        // and a mismatched cache only causes one extra write, never a skipped needed one.
+        // The guards skip only while both methods' writes are re-pointed (_logicPatched/
+        // _fadePatched — see their comment) and the option is on; in every other state they
+        // write unconditionally. The cache is maintained on every write in every option
+        // state, so a skip always means the source already holds the value. The cache is
+        // updated after the native setter returns: a setter that throws (e.g. on a destroyed
+        // source) leaves the previous value cached, so the next same-value write retries
+        // instead of being skipped against a value the source never received.
         private static void GuardedVolume(AudioSource source, float value)
         {
             LastWrite last = LastWrites.GetOrCreateValue(source);
-            if (NativePerfOptions.MusicSourceIdle && last.Volume == value) return;
-            last.Volume = value;
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Volume == value)
+                return;
             source.volume = value;
+            last.Volume = value;
         }
 
         private static void GuardedPitch(AudioSource source, float value)
         {
             LastWrite last = LastWrites.GetOrCreateValue(source);
-            if (NativePerfOptions.MusicSourceIdle && last.Pitch == value) return;
-            last.Pitch = value;
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Pitch == value)
+                return;
             source.pitch = value;
+            last.Pitch = value;
         }
     }
 
