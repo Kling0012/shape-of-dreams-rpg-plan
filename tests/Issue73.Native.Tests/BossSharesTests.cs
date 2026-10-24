@@ -633,7 +633,7 @@ namespace Issue73.Native.Tests
         // 冷経路の落とし方（perf-loop/20261024-1221）: 通常モンスター・Enemy が null の状態・
         // 未稼働のボス・親を持つボスは、TryBossShares でも定期点検 ScanBossShares でも
         // null を返し、state.Shares を null のまま変えない。通常モンスターと null は
-        // 稼働確認より前の純粋判定で落ちる（稼働確認が例外を出る状態でも通る）。
+        // 稼働確認より前の純粋判定で落ちる（稼働確認が例外を出す状態でも通る）。
         [Fact]
         public void Cold_path_rejections_return_null_and_keep_Shares_null_for_both_entry_points()
         {
