@@ -81,6 +81,7 @@ namespace SodRpg.Mod
             NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
             NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
             NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
+            NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
         }
     }
 
@@ -150,6 +151,7 @@ namespace SodRpg.Mod
         internal static bool TransitionIdle = true;
         internal static bool AgentVelocityIdle = true;
         internal static bool MidJoinLoadoutIdle = true;
+        internal static bool ChaosStatBonusTooltipCache = true;
     }
 
     internal static class NativePerfPatch
@@ -3787,6 +3789,197 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "chaos shrine hit scan", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChaosStatBonusTooltipCachePerf
+    {
+        // Se_Shrine_Chaos_StatBonus.GetCustomTooltipDescription rebuilds the chaos-shrine
+        // bonus's whole tooltip text — up to ~20 string.Format calls with as many +=
+        // concatenations and localization lookups, a few KB of garbage — on every call.
+        // UI_TooltipSection.Update re-runs every tooltip base object's OnSetup four times
+        // a second while a tooltip is open, and this effect lives for the whole run on
+        // every player, so the identical text is rebuilt ~4x/s for as long as the buff
+        // icon's tooltip stays open — on hosts and guests alike. The text is a pure
+        // function of 13 float and 10 int values (6 fields of syncedRegularChaosBonus,
+        // the corrupted bonus's fields and the current* SyncVars) plus the localization
+        // data object; snapshot them and reuse the last built string while all of them
+        // are unchanged. Same inputs, same string, so the tooltip shows exactly what
+        // vanilla shows, and a language switch replaces the data object and forces a
+        // rebuild.
+        private sealed class Entry
+        {
+            public readonly float[] floats = new float[13];
+            public readonly int[] ints = new int[10];
+            public object locale;
+            public string text;
+            public bool valid;
+        }
+
+        private static readonly ConditionalWeakTable<object, Entry> _cache = new ConditionalWeakTable<object, Entry>();
+        private static Func<object, float>[] _floatGetters;
+        private static Func<object, int>[] _intGetters;
+        private static Func<object> _localeGetter;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        // Set by the Prefix when it returned the cached string (and skipped the original), so
+        // the Postfix — which Harmony still runs — knows the inputs and result are unchanged
+        // and can skip its own reads. Per thread: tooltip updates and the game logic that
+        // changes the values live on different threads.
+        [ThreadStatic] private static bool _servedFromCache;
+
+        private static bool Prepare() => TryPrepare("Se_Shrine_Chaos_StatBonus");
+
+        // Type-name parameter, same shape as NativeChaosShrineHitScanPerf.TryPrepare: the
+        // mod never references this native class, and the tests can point the same wiring
+        // at a stand-in class exactly like the real one in the game.
+        internal static bool TryPrepare(string typeName)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(typeName);
+                if (type == null)
+                    throw new MissingMemberException(typeName + " unavailable");
+                _target = AccessTools.DeclaredMethod(type, "GetCustomTooltipDescription");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException(typeName + ".GetCustomTooltipDescription unavailable");
+                var dataProp = AccessTools.Property(typeof(DewLocalization), "data");
+                if (dataProp == null || dataProp.GetMethod == null || !dataProp.GetMethod.IsStatic)
+                    throw new MissingMemberException("DewLocalization.data unavailable");
+                _localeGetter = Expression.Lambda<Func<object>>(
+                    Expression.Convert(Expression.Property(null, dataProp), typeof(object))).Compile();
+                _floatGetters = new[]
+                {
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_maxHealthFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_armorFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_attackDamageFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_abilityPowerFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_attackSpeedPercentage"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_abilityHasteFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_attackRangeFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_critChanceFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_fireEffectAmpFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_coldEffectAmpFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_movementSpeedPercentage"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_abilityHasteFlat"),
+                    Reader<float>(type, "currentDodgeHaste"),
+                };
+                _intGetters = new[]
+                {
+                    BonusReader<int>(type, "syncedCorruptedChaosBonus", "_everyFourAttackStartIndexFlat"),
+                    Reader<int>(type, "currentDodgeAddedCharges"),
+                    Reader<int>(type, "currentAddedDarkMaxStack"),
+                    Reader<int>(type, "currentAddedLightMaxStack"),
+                    Reader<int>(type, "currentAddedMaxLevel"),
+                    Reader<int>(type, "currentAddedGemSlotQ"),
+                    Reader<int>(type, "currentAddedGemSlotW"),
+                    Reader<int>(type, "currentAddedGemSlotE"),
+                    Reader<int>(type, "currentAddedGemSlotR"),
+                    Reader<int>(type, "currentAddedGemSlotIdentity"),
+                };
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, T> Reader<T>(Type type, string fieldName)
+        {
+            var p = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Convert(p, type), fieldName), p).Compile();
+        }
+
+        private static Func<object, T> BonusReader<T>(Type effectType, string bonusField, string valueField)
+        {
+            var bonus = AccessTools.Field(effectType, bonusField);
+            if (bonus == null)
+                throw new MissingMemberException(effectType.Name + "." + bonusField + " unavailable");
+            var p = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Field(Expression.Convert(p, effectType), bonus), valueField), p).Compile();
+        }
+
+        private static bool Prefix(object __instance, ref string __result)
+        {
+            _servedFromCache = false;
+            if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache) return true;
+            try
+            {
+                Entry entry = _cache.GetOrCreateValue(__instance);
+                if (entry.valid && Matches(__instance, entry))
+                {
+                    __result = entry.text;
+                    _servedFromCache = true;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+            }
+            return true;
+        }
+
+        private static void Postfix(object __instance, string __result)
+        {
+            // Harmony runs the Postfix even when the Prefix returned the cache and skipped the
+            // original. In that case inputs and result are unchanged by definition, so the
+            // 23-value re-read and the Snapshot are skipped (they would only re-write the
+            // same values and double the reads on every cache hit).
+            if (_servedFromCache)
+            {
+                _servedFromCache = false;
+                return;
+            }
+            if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache || __result == null) return;
+            try
+            {
+                Entry entry = _cache.GetOrCreateValue(__instance);
+                Snapshot(__instance, entry);
+                entry.text = __result;
+                entry.valid = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+            }
+        }
+
+        private static bool Matches(object instance, Entry entry)
+        {
+            for (int i = 0; i < entry.floats.Length; i++)
+            {
+                if (entry.floats[i] != _floatGetters[i](instance)) return false;
+            }
+            for (int i = 0; i < entry.ints.Length; i++)
+            {
+                if (entry.ints[i] != _intGetters[i](instance)) return false;
+            }
+            return ReferenceEquals(entry.locale, _localeGetter());
+        }
+
+        private static void Snapshot(object instance, Entry entry)
+        {
+            for (int i = 0; i < entry.floats.Length; i++)
+            {
+                entry.floats[i] = _floatGetters[i](instance);
+            }
+            for (int i = 0; i < entry.ints.Length; i++)
+            {
+                entry.ints[i] = _intGetters[i](instance);
+            }
+            entry.locale = _localeGetter();
         }
     }
 
