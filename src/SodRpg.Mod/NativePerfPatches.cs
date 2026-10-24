@@ -73,6 +73,7 @@ namespace SodRpg.Mod
             NativePerfOptions.FxAttachIdle = config.nativeFxAttachIdle;
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
+            NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
         }
     }
 
@@ -134,6 +135,7 @@ namespace SodRpg.Mod
         internal static bool FxAttachIdle = true;
         internal static bool ChaosPetalIdle = true;
         internal static bool GamepadRumbleIdle = true;
+        internal static bool MusicSourceIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -6641,6 +6643,141 @@ namespace SodRpg.Mod
                 _offBumped = true;
                 NativePerfPatch.Warn(ref _warned, "audio setup idle", ex.Message);
             }
+        }
+    }
+
+    // MusicManager.LogicUpdate runs on the logic clock (up to 30 Hz, LogicUpdateManager.
+    // MinLogicUpdateInterval) on every client for as long as the manager exists — through
+    // gameplay and menus alike. Outside the short fade windows its tail recomputes and
+    // rewrites _activeSource.volume and _activeSource.pitch with bit-identical floats every
+    // tick, during a crossfade both sources' volumes are rewritten per tick by design, and
+    // DoCrossFade writes the crossfade's starting volume and pitch through the same two
+    // setters. A Unity AudioSource setter is a native call that re-dirties the source for
+    // the audio thread even when the value is unchanged, so the steady-state tail pays two
+    // no-op native writes per tick per client (music is effectively always in steady state;
+    // fades only run around zone and track changes).
+    // Re-pointing the writes through same-value guards keeps the property state identical:
+    // the guard writes whenever the source's cached last write differs and updates that
+    // cache on every write in every option state, so a skip always means "the source
+    // already holds exactly this value". Coherence rests on MusicManager being the only
+    // writer of these properties on these two sources — verified against the shipped
+    // r1.4.1.2 Dew.Core IL (set_volume/set_pitch occur only in LogicUpdate, 3+1, and
+    // DoCrossFade, 1+1): Play/Stop only stage the pending asset, Pause/UnPause don't touch
+    // volume or pitch, no other Dew.*/Assembly-CSharp code references the sources (the one
+    // external _source user, DewConsoleCommands, writes .time), and AudioManager.
+    // SetupAudioSource only runs on them once in Start, before the first guarded write —
+    // its fresh NaN entry makes that first guarded write unconditional. The transpiler
+    // demands the shipped shape per method (LogicUpdate 3 volume + 1 pitch stores,
+    // DoCrossFade 1 + 1); any other shape leaves that method unmodified with one warning,
+    // and the guards stay disarmed: while either method still writes the source directly
+    // the cache cannot see those writes, so until both methods are confirmed re-pointed
+    // the guards write unconditionally (exactly the unpatched behavior).
+    [HarmonyPatch]
+    internal static class NativeMusicSourceIdlePerf
+    {
+        private sealed class LastWrite
+        {
+            internal float Volume = float.NaN;
+            internal float Pitch = float.NaN;
+        }
+
+        private static readonly ConditionalWeakTable<AudioSource, LastWrite> LastWrites =
+            new ConditionalWeakTable<AudioSource, LastWrite>();
+
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+        // Flipped by the transpiler as each method's writes are re-pointed. A skip is only
+        // safe while both are set: a shape mismatch leaves that method's native writes in
+        // place, invisible to the cache, so skipping on a cache hit could then drop a
+        // needed write (the re-pointed method would believe the source already holds the
+        // value the un-re-pointed one overwrote). Both flags flip once, during Harmony's
+        // synchronous patching at startup; until then (and forever in a half-patched
+        // state) the guards write every call, which is the unpatched behavior.
+        private static volatile bool _logicPatched;
+        private static volatile bool _fadePatched;
+
+        private static bool Prepare()
+        {
+            var logic = NativePerfPatch.Find(typeof(MusicManager), nameof(MusicManager.LogicUpdate),
+                new[] { typeof(float) }, ref _warned);
+            if (logic == null) return false;
+            var crossFade = NativePerfPatch.Find(typeof(MusicManager), nameof(MusicManager.DoCrossFade),
+                new[] { typeof(DewMusicItem), typeof(float) }, ref _warned);
+            if (crossFade == null) return false;
+            _targets = new MethodBase[] { logic, crossFade };
+            return true;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static IEnumerable<CodeInstruction> Transpiler(MethodBase original,
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setVolume = AccessTools.PropertySetter(typeof(AudioSource), "volume");
+            var setPitch = AccessTools.PropertySetter(typeof(AudioSource), "pitch");
+            if (setVolume == null || setPitch == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "music source idle", "UnityEngine properties unavailable");
+                return code;
+            }
+            bool logicUpdate = original.Name == nameof(MusicManager.LogicUpdate);
+            int volumes = 0, pitches = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setVolume)) volumes++;
+                else if (code[i].Calls(setPitch)) pitches++;
+            }
+            if (volumes != (logicUpdate ? 3 : 1) || pitches != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "music source idle",
+                    "native " + original.Name + " body changed (writes " + volumes + "/" + pitches + ")");
+                return code;
+            }
+            var guardedVolume = AccessTools.Method(typeof(NativeMusicSourceIdlePerf), nameof(GuardedVolume));
+            var guardedPitch = AccessTools.Method(typeof(NativeMusicSourceIdlePerf), nameof(GuardedPitch));
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setVolume))
+                {
+                    code[i].opcode = OpCodes.Call;
+                    code[i].operand = guardedVolume;
+                }
+                else if (code[i].Calls(setPitch))
+                {
+                    code[i].opcode = OpCodes.Call;
+                    code[i].operand = guardedPitch;
+                }
+            }
+            if (logicUpdate) _logicPatched = true; else _fadePatched = true;
+            return code;
+        }
+
+        // The guards skip only while both methods' writes are re-pointed (_logicPatched/
+        // _fadePatched — see their comment) and the option is on; in every other state they
+        // write unconditionally. The cache is maintained on every write in every option
+        // state, so a skip always means the source already holds the value. The cache is
+        // updated after the native setter returns: a setter that throws (e.g. on a destroyed
+        // source) leaves the previous value cached, so the next same-value write retries
+        // instead of being skipped against a value the source never received.
+        private static void GuardedVolume(AudioSource source, float value)
+        {
+            LastWrite last = LastWrites.GetOrCreateValue(source);
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Volume == value)
+                return;
+            source.volume = value;
+            last.Volume = value;
+        }
+
+        private static void GuardedPitch(AudioSource source, float value)
+        {
+            LastWrite last = LastWrites.GetOrCreateValue(source);
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Pitch == value)
+                return;
+            source.pitch = value;
+            last.Pitch = value;
         }
     }
 
