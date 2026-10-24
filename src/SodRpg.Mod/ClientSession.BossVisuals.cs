@@ -382,11 +382,13 @@ namespace SodRpg.Mod
 #if DEBUG
         private static Func<int> _bossGuiClipCount;
         private static bool _bossGuiClipCountResolved;
+        private static int? _bossGuiRootClipCount;
 
-        private static void AssertBossGuiContext()
+        private static void AssertBossGuiContext(Matrix4x4 incomingMatrix)
         {
-            System.Diagnostics.Debug.Assert(GUI.matrix.isIdentity,
-                "Boss effect segments require an identity GUI.matrix base.");
+            // Check the caller's matrix before DrawBossEffects replaces it with identity.
+            System.Diagnostics.Debug.Assert(incomingMatrix.isIdentity,
+                "Boss effects must enter with an identity GUI.matrix before installing the segment base.");
             try
             {
                 // Resolve once; invoking the cached delegate allocates nothing per Repaint.
@@ -401,8 +403,15 @@ namespace SodRpg.Mod
                     _bossGuiClipCount = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), method);
                 }
                 if (_bossGuiClipCount != null)
-                    System.Diagnostics.Debug.Assert(_bossGuiClipCount() == 0,
-                        "Boss effect segments require the root GUI clip; do not draw inside a group or scroll view.");
+                {
+                    int clipCount = _bossGuiClipCount();
+                    // OnGUI currently calls us at the root, before _ui.Draw. The native
+                    // GetCount baseline is not specified by the managed API; learn it once.
+                    // A group already present on the first draw cannot be detected this way.
+                    if (!_bossGuiRootClipCount.HasValue) _bossGuiRootClipCount = clipCount;
+                    System.Diagnostics.Debug.Assert(clipCount <= _bossGuiRootClipCount.Value,
+                        "Boss effect GUI clip depth increased from the first draw; do not draw inside a group or scroll view.");
+                }
             }
             catch (Exception ex)
             {
@@ -428,11 +437,11 @@ namespace SodRpg.Mod
             int captionGlyphsLeft = BossQualityLow ? BossCaptionGlyphLimitLow : BossCaptionGlyphLimit;
             var oldColor = GUI.color;
             var oldMatrix = GUI.matrix;
+#if DEBUG
+            AssertBossGuiContext(oldMatrix);
+#endif
             // This world projection must not inherit the inventory UI's logical-canvas transform.
             GUI.matrix = Matrix4x4.identity;
-#if DEBUG
-            AssertBossGuiContext();
-#endif
             for (int visualIndex = 0; visualIndex < _bossRenderCount; visualIndex++)
                 {
                     var visual = _bossRenderVisuals[visualIndex];
