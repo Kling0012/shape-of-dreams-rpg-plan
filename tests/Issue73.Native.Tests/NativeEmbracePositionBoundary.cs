@@ -10,6 +10,33 @@ namespace UnityEngine.AI
     internal class NavMeshAgent
     {
         public ObstacleAvoidanceType obstacleAvoidanceType { get; set; }
+        // NativeAgentVelocityIdlePerf の差し替え先 SetVelocity が読み書きする本体 API の形
+        // （実機 NavMeshAgent.velocity。実機の getter/setter はどちらもネイティブ呼び出し）。
+        // AgentVelocityIdlePerfTests が等価性を検証できるよう、この模倣では setter の呼ばれた
+        // 回数を数え、getter が例外を出す切り替え（実機のネイティブ呼び出しの失敗に対応）を
+        // 持たせる。
+        private Vector3 _velocity;
+        public Vector3 velocity
+        {
+            get
+            {
+                if (throwOnVelocityGet) throw new System.InvalidOperationException("velocity getter failed");
+                return _velocity;
+            }
+            set { _velocity = value; velocityWrites++; }
+        }
+        internal int velocityWrites;
+        internal bool throwOnVelocityGet;
+    }
+
+    // NativeAgentVelocityIdlePerf の Transpiler に渡す IL の見本。WriteVelocityOnce は実機の
+    // DoMovementProcessorFrameUpdate と同じ形（NavMeshAgent の set_velocity の呼び出しが
+    // ちょうど1か所）、WriteVelocityTwice は呼び出しが2か所に増えた拒否の見本
+    // （FxCastTelegraph.UpdatePositionTwoSites と同じ使い方。実行はせず、IL の取り出しだけ）。
+    internal static class AgentVelocityIlSamples
+    {
+        public static void WriteVelocityOnce(NavMeshAgent agent) { agent.velocity = Vector3.zero; }
+        public static void WriteVelocityTwice(NavMeshAgent agent) { agent.velocity = Vector3.zero; agent.velocity = Vector3.zero; }
     }
 }
 namespace UnityEngine
@@ -171,6 +198,7 @@ namespace SodRpg.Mod
             nativeGemResponsibilityHitCache = true,
             nativeMusicSourceIdle = true,
             nativeTransitionIdle = true,
+            nativeAgentVelocityIdle = true,
             nativeMidJoinLoadoutIdle = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
