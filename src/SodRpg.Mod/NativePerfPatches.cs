@@ -7460,9 +7460,10 @@ namespace SodRpg.Mod
         private static bool Prefix(Gem_C_Responsibility __instance, Entity e, float strength)
         {
             if (_disabled || !NativePerfOptions.GemResponsibilityHitCache) return true;
+            GameObject fx;
             try
             {
-                GameObject fx = __instance.fxHit;
+                fx = __instance.fxHit;
                 if (fx == null) return true;
                 if (!ReferenceEquals(_cachedFx, fx))
                 {
@@ -7482,8 +7483,6 @@ namespace SodRpg.Mod
                 FxCameraShake[] shakes = _cachedShake;
                 for (int i = 0; i < shakes.Length; i++) shakes[i].amplitude = amplitude;
                 fx.transform.localScale = Vector3.one * volumeMultiplier;
-                __instance.FxPlayNew(fx, e);
-                return false;
             }
             catch (Exception ex)
             {
@@ -7492,8 +7491,15 @@ namespace SodRpg.Mod
                 _cachedAudio = null;
                 _cachedShake = null;
                 NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                // ここまでの書き込みは冪等な同じ値の設定だけなので、本体の再実行と重なっても
+                // 結果は同じである。本体経路へ戻して本体に一からやらせる。
                 return true;
             }
+            // FxPlayNew は try の外。この時点で本体相当の書き込みは済んでおり、ここで例外が
+            // 出たときに本体へ戻すと演出がもう1つ入る（または同じ例外がもう1回出る）。例外は
+            // そのまま伝播させ、本体が FxPlayNew の中で例外を出す場合と同じ挙動にする。
+            __instance.FxPlayNew(fx, e);
+            return false;
         }
     }
 }
