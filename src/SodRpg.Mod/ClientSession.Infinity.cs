@@ -422,7 +422,13 @@ namespace SodRpg.Mod
                 InfinityMode.AcknowledgeLocal(choice);
                 _nextInfinityAck = Time.unscaledTime + 1f;
             }
-            if (!NetworkServer.active || !InfinityMode.PartyAcknowledged(choice) || !InfinityMode.CanAdvance
+            if (!NetworkServer.active) return;
+            // An applied delve/secure choice only triggers work here while it is secure, a boundary,
+            // or the run is Transitioning (Rules.Delve sets Transitioning right after applying).
+            // Outside those windows the settle checks below are re-evaluated every frame of the
+            // segment without anything to trigger, so check the trigger first and skip them.
+            if (!choice.Secure && !choice.Boundary && state?.Phase != InfinityPhase.Transitioning) return;
+            if (!InfinityMode.PartyAcknowledged(choice) || !InfinityMode.CanAdvance
                 || !HostInfinityBoundarySettled) return;
             if (choice.Secure)
             {
