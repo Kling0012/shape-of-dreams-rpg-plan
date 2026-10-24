@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.66 — Lighter skill appearances（2026-10-25）
+
+この版では、スキルが出てくるときの処理から、結果の変わらない探し直しを省きました。 / This version removes repeated lookups that could not change anything from skill appearances.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- スキルが出てくるたびに、ホストと参加者全員のゲームが、スキルの見た目のデータを毎回探し直していました。今は最初に見つけたデータを使い回します。スキルが出てくる瞬間の処理が少し軽くなる見込みですが、実際の効果はまだ測っていません。スキルの見た目、出てくるタイミング、協力プレイでの見え方は変わりません。 / Every time a skill appeared, the host and every co-op player looked up the skill's model data again. The game now reuses the data it found the first time. The moment a skill appears should run a little lighter, though the actual effect has not been measured yet. How skills look, when they appear, and how they show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.65 — Lighter drawing of boss attack warnings（2026-10-25）
 
 この版では、ボスの攻撃予告を描くときの処理から、結果の変わらない回り道を省きました。 / This version removes roundabout work from drawing boss attack warnings without changing how they look.
