@@ -62,7 +62,7 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// 群れの味方判定キャッシュ（#55）を読み出す前に計算し直すか。行動ティックは起きている
         /// モンスターしか更新しないので、睡眠・ゾーン遷移を挟んだ読み出し（起床直後の被弾を含む）は
-        /// この判定で窓の切れを確かめ、切りていれば計算し直す。未初期化（checkedAt &lt; 0）も計算し直す。
+        /// この判定で窓の切れを確かめ、切れていれば計算し直す。未初期化（checkedAt &lt; 0）も計算し直す。
         /// 呼び出し側は HostAuthority.PackboundAllyNear。
         /// </summary>
         public static bool AllyCacheStale(float checkedAt, float now) =>
