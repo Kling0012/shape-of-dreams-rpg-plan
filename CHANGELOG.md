@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.74 — Lighter essence slot overflow checks on the host（2026-10-25）
+
+この版では、エッセンス枠からあふれたエッセンスを確かめる処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from checking for essences that overflow their slots.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ホストのゲームは、スキルのエッセンス枠からあふれたエッセンスがないかを、ヒーロー1人につき1秒に6回確かめています。この確認のたびに小さな一時データを作っては捨てており、その数はヒーロー1人あたり1秒に約12個でした（4人なら約48個）。今はその半分の約6個（4人なら約24個）で済みます。ホストのゲームで後片付けの処理が起きる回数がわずかに減る見込みですが、目に見えるほどの差ではありません。数は見積もりで、実際の効果もまだ測っていません。エッセンスの付き方・外れ方と、参加者への通信は変わりません。 / The host's game checks each hero's skill essence slots for overflowing essences six times per second. Each check created and threw away small pieces of temporary data, about 12 per hero per second (about 48 with four players). It now needs only about half as many, around 6 per hero per second (about 24 with four players). Cleanup work on the host's game should run slightly less often, though the difference is too small to notice. These numbers are estimates, and the actual effect has not been measured yet. How essences are equipped and removed, and communication with co-op players, are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.73 — Lighter Pressure mode kill rewards and Infinity mode boss plan syncing（2026-10-25）
 
 この版では、圧迫モードで敵を倒したときの報酬の計算と、無限モードのボス戦の予定の送信から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from kill rewards in Pressure mode and from sending the boss plan in Infinity mode.
