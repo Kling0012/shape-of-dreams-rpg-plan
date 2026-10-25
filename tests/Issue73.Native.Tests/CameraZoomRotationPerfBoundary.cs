@@ -25,6 +25,16 @@ namespace UnityEngine
         // 読まれる前に必ず Euler の代入で上書きされる）。
         public static Quaternion identity => new Quaternion(0f, 0f, 0f, 1f);
         public static Quaternion Euler(float x, float y, float z) => new Quaternion(x, y, z);
+        // NativeTransformSyncHoldPerf が回転の正規化一致を見る本体 API の受け口。
+        // 実物（UnityEngine.Quaternion.Normalize）と同じ「長さの逆数を掛ける」式。
+        // 長さがほぼ 0 のときは本体どおり identity を返す。
+        public static Quaternion Normalize(Quaternion a)
+        {
+            float length = (float)System.Math.Sqrt(a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w);
+            if (length < 1e-15f) return identity;
+            float invNorm = 1f / length;
+            return new Quaternion(a.x * invNorm, a.y * invNorm, a.z * invNorm, a.w * invNorm);
+        }
         // NativeEntityRotationIdlePerf の Prefix が読む本体 API の受け口。この境界の
         // Quaternion は Euler の入力角度をそのまま成分に持つので、eulerAngles はそれを
         // そのまま返す（EntityRotationIdlePerfTests が向きを設定するのに使う）。

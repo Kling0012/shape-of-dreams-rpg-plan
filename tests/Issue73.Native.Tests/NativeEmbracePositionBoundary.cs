@@ -169,6 +169,17 @@ namespace SodRpg.Mod
     {
         private SyncMovementData _syncData;
         public SyncMovementData Network_syncData { get => _syncData; set => _syncData = value; }
+        // NativeTransformSyncHoldPerf（収束姿勢の FrameUpdate 省略）が読む本体側の状態と
+        // 受け口。判定そのものはテストしていない（実行するテストは無い）が、リンクした
+        // NativePerfPatches.cs がこの名前を参照するので、本体と同じ名前で置いておく。
+        // isServer は NetworkBehaviour、transform は Component の受け口。
+        internal bool _hasData;
+        internal bool _serverTickPending;
+        internal Vector3 _renderPos, _renderPosCv, _renderScale, _renderScaleCv;
+        internal Quaternion _renderRot, _renderRotCv;
+        public bool isServer => false;
+        public Transform transform = new Transform();
+        public void FrameUpdate() { }
     }
 
     // NativeTransformSyncWriteSkipPerf の ValidateBody / Apply に渡す IL の見本。
@@ -217,6 +228,7 @@ namespace SodRpg.Mod
             nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeTransformSyncWriteSkip = true,
+            nativeTransformSyncHold = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCastIndicatorLine = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,

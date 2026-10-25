@@ -34,6 +34,7 @@ namespace SodRpg.Mod
             NativeSkillLockRecovery.Enabled = config.guestSkillLockRecovery;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.TransformSyncWriteSkip = config.nativeTransformSyncWriteSkip;
+            NativePerfOptions.TransformSyncHold = config.nativeTransformSyncHold;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CastIndicatorLine = config.nativeCastIndicatorLine;
@@ -111,6 +112,7 @@ namespace SodRpg.Mod
         internal static bool CooldownIdleMultiplier = true;
         internal static bool TransformSyncIdle = true;
         internal static bool TransformSyncWriteSkip = true;
+        internal static bool TransformSyncHold = true;
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CastIndicatorLine = true;
@@ -1650,6 +1652,145 @@ namespace SodRpg.Mod
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             => NativeTransformSyncWriteSkipPerf.Apply(instructions);
+    }
+
+    // ActorTransformSync.FrameUpdate は、受信した座標サンプル（_syncData）から速度で外挿した
+    // 目標姿勢へ _renderPos / _renderRot / _renderScale を SmoothDamp（内部で Time.deltaTime の
+    // ネイティブ呼び出しを含む）で追わせ、結果を Transform へ書く。対象が止まって補間が
+    // 収束すると、三つの速度は厳密に 0、目標姿勢はサンプル値そのもの、描画状態は目標と
+    // ビット一致し、SmoothDamp の速度項は 0 になる。この状態での本体の計算は SmoothDamp の
+    // 恒等式だけで、フィールドも Transform も 1つも変わらない（書き込みは
+    // NativeTransformSyncWriteSkipPerf のラッパーが省く）。
+    //
+    // そこで全チャンネルが「サンプル・描画状態・Transform の現在値の三者がビット一致し、
+    // かつ速度が厳密に 0」のときだけ FrameUpdate 本体を丸ごと省く。判定は状態を持たず
+    // 毎フレームの現在値だけで行うので、動き出した・新しいサンプルが届いた・アニメーション
+    // など外部が Transform を動かした、のいずれも次のフレームで判定が外れて本体へ戻る。
+    // サーバは同じ呼び出し内で _serverTickPending を消費して座標を確定するため、その経路は
+    // 常に本体へ流す（この省略は参加者と、確定が済んだ後のホストで効く）。破壊済みアクター
+    // での NullReferenceException / MissingReferenceException は本体も同じ読み出しで出すので、
+    // 判定が失敗したときは本体に流して同じ例外として出る。
+    [HarmonyPatch]
+    internal static class NativeTransformSyncHoldPerf
+    {
+        private const string Feature = "transform sync hold";
+
+        private static MethodBase _target;
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static AccessTools.FieldRef<ActorTransformSync, bool> _hasData;
+        private static AccessTools.FieldRef<ActorTransformSync, bool> _serverTickPending;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderPos;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderPosCv;
+        private static AccessTools.FieldRef<ActorTransformSync, Quaternion> _renderRot;
+        private static AccessTools.FieldRef<ActorTransformSync, Quaternion> _renderRotCv;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderScale;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderScaleCv;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = NativePerfPatch.Find(typeof(ActorTransformSync), "FrameUpdate", ref _warned);
+                if (_target == null) return false;
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                _hasData = AccessTools.FieldRefAccess<ActorTransformSync, bool>("_hasData");
+                _serverTickPending = AccessTools.FieldRefAccess<ActorTransformSync, bool>("_serverTickPending");
+                _renderPos = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderPos");
+                _renderPosCv = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderPosCv");
+                _renderRot = AccessTools.FieldRefAccess<ActorTransformSync, Quaternion>("_renderRot");
+                _renderRotCv = AccessTools.FieldRefAccess<ActorTransformSync, Quaternion>("_renderRotCv");
+                _renderScale = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderScale");
+                _renderScaleCv = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderScaleCv");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncHold) return true;
+            try
+            {
+                // サーバはこの呼び出しで座標を確定して同期を立てるので、その経路は本体に任せる。
+                if (_serverTickPending(__instance) && __instance.isServer) return true;
+                if (!_hasData(__instance)) return false; // 本体もここで何もせず返る（base.FrameUpdate は空）
+                if (!IsPoseHeld(__instance)) return true;
+                return false;
+            }
+            catch (NullReferenceException)
+            {
+                return true; // 破壊済みアクター。本体も同じ例外を出すのでそのまま流す
+            }
+            catch (MissingReferenceException)
+            {
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return true;
+            }
+        }
+
+        // すべての有効チャンネルが「サンプル・描画状態・Transform の現在値がビット一致し、
+        // かつ速度が厳密に 0」のときだけ true。1つでも省けないチャンネルがあれば false。
+        internal static bool IsPoseHeld(ActorTransformSync instance)
+        {
+            SyncMovementData d = _syncData(instance);
+            Transform tr = instance.transform;
+            if (d.Has(SyncTransformChannel.Position))
+            {
+                if (!IsExactlyZero(d.velocity) || HasNegativeZero(d.position)) return false;
+                if (!SameVecBits(tr.position, _renderPos(instance)) || !SameVecBits(_renderPos(instance), d.position)) return false;
+                if (!IsExactlyZero(_renderPosCv(instance))) return false;
+            }
+            if (d.Has(SyncTransformChannel.Rotation))
+            {
+                if (!IsExactlyZero(d.angularVelocity)) return false;
+                Quaternion r = d.rotation;
+                if (IsNegativeZero(r.x) || IsNegativeZero(r.y) || IsNegativeZero(r.z) || IsNegativeZero(r.w)) return false;
+                if (!SameQuatBits(Quaternion.Normalize(r), r)) return false; // 正規化が1ULPでも動くなら本体はまだ状態を変える
+                if (!SameQuatBits(tr.rotation, _renderRot(instance)) || !SameQuatBits(_renderRot(instance), r)) return false;
+                Quaternion cv = _renderRotCv(instance);
+                if (cv.x != 0f || cv.y != 0f || cv.z != 0f || cv.w != 0f) return false;
+            }
+            if (d.Has(SyncTransformChannel.Scale))
+            {
+                if (!IsExactlyZero(d.scaleVelocity) || HasNegativeZero(d.scale)) return false;
+                if (!SameVecBits(tr.localScale, _renderScale(instance)) || !SameVecBits(_renderScale(instance), d.scale)) return false;
+                if (!IsExactlyZero(_renderScaleCv(instance))) return false;
+            }
+            return true;
+        }
+
+        // 速度の 0 は数値比較でよい（-0 も通す）。外挿項 velocity * num2 は符号を問わず ±0 で、
+        // 保存値の各成分に -0 がなければ position + (±0) はビット一致するため。
+        private static bool IsExactlyZero(Vector3 v) => v.x == 0f && v.y == 0f && v.z == 0f;
+
+        // -0 成分は外挿の足し算で +0 に反転する（本体が状態を変える）ので、そのときは省かない。
+        private static bool HasNegativeZero(Vector3 v) => IsNegativeZero(v.x) || IsNegativeZero(v.y) || IsNegativeZero(v.z);
+
+        private static bool IsNegativeZero(float v) => v == 0f && BitConverter.SingleToInt32Bits(v) != 0;
+
+        // Unity の == は許容差つきなので、書き込み省略ラッパーと同じビット比較を使う。
+        // a == b を先に見ることで NaN は常に「保持されていない」と扱う（本体どおり書く）。
+        private static bool SameBits(float a, float b)
+            => a == b && BitConverter.SingleToInt32Bits(a) == BitConverter.SingleToInt32Bits(b);
+
+        private static bool SameVecBits(Vector3 a, Vector3 b)
+            => SameBits(a.x, b.x) && SameBits(a.y, b.y) && SameBits(a.z, b.z);
+
+        private static bool SameQuatBits(Quaternion a, Quaternion b)
+            => SameBits(a.x, b.x) && SameBits(a.y, b.y) && SameBits(a.z, b.z) && SameBits(a.w, b.w);
     }
 
     [HarmonyPatch]
