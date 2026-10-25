@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.84 — Fewer redundant summon checks on the host（2026-10-25）
+
+この版では、召喚体を連れた英雄がいるときに、ホストのゲームが結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero had summons.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 機構の装備には、戦闘中の出来事に応じて記憶の冷却時間を短くするものがあります。 / Some mechanism equipment shortens memory cooldowns in response to events during combat. これまでホストのゲームは、召喚体を連れた英雄がいると、攻撃を受けたときや敵を倒したとき、記憶を使ったときなど、こうした出来事が起きるたびに召喚体をすべて調べていました。 / Until now, while a hero had summons, the host's game went through all of that hero's summons every time such an event happened, such as taking a hit, defeating an enemy, or using a memory. 召喚体がいるかどうかで結果が変わるのは基本攻撃のときだけで、それ以外の出来事では、何度調べても結果は同じです。 / Whether summons are present only matters for basic attacks; for every other event, the result of this check is always the same. 今は、基本攻撃のときだけ召喚体を調べます。 / The game now checks summons only for basic attacks. 基本攻撃のときは、これまでどおり召喚体がいるかどうかを確かめて冷却時間を短くします。 / For basic attacks, the game still checks for summons and shortens cooldowns as before. 効果が出るのはホストのゲームだけで、連れている召喚体が多いほど効果も大きくなります。 / The benefit appears only on the host's game, and the more summons a hero has, the larger the benefit. 効果は見積もりで、実際の効果はまだ測っていません。 / This benefit is an estimate, and the actual effect has not been measured yet. 参加者のゲームには直接の効果はありません。 / There is no direct effect on co-op players' games. 冷却時間の短くなり方やゲームの動きは変わりません。 / How cooldowns are shortened and how the game behaves are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.83 — Less redundant work for knocked-out heroes and sleeping pack monsters（2026-10-25）
 
 この版では、撃倒された英雄の体力を同じ値のまま何度も送り直していた無駄と、眠っている群れのモンスターについて仲間探しを繰り返していた無駄を省きました。 / This version removes two kinds of redundant work: resending the same health value of knocked-out heroes again and again, and repeatedly searching for allies on behalf of sleeping pack monsters.
