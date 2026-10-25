@@ -360,6 +360,9 @@ namespace SodRpg.Mod
         [LabelText("Skip the [BossPool] debug log built on every boss spawn (host) /\nボスが出るたびに組み立てられる [BossPool] のデバッグログを省く（ホスト）")]
         public bool nativeBossPoolSpawnLog = true;
 
+        [LabelText("Resolve each prewarm entry's prefab once instead of twice when applying the room's prewarm list (guests) /\nルームのプリウォーム一覧を適用するとき、各項目のプレハブ解決を2回から1回に減らす（参加者）")]
+        public bool nativeRoomPrewarmResolveOnce = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
