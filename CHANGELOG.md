@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.77 — Lighter room preparation when entering a room（2026-10-25）
+
+この版では、新しい部屋に入るときの準備処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the preparation the game does when you enter a new room.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 新しい部屋に入ったときと、協力プレイに途中から参加したときに、ゲームはその部屋に出る敵などを前もって準備します。これまでは準備する項目ごとに、同じ調べものを2回していました。今は1回で済ませます。項目が数十件ある部屋では、この調べものを数百回から千回あまり減らせる見込みです。そのため、部屋に入るときの負荷が少し減ると考えています。数は見積もりで、実際の効果もまだ測っていません。準備する内容と順番は変わらないので、部屋に出る敵や遊び方も変わりません。 / When you enter a new room, or join a co-op game partway through, the game gets the enemies and other things that room needs ready ahead of time. Until now, it looked up the same information twice for every item it prepared. It now looks each one up only once. In rooms with dozens of items, this should remove several hundred to just over a thousand of these lookups, so entering a room should put slightly less load on the game. These numbers are estimates, and the actual effect has not been measured yet. The game still prepares the same things in the same order, so the enemies in each room and the way the game plays are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.76 — Lighter skill editing screen at the Shrine of Chaos（2026-10-25）
 
 この版では、混沌の祠でスキルを編集する画面から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the skill editing screen at the Shrine of Chaos.
