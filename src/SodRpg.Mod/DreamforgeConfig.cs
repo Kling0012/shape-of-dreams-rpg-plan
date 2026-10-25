@@ -357,6 +357,9 @@ namespace SodRpg.Mod
         [LabelText("Keep the entity ability-changed callback to one subscription when a pooled entity is reused (host and guests) /\nプールで再利用されたエンティティで、能力変化コールバックの購読が重複しないようにする（ホストと参加者）")]
         public bool nativeEntityAbilitySubscribeDedup = true;
 
+        [LabelText("Skip the [BossPool] debug log built on every boss spawn (host) /\nボスが出るたびに組み立てられる [BossPool] のデバッグログを省く（ホスト）")]
+        public bool nativeBossPoolSpawnLog = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
