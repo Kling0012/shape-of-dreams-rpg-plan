@@ -55,6 +55,12 @@ namespace SodRpg.Core.Game
             NativePayloadKind = nativePayloadKind; GeneratedOrigin = generatedOrigin; EquipmentEpoch = equipmentEpoch;
             IsAssist = isAssist;
         }
+
+        /// <summary>The firing of the owner's main basic attack; the only notification for which
+        /// MechanismEquipment.ResolveEventSource reads the owned-summon flag. Hosts that skip the
+        /// summons scan for other notifications must gate on this same property.</summary>
+        public bool IsMainBasicAttackFired => EventKind == MemoryEventKind.OwnedBasicAttackFired
+            && NativePayloadKind == NativePayloadKind.MainBasicAttack;
     }
 
     /// <summary>Only an exact inspected host adapter may register a native exception.</summary>

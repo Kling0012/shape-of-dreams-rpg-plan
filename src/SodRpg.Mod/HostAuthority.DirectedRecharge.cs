@@ -86,9 +86,9 @@ namespace SodRpg.Mod
             {
             var requests = buffers.Recharges;
             // 召喚の有無が結果に影響するのは基本攻撃発火の通知だけ（ResolveEventSource の St_D_CircleOfLife 特例）。
+            // 判定は特例と同じ MemoryActivationEvent.IsMainBasicAttackFired にまとめてあり、条件はずれない。
             // 被弾・撃破・使用などの通知では、召喚一覧の走査（各召喚の祖先走査を含む）を省く。
-            bool summons = notification.EventKind == MemoryEventKind.OwnedBasicAttackFired
-                && notification.NativePayloadKind == NativePayloadKind.MainBasicAttack
+            bool summons = notification.IsMainBasicAttackFired
                 && _runtimes.TryGetValue(hero, out var rt) && HasOwnSummons(rt);
             AuthoredMechanismSpec spec = null;
             if (channelId != null && _authoredMechanisms.TryGetValue(hero, out var authored) && authored.Channels.TryGetValue(channelId, out var channel))
