@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.81 — Skip redundant position-sync calculations for characters standing still in co-op（2026-10-25）
+
+この版では、協力プレイでキャラクターの位置を合わせる処理から、結果の変わらない無駄な計算を省きました。 / This version removes redundant calculations that never changed the result from the processing that keeps character positions in sync in co-op.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイでは、プレイヤーや敵などのキャラクターが画面上でなめらかに動くように、ゲームが毎フレーム、ホストから届いた位置へ向けて表示の位置を少しずつ近づけています。これまでは、キャラクターが止まって表示の位置が届いた位置に完全に追いついたあとも、同じ計算を毎フレーム続けていました。追いついたあとは、計算しても位置は1つも変わりません。今は、止まっていて表示が届いた位置とぴったり重なり、どの向きにも動いていないキャラクターについては、この計算を省きます。キャラクターが動き出したときや、新しい位置が届いたとき、ほかの理由で位置が変わったときは、次のフレームからこれまでどおり計算します。効果が出るのは主に参加者のゲームで、止まっているキャラクター1体ごとに、毎フレームの計算が簡単な確認1回に置き換わります。1体あたりはごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。キャラクターの動きや見え方は変わりません。 / In co-op, so that players, enemies, and other characters move smoothly on screen, the game moves each character's displayed position a little closer every frame toward the position received from the host. Until now, it kept doing this same calculation every frame even after a character had stopped and its displayed position had fully caught up. Once it has caught up, the calculation changes nothing. The game now skips this calculation for characters that are standing still, whose displayed position exactly matches the received position, and that are not moving in any way. When a character starts moving, a new position arrives, or its position changes for any other reason, the calculation resumes from the next frame as before. The benefit appears mainly on co-op players' games: for each character standing still, the per-frame calculation is replaced by one simple check. Each one is a very quick step, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. How characters move and look is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.80 — Skip resending unchanged no-load reports in co-op（2026-10-25）
 
 この版では、協力プレイの参加者のゲームがホストへ送る報告から、結果の変わらない無駄な送信を省きました。 / This version removes redundant sends that never changed the result from the reports that co-op players' games send to the host.
