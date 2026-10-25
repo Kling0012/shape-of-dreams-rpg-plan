@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.75 — Lighter boss spawns on the host（2026-10-25）
+
+この版では、ボスが現れるときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from what happens when a boss appears.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボスが1体現れるたびに、ホストのゲームは開発用の記録を組み立てて書き出していました。プレイには使わない記録なので、今は書き出しません。無限モードのようにボスが続けて何体も現れる場面で、ホストのゲームの引っかかりが少し減る見込みです。実際の効果はまだ測っていません。どのボスが現れるか、ボスの技や強さは変わりません。参加者のゲームの負荷も変わりません。 / Each time a boss appeared, the host's game built and wrote out a developer log. That log is not used in play, so the game no longer writes it. When many bosses appear in quick succession, as in Infinity mode, the host's game should stutter a little less. The actual effect has not been measured yet. Which bosses appear, and their abilities and strength, are unchanged. The load on co-op players' games is also unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.74 — Lighter essence slot overflow checks on the host（2026-10-25）
 
 この版では、エッセンス枠からあふれたエッセンスを確かめる処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from checking for essences that overflow their slots.
