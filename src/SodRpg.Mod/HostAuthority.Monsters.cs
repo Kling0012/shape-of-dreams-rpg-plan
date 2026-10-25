@@ -160,13 +160,16 @@ namespace SodRpg.Mod
                 if (state == null || !Alive(m)) continue;
                 float elapsed = Mathf.Clamp(now - state.LastTick, 0f, 0.25f);
                 state.LastTick = now;
-                // Refresh before the sleep branch: a sleeping monster can still take a cached-guard hit (#55).
-                if ((state.Affixes & NightmareAffix.Packbound) != 0) PackboundAllyNear(rt);
                 if (m.isSleeping || (_zone != null && _zone.isInAnyTransition))
                 {
                     state.LastHit = now; // Do not accumulate out-of-combat healing.
                     continue;
                 }
+                // Only awake ticks refresh the cached ally state: while asleep or in a zone
+                // transition no reader runs (the sleep branch skips the cue send, and the damage
+                // closure returns on isSleeping), and PackboundAllyNear recomputes on the first
+                // read after the 0.15 s window lapses, so waking hits keep their fresh value (#55).
+                if ((state.Affixes & NightmareAffix.Packbound) != 0) PackboundAllyNear(rt);
                 try
                 {
                     state.Age += elapsed;
