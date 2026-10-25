@@ -400,11 +400,14 @@ namespace SodRpg.Mod
             if (_deathDepth == 0) _deathBaseline = monsters.disableMiniBossRewards;
             __state = new DeathScope { Monsters = monsters, Previous = monsters.disableMiniBossRewards };
             _deathDepth++;
-            double scale = PressureCountRewards.ScaleFromActorData(__instance.persistentSyncedData);
             // Chaos is indivisible. Retain the native deferred reward with this extra's coefficient.
             // An original killed in a nested extra death still sees the original native baseline.
-            bool mini = __instance is Monster monster && monster.type == Monster.MonsterType.MiniBoss;
-            monsters.disableMiniBossRewards = _deathBaseline || (mini && scale < 1 && Random.NextDouble() >= scale);
+            // Only a miniboss death while native rewards are live can move the flag; every other
+            // death would only restore the value it sees, so it skips the scale lookup and the write.
+            if (_deathBaseline || !(__instance is Monster monster
+                && monster.type == Monster.MonsterType.MiniBoss)) return;
+            double scale = PressureCountRewards.ScaleFromActorData(__instance.persistentSyncedData);
+            monsters.disableMiniBossRewards = scale < 1 && Random.NextDouble() >= scale;
         }
 
         private static void AfterDeath(DeathScope __state)
