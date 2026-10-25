@@ -225,6 +225,9 @@ namespace SodRpg.Mod
 
     internal sealed partial class ClientSession
     {
+        // Last quantized pressure actually accepted by NetworkClient.Send; -1 = nothing sent yet.
+        private int _lastSentAutocastPressure = -1;
+
         private void TickAutocastPressureReport()
         {
             float over = AutocastPressure.SampleFrame();
@@ -234,10 +237,16 @@ namespace SodRpg.Mod
             if (now < _nextAutocastPressureReport) return;
             _nextAutocastPressureReport = now + 1f;
             byte quantized = (byte)Mathf.RoundToInt(over * 255f);
-            // Refresh even unchanged pressure: the host expires reports after five seconds.
-            // The one-second gate above also bounds heartbeat and failed-send retries.
+            // Nonzero pressure is refreshed every second: the host expires reports after five
+            // seconds and an expired nonzero value would silently lower RemoteOver. A zero
+            // report needs no heartbeat — the host adds Over / 255 to RemoteOver only for fresh
+            // entries, so a missing entry and a fresh zero both read as no pressure. Idle
+            // guests therefore stay silent until the value moves; the one-second gate above
+            // still bounds transition reports and failed-send retries.
+            if (quantized == 0 && _lastSentAutocastPressure == 0) return;
             Writer<DreamforgePerfPressureMsg>.write = (writer, message) => writer.WriteByte(message.over);
             NetworkClient.Send(new DreamforgePerfPressureMsg { over = quantized });
+            _lastSentAutocastPressure = quantized;
         }
     }
 }

@@ -33,6 +33,7 @@ namespace PressureReportUnderTest
     {
         private bool _hostAutocastPressureCapability;
         private float _nextAutocastPressureReport;
+        private int _lastSentAutocastPressure = -1;
         private object _clientRpcOn = new object();
         private float _helloFirstSent, _nextHello, _nextBuildInputProbe;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
@@ -86,7 +87,15 @@ namespace SodRpg.Core.Tests
                 float now = frame / 10f;
                 client.Tick(now, over);
                 if (NetworkClient.Sent.Count > 0) lastReceived = NetworkClient.Sent[NetworkClient.Sent.Count - 1].Time;
-                Assert.True(now - lastReceived < 5f, "An unchanged pressure report expired on the host");
+                if (expected > 0) Assert.True(now - lastReceived < 5f, "An unchanged pressure report expired on the host");
+            }
+            if (expected == 0)
+            {
+                // Zero pressure reports once and then stays silent: the host adds
+                // Over / 255 to RemoteOver only for fresh entries, so a missing entry
+                // and a fresh zero both read as no pressure and nothing needs keeping alive.
+                Assert.Single(NetworkClient.Sent);
+                return;
             }
             Assert.True(NetworkClient.Sent.Count > 2);
             for (int i = 0; i < NetworkClient.Sent.Count; i++)
@@ -105,7 +114,12 @@ namespace SodRpg.Core.Tests
             client.Tick(1f, 1f);
             client.Tick(1.5f, 0f);
             client.Tick(2f, 0f);
-            Assert.Equal(new byte[] { 0, 255, 0 }, NetworkClient.Sent.ConvertAll(packet => packet.Over));
+            // Zero stays silent, and a pressure change while silent is still reported
+            // at the next one-second gate, exactly like a change during a heartbeat.
+            client.Tick(3f, 0f);
+            client.Tick(3.5f, 1f);
+            client.Tick(4f, 1f);
+            Assert.Equal(new byte[] { 0, 255, 0, 255 }, NetworkClient.Sent.ConvertAll(packet => packet.Over));
         }
 
         [Fact]
