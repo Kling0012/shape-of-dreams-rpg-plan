@@ -259,6 +259,7 @@ namespace SodRpg.Mod
             nativeEntityAnimLayerWeightIdle = true,
             nativeChaosStatBonusTooltipCache = true,
             nativeEntityOwnerClientFast = true,
+            nativeProjectileTargetClientFast = true,
             nativeEntityAbilitySubscribeDedup = true,
             nativeBossPoolSpawnLog = true,
             nativeRoomPrewarmResolveOnce = true,
@@ -286,9 +287,32 @@ namespace SodRpg.Mod
     // 読む 4 つの公開効果プレハブ字段と、Prepare が探す weaver 送信メソッドの名前と引数の形
     // だけを置く（中身は呼ばれないので空）。実機の受信側 UserCode_* は対応する字段が null の
     // とき最初に return する（実 DLL 逆コンパイルで確認済み）。
+    // NativeProjectileTargetSyncVarPerf（リンク）の Prefix もこの境界に対して動く。Prepare が
+    // Network_targetEntity の getter と _targetEntity・____targetEntityNetId の 2 字段を実物と
+    // 同じ名前で解決し、ProjectileTargetSyncVarPerfTests が Prefix を直接呼ぶ。実機の
+    // isClient は netIdentity.isClient。実機の Network_targetEntity getter は
+    // GetSyncVarNetworkBehaviour の辞書引きを呼び出しごとにやり直すが、境界の getter は
+    // 解決済みの _targetEntity をそのまま返す（その辞書引きの置き換えこそがこのパッチ）。
     internal class Projectile
     {
         public struct EntityHit { }
+
+        // Prefix が読む NetworkBehaviour 継承面。
+        // ProjectileIdleRpcPerfTests が typeof(Projectile).GetFields() を GameObject 設定で
+        // 回すため、フィールドではなくプロパティにして列挙対象外にする。
+        public Mirror.NetworkIdentity netIdentity { get; set; }
+        public bool isServer { get; set; }
+        public bool isClient { get; set; }
+
+        // NativeProjectileTargetSyncVarPerf の Prepare と Prefix が読む標的 SyncVar の対
+        // （実物の weaver 生成の私有字段と同じ名前）。公開字段にすると同じく
+        // ProjectileIdleRpcPerfTests の GetFields() 列挙で GameObject を詰められるため、
+        // 列挙対象外の内部可視性にする（AccessTools.Field は内部字段も解決する）。
+        internal Entity _targetEntity;
+        internal Mirror.NetworkBehaviourSyncVar ____targetEntityNetId;
+        // Prepare の AccessTools.PropertyGetter の解決先。本体の中身（辞書引きからの解決）は
+        // Prefix の差し替え対象のため、境界では Prefix と同じ解決済み参照を返すだけ。
+        internal Entity Network_targetEntity => _targetEntity;
 
         public GameObject effectOnFly;
         public GameObject effectOnEntity;

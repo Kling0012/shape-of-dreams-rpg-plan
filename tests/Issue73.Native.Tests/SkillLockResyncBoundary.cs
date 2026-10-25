@@ -104,6 +104,11 @@ namespace SodRpg.Mod
         // InitializeNetworkBehaviours で設定される。テストでは Prefix を通さないため形だけ。
         public bool isClient;
         public NetworkIdentity netIdentity;
+        // NativeProjectileTargetSyncVarPerf（リンク）の Prefix が標的 SyncVar の一致判定で読む
+        // NetworkBehaviour のフィールド。実物は InitializeNetworkBehaviours が NetworkBehaviours
+        // の添字を入れる。ProjectileTargetSyncVarPerfTests が Prefix を直接呼ぶ一致判定で使う
+        // （相手の netId は NativeBoundary.cs 側の Entity 公開フィールド）。
+        public byte ComponentIndex;
     }
 
     internal partial class AbilityInstance

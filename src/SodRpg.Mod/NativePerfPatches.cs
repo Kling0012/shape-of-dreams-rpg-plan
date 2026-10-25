@@ -86,6 +86,7 @@ namespace SodRpg.Mod
             NativePerfOptions.EntityAnimationLayerWeightIdle = config.nativeEntityAnimLayerWeightIdle;
             NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
             NativePerfOptions.EntityOwnerClientFast = config.nativeEntityOwnerClientFast;
+            NativePerfOptions.ProjectileTargetClientFast = config.nativeProjectileTargetClientFast;
             NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
             NativePerfOptions.BossPoolSpawnLog = config.nativeBossPoolSpawnLog;
             NativePerfOptions.RoomPrewarmResolveOnce = config.nativeRoomPrewarmResolveOnce;
@@ -162,6 +163,7 @@ namespace SodRpg.Mod
         internal static bool EntityAnimationLayerWeightIdle = true;
         internal static bool ChaosStatBonusTooltipCache = true;
         internal static bool EntityOwnerClientFast = true;
+        internal static bool ProjectileTargetClientFast = true;
         internal static bool EntityAbilitySubscribeDedup = true;
         internal static bool BossPoolSpawnLog = true;
         internal static bool RoomPrewarmResolveOnce = true;
@@ -8932,6 +8934,92 @@ namespace SodRpg.Mod
             if (!NativePerfOptions.EntityOwnerClientFast) return true;
             if (__instance.netIdentity == null || __instance.isServer || !__instance.isClient) return true;
             DewPlayer cached = _ownerGetter(__instance);
+            if (cached == null) return true;
+            NetworkBehaviourSyncVar syncId = _netIdGetter(__instance);
+            if (syncId.netId == 0
+                || cached.netId != syncId.netId
+                || cached.ComponentIndex != syncId.componentIndex) return true;
+            __result = cached;
+            return false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeProjectileTargetSyncVarPerf
+    {
+        // Projectile.Network_targetEntity の getter は Entity.owner と同じ Mirror 生成の
+        // SyncVar 参照で、ホスト（isServer）では SetSyncVarNetworkBehaviour が書いた
+        // _targetEntity をそのまま返す O(1) だが、純クライアント（参加者）では
+        // NetworkClient.spawned の辞書引きと NetworkBehaviours[componentIndex] の配列
+        // アクセスとキャストを呼び出しごとにやり直す。
+        //
+        // 標的追尾（entity mode）の弾は参加者でもロジックティック（約30Hz）ごとに読む:
+        // Projectile.LogicUpdate → StandardProjectile.PositionSolver →
+        // GetTargetWorldPosition() → targetEntity で、rotationType が Target の弾は
+        // RotationSolver でもう1回読む。追尾弾は基本攻撃のほとんど（攻撃対象のある
+        // AttackProjectile）と魔物の射撃で、魔物が多い部屋では参加者で毎秒数百〜数千回、
+        // 前ティックと同じ解決を辞書からやり直す。値は OnPrepare で1回設定され
+        // OnDisable で解除されるだけで飛行中に変わらない。
+        //
+        // Prefix は純クライアントのときだけ、解決済みの _targetEntity が今の
+        // ____targetEntityNetId と一致するならそれをそのまま返す。一致の判定は
+        // (netId, componentIndex) の比較で、NativeEntityOwnerSyncVarPerf と同じ根拠で
+        // 等価である: netId は生きている NetworkIdentity の間だけ一意で、Mirror は
+        // クライアント側の削除で必ず GameObject の破壊（Unity-null 化）か Reset() による
+        // netId=0 化のどちらかを行う（Mirror.dll の NetworkClient.DestroyObject —
+        // unspawn handler 経路は Reset、生成プレハブ経路は Object.Destroy、シーン配置
+        // 経路は非アクティブ化+Reset — を確認。破壊なしの除外はホストクライアントの
+        // OnHostClientObjectDestroy だけで、isServer の除外で対象外）。
+        // componentIndex は InitializeNetworkBehaviours が NetworkBehaviours の添字と同じ
+        // 値を入れるため、一致するなら元の実装が返すオブジェクトと同一である。
+        // 標的の despawn 後は Unity-null（本体が解決して辞書にないので null）か
+        // netId=0（不一致で本体に任せる）のどちらかで、本体と同じ結果になる。
+        // 飛行中の再設定（同期での標的変更）は netId か componentIndex が変わるので
+        // 不一致になり、本体が解決する。ホストは対象外（本体がすでに O(1)）。
+        // 設定 DreamforgeConfig の nativeProjectileTargetClientFast（既定は有効）で
+        // 切れる。フィールドや getter の形が違うときは Prepare で1回だけ警告を出して
+        // この修正だけ外れる（fail-soft）。
+        private static Func<Projectile, Entity> _targetGetter;
+        private static Func<Projectile, NetworkBehaviourSyncVar> _netIdGetter;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = AccessTools.PropertyGetter(typeof(Projectile), "Network_targetEntity");
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "projectile target client fast path", "Projectile.Network_targetEntity getter unavailable");
+                return false;
+            }
+            try
+            {
+                _targetGetter = FieldReader<Entity>(AccessTools.Field(typeof(Projectile), "_targetEntity"));
+                _netIdGetter = FieldReader<NetworkBehaviourSyncVar>(AccessTools.Field(typeof(Projectile), "____targetEntityNetId"));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "projectile target client fast path", ex.Message);
+                return false;
+            }
+        }
+
+        private static Func<Projectile, T> FieldReader<T>(FieldInfo field)
+        {
+            if (field == null)
+                throw new MissingMemberException(typeof(Projectile).Name + " target syncvar field unavailable");
+            var p = Expression.Parameter(typeof(Projectile));
+            return Expression.Lambda<Func<Projectile, T>>(Expression.Field(p, field), p).Compile();
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Projectile __instance, ref Entity __result)
+        {
+            if (!NativePerfOptions.ProjectileTargetClientFast) return true;
+            if (__instance.netIdentity == null || __instance.isServer || !__instance.isClient) return true;
+            Entity cached = _targetGetter(__instance);
             if (cached == null) return true;
             NetworkBehaviourSyncVar syncId = _netIdGetter(__instance);
             if (syncId.netId == 0
