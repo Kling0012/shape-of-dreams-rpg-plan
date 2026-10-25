@@ -65,6 +65,8 @@ namespace SodRpg.Mod
             state.EquipEpoch = rt.ShieldEquipmentEpoch; state.EquipBuild = rt.Powers.Build;
             _obliviaxCombat.Add(rt, state); return state;
         }
+        private static bool ObliviaxCacheValid(ObliviaxCombat state, HeroRuntime rt)
+            => state.EquipEpoch == rt.ShieldEquipmentEpoch && state.EquipBuild == rt.Powers.Build;
         private static bool ObliviaxAvailable(HeroRuntime rt, BossAction action, float now)
             => (!rt.Boss.Ready.TryGetValue(action.RuntimeKey, out var due) || now >= due)
                 && (rt.Boss.Ready.ContainsKey(action.RuntimeKey) || rt.Boss.Ready.Count < 128);
@@ -111,7 +113,7 @@ namespace SodRpg.Mod
                 if (!BossFind(rt, ObliviaxProfiles[3], out _, out _)) return;
                 state = ObliviaxState(rt); if (state == null) return;
             }
-            else if (state.EquipEpoch != rt.ShieldEquipmentEpoch || state.EquipBuild != rt.Powers.Build)
+            else if (!ObliviaxCacheValid(state, rt))
             {
                 if (!BossFind(rt, ObliviaxProfiles[3], out _, out _)) return;
             }
@@ -286,7 +288,7 @@ namespace SodRpg.Mod
             // 毎フレームの9走査は行われない。エポックが進まない Build の差し替えも、状態側で
             // 参照を比べて検出する（BossEnsure の呼び出し順に依存しない）。
             int mask;
-            if (state.EquipEpoch == rt.ShieldEquipmentEpoch && state.EquipBuild == rt.Powers.Build) mask = state.EquippedMask;
+            if (ObliviaxCacheValid(state, rt)) mask = state.EquippedMask;
             else
             {
                 mask = 0;
