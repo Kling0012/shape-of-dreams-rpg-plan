@@ -115,23 +115,28 @@ namespace SodRpg.Core.Tests
         [InlineData(MemoryEventKind.Kill, NativePayloadKind.Skill)]
         [InlineData(MemoryEventKind.ConfirmedUse, NativePayloadKind.Skill)]
         [InlineData(MemoryEventKind.Hit, NativePayloadKind.SummonAttack)]
+        [InlineData(MemoryEventKind.OwnedBasicAttackFired, NativePayloadKind.SummonAttack)]
         public void SummonPresenceDoesNotChangeResultsOutsideTheMainBasicAttackFiring(MemoryEventKind kind, NativePayloadKind payload)
         {
             var equipment = Equipment();
-            var notification = Event(kind: kind, payload: payload);
-            Assert.Same(equipment.ResolveEventSource(notification, true), equipment.ResolveEventSource(notification, false));
             var channel = new DirectedRechargeChannel("channel", new MemorySelector(MemorySelectorKind.EquippedQ), kind,
                 new MemorySelector(MemorySelectorKind.EquippedMovement), new[] { 2000 });
-            var withSummons = Fire(Runtime(channel), notification, equipment, summons: true);
-            var withoutSummons = Fire(Runtime(channel), notification, equipment, summons: false);
-            Assert.Single(withSummons); Assert.Single(withoutSummons);
-            Assert.Equal(withoutSummons[0].ChannelId, withSummons[0].ChannelId);
-            Assert.Equal(withoutSummons[0].SourceMemory, withSummons[0].SourceMemory);
-            Assert.Equal(withoutSummons[0].SourceInstanceId, withSummons[0].SourceInstanceId);
-            Assert.Equal(withoutSummons[0].RecipientMemory, withSummons[0].RecipientMemory);
-            Assert.Equal(withoutSummons[0].RecipientInstanceId, withSummons[0].RecipientInstanceId);
-            Assert.Equal(withoutSummons[0].ValueUnits, withSummons[0].ValueUnits);
-            Assert.False(withSummons[0].RequiresOwnedSummon);
+            foreach (var memory in new[] { "source", "" })
+            {
+                var notification = Event(kind: kind, payload: payload, memory: memory);
+                Assert.Same(equipment.ResolveEventSource(notification, true), equipment.ResolveEventSource(notification, false));
+                var withSummons = Fire(Runtime(channel), notification, equipment, summons: true);
+                var withoutSummons = Fire(Runtime(channel), notification, equipment, summons: false);
+                if (memory.Length == 0) { Assert.Empty(withSummons); Assert.Empty(withoutSummons); continue; }
+                Assert.Single(withSummons); Assert.Single(withoutSummons);
+                Assert.Equal(withoutSummons[0].ChannelId, withSummons[0].ChannelId);
+                Assert.Equal(withoutSummons[0].SourceMemory, withSummons[0].SourceMemory);
+                Assert.Equal(withoutSummons[0].SourceInstanceId, withSummons[0].SourceInstanceId);
+                Assert.Equal(withoutSummons[0].RecipientMemory, withSummons[0].RecipientMemory);
+                Assert.Equal(withoutSummons[0].RecipientInstanceId, withSummons[0].RecipientInstanceId);
+                Assert.Equal(withoutSummons[0].ValueUnits, withSummons[0].ValueUnits);
+                Assert.False(withSummons[0].RequiresOwnedSummon);
+            }
         }
         [Fact] public void MainBasicAttackFiringKeepsTheOwnedSummonAsTheResolvedSource()
         {
