@@ -9395,19 +9395,26 @@ namespace SodRpg.Mod
         //
         // This patch clears the _currentHealth dirty bit after the pin's tick, but only
         // when the pending change is provably empty:
-        // - The bit must already have been set when the pin's tick began. A bit that was
-        //   clear at entry and set at exit was raised by the pin's own reset after a send
-        //   delivered a transient between-ticks write (rare: host-side heals run inside
-        //   ticks, and a delivered one is consumed by its own send). That reset is the
-        //   observers' only convergence back to 0.01f, so it goes out exactly as vanilla
-        //   sends it.
-        // - The observers must already hold 0.01f. The prefix marks the effect "delivered"
-        //   the first time it sees the bit clear at entry — the first pending pin value
-        //   (the creation SetHealth) can only be consumed by a real send — and until then
-        //   the bit is left alone, so the knocked-out hero's 0.01f still reaches everyone
-        //   like vanilla. A mid-join observer's baseline comes from the force-all spawn
-        //   snapshot, which this patch never touches.
-        // - The health must still be the pin's exact 0.01f. Anything else — a revive, the
+        // - The observers must already hold 0.01f. The prefix re-earns the "delivered" mark
+        //   only at ticks whose entry has the bit clear — every earlier raise was consumed
+        //   by a real send, so the value at entry is exactly what the observers hold — and
+        //   whose entry value is the pin's own 0.01f. Until such a tick is seen (right
+        //   after creation, after a revive) the bit is left alone, so the knocked-out
+        //   hero's 0.01f still reaches everyone like vanilla. A mid-join observer's
+        //   baseline comes from the force-all spawn snapshot, which this patch never
+        //   touches.
+        // - No write-back may still be waiting for its send. Mirror throttles broadcasts
+        //   by syncInterval, so a bit that is set when the pin's tick begins is not proof
+        //   of a non-pin change: it may be the previous tick's own convergence reset that
+        //   no send has consumed yet. When the postfix sees the bit clear at entry and
+        //   set at exit, it marks the effect "converging", and that mark keeps blocking
+        //   the skip until a prefix sees the bit clear again — which only a real send
+        //   produces. After a between-ticks change (a heal applied outside the tick
+        //   order) reaches the observers, the pin's reset is their only convergence back
+        //   to 0.01f, so it goes out exactly as vanilla sends it, even across runs of
+        //   send-thinned ticks.
+        // - The health must still be the pin's exact 0.01f at the end of the tick.
+        //   Anything else — a revive landing in a later bucket of the same tick, the
         //   negative-regen kill through the LogicUpdate death check, a vanished victim —
         //   keeps its value and its dirty bit exactly as vanilla raised them.
         // The bit is masked through Mirror's syncVarDirtyBits property, so lastSyncTime,
@@ -9416,11 +9423,21 @@ namespace SodRpg.Mod
         // NativeStatsRatioIdlePerf does. Host-side values, heals and the death check see
         // exactly what vanilla computes — only identical floats stop reaching the wire
         // (nativeHeroKnockoutHealthIdle turns the skip off).
-        private static readonly object DeliveredMark = new object();
-        private static readonly ConditionalWeakTable<object, object> Delivered =
-            new ConditionalWeakTable<object, object>();
-        private static readonly ConditionalWeakTable<object, object>.CreateValueCallback CreateDeliveredMark =
-            _ => DeliveredMark;
+        //
+        // The per-effect knowledge lives in one ConditionalWeakTable entry: the two marks
+        // above plus the current tick's entry-bit state, which the prefix records and the
+        // postfix of the same tick reads (Harmony's only pass-through channel is the single
+        // __state flag, so the entry observation travels with the effect, not the patch
+        // signature). The entry is created on the effect's first host-side tick and never
+        // per tick, so the steady state allocates nothing.
+        private sealed class EffectState
+        {
+            public bool Delivered;
+            public bool Converging;
+            public bool EntryClear;
+        }
+        private static readonly ConditionalWeakTable<object, EffectState> States =
+            new ConditionalWeakTable<object, EffectState>();
         private static MethodBase _target;
         private static Func<EntityStatus, float> _currentHealth;
         private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
@@ -9429,21 +9446,25 @@ namespace SodRpg.Mod
         private static bool _disabled;
         private static bool _warned;
 
-        private static bool Prepare()
+        private static bool Prepare() => TryPrepare("Se_HeroKnockedOut");
+
+        // Split out with the type name as an argument (same shape as
+        // NativeChaosShrineHitScanPerf.TryPrepare) so the tests can point the same wiring
+        // at their stand-in class and at a missing name (the fail-soft path). TypeByName
+        // like the other native patches: the mod never references this native class, and
+        // the name resolves stand-ins in tests exactly like the real class in the game.
+        internal static bool TryPrepare(string effectTypeName)
         {
             if (_disabled) return false;
             if (_target != null) return true;
             _disabled = true;
             try
             {
-                // TypeByName like the other native patches: the mod never references this
-                // native class, and the name resolves stand-ins in tests exactly like the
-                // real class in the game.
-                var effect = AccessTools.TypeByName("Se_HeroKnockedOut");
-                if (effect == null) throw new MissingMemberException("Se_HeroKnockedOut unavailable");
+                var effect = AccessTools.TypeByName(effectTypeName);
+                if (effect == null) throw new MissingMemberException(effectTypeName + " unavailable");
                 _target = AccessTools.DeclaredMethod(effect, "ActiveLogicUpdate", new[] { typeof(float) });
                 if (_target == null || _target.GetMethodBody() == null)
-                    throw new MissingMemberException("Se_HeroKnockedOut.ActiveLogicUpdate unavailable");
+                    throw new MissingMemberException(effectTypeName + ".ActiveLogicUpdate unavailable");
                 var setter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentHealth");
                 if (setter == null || setter.GetMethodBody() == null)
                     throw new MissingMemberException("EntityStatus.Network_currentHealth setter unavailable");
@@ -9506,17 +9527,37 @@ namespace SodRpg.Mod
         private static bool Prefix(object __instance, out bool __state)
         {
             __state = false;
-            if (_disabled || !NativePerfOptions.HeroKnockoutHealthIdle) return true;
+            if (_disabled) return true;
+            if (!NativePerfOptions.HeroKnockoutHealthIdle)
+            {
+                // While the setting is off the patch observes nothing, so it keeps no
+                // stale knowledge either: the whole entry is dropped and re-earned from
+                // scratch when the skip is turned back on.
+                States.Remove(__instance);
+                return true;
+            }
             try
             {
                 var status = VictimStatus(__instance);
                 if (status == null || !status.isServer) return true;
-                bool pending = (_dirtyBits(status) & _healthBit) != 0UL;
-                // A clear bit at entry means whatever was pending — the creation pin, the
-                // first chunk — was consumed by a real send: from now on the observers
-                // hold the exact 0.01f this patch may skip.
-                if (pending) __state = Delivered.TryGetValue(__instance, out _);
-                else Delivered.GetValue(__instance, CreateDeliveredMark);
+                var state = States.GetOrCreateValue(__instance);
+                if ((_dirtyBits(status) & _healthBit) != 0UL)
+                {
+                    state.EntryClear = false;
+                    // The pending raise may only be dropped when the observers provably
+                    // hold the pin value and no convergence from an earlier tick is still
+                    // waiting for its send.
+                    __state = state.Delivered && !state.Converging;
+                    return true;
+                }
+                // A clear bit at entry means every earlier raise was consumed by a real
+                // send, so the convergence wait ends here. What the observers hold now is
+                // exactly the value at entry: the delivered mark is re-earned only when
+                // that value is the pin's own 0.01f (a delivered between-ticks heal
+                // leaves it off until the pin's convergence has gone out too).
+                state.EntryClear = true;
+                state.Converging = false;
+                state.Delivered = _currentHealth(status).Equals(0.01f);
                 return true;
             }
             catch (Exception ex)
@@ -9529,17 +9570,28 @@ namespace SodRpg.Mod
 
         private static void Postfix(object __instance, bool __state, bool __runOriginal)
         {
-            if (!__state || _disabled || !__runOriginal) return;
+            if (_disabled || !__runOriginal) return;
             try
             {
                 var status = VictimStatus(__instance);
                 if (status == null) return;
+                bool entryClear = States.TryGetValue(__instance, out var state) && state.EntryClear;
+                if (!__state && !entryClear) return;
                 // Only the pin's exact steady value is redundant; a revive, a death or any
                 // other surprise keeps its dirty bit exactly as vanilla raised it.
                 if (!_currentHealth(status).Equals(0.01f)) return;
                 ulong bits = _dirtyBits(status);
                 if ((bits & _healthBit) == 0UL) return;
-                _setDirtyBits(status, bits & ~_healthBit);
+                if (__state)
+                {
+                    _setDirtyBits(status, bits & ~_healthBit);
+                    return;
+                }
+                // Clear at entry and set at exit (entryClear implies a state entry): this
+                // raise is the pin's own write-back, the observers' only convergence back
+                // to 0.01f after a between-ticks change reached them. Remember it until a
+                // prefix sees the bit cleared by a real send; until then no tick may drop it.
+                state.Converging = true;
             }
             catch (Exception ex)
             {
