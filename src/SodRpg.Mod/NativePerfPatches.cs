@@ -88,6 +88,7 @@ namespace SodRpg.Mod
             NativePerfOptions.EntityOwnerClientFast = config.nativeEntityOwnerClientFast;
             NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
             NativePerfOptions.BossPoolSpawnLog = config.nativeBossPoolSpawnLog;
+            NativePerfOptions.RoomPrewarmResolveOnce = config.nativeRoomPrewarmResolveOnce;
         }
     }
 
@@ -163,6 +164,7 @@ namespace SodRpg.Mod
         internal static bool EntityOwnerClientFast = true;
         internal static bool EntityAbilitySubscribeDedup = true;
         internal static bool BossPoolSpawnLog = true;
+        internal static bool RoomPrewarmResolveOnce = true;
     }
 
     internal static class NativePerfPatch
@@ -9019,6 +9021,118 @@ namespace SodRpg.Mod
                 isinstSite = i;
             }
             return isinstSite >= 0;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomPrewarmResolveOncePerf
+    {
+        // RoomMonsters.ApplyPrewarm runs on every client that receives the room's prewarm
+        // list — the RpcPrewarm broadcast at room start and the TpcReplayPrewarm a
+        // mid-join guest gets once its hero exists — and resolves every entry's prefab
+        // twice: pass one collects the resolved prefabs into the keep set handed to
+        // ReleaseInactivePoolsExcept, pass two re-resolves the exact same
+        // (assetId, ownerNetId) pairs to accumulate the SpawnManager.Prewarm counts.
+        // One resolve walks several DewResources dictionaries, Mirror's spawned-object
+        // lookup and a VariantDef computation (plus, the first time a variant is fresh,
+        // a synchronous Addressables load and a full prefab Instantiate), and the result
+        // is deterministic per entry, so pass two repeats identical work that nothing
+        // can observe. ReleaseInactivePoolsExcept and AgeAndDropInactivePools only touch
+        // SpawnManager and Fx pools, never the DewResources variant prefabs themselves,
+        // so resolving once up front and filling the keep set and the count dictionary
+        // in the same pass yields the same keep set, the same totals and the same
+        // Prewarm order (dictionary insertion order, no removals in either version).
+        // Guests run this once per room for the whole run.
+        private static Func<object, uint> _assetId, _ownerNetId;
+        private static Func<object, int> _count;
+        private static Func<uint, uint, GameObject> _resolve;
+        private static Action<HashSet<GameObject>> _releaseExcept;
+        private static Action _ageAndDrop;
+        private static Action<GameObject, int> _prewarm;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                // Name-only lookups: the mod never references these native classes, and
+                // TypeByName resolves the harness stand-ins in tests exactly like the
+                // real classes in the game (the stand-ins just fail Prepare, which is
+                // the fail-soft path).
+                var monsters = AccessTools.TypeByName("RoomMonsters");
+                if (monsters == null) throw new MissingMemberException("RoomMonsters unavailable");
+                var entry = monsters.GetNestedType("PrewarmEntry");
+                if (entry == null) throw new MissingMemberException("RoomMonsters.PrewarmEntry unavailable");
+                _target = AccessTools.DeclaredMethod(monsters, "ApplyPrewarm", new[] { entry.MakeArrayType() });
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException("RoomMonsters.ApplyPrewarm unavailable");
+                _assetId = CreateEntryReader<uint>(entry, "assetId");
+                _ownerNetId = CreateEntryReader<uint>(entry, "ownerNetId");
+                _count = CreateEntryReader<int>(entry, "count");
+                _resolve = AccessTools.MethodDelegate<Func<uint, uint, GameObject>>(
+                    AccessTools.Method(monsters, "ResolveClientPrewarmPrefab", new[] { typeof(uint), typeof(uint) })
+                        ?? throw new MissingMemberException("RoomMonsters.ResolveClientPrewarmPrefab unavailable"));
+                _releaseExcept = AccessTools.MethodDelegate<Action<HashSet<GameObject>>>(
+                    AccessTools.Method(AccessTools.TypeByName("SpawnManager"), "ReleaseInactivePoolsExcept", new[] { typeof(HashSet<GameObject>) })
+                        ?? throw new MissingMemberException("SpawnManager.ReleaseInactivePoolsExcept unavailable"));
+                _ageAndDrop = AccessTools.MethodDelegate<Action>(
+                    AccessTools.Method(AccessTools.TypeByName("DewEffect"), "AgeAndDropInactivePools")
+                        ?? throw new MissingMemberException("DewEffect.AgeAndDropInactivePools unavailable"));
+                var prewarm = AccessTools.Method(AccessTools.TypeByName("SpawnManager"), "Prewarm")
+                    ?? throw new MissingMemberException("SpawnManager.Prewarm unavailable");
+                if (!prewarm.IsGenericMethodDefinition)
+                    throw new MissingMemberException("SpawnManager.Prewarm is not generic");
+                _prewarm = AccessTools.MethodDelegate<Action<GameObject, int>>(prewarm.MakeGenericMethod(typeof(GameObject)));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room monsters prewarm resolve", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, T> CreateEntryReader<T>(Type entryType, string fieldName)
+        {
+            var field = AccessTools.Field(entryType, fieldName);
+            if (field == null || field.FieldType != typeof(T))
+                throw new MissingMemberException(entryType.Name + "." + fieldName + " unavailable");
+            var instance = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Convert(instance, entryType), field), instance).Compile();
+        }
+
+        private static bool Prefix(object __0)
+        {
+            if (!NativePerfOptions.RoomPrewarmResolveOnce) return true;
+            try
+            {
+                var array = (Array)__0;
+                var keep = new HashSet<GameObject>();
+                var counts = new Dictionary<GameObject, int>();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    object entry = array.GetValue(i);
+                    GameObject prefab = _resolve(_assetId(entry), _ownerNetId(entry));
+                    if (prefab == null) continue;
+                    keep.Add(prefab);
+                    counts.TryGetValue(prefab, out int total);
+                    counts[prefab] = total + _count(entry);
+                }
+                _releaseExcept(keep);
+                _ageAndDrop();
+                foreach (KeyValuePair<GameObject, int> item in counts)
+                    _prewarm(item.Key, item.Value);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room monsters prewarm resolve", ex.Message);
+                return true; // fall back to the vanilla double resolve
+            }
         }
     }
 }
