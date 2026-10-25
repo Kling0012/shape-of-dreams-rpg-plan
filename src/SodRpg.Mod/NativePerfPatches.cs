@@ -1721,12 +1721,9 @@ namespace SodRpg.Mod
             {
                 // サーバはこの呼び出しで座標を確定して同期を立てるので、その経路は本体に任せる。
                 if (_serverTickPending(__instance) && __instance.isServer) return true;
-                // 本体（Dew.Core r1.4.1.2 の逆コンパイル）の FrameUpdate 冒頭は 154 行目の
-                // base.FrameUpdate()（DewNetworkBehaviour 側は空）と 155-159 行目の
-                // isServer && _serverTickPending ブロック（上で本体へ流している）だけで、
-                // 160-163 行目の if (!_hasData) return; が残りを担う。未受信なら本体は
-                // 何もしないので、ここでも丸ごと省く（docs/specs/perf-loop/20261025-1651.md）。
-                if (!_hasData(__instance)) return false;
+                // 未受信時は本体へ流す。将来のゲーム更新で _hasData 判定より前に処理が
+                // 増えても、その処理を省かない（docs/specs/perf-loop/20261025-1651.md）。
+                if (!_hasData(__instance)) return true;
                 if (!IsPoseHeld(__instance)) return true;
                 return false;
             }

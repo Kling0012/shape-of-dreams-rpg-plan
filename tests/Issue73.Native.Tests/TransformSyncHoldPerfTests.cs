@@ -14,7 +14,7 @@ namespace Issue73.Native.Tests
     /// ときだけ FrameUpdate を飛ばす（false）こと、速度・-0 成分・NaN・Transform との
     /// 不一致・SmoothDamp の速度項（cv）・正規化で 1ULP 動く回転のどれかがあるときは
     /// 本体経路に戻す（true）こと、サーバの確定待ち（isServer かつ _serverTickPending）は
-    /// 本体へ流して未受信（_hasData=false）は省くこと、破壊済みアクターの読み出し例外は
+    /// 本体へ流し、未受信（_hasData=false）も本体へ流すこと、破壊済みアクターの読み出し例外は
     /// そのまま流し、想定外の例外ではこの機能だけが落ちて以後常に本体経路になることを
     /// 確かめる。
     /// </summary>
@@ -303,27 +303,27 @@ namespace Issue73.Native.Tests
             });
         }
 
-        // 未受信（_hasData=false）では本体は冒頭の空の base 呼び出しだけで返るため省く。
-        // 姿勢が収束していなくても（本体は姿勢を読む前に返るため）同じ。
+        // 未受信（_hasData=false）は本体へ流し、将来のゲーム更新で判定より前に
+        // 追加された処理も実行する。姿勢が収束しているかどうかにかかわらず同じ。
         [Fact]
-        public void NoDataIsSkipped()
+        public void NoDataRunsNative()
         {
             WithPatch(true, () =>
             {
                 var guest = NewHeldSync();
                 guest._hasData = false;
-                Assert.False(RunPrefix(guest));
+                Assert.True(RunPrefix(guest));
 
                 var host = NewHeldSync();
                 host._hasData = false;
                 host.isServer = true;
                 host._serverTickPending = false;
-                Assert.False(RunPrefix(host)); // 確定待ちがないホストも同じ
+                Assert.True(RunPrefix(host)); // 確定待ちがないホストも同じ
 
                 var moved = NewHeldSync();
                 moved._hasData = false;
                 moved.transform.position = new Vector3(99f, 99f, 99f);
-                Assert.False(RunPrefix(moved));
+                Assert.True(RunPrefix(moved));
             });
         }
 
