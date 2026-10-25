@@ -9110,6 +9110,7 @@ namespace SodRpg.Mod
         private static bool Prefix(object __0)
         {
             if (!NativePerfOptions.RoomPrewarmResolveOnce) return true;
+            bool sideEffectsStarted = false;
             try
             {
                 var array = (Array)__0;
@@ -9124,6 +9125,7 @@ namespace SodRpg.Mod
                     counts.TryGetValue(prefab, out int total);
                     counts[prefab] = total + _count(entry);
                 }
+                sideEffectsStarted = true;
                 _releaseExcept(keep);
                 _ageAndDrop();
                 foreach (KeyValuePair<GameObject, int> item in counts)
@@ -9133,7 +9135,8 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 NativePerfPatch.Warn(ref _warned, "room monsters prewarm resolve", ex.Message);
-                return true; // fall back to the vanilla double resolve
+                // Once pool work starts, retrying vanilla would repeat release, age and prewarm.
+                return !sideEffectsStarted;
             }
         }
     }
