@@ -354,6 +354,9 @@ namespace SodRpg.Mod
         [LabelText("Serve the cached owner reference on pure clients while the synced owner id is unchanged (guests) /\n純クライアントで、同期された所有者のIDが変わらない間は解決済みの所有者参照を使い回す（参加者） /\n纯客户端在同步的所有者ID未变化时复用已解析的所有者引用（参与者）")]
         public bool nativeEntityOwnerClientFast = true;
 
+        [LabelText("Serve the cached homing target reference on pure clients while the synced target id is unchanged (guests) /\n純クライアントで、同期された標的のIDが変わらない間は解決済みの標的参照を使い回す（参加者） /\n纯客户端在同步的目标ID未变化时复用已解析的目标引用（参与者）")]
+        public bool nativeProjectileTargetClientFast = true;
+
         [LabelText("Keep the entity ability-changed callback to one subscription when a pooled entity is reused (host and guests) /\nプールで再利用されたエンティティで、能力変化コールバックの購読が重複しないようにする（ホストと参加者）")]
         public bool nativeEntityAbilitySubscribeDedup = true;
 

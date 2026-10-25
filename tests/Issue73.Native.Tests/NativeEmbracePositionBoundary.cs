@@ -259,6 +259,7 @@ namespace SodRpg.Mod
             nativeEntityAnimLayerWeightIdle = true,
             nativeChaosStatBonusTooltipCache = true,
             nativeEntityOwnerClientFast = true,
+            nativeProjectileTargetClientFast = true,
             nativeEntityAbilitySubscribeDedup = true,
             nativeBossPoolSpawnLog = true,
             nativeRoomPrewarmResolveOnce = true,
@@ -286,9 +287,18 @@ namespace SodRpg.Mod
     // 読む 4 つの公開効果プレハブ字段と、Prepare が探す weaver 送信メソッドの名前と引数の形
     // だけを置く（中身は呼ばれないので空）。実機の受信側 UserCode_* は対応する字段が null の
     // とき最初に return する（実 DLL 逆コンパイルで確認済み）。
+    // NativeProjectileTargetSyncVarPerf（リンク）の Prefix が読む NetworkBehaviour 継承面も
+    // 同じく形だけ（テストでは Prefix を通さない）。実機の isClient は netIdentity.isClient。
     internal class Projectile
     {
         public struct EntityHit { }
+
+        // Prefix が読む NetworkBehaviour 継承面（テストでは Prefix を通さないため形だけ）。
+        // ProjectileIdleRpcPerfTests が typeof(Projectile).GetFields() を GameObject 設定で
+        // 回すため、フィールドではなくプロパティにして列挙対象外にする。
+        public Mirror.NetworkIdentity netIdentity { get; set; }
+        public bool isServer { get; set; }
+        public bool isClient { get; set; }
 
         public GameObject effectOnFly;
         public GameObject effectOnEntity;
