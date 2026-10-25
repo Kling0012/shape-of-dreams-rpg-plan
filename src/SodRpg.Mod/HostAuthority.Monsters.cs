@@ -130,13 +130,15 @@ namespace SodRpg.Mod
 
         /// <summary>
         /// 群れの味方が近くにいるか（#55）。全モンスター走査を被弾・合図のたびに繰り返す代わりに、
-        /// 0.15秒までのキャッシュを使う。値の更新は TickMonsterBehaviors が0.1秒ごとに行う。
+        /// <see cref="MonsterBehavior.AllyCacheSeconds"/> までのキャッシュを使う。窓が切れていれば
+        /// （<see cref="MonsterBehavior.AllyCacheStale"/>）その場で計算し直す。値の更新は
+        /// TickMonsterBehaviors が起きているモンスターに対して0.1秒ごとに行う。
         /// </summary>
         private bool PackboundAllyNear(MonsterRuntime rt)
         {
             var state = rt.Behavior;
             if (state == null) return false;
-            if (state.AllyCheckedAt < 0f || Time.time - state.AllyCheckedAt > 0.15f)
+            if (MonsterBehavior.AllyCacheStale(state.AllyCheckedAt, Time.time))
             {
                 state.HasAlly = FindBehaviorAlly(rt.Monster, false) != null;
                 state.AllyCheckedAt = Time.time;
@@ -160,13 +162,17 @@ namespace SodRpg.Mod
                 if (state == null || !Alive(m)) continue;
                 float elapsed = Mathf.Clamp(now - state.LastTick, 0f, 0.25f);
                 state.LastTick = now;
-                // Refresh before the sleep branch: a sleeping monster can still take a cached-guard hit (#55).
-                if ((state.Affixes & NightmareAffix.Packbound) != 0) PackboundAllyNear(rt);
                 if (m.isSleeping || (_zone != null && _zone.isInAnyTransition))
                 {
                     state.LastHit = now; // Do not accumulate out-of-combat healing.
                     continue;
                 }
+                // Only awake ticks refresh the cached ally state: while asleep or in a zone
+                // transition no reader runs (the sleep branch skips the cue send, and the damage
+                // closure returns on isSleeping), and every read goes through PackboundAllyNear,
+                // whose window gate (MonsterBehavior.AllyCacheStale) recomputes on the first read
+                // after the window lapses, so waking hits keep their fresh value (#55).
+                if ((state.Affixes & NightmareAffix.Packbound) != 0) PackboundAllyNear(rt);
                 try
                 {
                     state.Age += elapsed;
