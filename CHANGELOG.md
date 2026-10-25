@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.82 — Skip redundant per-frame Obliviax gear checks on the host（2026-10-25）
+
+この版では、Obliviax の装備を身につけた英雄がいるときに、ホストのゲームで結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero was wearing Obliviax gear.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Obliviax の装備は9つの部位に分かれています。これまでホストのゲームは、この装備を身につけた英雄がいると、9つの部位のどれを身につけているかを毎フレーム確かめていました。装備を変えないかぎり、何度確かめても結果は同じです。今は、装備が変わったときに1回だけ確かめ、その結果を覚えて使います。ボスの装備を身につけた英雄が移動するたびに、頭の部位を身につけているかを確かめていた処理も、同じように覚えた結果で済ませます。装備を付け替えたときは、これまでどおり新しい装備ですぐに確かめ直します。効果が出るのはホストのゲームだけです。Obliviax の装備を身につけた英雄がいるあいだ、60fps なら1秒あたりおよそ540回の確認が減ります。1回あたりはごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。参加者のゲームには直接の効果はありません。ゲームの動きは変わりません。 / Obliviax gear is split into nine parts. Until now, while a hero was wearing this gear, the host's game checked every frame which of the nine parts the hero had on. As long as the equipment does not change, the result of this check is always the same. The game now checks only once when the equipment changes and remembers the result. The check of whether a hero wearing boss gear has the head part on, which ran each time that hero moved, now also uses the remembered result. When equipment is swapped, the game checks the new equipment right away, as before. The benefit appears only on the host's game: while a hero is wearing Obliviax gear, about 540 checks per second are removed at 60 fps. Each one is a very quick step, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. There is no direct effect on co-op players' games. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.81 — Skip redundant position-sync calculations for characters standing still in co-op（2026-10-25）
 
 この版では、協力プレイでキャラクターの位置を合わせる処理から、結果の変わらない無駄な計算を省きました。 / This version removes redundant calculations that never changed the result from the processing that keeps character positions in sync in co-op.
