@@ -87,6 +87,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
             NativePerfOptions.EntityOwnerClientFast = config.nativeEntityOwnerClientFast;
             NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
+            NativePerfOptions.BossPoolSpawnLog = config.nativeBossPoolSpawnLog;
         }
     }
 
@@ -161,6 +162,7 @@ namespace SodRpg.Mod
         internal static bool ChaosStatBonusTooltipCache = true;
         internal static bool EntityOwnerClientFast = true;
         internal static bool EntityAbilitySubscribeDedup = true;
+        internal static bool BossPoolSpawnLog = true;
     }
 
     internal static class NativePerfPatch
@@ -8935,6 +8937,88 @@ namespace SodRpg.Mod
                 || cached.ComponentIndex != syncId.componentIndex) return true;
             __result = cached;
             return false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeMonsterBossPoolLogPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Monster), "SelectAbilityPool", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            if (!NativePerfOptions.BossPoolSpawnLog) return code;
+            var log = AccessTools.Method(typeof(Debug), nameof(Debug.Log), new[] { typeof(object) });
+            var concat = AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string[]) });
+            int logSite = -1;
+            for (int i = 0; log != null && i < code.Count; i++)
+            {
+                if (!code[i].Calls(log)) continue;
+                if (logSite >= 0) { logSite = -2; break; }
+                logSite = i;
+            }
+            // Native shape: ldarg.0 / isinst BossMonster / brfalse <after log> / [string[7] array,
+            // String.Format x2, String.Join (boxes every element), String.Concat] / Debug.Log(obj).
+            // The log only reports the picked ability pool. Making the isinst always false keeps the
+            // branch taken for every monster, so the log string is never built and the log never runs,
+            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick stay
+            // identical for bosses and non-bosses alike.
+            if (logSite < 4 || concat == null || !code[logSite - 1].Calls(concat)
+                || !FindBossLogGuard(code, logSite, out int isinstSite))
+            {
+                NativePerfPatch.Warn(ref _warned, "boss pool log", "native [BossPool] log block changed or already patched");
+                return code;
+            }
+            code[isinstSite - 1].opcode = OpCodes.Nop;
+            code[isinstSite].opcode = OpCodes.Ldc_I4_0;
+            code[isinstSite].operand = null;
+            return code;
+        }
+
+        private static bool FindBossLogGuard(List<CodeInstruction> code, int logSite, out int isinstSite)
+        {
+            isinstSite = -1;
+            for (int i = 1; i < code.Count - 1; i++)
+            {
+                if (code[i].opcode != OpCodes.Isinst || code[i].operand is not Type guard || guard != typeof(BossMonster)) continue;
+                if (code[i - 1].opcode != OpCodes.Ldarg_0 || code[i + 1].opcode != OpCodes.Brfalse) continue;
+                if (code[i + 1].operand is not Label skip) continue;
+                int end = -1;
+                for (int j = i + 2; j < code.Count; j++)
+                    if (code[j].labels.Contains(skip)) { end = j; break; }
+                if (end != logSite + 1) continue;
+                bool clean = true;
+                for (int j = i + 2; j <= logSite && clean; j++)
+                {
+                    // Nothing inside the block may be jumped at from outside, and every branch
+                    // inside it must stay inside: skipping the guard then skips exactly the log.
+                    if (code[j].labels.Count > 0) { clean = false; break; }
+                    // Branch operands are always a Label (or Label[] for switch); other operand
+                    // types mean this is no branch, so it needs no check.
+                    if (code[j].operand is Label inner)
+                    {
+                        bool inside = false;
+                        for (int k = i + 2; k <= logSite; k++)
+                            if (code[k].labels.Contains(inner)) { inside = true; break; }
+                        if (!inside) clean = false;
+                    }
+                    else if (code[j].operand is Label[]) clean = false;
+                }
+                if (!clean) continue;
+                if (isinstSite >= 0) { isinstSite = -1; return false; }
+                isinstSite = i;
+            }
+            return isinstSite >= 0;
         }
     }
 }
