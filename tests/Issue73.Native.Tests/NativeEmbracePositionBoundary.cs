@@ -169,6 +169,18 @@ namespace SodRpg.Mod
     {
         private SyncMovementData _syncData;
         public SyncMovementData Network_syncData { get => _syncData; set => _syncData = value; }
+        // NativeTransformSyncHoldPerf（収束姿勢の FrameUpdate 省略）が読む本体側の状態と
+        // 受け口。TransformSyncHoldPerfTests がこの欄へ収束状態を作り、判定と Prefix の
+        // 分岐（保持・速度・-0・NaN・Transform との不一致・cv・サーバ確定・未受信・例外）を
+        // 直接確かめる。isServer は NetworkBehaviour、transform は Component の受け口で、
+        // isServer はサーバ確定経路の境界テストのために書き替えられる。
+        internal bool _hasData;
+        internal bool _serverTickPending;
+        internal Vector3 _renderPos, _renderPosCv, _renderScale, _renderScaleCv;
+        internal Quaternion _renderRot, _renderRotCv;
+        public bool isServer { get; set; }
+        public Transform transform = new Transform();
+        public void FrameUpdate() { }
     }
 
     // NativeTransformSyncWriteSkipPerf の ValidateBody / Apply に渡す IL の見本。
@@ -217,6 +229,7 @@ namespace SodRpg.Mod
             nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeTransformSyncWriteSkip = true,
+            nativeTransformSyncHold = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCastIndicatorLine = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
