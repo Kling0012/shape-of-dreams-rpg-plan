@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.76 — Lighter skill editing screen at the Shrine of Chaos（2026-10-25）
+
+この版では、混沌の祠でスキルを編集する画面から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the skill editing screen at the Shrine of Chaos.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 混沌の祠でスキルを編集する画面では、スキルボタンごとにエッセンス枠の表示を出しています。スキルによってエッセンス枠の数が違うと、画面を開いているあいだ、この表示の文章をボタンが切り替わるたびに作り直していました。60fps なら1秒に約240回です。今は一度作った文章を覚えておき、内容が変わるときだけ作り直します。この画面を開いているあいだ、ゲームの負荷が少し減る見込みです。ただし画面を開く時間は短いので、効果はその場面に限られます。数は見積もりで、実際の効果もまだ測っていません。この画面はホストと参加者がそれぞれ自分のゲームで開くので、どちらにも効きます。画面に表示される内容は変わりません。 / On the skill editing screen at the Shrine of Chaos, each skill button shows its essence slot information. When skills had different numbers of essence slots, the game rebuilt this text every time it moved from one button to the next while the screen was open, about 240 times per second at 60 fps. The game now remembers text it has already built and only rebuilds it when the content changes. The game should be under slightly less load while this screen is open. The screen is usually open only briefly, so the benefit is limited to that moment. These numbers are estimates, and the actual effect has not been measured yet. The host and co-op players each open this screen in their own game, so the change applies to both. What the screen displays is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.75 — Lighter boss spawns on the host（2026-10-25）
 
 この版では、ボスが現れるときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from what happens when a boss appears.
