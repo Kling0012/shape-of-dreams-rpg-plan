@@ -53,6 +53,22 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
+        /// 群れの味方判定キャッシュ（#55）の鮮度窓（秒）。HostAuthority 側のキャッシュ方針で、
+        /// バランス値ではない（MonstersBalance を経由しない）。被弾・合図の読み出しは
+        /// <see cref="AllyCacheStale"/> で窓が切れていればその場で計算し直す。
+        /// </summary>
+        public const float AllyCacheSeconds = 0.15f;
+
+        /// <summary>
+        /// 群れの味方判定キャッシュ（#55）を読み出す前に計算し直すか。行動ティックは起きている
+        /// モンスターしか更新しないので、睡眠・ゾーン遷移を挟んだ読み出し（起床直後の被弾を含む）は
+        /// この判定で窓の切れを確かめ、切りていれば計算し直す。未初期化（checkedAt &lt; 0）も計算し直す。
+        /// 呼び出し側は HostAuthority.PackboundAllyNear。
+        /// </summary>
+        public static bool AllyCacheStale(float checkedAt, float now) =>
+            checkedAt < 0f || now - checkedAt > AllyCacheSeconds;
+
+        /// <summary>
         /// 被ダメージ処理（HostAuthority）が距離と向きを計算すべきか。
         /// IncomingMultiplier が距離・向きを読むのは Veiled・Hollow・Facing のビットだけなので、
         /// これが false の接辞では呼び出し側は計算を省いて -1f を渡してよい（#1000）。
