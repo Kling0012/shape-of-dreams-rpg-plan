@@ -369,6 +369,9 @@ namespace SodRpg.Mod
         [LabelText("Resolve each prewarm entry's prefab once instead of twice when applying the room's prewarm list (guests) /\nルームのプリウォーム一覧を適用するとき、各項目のプレハブ解決を2回から1回に減らす（参加者）")]
         public bool nativeRoomPrewarmResolveOnce = true;
 
+        [LabelText("Skip redundant health re-sends while a hero is knocked out (host) / 英雄が撃倒されている間の同じ体力の再送を省く（ホスト）")]
+        public bool nativeHeroKnockoutHealthIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
