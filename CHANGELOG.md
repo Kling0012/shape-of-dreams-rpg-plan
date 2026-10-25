@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.73 — Lighter Pressure mode kill rewards and Infinity mode boss plan syncing（2026-10-25）
+
+この版では、圧迫モードで敵を倒したときの報酬の計算と、無限モードのボス戦の予定の送信から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from kill rewards in Pressure mode and from sending the boss plan in Infinity mode.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 圧迫モードで追加の敵を1体倒すたびに、ホストのゲームは同じ報酬倍率を最大6回読み直していました。今は1回だけ読みます。敵を次々に倒す圧迫モードの部屋では、ホストのゲームが少し軽くなる見込みです。ただ、1回ごとの節約は小さいので効果は控えめで、実際の効果もまだ測っていません。参加者のゲームの負荷は変わりません。報酬の量も変わりません。 / In Pressure mode, each time an extra enemy was defeated, the host's game re-read the same reward multiplier up to six times. The game now reads it only once. The host's game should run a little lighter in Pressure mode rooms where enemies fall in quick succession, though each saving is tiny, so the effect is modest and has not been measured yet. The load on co-op players' games is unchanged, and so are the rewards.
+- 無限モードでは、同じボスがまた現れたときなど、ボス戦の予定の中身が変わっていなくても、ホストが同じ内容を参加者へ送り直していました。今は中身が変わったときだけ送ります。参加者のゲームとホストの通信がわずかに軽くなる見込みです。ただ、もともと起きる回数は少なく、実際の効果もまだ測っていません。ボス戦の内容は変わりません。 / In Infinity mode, the host re-sent the boss plan to co-op players even when its contents had not changed, such as when the same boss appeared again. The host now sends it only when the contents change. Co-op players' games and the host's networking should run slightly lighter, though this happened rarely to begin with and the actual effect has not been measured yet. Boss battles are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.72 — Lighter skill swaps, waypoint tracking, and owner lookups（2026-10-25）
 
 この版では、スキルの付け替え、道標の受け持ちの確認、キャラクターの持ち主の確認で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from skill swaps, waypoint tracking, and looking up who owns each character.
