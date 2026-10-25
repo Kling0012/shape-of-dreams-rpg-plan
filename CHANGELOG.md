@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.80 — Skip resending unchanged no-load reports in co-op（2026-10-25）
+
+この版では、協力プレイの参加者のゲームがホストへ送る報告から、結果の変わらない無駄な送信を省きました。 / This version removes redundant sends that never changed the result from the reports that co-op players' games send to the host.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの参加者のゲームは、自動で使うスキルの負荷がどれくらいかを、1秒に1回ホストへ知らせています。これまでは負荷がまったく無いときも、「負荷なし」という同じ報告を毎秒送り直していました。ホストにとっては、負荷なしの報告が届いても届かなくても結果は同じです。今は、負荷なしが続いているあいだは送り直しません。最初の1回は負荷なしでも送り、負荷があるときはこれまでどおり毎秒送ります。負荷が変われば、次の1秒の区切りでホストに届きます。ふだんの協力プレイでは負荷なしの時間が多く、そのあいだ参加者のゲームでは1秒に1回の送信が、ホストのゲームでは1秒に1回の受け取りが減ります。1回あたりはごく短い処理と数十バイトほどの小さな通信なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。ゲームの動きは変わりません。 / On co-op players' games, the game tells the host once per second how heavily skills used automatically are loading it. Until now, even when there was no load at all, it sent the same "no load" report again every second. For the host, the result is the same whether that "no load" report arrives or not. The game no longer resends it while there is still no load. The first report is still sent even when there is no load, and while there is load, the report is sent every second as before. When the load changes, the host receives it at the next one-second mark. In normal co-op play there is usually no load, and during that time each player's game sends one less message per second, and the host's game receives one less. Each one is a very quick step and a small message of a few dozen bytes at most, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.79 — Removes redundant player checks from difficulty scaling on the host（2026-10-25）
 
 この版では、参加人数に合わせて難易度を変える処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the processing that adjusts difficulty to the number of players.
