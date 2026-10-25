@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.83 — Less redundant work for knocked-out heroes and sleeping pack monsters（2026-10-25）
+
+この版では、撃倒された英雄の体力を同じ値のまま何度も送り直していた無駄と、眠っている群れのモンスターについて仲間探しを繰り返していた無駄を省きました。 / This version removes two kinds of redundant work: resending the same health value of knocked-out heroes again and again, and repeatedly searching for allies on behalf of sleeping pack monsters.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで英雄が撃倒されているあいだ、ホストのゲームはその英雄の体力を一定の値に保ち、参加者全員へ送っています。これまでは、体力が自然に回復する英雄の場合、参加者がすでに受け取っている同じ値を何度も送り直していました。今は、参加者が同じ値をすでに持っているときは送り直しません。英雄が復帰したときや死亡したとき、体力がほかの値に変わったときは、これまでどおり送ります。効果が出るのは参加者のゲームです。撃倒中の英雄1人につき、送信のたびに受け取る小さなデータ（12バイト）が1つ減ります。回復量が大きい英雄ほど効果も大きく、体力が回復しない英雄では何も変わりません。この効果は見積もりで、実際の効果はまだ測っていません。体力の値や回復、死亡の判定は変わりません。 / In co-op, while a hero is knocked out, the host's game holds that hero's health at a fixed value and sends it to all players. Until now, for heroes with natural health regeneration, it kept resending that same value even though players already had it. The game now skips the resend when players already have the same value. When the hero is revived, dies, or their health changes to any other value, it is sent as before. The benefit appears on co-op players' games: for each knocked-out hero, one small piece of data (12 bytes) is no longer received with each send. The more a hero regenerates, the larger the benefit; heroes with no regeneration are unaffected. This benefit is an estimate, and the actual effect has not been measured yet. Health values, regeneration, and death checks are unchanged.
+- 群れで行動するモンスターは、近くに仲間がいるかどうかで動きが変わります。これまでホストのゲームは、戦闘の起きていない部屋で眠っているモンスターや、ゾーンを移動しているあいだのモンスターについても、0.2秒ごとにすべてのモンスターを調べて仲間を探していました。眠っているあいだは、この結果を使う場面がありません。今は、眠っているあいだとゾーンの移動中はこの確認を省きます。目を覚ましたあと最初に攻撃を受けたときや動き出したときは、その場で確かめ直すので、眠る前の古い結果を使うことはありません。効果が出るのはホストのゲームだけです。モンスター80体のうち眠っている群れのモンスターが15体なら、1秒あたりおよそ6,000回の確認が減ります。数は見積もりで、実際の効果はまだ測っていません。参加者のゲームには直接の効果はありません。ゲームの動きは変わりません。 / Pack monsters behave differently depending on whether an ally is nearby. Until now, the host's game searched through every monster for allies every 0.2 seconds, even for monsters sleeping in rooms with no combat and for monsters during zone transitions. While a monster is asleep, that result is never used. The game now skips this check while monsters are asleep and during zone transitions. When a monster wakes up and is first hit or starts acting, the game checks again on the spot, so it never relies on a stale result from before it fell asleep. The benefit appears only on the host's game: with 80 monsters, 15 of them sleeping pack monsters, about 6,000 checks per second are removed. These numbers are estimates, and the actual effect has not been measured yet. There is no direct effect on co-op players' games. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.82 — Skip redundant per-frame Obliviax gear checks on the host（2026-10-25）
 
 この版では、Obliviax の装備を身につけた英雄がいるときに、ホストのゲームで結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero was wearing Obliviax gear.
