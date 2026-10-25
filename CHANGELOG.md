@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.78 — Lighter homing projectiles for co-op players and lighter enemy defeats for hosts（2026-10-25）
+
+この版では、追尾する弾の処理と敵を倒したときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from how homing projectiles are handled and from what the game does when an enemy is defeated.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 基本攻撃のほとんどや魔物の射撃のように、狙った相手を追いかける弾があります。協力プレイの参加者のゲームでは、こうした弾が飛んでいるあいだ、狙っている相手を1秒に約30回、毎回最初から調べ直していました。飛んでいる途中で狙う相手は変わらないので、今は一度調べた結果を使い回します。魔物の多い戦闘で追尾する弾が数十発飛んでいると、この調べ直しを1秒に数百回から数千回減らせる見込みです。1回あたりはごく短い処理なので、効果は小さいと考えています。数は見積もりで、実際の効果もまだ測っていません。弾の飛び方や当たり方は変わりません。 / Many projectiles home in on a target, including most basic attacks and monster shots. On co-op players' games, while such a projectile was in flight, the game looked up its target from scratch about 30 times per second. The target does not change mid-flight, so the game now reuses the result it already found. In fights with many monsters and dozens of homing projectiles in the air, this should remove several hundred to several thousand lookups per second. Each lookup is very quick, so the benefit is expected to be small. These numbers are estimates, and the actual effect has not been measured yet. How projectiles fly and hit is unchanged.
+- ホストのゲームでは、敵を1体倒すたびに、ミニボスの報酬にだけ関わる値を読み出していました。今はミニボスを倒したときだけ読み出します。ミニボスは部屋に数体しかいないので、ほとんどの撃破でこの処理を省けます。敵の数が増える圧迫モードでは撃破の回数が多いぶん、効果も大きくなります。1回あたりはごく短い処理で、数は見積もり、実際の効果もまだ測っていません。この処理はホストのゲームだけで動くので、効果が出るのもホストだけです。ミニボスの報酬は変わりません。 / On the host's game, every time an enemy was defeated, the game read a value that only matters for mini-boss rewards. It now reads that value only when a mini-boss is defeated. Rooms have only a few mini-bosses, so almost every defeat now skips this step. Pressure mode adds extra enemies and therefore more defeats, so the benefit is larger there. Each step saved is very quick; these numbers are estimates, and the actual effect has not been measured yet. This step runs only on the host's game, so only the host benefits. Mini-boss rewards are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.77 — Lighter room preparation when entering a room（2026-10-25）
 
 この版では、新しい部屋に入るときの準備処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the preparation the game does when you enter a new room.
