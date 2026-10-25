@@ -38,13 +38,14 @@ namespace SodRpg.Mod
             internal bool QuietArmed, Observing, OrbMagic, OrbPending;
             internal int EquippedMask;
             internal long EquipEpoch;
+            internal Build EquipBuild;
             internal void Reset()
             {
                 Main.Clear(); Memory.Clear(); Movement.Clear();
                 Departure = Turret = OrbOrigin = OrbPoint = default;
                 AmbushUntil = TurretUntil = QuietStart = QuietDistance = LastObservation = OrbDue = OrbAmount = 0;
                 AmbushVisual = TurretVisual = TurretActivation = 0;
-                QuietArmed = Observing = OrbMagic = OrbPending = false; EquippedMask = 0; EquipEpoch = 0;
+                QuietArmed = Observing = OrbMagic = OrbPending = false; EquippedMask = 0; EquipEpoch = 0; EquipBuild = null;
             }
         }
         private static readonly string[] ObliviaxProfiles =
@@ -61,7 +62,7 @@ namespace SodRpg.Mod
             state.Reset();
             for (int i = 0; i < ObliviaxProfiles.Length; i++)
                 if (BossFind(rt, ObliviaxProfiles[i], out _, out _)) state.EquippedMask |= 1 << i;
-            state.EquipEpoch = rt.ShieldEquipmentEpoch;
+            state.EquipEpoch = rt.ShieldEquipmentEpoch; state.EquipBuild = rt.Powers.Build;
             _obliviaxCombat.Add(rt, state); return state;
         }
         private static bool ObliviaxAvailable(HeroRuntime rt, BossAction action, float now)
@@ -101,15 +102,16 @@ namespace SodRpg.Mod
             if (!_runtimes.TryGetValue(hero, out var rt) || rt.Boss.Build == null) return;
             // 頭区分の在確認は、ふつうは状態があれば作成時の走査で済ませる。装備の変化では
             // BossEnsure が先に状態を一度捨てるので、存在する状態の EquippedMask は現在の
-            // 頭区分の有無と一致する。エポックが進んでいる（状態を捨てる前の窓）間だけは、
-            // 旧実装と同じく現在の装備で頭の有無を確かめる。マスクの書き直しと区分の取消しは
-            // TickObliviaxBoss の付け直しに任せる。
+            // 頭区分の有無と一致する。エポックが進んでいるか Build が差し替わっている
+            // （状態を捨てる前の窓。エポックが進まない差し替えも BossEnsure と同じ参照比較で
+            // 拾う）間だけは、旧実装と同じく現在の装備で頭の有無を確かめる。マスクの書き直しと
+            // 区分の取消しは TickObliviaxBoss の付け直しに任せる。
             if (!_obliviaxCombat.TryGetValue(rt, out var state))
             {
                 if (!BossFind(rt, ObliviaxProfiles[3], out _, out _)) return;
                 state = ObliviaxState(rt); if (state == null) return;
             }
-            else if (state.EquipEpoch != rt.ShieldEquipmentEpoch)
+            else if (state.EquipEpoch != rt.ShieldEquipmentEpoch || state.EquipBuild != rt.Powers.Build)
             {
                 if (!BossFind(rt, ObliviaxProfiles[3], out _, out _)) return;
             }
@@ -278,11 +280,13 @@ namespace SodRpg.Mod
             TickBossShout(rt);
             if (!_obliviaxCombat.TryGetValue(rt, out var state)) return;
             if (rt.Boss.Build == null || !BossAlive(rt.Hero)) { ClearObliviaxBoss(rt); return; }
-            // 9区分の在確認は装備エポックが進んだ最初の1回だけ付け直す（PolarisState と同じ）。
-            // BossMoves は Build の生成後にどこからも変わらず、装備の変化は BossEnsure が先に
-            // 状態を一度捨てるので、ふつうはエポックが一致し、毎フレームの9走査は行われない。
+            // 9区分の在確認は装備エポックが進むか Build が差し替わった最初の1回だけ付け直す
+            // （PolarisState と同じ）。BossMoves は Build の生成後にどこからも変わらず、装備の
+            // 変化は BossEnsure が先に状態を一度捨てるので、ふつうはエポックも参照も一致し、
+            // 毎フレームの9走査は行われない。エポックが進まない Build の差し替えも、状態側で
+            // 参照を比べて検出する（BossEnsure の呼び出し順に依存しない）。
             int mask;
-            if (state.EquipEpoch == rt.ShieldEquipmentEpoch) mask = state.EquippedMask;
+            if (state.EquipEpoch == rt.ShieldEquipmentEpoch && state.EquipBuild == rt.Powers.Build) mask = state.EquippedMask;
             else
             {
                 mask = 0;
@@ -296,6 +300,7 @@ namespace SodRpg.Mod
                             for (int j = 0; j < profile.Actions.Count; j++) rt.Boss.Ready.Remove(profile.Actions[j].RuntimeKey);
                     }
                 state.EquipEpoch = rt.ShieldEquipmentEpoch;
+                state.EquipBuild = rt.Powers.Build;
                 state.EquippedMask = mask;
             }
             ObliviaxExpire(rt, state, now);
