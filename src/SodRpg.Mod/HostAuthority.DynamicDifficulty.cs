@@ -65,7 +65,9 @@ namespace SodRpg.Mod
             int count = 0;
             // 2026-10-24：数える相手は列挙元の gamePlayers 自身の要素なので、OwnershipConnected の
             // List.Contains（1人につき O(n) の所属再確認）は常に真。条件は IsCountableConnected として
-            // OwnershipConnected と共有し、所属確認だけを外して数える。
+            // OwnershipConnected と共有し、所属確認だけを外して数える。2026-10-25：このファイル内の
+            // gamePlayers 列挙ループは全て IsCountableConnected に統一（_dynamicPlayers 側の輪は
+            // 列挙元が違うので OwnershipConnected のまま）。
             foreach (var player in DewPlayer.gamePlayers)
                 if (IsCountableConnected(player)) count++;
             return count == 1 ? _dynamicSolo : count > 1 && _enemyOwnershipEnabled;
@@ -75,7 +77,7 @@ namespace SodRpg.Mod
         {
             if (!DynamicRunning()) return false;
             int count = 0;
-            foreach (var player in DewPlayer.gamePlayers) if (OwnershipConnected(player)) count++;
+            foreach (var player in DewPlayer.gamePlayers) if (IsCountableConnected(player)) count++;
             return count == 1;
         }
 
@@ -241,7 +243,7 @@ namespace SodRpg.Mod
                 state.Solo = DynamicSoloRunning();
                 if (state.Solo)
                     foreach (var player in DewPlayer.gamePlayers)
-                        if (OwnershipConnected(player)) { state.Owner = player; break; }
+                        if (IsCountableConnected(player)) { state.Owner = player; break; }
                 state.Factor = DynamicFactor(state.Owner);
                 _dynamicEnemies.Add(enemy, state);
                 if (state.Solo && !(enemy is Monster) && enemy.Status != null)
@@ -358,7 +360,7 @@ namespace SodRpg.Mod
                 bool same = _dynamicDisplay != null;
                 foreach (var player in DewPlayer.gamePlayers)
                 {
-                    if (!OwnershipConnected(player)) continue;
+                    if (!IsCountableConnected(player)) continue;
                     int factor = (int)Math.Round(DynamicFactor(player) * 100);
                     if (_dynamicDisplay == null || count >= _dynamicDisplay.Length
                         || _dynamicDisplay[count].participantId != player.guid || _dynamicDisplay[count].factor != factor) same = false;
@@ -368,7 +370,7 @@ namespace SodRpg.Mod
                 var result = new DynamicDifficultyDisplay[count];
                 int next = 0;
                 foreach (var player in DewPlayer.gamePlayers)
-                    if (OwnershipConnected(player)) result[next++] = new DynamicDifficultyDisplay
+                    if (IsCountableConnected(player)) result[next++] = new DynamicDifficultyDisplay
                     { participantId = player.guid, factor = (int)Math.Round(DynamicFactor(player) * 100) };
                 _dynamicRosterRevision++;
                 return _dynamicDisplay = result;
@@ -397,7 +399,7 @@ namespace SodRpg.Mod
                     _helpDecayTable = table;
                 }
                 int connected = 0;
-                foreach (var player in DewPlayer.gamePlayers) if (OwnershipConnected(player)) connected++;
+                foreach (var player in DewPlayer.gamePlayers) if (IsCountableConnected(player)) connected++;
                 int state = DynamicApplicationRunning() ? DynamicDifficultyStatus.On
                     : _dynamicEnabled && connected == 1 && !_dynamicSolo ? DynamicDifficultyStatus.SoloOff : DynamicDifficultyStatus.Off;
                 int world = RunWorldIndex;
