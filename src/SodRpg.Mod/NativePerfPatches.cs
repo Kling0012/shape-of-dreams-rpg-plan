@@ -9403,6 +9403,17 @@ namespace SodRpg.Mod
         //   hero's 0.01f still reaches everyone like vanilla. A mid-join observer's
         //   baseline comes from the force-all spawn snapshot, which this patch never
         //   touches.
+        // - The delivered mark must be fresh. Mirror's send (ClearAllDirtyBits) consumes
+        //   the dirty bits and advances NetworkBehaviour.lastSyncTime in the same step, so
+        //   a bit that is set at entry while lastSyncTime moved on since this patch's
+        //   previous look belongs to a raise that landed after that send (a health-regen
+        //   chunk of the earlier bucket, a between-ticks heal). What the observers hold is
+        //   then whatever that send carried — possibly a non-pin value — so the stale
+        //   delivered mark is dropped and the raise keeps its send; the mark is re-earned
+        //   only at the next clear-entry tick. Without this check a heal that reached the
+        //   observers between ticks would be followed by its chunk raising the bit, the
+        //   stale mark would suppress the pin's convergence, and the observers would keep
+        //   the heal's value for the rest of the knockout.
         // - No write-back may still be waiting for its send. Mirror throttles broadcasts
         //   by syncInterval, so a bit that is set when the pin's tick begins is not proof
         //   of a non-pin change: it may be the previous tick's own convergence reset that
@@ -9417,24 +9428,26 @@ namespace SodRpg.Mod
         //   Anything else — a revive landing in a later bucket of the same tick, the
         //   negative-regen kill through the LogicUpdate death check, a vanished victim —
         //   keeps its value and its dirty bit exactly as vanilla raised them.
-        // The bit is masked through Mirror's syncVarDirtyBits property, so lastSyncTime,
-        // every other sync var bit and every SyncList stay untouched, and the health bit
-        // is read from the Network_currentHealth setter's IL like
-        // NativeStatsRatioIdlePerf does. Host-side values, heals and the death check see
-        // exactly what vanilla computes — only identical floats stop reaching the wire
-        // (nativeHeroKnockoutHealthIdle turns the skip off).
+        // The bit is masked through Mirror's syncVarDirtyBits property and lastSyncTime is
+        // only read, so every sync var bit, every SyncList and Mirror's own sync pacing
+        // stay untouched. The health bit is read from the Network_currentHealth setter's
+        // IL like NativeStatsRatioIdlePerf does. Host-side values, heals and the death
+        // check see exactly what vanilla computes — only identical floats stop reaching
+        // the wire (nativeHeroKnockoutHealthIdle turns the skip off).
         //
         // The per-effect knowledge lives in one ConditionalWeakTable entry: the two marks
-        // above plus the current tick's entry-bit state, which the prefix records and the
-        // postfix of the same tick reads (Harmony's only pass-through channel is the single
-        // __state flag, so the entry observation travels with the effect, not the patch
-        // signature). The entry is created on the effect's first host-side tick and never
-        // per tick, so the steady state allocates nothing.
+        // above, the lastSyncTime value seen at the previous tick and the current tick's
+        // entry-bit state (recorded by the prefix, read by the postfix of the same tick —
+        // Harmony's only pass-through channel is the single __state flag, so the entry
+        // observation travels with the effect, not the patch signature). The entry is
+        // created on the effect's first host-side tick and never per tick, so the steady
+        // state allocates nothing.
         private sealed class EffectState
         {
             public bool Delivered;
             public bool Converging;
             public bool EntryClear;
+            public double LastSync;
         }
         private static readonly ConditionalWeakTable<object, EffectState> States =
             new ConditionalWeakTable<object, EffectState>();
@@ -9442,6 +9455,7 @@ namespace SodRpg.Mod
         private static Func<EntityStatus, float> _currentHealth;
         private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
         private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static Func<Mirror.NetworkBehaviour, double> _lastSync;
         private static ulong _healthBit;
         private static bool _disabled;
         private static bool _warned;
@@ -9475,6 +9489,7 @@ namespace SodRpg.Mod
                 _currentHealth = (Func<EntityStatus, float>)Delegate.CreateDelegate(
                     typeof(Func<EntityStatus, float>), getter);
                 if (!ResolveBitAccess()) return false;
+                if (!ResolveLastSyncAccess()) return false;
                 _disabled = false;
                 return true;
             }
@@ -9524,6 +9539,25 @@ namespace SodRpg.Mod
             return true;
         }
 
+        // lastSyncTime is Mirror's internal field that ClearAllDirtyBits — the same call
+        // that consumes the dirty bits after a send — advances, so its movement is the
+        // "a send ran since the last look" signal. It is a field, not a property, so the
+        // compiled expression reads it without boxing (the steady state allocates
+        // nothing) the same way the other native patches compile their field readers.
+        private static bool ResolveLastSyncAccess()
+        {
+            var field = AccessTools.Field(typeof(Mirror.NetworkBehaviour), "lastSyncTime");
+            if (field == null || field.FieldType != typeof(double))
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "Mirror lastSyncTime access unavailable");
+                return false;
+            }
+            var p = Expression.Parameter(typeof(Mirror.NetworkBehaviour), "behaviour");
+            _lastSync = Expression.Lambda<Func<Mirror.NetworkBehaviour, double>>(
+                Expression.Field(p, field), p).Compile();
+            return true;
+        }
+
         private static bool Prefix(object __instance, out bool __state)
         {
             __state = false;
@@ -9541,12 +9575,21 @@ namespace SodRpg.Mod
                 var status = VictimStatus(__instance);
                 if (status == null || !status.isServer) return true;
                 var state = States.GetOrCreateValue(__instance);
+                // Sends run between logic ticks, never inside the prefix→postfix window,
+                // so reading the sync clock once here captures every send since the
+                // previous tick's look.
+                double sync = _lastSync(status);
+                bool sentSinceLastLook = sync != state.LastSync;
+                state.LastSync = sync;
                 if ((_dirtyBits(status) & _healthBit) != 0UL)
                 {
                     state.EntryClear = false;
                     // The pending raise may only be dropped when the observers provably
                     // hold the pin value and no convergence from an earlier tick is still
-                    // waiting for its send.
+                    // waiting for its send. A send since the last look consumed every
+                    // raise that existed then, so this bit belongs to a later write and
+                    // what the observers hold is unknown: the delivered mark is stale.
+                    if (sentSinceLastLook) state.Delivered = false;
                     __state = state.Delivered && !state.Converging;
                     return true;
                 }

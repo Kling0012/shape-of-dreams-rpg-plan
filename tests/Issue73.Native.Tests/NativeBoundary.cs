@@ -65,6 +65,12 @@ namespace Mirror
         public bool isServer { get; set; }
         public bool isClient { get; set; }
         public ulong syncVarDirtyBits { get; set; }
+        // （#1204）実機 Mirror の NetworkBehaviour.lastSyncTime（internal double）。送信後の
+        // ClearAllDirtyBits が bit を消すのと同時に NetworkTime.localTime へ進める。
+        // NativeHeroKnockoutHealthIdlePerf が「前のtickの観察のあとに送信が走ったか」を
+        // この欄の前進で識別するため、境界にも同じ double の欄を置き、テストの Deliver
+        // （送信の模倣）が bit を消すときに一緒に進める。
+        public double lastSyncTime;
         public void SendRPCInternal(NetworkWriter writer, string rpcName) { }
         // （#876）実機 Mirror の weaver 生成セッターが呼ぶ NetworkBehaviour.GeneratedSyncVarSetter。
         // 等値（EqualityComparer<T>.Default。float では float.Equals と同じく NaN==NaN・0==-0 を

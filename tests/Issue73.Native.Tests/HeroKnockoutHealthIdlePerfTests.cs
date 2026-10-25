@@ -22,7 +22,9 @@ namespace Issue73.Native.Tests
     /// (f) 設定を無効にすると何もしないこと、
     /// (g) パッチ先がないときは警告1回で外れること、
     /// に加え、Mirror の syncInterval で送信が間引かれた tick が連続しても、参加者を
-    /// 0.01f へ戻す唯一の送信（収束用の bit）が失われないことを確かめる（#1204 指摘）。
+    /// 0.01f へ戻す唯一の送信（収束用の bit）が失われないこと、配達済みの印のあとに
+    /// 0.01f 以外の値が届いた直後の回復チャンク（開始時に bit が立っている形）でも
+    /// 同じ送信が失われないことを確かめる（#1204 指摘）。
     /// </summary>
     public sealed class HeroKnockoutHealthIdlePerfTests : IDisposable
     {
@@ -40,7 +42,7 @@ namespace Issue73.Native.Tests
             type.GetField("_disabled", Hidden).SetValue(null, false);
             type.GetField("_warned", Hidden).SetValue(null, false);
             type.GetField("_target", Hidden).SetValue(null, null);
-            foreach (var field in new[] { "_currentHealth", "_dirtyBits", "_setDirtyBits" })
+            foreach (var field in new[] { "_currentHealth", "_dirtyBits", "_setDirtyBits", "_lastSync" })
             {
                 type.GetField(field, Hidden).SetValue(null, null);
             }
@@ -94,8 +96,14 @@ namespace Issue73.Native.Tests
         }
 
         // Mirror の送信が bit を消した（参加者へ届いた）ことにする。境界には Mirror の
-        // 送信輪が無いため、テストが直接クリアする。
-        private static void Deliver(EntityStatus status) => status.syncVarDirtyBits &= ~HealthBit;
+        // 送信輪が無いため、テストが直接クリアする。実機の送信は ClearAllDirtyBits で
+        // bit を消すと同時に lastSyncTime を進めるので、ここでも同じ欄を一緒に進める
+        // （#1204 指摘: Prefix はこの前進で「前のtickのあとに送信が走った」を識別する）。
+        private static void Deliver(EntityStatus status)
+        {
+            status.syncVarDirtyBits &= ~HealthBit;
+            status.lastSyncTime += 1.0;
+        }
 
         // (a) 作成直後の最初の 0.01f（作成時の SetHealth で立った bit）は、送信が確認できる
         // まで毎tickのピンでも下がらない。
@@ -185,6 +193,38 @@ namespace Issue73.Native.Tests
             RunPinnedTick(effect);
             Assert.NotEqual(0UL, status.syncVarDirtyBits & HealthBit);
             // 送信が届いて初めて bit は消え、次のtickからは再び省略に戻る。
+            Deliver(status);
+            RunPinnedTick(effect);
+            status.Network_currentHealth = 2.01f;
+            RunPinnedTick(effect);
+            Assert.Equal(0UL, status.syncVarDirtyBits & HealthBit);
+            Assert.Equal(0.01f, status.currentHealth);
+        }
+
+        // （#1204 指摘）配達済みの印が付いたあと、tick の間に 0.01f 以外の値 X が書かれ
+        // 送信で参加者へ届くと bit は消える。次のtickでは効果より前のバケツ
+        // （EntityStatus.LogicUpdate の回復チャンク）が X へ回復を足して bit を立てるため、
+        // 効果の Prefix は「開始時に bit が立っている」形で始まる。この形でも Prefix は
+        // lastSyncTime の前進から印のあとに送信が走ったことを識別し、参加者を 0.01f へ
+        // 戻す唯一の送信を省かない。収束が届いて定常に戻れば、次のチャンクは再び省略される。
+        [Fact]
+        public void AChunkAfterADeliveredHealKeepsItsBit()
+        {
+            var effect = NewEffect();
+            var status = effect.victim.Status;
+            status.Network_currentHealth = 0.01f;
+            RunPinnedTick(effect);
+            Deliver(status);
+            RunPinnedTick(effect);
+            // tick の間に 0.01f 以外の値 X が書かれ、送信で参加者へ届いて bit が消える。
+            status.Network_currentHealth = 50f;
+            Deliver(status);
+            // 効果より前のバケツで回復チャンク（X+2）が書かれ、bit が立ったままtickが始まる。
+            status.Network_currentHealth = 52f;
+            RunPinnedTick(effect);
+            Assert.NotEqual(0UL, status.syncVarDirtyBits & HealthBit);
+            Assert.Equal(0.01f, status.currentHealth);
+            // 収束の 0.01f が届いて定常に戻れば、次のチャンクは再び省略される。
             Deliver(status);
             RunPinnedTick(effect);
             status.Network_currentHealth = 2.01f;
