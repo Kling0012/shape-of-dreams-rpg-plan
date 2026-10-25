@@ -9058,8 +9058,10 @@ namespace SodRpg.Mod
             {
                 // Name-only lookups: the mod never references these native classes, and
                 // TypeByName resolves the harness stand-ins in tests exactly like the
-                // real classes in the game (the stand-ins just fail Prepare, which is
-                // the fail-soft path).
+                // real classes in the game (RoomPrewarmResolveOncePerfBoundary.cs
+                // reproduces the shipped signatures — static-ness included — so Prepare
+                // passes there and RoomPrewarmResolveOncePerfTests drives this Prefix
+                // against the transcribed two-loop original).
                 var monsters = AccessTools.TypeByName("RoomMonsters");
                 if (monsters == null) throw new MissingMemberException("RoomMonsters unavailable");
                 var entry = monsters.GetNestedType("PrewarmEntry");
