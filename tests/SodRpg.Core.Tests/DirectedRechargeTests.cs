@@ -34,10 +34,10 @@ namespace SodRpg.Core.Tests
             var runtime = new DirectedRechargeRuntime(); runtime.SetChannels(channels); return runtime;
         }
         private static List<DirectedRechargeRequest> Fire(DirectedRechargeRuntime runtime, MemoryActivationEvent notification,
-            MechanismEquipment equipment = null, double chance = 0, bool shielded = false)
+            MechanismEquipment equipment = null, double chance = 0, bool shielded = false, bool summons = false)
         {
             var results = new List<DirectedRechargeRequest>();
-            runtime.Notify(notification, equipment ?? Equipment(), new RechargeConditionContext(shielded, 0), () => chance, results);
+            runtime.Notify(notification, equipment ?? Equipment(), new RechargeConditionContext(shielded, 0, summons), () => chance, results);
             return results;
         }
         [Fact] public void ProbabilityRollsOnceForAnActivationNotEachVictimOrRecipient()
@@ -108,6 +108,56 @@ namespace SodRpg.Core.Tests
             Assert.Single(Fire(runtime, Event(victim: 10, kind: MemoryEventKind.Kill)));
             Assert.Empty(Fire(runtime, Event(victim: 10, kind: MemoryEventKind.Kill)));
             Assert.Single(Fire(runtime, Event(victim: 11, kind: MemoryEventKind.Kill)));
+        }
+        [Theory]
+        [InlineData(MemoryEventKind.Hit, NativePayloadKind.Skill)]
+        [InlineData(MemoryEventKind.CriticalHit, NativePayloadKind.Skill)]
+        [InlineData(MemoryEventKind.Kill, NativePayloadKind.Skill)]
+        [InlineData(MemoryEventKind.ConfirmedUse, NativePayloadKind.Skill)]
+        [InlineData(MemoryEventKind.Hit, NativePayloadKind.SummonAttack)]
+        [InlineData(MemoryEventKind.OwnedBasicAttackFired, NativePayloadKind.SummonAttack)]
+        public void SummonPresenceDoesNotChangeResultsOutsideTheMainBasicAttackFiring(MemoryEventKind kind, NativePayloadKind payload)
+        {
+            var equipment = Equipment();
+            var channel = new DirectedRechargeChannel("channel", new MemorySelector(MemorySelectorKind.EquippedQ), kind,
+                new MemorySelector(MemorySelectorKind.EquippedMovement), new[] { 2000 });
+            foreach (var memory in new[] { "source", "" })
+            {
+                var notification = Event(kind: kind, payload: payload, memory: memory);
+                Assert.Same(equipment.ResolveEventSource(notification, true), equipment.ResolveEventSource(notification, false));
+                var withSummons = Fire(Runtime(channel), notification, equipment, summons: true);
+                var withoutSummons = Fire(Runtime(channel), notification, equipment, summons: false);
+                if (memory.Length == 0) { Assert.Empty(withSummons); Assert.Empty(withoutSummons); continue; }
+                Assert.Single(withSummons); Assert.Single(withoutSummons);
+                Assert.Equal(withoutSummons[0].ChannelId, withSummons[0].ChannelId);
+                Assert.Equal(withoutSummons[0].SourceMemory, withSummons[0].SourceMemory);
+                Assert.Equal(withoutSummons[0].SourceInstanceId, withSummons[0].SourceInstanceId);
+                Assert.Equal(withoutSummons[0].RecipientMemory, withSummons[0].RecipientMemory);
+                Assert.Equal(withoutSummons[0].RecipientInstanceId, withSummons[0].RecipientInstanceId);
+                Assert.Equal(withoutSummons[0].ValueUnits, withSummons[0].ValueUnits);
+                Assert.False(withSummons[0].RequiresOwnedSummon);
+            }
+        }
+        [Fact] public void MainBasicAttackFiringKeepsTheOwnedSummonAsTheResolvedSource()
+        {
+            var equipment = new MechanismEquipment(1, 1, new List<EquippedMechanismMemory>
+            {
+                new EquippedMechanismMemory("St_D_CircleOfLife", 103, MechanismMemorySlot.Identity, false, false),
+                new EquippedMechanismMemory("movement", 105, MechanismMemorySlot.Movement, true, false)
+            });
+            var notification = new MemoryActivationEvent(1, "", 1, 0, 0, MemoryEventKind.OwnedBasicAttackFired,
+                NativePayloadKind.MainBasicAttack, GeneratedOrigin.None, 1);
+            Assert.Null(equipment.ResolveEventSource(notification, false));
+            var source = equipment.ResolveEventSource(notification, true);
+            Assert.NotNull(source); Assert.Equal("St_D_CircleOfLife", source.Memory);
+            var channel = new DirectedRechargeChannel("circle", new MemorySelector(MemorySelectorKind.Memory, "St_D_CircleOfLife"),
+                MemoryEventKind.OwnedBasicAttackFired, new MemorySelector(MemorySelectorKind.EquippedMovement),
+                new[] { 2000 }, AttributionBudget.PerOwnedBasicAttack);
+            var withSummons = Fire(Runtime(channel), notification, equipment, summons: true);
+            Assert.Single(withSummons);
+            Assert.Equal("St_D_CircleOfLife", withSummons[0].SourceMemory);
+            Assert.True(withSummons[0].RequiresOwnedSummon);
+            Assert.Empty(Fire(Runtime(channel), notification, equipment, summons: false));
         }
     }
 }
