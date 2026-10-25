@@ -91,6 +91,7 @@ namespace SodRpg.Mod
             NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
             NativePerfOptions.BossPoolSpawnLog = config.nativeBossPoolSpawnLog;
             NativePerfOptions.RoomPrewarmResolveOnce = config.nativeRoomPrewarmResolveOnce;
+            NativePerfOptions.HeroKnockoutHealthIdle = config.nativeHeroKnockoutHealthIdle;
         }
     }
 
@@ -169,6 +170,7 @@ namespace SodRpg.Mod
         internal static bool EntityAbilitySubscribeDedup = true;
         internal static bool BossPoolSpawnLog = true;
         internal static bool RoomPrewarmResolveOnce = true;
+        internal static bool HeroKnockoutHealthIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -9372,6 +9374,187 @@ namespace SodRpg.Mod
                 // Once pool work starts, retrying vanilla would repeat release, age and prewarm.
                 return !sideEffectsStarted;
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeHeroKnockoutHealthIdlePerf
+    {
+        // While a hero is knocked out, Se_HeroKnockedOut pins its victim's health with
+        // SetHealth(0.01f) on every logic tick, and EntityStatus.LogicUpdate (priority
+        // -300, one bucket before the -200 status-effect tick) still applies healthRegen
+        // to the knocked-out hero in integer chunks. Whenever a chunk lands, the host
+        // raises the _currentHealth dirty bit (0x80) twice — the chunk write, then the
+        // pin's reset — so the next sync serializes currentHealth to every observer even
+        // though the value it carries is the same 0.01f the pin leaves between ticks:
+        // Mirror broadcasts between logic ticks, and the pin is the last write of every
+        // tick, so a chunk can never be caught mid-tick and the sent float is always the
+        // 0.01f the observers already hold. The same holds for a heal that lands inside
+        // the tick on the untargetable hero: it is transient, wiped by the pin before the
+        // tick ends, and its only wire trace is that same redundant 0.01f.
+        //
+        // This patch clears the _currentHealth dirty bit after the pin's tick, but only
+        // when the pending change is provably empty:
+        // - The bit must already have been set when the pin's tick began. A bit that was
+        //   clear at entry and set at exit was raised by the pin's own reset after a send
+        //   delivered a transient between-ticks write (rare: host-side heals run inside
+        //   ticks, and a delivered one is consumed by its own send). That reset is the
+        //   observers' only convergence back to 0.01f, so it goes out exactly as vanilla
+        //   sends it.
+        // - The observers must already hold 0.01f. The prefix marks the effect "delivered"
+        //   the first time it sees the bit clear at entry — the first pending pin value
+        //   (the creation SetHealth) can only be consumed by a real send — and until then
+        //   the bit is left alone, so the knocked-out hero's 0.01f still reaches everyone
+        //   like vanilla. A mid-join observer's baseline comes from the force-all spawn
+        //   snapshot, which this patch never touches.
+        // - The health must still be the pin's exact 0.01f. Anything else — a revive, the
+        //   negative-regen kill through the LogicUpdate death check, a vanished victim —
+        //   keeps its value and its dirty bit exactly as vanilla raised them.
+        // The bit is masked through Mirror's syncVarDirtyBits property, so lastSyncTime,
+        // every other sync var bit and every SyncList stay untouched, and the health bit
+        // is read from the Network_currentHealth setter's IL like
+        // NativeStatsRatioIdlePerf does. Host-side values, heals and the death check see
+        // exactly what vanilla computes — only identical floats stop reaching the wire
+        // (nativeHeroKnockoutHealthIdle turns the skip off).
+        private static readonly object DeliveredMark = new object();
+        private static readonly ConditionalWeakTable<object, object> Delivered =
+            new ConditionalWeakTable<object, object>();
+        private static readonly ConditionalWeakTable<object, object>.CreateValueCallback CreateDeliveredMark =
+            _ => DeliveredMark;
+        private static MethodBase _target;
+        private static Func<EntityStatus, float> _currentHealth;
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static ulong _healthBit;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            if (_disabled) return false;
+            if (_target != null) return true;
+            _disabled = true;
+            try
+            {
+                // TypeByName like the other native patches: the mod never references this
+                // native class, and the name resolves stand-ins in tests exactly like the
+                // real class in the game.
+                var effect = AccessTools.TypeByName("Se_HeroKnockedOut");
+                if (effect == null) throw new MissingMemberException("Se_HeroKnockedOut unavailable");
+                _target = AccessTools.DeclaredMethod(effect, "ActiveLogicUpdate", new[] { typeof(float) });
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException("Se_HeroKnockedOut.ActiveLogicUpdate unavailable");
+                var setter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentHealth");
+                if (setter == null || setter.GetMethodBody() == null)
+                    throw new MissingMemberException("EntityStatus.Network_currentHealth setter unavailable");
+                _healthBit = ExtractDirtyBit(setter);
+                if (_healthBit == 0UL) return false;
+                var getter = AccessTools.PropertyGetter(typeof(EntityStatus), "currentHealth");
+                if (getter == null) throw new MissingMemberException("EntityStatus.currentHealth getter unavailable");
+                _currentHealth = (Func<EntityStatus, float>)Delegate.CreateDelegate(
+                    typeof(Func<EntityStatus, float>), getter);
+                if (!ResolveBitAccess()) return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The weaver's setter embeds its dirty bit as the call's only long constant
+        // (GeneratedSyncVarSetter(value, ref field, <bit>, null)); reading it from the IL
+        // keeps the clear mask bound to the same constant SerializeSyncVars writes.
+        private static ulong ExtractDirtyBit(System.Reflection.MethodInfo setter)
+        {
+            ulong found = 0UL;
+            int count = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(setter))
+            {
+                if (insn.opcode != OpCodes.Ldc_I8) continue;
+                found = (ulong)(long)insn.operand;
+                count++;
+            }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "native setter dirty bit shape changed");
+                return 0UL;
+            }
+            return found;
+        }
+
+        private static bool ResolveBitAccess()
+        {
+            var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            if (getter == null || setter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "Mirror syncVarDirtyBits access unavailable");
+                return false;
+            }
+            _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+            _setDirtyBits = (Action<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Action<Mirror.NetworkBehaviour, ulong>), setter);
+            return true;
+        }
+
+        private static bool Prefix(object __instance, out bool __state)
+        {
+            __state = false;
+            if (_disabled || !NativePerfOptions.HeroKnockoutHealthIdle) return true;
+            try
+            {
+                var status = VictimStatus(__instance);
+                if (status == null || !status.isServer) return true;
+                bool pending = (_dirtyBits(status) & _healthBit) != 0UL;
+                // A clear bit at entry means whatever was pending — the creation pin, the
+                // first chunk — was consumed by a real send: from now on the observers
+                // hold the exact 0.01f this patch may skip.
+                if (pending) __state = Delivered.TryGetValue(__instance, out _);
+                else Delivered.GetValue(__instance, CreateDeliveredMark);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+                return true;
+            }
+        }
+
+        private static void Postfix(object __instance, bool __state, bool __runOriginal)
+        {
+            if (!__state || _disabled || !__runOriginal) return;
+            try
+            {
+                var status = VictimStatus(__instance);
+                if (status == null) return;
+                // Only the pin's exact steady value is redundant; a revive, a death or any
+                // other surprise keeps its dirty bit exactly as vanilla raised it.
+                if (!_currentHealth(status).Equals(0.01f)) return;
+                ulong bits = _dirtyBits(status);
+                if ((bits & _healthBit) == 0UL) return;
+                _setDirtyBits(status, bits & ~_healthBit);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+            }
+        }
+
+        private static EntityStatus VictimStatus(object effect)
+        {
+            var typed = effect as StatusEffect;
+            // victim is a UnityEngine.Object, so the null check must stay on the cast
+            // result, not on a cached bool.
+            var victim = typed != null ? typed.victim : null;
+            return victim != null ? victim.Status : null;
         }
     }
 }
