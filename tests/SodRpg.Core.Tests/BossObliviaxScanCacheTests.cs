@@ -221,7 +221,7 @@ namespace SodRpg.Core.Tests
             rig.Rt.ShieldEquipmentEpoch++;
             rig.ObliviaxTick(11f);
             // 消えた区分（weapon）だけが予約取消しと Ready.Remove で撤去され、他の区分の予約と
-            // クールダウンはそのまま（状態全体の破棄ではない）。旧実装と同じ撤ȥ。
+            // クールダウンはそのまま（状態全体の破棄ではない）。旧実装と同じ撤去。
             Assert.Equal(0, rig.Rt.Boss.Fields.Count(BossProfiles.ObliviaxSetId, Profiles[0]));
             Assert.Equal(1, rig.Rt.Boss.Fields.Count(BossProfiles.ObliviaxSetId, Profiles[1]));
             Assert.Equal(1, rig.Rt.Boss.Fields.Count(BossProfiles.ObliviaxSetId, Profiles[6]));
