@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.79 — Removes redundant player checks from difficulty scaling on the host（2026-10-25）
+
+この版では、参加人数に合わせて難易度を変える処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the processing that adjusts difficulty to the number of players.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ホストのゲームは、参加人数に合わせて難易度を変えるときに、参加しているプレイヤーを1人ずつ確かめます。これまでは1人確かめるたびに、そのプレイヤーが参加者の一覧に入っているかを一覧の最初から調べ直していました。確かめているのは一覧から取り出したプレイヤーなので、答えは必ず「入っている」です。今はこの調べ直しをしません。この処理は、表示をそろえるために1秒に4回ほど動き、敵が出るたびにも動きます。1回あたりに減るのは数十回のごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。この処理はホストのゲームだけで動くので、効果が出るのもホストだけです。難易度の決まり方は変わりません。 / When the host's game adjusts difficulty to the number of players, it goes through the players in the game one by one. Until now, for each player it checked again, from the start of the player list, whether that player was in the list. The player had just been taken from that same list, so the answer was always yes. The game no longer repeats this check. This processing runs about 4 times per second to keep the display in sync, and also whenever an enemy appears. Each run saves only a few dozen very quick steps, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. This processing runs only on the host's game, so only the host benefits. How difficulty is decided is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.78 — Lighter homing projectiles for co-op players and lighter enemy defeats for hosts（2026-10-25）
 
 この版では、追尾する弾の処理と敵を倒したときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from how homing projectiles are handled and from what the game does when an enemy is defeated.
