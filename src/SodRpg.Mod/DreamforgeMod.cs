@@ -28,6 +28,8 @@ namespace SodRpg.Mod
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
         partial void ApplyNativePerfConfig();
+        partial void StartLacertaMemories();
+        partial void StopLacertaMemories();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -63,6 +65,7 @@ namespace SodRpg.Mod
                 try { CulinaryIngredientDisplay.Install(harmony); }
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
+                StartLacertaMemories();
                 ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
                 Loc.Language = config.ResolveLanguage(ExternalLanguages.Select);
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
@@ -464,6 +467,7 @@ namespace SodRpg.Mod
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
             StopNativeKillRewards();
+            StopLacertaMemories();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
