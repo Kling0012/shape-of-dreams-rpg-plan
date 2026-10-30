@@ -11,7 +11,7 @@ namespace SodRpg.Mod
         private const float SkillLockStuckSeconds = 10f;
         private const float SkillLockRequestSeconds = 8f;
         private const float SkillLockRunawaySeconds = 600f;
-        private const int SkillLockMaxRequests = 3;
+        private const float SkillLockRetrySeconds = 60f;
 
         [Flags]
         private enum SkillBlock
@@ -28,13 +28,75 @@ namespace SodRpg.Mod
             internal SkillBlock Block;
             internal float Since, Cooldown, Delay;
             internal int Charge, Requests;
-            internal bool Logged;
+            internal bool Logged, ResultLogged, LegacyRequest;
+            internal float NextRequest, ReplyAt;
+            internal uint RequestId;
+            internal DreamforgeSkillStateReplyMsg Reply;
+            internal DreamforgeSkillState SentState;
+            internal SkillBlock SentBlock;
         }
 
         private float _nextSkillLockScan, _nextSkillLockRequest;
         private Hero _skillLockHero;
         private Actor _skillLockConnection;
-        private bool _skillLockUnavailable;
+        private bool _skillLockUnavailable, _hostSkillStateCapability;
+        private uint _skillStateRequestId;
+        private int _skillLockNextSlot;
+        private Action<DreamforgeSkillResyncCapabilityMsg> _onSkillStateCapability;
+        private Action<DreamforgeSkillStateReplyMsg> _onSkillStateReply;
+
+        private void RegisterSkillState(Actor actor)
+        {
+            _hostSkillStateCapability = false;
+            if (_onSkillStateCapability == null) _onSkillStateCapability = OnSkillStateCapability;
+            if (_onSkillStateReply == null) _onSkillStateReply = OnSkillStateReply;
+            try
+            {
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeSkillResyncCapabilityMsg>(_onSkillStateCapability);
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeSkillStateReplyMsg>(_onSkillStateReply);
+            }
+            catch (Exception ex) { Log.Warn("Skill lock reply registration failed: " + ex.Message); }
+        }
+
+        private void UnregisterSkillState(Actor actor)
+        {
+            _hostSkillStateCapability = false;
+            if (_onSkillStateCapability != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeSkillResyncCapabilityMsg>(_onSkillStateCapability); } catch (Exception) { }
+            if (_onSkillStateReply != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeSkillStateReplyMsg>(_onSkillStateReply); } catch (Exception) { }
+            ResetSkillLockObservations();
+        }
+
+        private void OnSkillStateCapability(DreamforgeSkillResyncCapabilityMsg msg)
+        {
+            if (msg?.version != 2 || NetworkServer.active || _skillLockHero == null
+                || msg.heroNetId != _skillLockHero.netId || !ReferenceEquals(_skillLockConnection, _clientRpcOn)) return;
+            _hostSkillStateCapability = true;
+            if (msg.snapshots == null || msg.snapshots.Length != 6) return;
+            for (int slot = 0; slot < 6; slot++)
+            {
+                ref var observation = ref _skillLockObservations[slot];
+                var reply = msg.snapshots[slot];
+                if (!observation.LegacyRequest || observation.RequestId == 0 || observation.ResultLogged
+                    || reply == null || reply.slot != slot) continue;
+                reply.requestId = observation.RequestId;
+                reply.compared = observation.SentState != null && reply.state != null;
+                reply.different = NativeSkillLockRecovery.Different(observation.SentState, reply.state);
+                OnSkillStateReply(reply);
+            }
+        }
+
+        private void OnSkillStateReply(DreamforgeSkillStateReplyMsg msg)
+        {
+            if (!_hostSkillStateCapability || !NativeSkillLockRecovery.Enabled || msg == null || msg.version != 2
+                || NetworkServer.active || _skillLockHero == null || msg.heroNetId != _skillLockHero.netId
+                || !ReferenceEquals(_skillLockConnection, _clientRpcOn) || msg.slot < 0 || msg.slot >= 6) return;
+            ref var observation = ref _skillLockObservations[msg.slot];
+            if (msg.requestId != observation.RequestId || msg.requestId == 0 || observation.ResultLogged) return;
+            observation.Reply = msg;
+            observation.ReplyAt = Time.unscaledTime + 2f; // SyncVars / SyncObjects flush after the array RPC.
+        }
         private readonly SkillTrigger[] _skillLockScratch = new SkillTrigger[6];
         private readonly SkillLockObservation[] _skillLockObservations = new SkillLockObservation[6];
 
@@ -91,23 +153,42 @@ namespace SodRpg.Mod
             _skillLockScratch[4] = hero.Skill.Identity;
             _skillLockScratch[5] = hero.Skill.Movement;
             bool requested = false;
-            for (int slot = 0; slot < _skillLockScratch.Length; slot++)
+            int firstSlot = _skillLockNextSlot;
+            for (int offset = 0; offset < _skillLockScratch.Length; offset++)
             {
+                int slot = (firstSlot + offset) % _skillLockScratch.Length;
                 var skill = _skillLockScratch[slot];
                 SkillBlock block = GetSkillBlock(hero, skill, slot, out float cooldown, out float delay, out int charge);
                 ref var observation = ref _skillLockObservations[slot];
                 int config = skill == null ? -1 : skill.currentConfigIndex;
+                bool sameSkill = observation.Skill == skill && observation.Config == config;
+                if (observation.Reply != null && !observation.ResultLogged
+                    && (block == SkillBlock.None || now >= observation.ReplyAt))
+                {
+                    observation.ResultLogged = true;
+                    var reply = observation.Reply;
+                    Log.Info("Skill lock result: request=" + reply.requestId + " slot=" + slot
+                        + " compared=" + reply.compared + " different=" + reply.different + " recovered=" + (block == SkillBlock.None)
+                        + " before=" + observation.SentBlock + " reason=" + block + " host=[" + reply.diagnostic + "] guest=["
+                        + NativeSkillLockRecovery.Diagnostic(hero, skill, slot) + "]");
+                    observation.Reply = null;
+                }
                 if (block == SkillBlock.None)
                 {
+                    // Wait for the receipt so a fast recovery still produces one correlated result.
+                    if (observation.RequestId != 0 && !observation.ResultLogged)
+                    {
+                        if (now < observation.NextRequest + SkillLockRetrySeconds) continue;
+                        Log.Info("Skill lock result: request=" + observation.RequestId + " slot=" + slot
+                            + " recovered=true hostReply=missing");
+                    }
                     observation = default;
                     continue;
                 }
-                // Each slot owns its window: alternating blocked skills cannot accumulate ten seconds.
-                // A normal countdown that is making progress is not stuck. Ultimate config 0 is excluded below.
-                bool progressing = block == SkillBlock.Waiting &&
-                    (cooldown < observation.Cooldown - 0.001f || delay < observation.Delay - 0.001f || charge != observation.Charge);
-                if (observation.Skill != skill || observation.Config != config || observation.Block != block || progressing)
-                    observation = new SkillLockObservation { Skill = skill, Config = config, Block = block, Since = now };
+                // Follow continuous unavailability, even if its reasons or countdown change.
+                if (!sameSkill || observation.Block == SkillBlock.None)
+                    observation = new SkillLockObservation { Skill = skill, Config = config, Since = now };
+                observation.Block = block;
                 observation.Cooldown = cooldown;
                 observation.Delay = delay;
                 observation.Charge = charge;
@@ -117,13 +198,40 @@ namespace SodRpg.Mod
                     observation.Logged = true;
                     NativeSkillLockRecovery.LogSnapshot(hero, skill, slot, "Skill lock guest: reason=" + block + " ");
                 }
-                // A long legitimate lock may look identical to stale state. Re-send authority only,
-                // at most three times per unchanged episode, with a session-wide eight-second minimum.
-                if (requested || now < _nextSkillLockRequest || observation.Requests >= SkillLockMaxRequests) continue;
+                // Long legitimate waits are queried too, never shortened. After three attempts,
+                // retain a minute heartbeat instead of permanently abandoning the episode.
+                if (requested || now < _nextSkillLockRequest || now < observation.NextRequest) continue;
                 _nextSkillLockRequest = now + SkillLockRequestSeconds;
-                observation.Requests++;
+                observation.Requests = Math.Min(observation.Requests + 1, 3);
+                observation.NextRequest = now + (observation.Requests >= 3 ? SkillLockRetrySeconds : SkillLockRequestSeconds);
+                _skillLockNextSlot = (slot + 1) % _skillLockScratch.Length;
                 requested = true;
-                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeSkillResyncMsg { version = 1, heroNetId = hero.netId });
+                _skillStateRequestId++;
+                if (_skillStateRequestId == 0) _skillStateRequestId++;
+                observation.RequestId = _skillStateRequestId;
+                observation.LegacyRequest = !_hostSkillStateCapability;
+                observation.SentBlock = block;
+                // A probe failure must not disable the resend itself.
+                try { observation.SentState = NativeSkillLockRecovery.Capture(hero, skill); }
+                catch (Exception) { observation.SentState = null; }
+                if (_hostSkillStateCapability)
+                {
+                    try
+                    {
+                        _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeSkillStateRequestMsg
+                        {
+                            heroNetId = hero.netId, requestId = observation.RequestId, slot = slot,
+                            diagnose = !observation.ResultLogged, reason = block.ToString(),
+                            state = observation.SentState,
+                        });
+                    }
+                    catch (Exception) { /* Keep the deadline and retry; transport failure is not a receipt. */ }
+                }
+                else
+                {
+                    try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeSkillResyncMsg { version = 1, heroNetId = hero.netId }); }
+                    catch (Exception) { /* Retry after the same rate limit. */ }
+                }
             }
         }
 
@@ -133,7 +241,8 @@ namespace SodRpg.Mod
             cooldown = delay = 0f;
             charge = 0;
             if (skill == null)
-                return hero.Ability != null && hero.Ability.abilities.ContainsKey(slot) ? SkillBlock.Shape : SkillBlock.None;
+                return (hero.Ability != null && hero.Ability.abilities.ContainsKey(slot))
+                    || NativeSkillLockRecovery.HasStaleUiTarget(null, slot) ? SkillBlock.Shape : SkillBlock.None;
             if (!skill.isActive) return SkillBlock.Shape;
             var configs = skill.configs;
             var times = skill.currentUnscaledCooldownTimes;
@@ -145,8 +254,10 @@ namespace SodRpg.Mod
                 || times.Length != configs.Length || delays.Length != configs.Length || charges.Length != configs.Length)
                 return SkillBlock.Shape;
             var config = configs[index];
-            // Passive memories (including the Seedling) are deliberately not castable.
-            if (!config.isActive || config.maxCharges <= 0) return SkillBlock.None;
+            // isActive is prefab policy, not a synchronized value. Real passives stay excluded.
+            // maxCharges is synchronized, so an invalid guest value still needs a host query.
+            if (!config.isActive) return SkillBlock.None;
+            if (config.maxCharges <= 0) return SkillBlock.Shape;
             cooldown = times[index];
             delay = delays[index];
             charge = charges[index];
@@ -160,6 +271,7 @@ namespace SodRpg.Mod
                 if (castLock) block |= SkillBlock.CastLock;
                 if (cooldownLock) block |= SkillBlock.CooldownLock;
             }
+            else block |= SkillBlock.Shape;
             if (hero.Ability != null && skill.abilityIndex >= 0 && skill.abilityIndex < 6
                 && hero.Ability.IsAbilityCastLocked(skill.abilityIndex)) block |= SkillBlock.AbilityLock;
             if (hero.Control != null && !config.ignoreBlock && hero.Control.IsActionBlocked(slot == 5
@@ -168,10 +280,9 @@ namespace SodRpg.Mod
             if (!config.selfValidator.Evaluate(hero)) block |= SkillBlock.Validator;
             if (!(hero.currentMana >= config.manaCost)) block |= SkillBlock.Mana;
             if (charge == 0 && cooldown <= 0.05f && delay <= 0.001f) block |= SkillBlock.Undercharged;
-            bool ultimateCharging = skill.type == SkillType.Ultimate && index == 0 && cooldown > 0f;
-            if ((charge <= 0 && !ultimateCharging) || delay != 0f) block |= SkillBlock.Waiting;
+            if (charge <= 0 || delay != 0f) block |= SkillBlock.Waiting;
             if (NativeSkillLockRecovery.HasStaleUiTarget(skill, slot)) block |= SkillBlock.UiTarget;
-            if (block == SkillBlock.None && !ultimateCharging && NativeSkillLockRecovery.IsUnexpectedlyUnreservable(skill))
+            if (block == SkillBlock.None && NativeSkillLockRecovery.IsUnexpectedlyUnreservable(skill))
                 block |= SkillBlock.Reservation;
             return block;
         }
