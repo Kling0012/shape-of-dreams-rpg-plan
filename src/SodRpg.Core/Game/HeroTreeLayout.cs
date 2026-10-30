@@ -92,6 +92,13 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>拡張旅人の登録後に使い回しを消す（ヒーローコネクタ。レイアウトは登録後に作り直す）。</summary>
+        internal static void InvalidateLayout(string heroKey)
+        {
+            if (string.IsNullOrEmpty(heroKey)) return;
+            lock (Layouts) Layouts.Remove(heroKey);
+        }
+
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
 
@@ -186,13 +193,14 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < deep.Count; i++)
             {
                 deepIndices[i] = Add(deep[i], DeepRadius, Angle(i, deep.Count));
-                int parent = innerIndices[i * inner.Count / deep.Count];
+                // 拡張旅人（ヒーローコネクタ）は手前の星・刻印なしで奥の星だけを宣言できる。そのときの親は中心。
+                int parent = inner.Count == 0 ? 0 : innerIndices[i * inner.Count / deep.Count];
                 deepParents[i] = parent;
                 Join(parent, deepIndices[i]);
                 // The inner ring also holds the hero's keystones, which only count once chosen. A deep star whose only
                 // parent is a keystone (and the route behind it) would then need that keystone, so it also hangs off
                 // the nearest ordinary inner star. The keystone edge stays: saved builds keep their links.
-                if (nodes[parent].Talent.IsKeystone)
+                if (nodes[parent].Talent != null && nodes[parent].Talent.IsKeystone)
                 {
                     int nearest = -1;
                     float best = float.MaxValue;
@@ -248,17 +256,21 @@ namespace SodRpg.Core.Game
                             Join(deepParents[d], branchNodes[b][0]);
             }
             // Preserve the shipped cyclic bridge endpoints (the eighth uses the later route stars).
-            for (int i = 0; i < ring.Count; i++)
+            // 拡張旅人（ヒーローコネクタ）は記憶ルートを持たない（branches.Count==0）ので、この2辺は作らない。
+            if (branches.Count >= 6)
             {
-                int branch = i % branches.Count;
-                int order = i < branches.Count ? 3 : 5;
-                int bridge = Add(ring[i], BranchRadius + BranchStep * order, Angle(branch + 0.5, branches.Count));
-                Join(branchNodes[branch][order], bridge);
-                Join(bridge, branchNodes[(branch + 1) % branches.Count][order]);
+                for (int i = 0; i < ring.Count; i++)
+                {
+                    int branch = i % branches.Count;
+                    int order = i < branches.Count ? 3 : 5;
+                    int bridge = Add(ring[i], BranchRadius + BranchStep * order, Angle(branch + 0.5, branches.Count));
+                    Join(branchNodes[branch][order], bridge);
+                    Join(bridge, branchNodes[(branch + 1) % branches.Count][order]);
+                }
+                // Preserve the two early direct access edges; the sector pass may move their endpoints.
+                Join(branchNodes[1][2], branchNodes[2][2]);
+                Join(branchNodes[4][2], branchNodes[5][2]);
             }
-            // Preserve the two early direct access edges; the sector pass may move their endpoints.
-            Join(branchNodes[1][2], branchNodes[2][2]);
-            Join(branchNodes[4][2], branchNodes[5][2]);
             PlaceClusters(nodes, neighbors, edges, talents, tuned);
             return new HeroTreeLayout(nodes, edges);
         }
@@ -309,12 +321,29 @@ namespace SodRpg.Core.Game
             {
                 Traverse(hero, removed, keystones);
                 foreach (var allocation in hero.Talents)
-                    if (allocation.Value > 0 && allocation.Key != removedTalent
-                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated]
-                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystones))) return false;
+                {
+                    if (allocation.Value <= 0 || allocation.Key == removedTalent) continue;
+                    // 拡張旅人の星（ヒーローコネクタ §10）で、今の星図に無い割り当ては休眠: 接続判定から外す。
+                    if (!indices.TryGetValue(allocation.Key, out int allocated))
+                    {
+                        if (ExtendedHeroes.IsExtendedStarId(allocation.Key)) continue;
+                        return false;
+                    }
+                    if (!reached[allocated]
+                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystones)) return false;
+                }
                 foreach (string keystone in keystones)
-                    if (keystone != null && (!indices.TryGetValue(keystone, out int key) || !reached[key]
-                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystones))) return false;
+                {
+                    if (keystone == null) continue;
+                    // 休眠の到達刻印も同様に外す。
+                    if (!indices.TryGetValue(keystone, out int key))
+                    {
+                        if (ExtendedHeroes.IsExtendedStarId(keystone)) continue;
+                        return false;
+                    }
+                    if (!reached[key]
+                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystones)) return false;
+                }
                 return true;
             }
         }

@@ -183,6 +183,31 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<TalentDef> All => StarClusters.InstalledTalents(BaselineAll);
         private static readonly Dictionary<string, IReadOnlyList<TalentDef>> Trees = CreateTrees();
 
+        /// <summary>ヒーローコネクタが受け入れた拡張旅人の星図（§6-4 の小さい登録口）。既存9人とは分けて持つ。</summary>
+        private static readonly object ExtendedLock = new object();
+        private static readonly Dictionary<string, IReadOnlyList<TalentDef>> ExtendedTrees =
+            new Dictionary<string, IReadOnlyList<TalentDef>>(StringComparer.Ordinal);
+
+        /// <summary>§5 の上限の原典。既存9人の核（ルート・星群・監修星図は含まない）。</summary>
+        internal static IReadOnlyList<TalentDef> CoreBaseline => Core;
+
+        /// <summary>本体の9人かどうか。拡張旅人を含めない（宣言の key の検証で使う）。</summary>
+        internal static bool IsCoreTraveler(string heroKey) => heroKey != null && Trees.ContainsKey(heroKey);
+
+        /// <summary>拡張旅人の星図を登録する。検証済みのツリーだけを渡す（ExtendedHeroes.Register から）。</summary>
+        internal static void RegisterExtendedTree(string heroKey, IReadOnlyList<TalentDef> tree)
+        {
+            if (string.IsNullOrEmpty(heroKey) || tree == null) throw new ArgumentNullException(heroKey == null ? nameof(heroKey) : nameof(tree));
+            lock (ExtendedLock) ExtendedTrees[heroKey] = tree;
+            Rules.InvalidateAllocationValidation(heroKey);
+            HeroTreeLayout.InvalidateLayout(heroKey);
+        }
+
+        internal static bool TryGetExtendedTree(string heroKey, out IReadOnlyList<TalentDef> tree)
+        {
+            lock (ExtendedLock) return ExtendedTrees.TryGetValue(heroKey, out tree);
+        }
+
         private static IReadOnlyList<TalentDef> CreateAll()
         {
             var routes = HeroStarRoutes.All;
@@ -213,12 +238,21 @@ namespace SodRpg.Core.Game
             return trees;
         }
 
-        public static bool HasTree(string heroKey) => heroKey != null && Trees.ContainsKey(heroKey);
+        public static bool HasTree(string heroKey)
+        {
+            if (heroKey == null) return false;
+            if (Trees.ContainsKey(heroKey)) return true;
+            lock (ExtendedLock) return ExtendedTrees.ContainsKey(heroKey);
+        }
 
         /// <summary>旅人ごとに一度だけ分類する。未知の旅人は従来の汎用ツリー。</summary>
         public static IReadOnlyList<TalentDef> TreeFor(string heroKey) =>
             StarClusters.TryGetRegisteredTree(heroKey, out var registered) ? registered : BaselineTreeFor(heroKey);
-        internal static IReadOnlyList<TalentDef> BaselineTreeFor(string heroKey) =>
-            heroKey != null && Trees.TryGetValue(heroKey, out var tree) ? tree : Content.Talents;
+        internal static IReadOnlyList<TalentDef> BaselineTreeFor(string heroKey)
+        {
+            if (heroKey != null && Trees.TryGetValue(heroKey, out var tree)) return tree;
+            if (heroKey != null && TryGetExtendedTree(heroKey, out var extended)) return extended;
+            return Content.Talents;
+        }
     }
 }

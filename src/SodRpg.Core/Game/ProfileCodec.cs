@@ -404,6 +404,9 @@ namespace SodRpg.Core.Game
                             else if (t.Value is long removedRank && removedRank > 0
                                 && StarClusters.MigrationsFor(kv.Key).FirstOrDefault(rule => rule.Removed && rule.LocalStarId == t.Key) is LegacyStarMigration removed)
                                 h.Talents[t.Key] = (int)System.Math.Min(removed.MaxRank, removedRank);
+                            else if (t.Value is long dormantRank && dormantRank > 0 && ExtendedHeroes.IsExtendedStarId(t.Key))
+                                // 拡張旅人の星（ヒーローコネクタ §10）: 今の星図に無くても記録は消さない（効果なし・ポイント未使用）。
+                                h.Talents[t.Key] = (int)dormantRank;
                             else
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
@@ -436,14 +439,19 @@ namespace SodRpg.Core.Game
                     h.ExtraPoints = Clamp(Long(hj, "xp2"), 0, StarProgression.MaxExtraPoints);
                     h.AuthoredMigrationVersion = Clamp(Long(hj, "authoredMigrationVersion"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
-                    if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (key != null && ((Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key))
+                            // 拡張旅人の到達刻印（ヒーローコネクタ §10）: 定義が無いときも記録を保持する。
+                            || (ExtendedHeroes.IsExtendedStarId(key) && !h.HasKeystone(key))))
+                        h.Keystone = key;
                     if (hj.TryGet("keystones", out object ksList) && ksList is List<object> extraKeys)
                         for (int slot = 1; slot < h.Keystones.Length; slot++)
                         {
                             // 2つ目以降の刻印。古い保存にはこの欄が無い（読み込みは1つのまま）。枠は前詰めで保存した順に入れる。
                             string id = slot - 1 < extraKeys.Count ? extraKeys[slot - 1] as string : null;
-                            if (id != null && !h.HasKeystone(id) && Content.TryGetTalent(kv.Key, id, out var extraDef)
-                                && extraDef.IsKeystone && Rules.BelongsTo(extraDef, kv.Key) && h.AddKeystone(id) < 0) break;
+                            if (id != null && !h.HasKeystone(id) && ((Content.TryGetTalent(kv.Key, id, out var extraDef)
+                                    && extraDef.IsKeystone && Rules.BelongsTo(extraDef, kv.Key))
+                                    // 拡張旅人の到達刻印（休眠）も同じ枠へ保持する。
+                                    || ExtendedHeroes.IsExtendedStarId(id)) && h.AddKeystone(id) < 0) break;
                         }
                     if (HeroSigils.HasTree(kv.Key))
                     {

@@ -9,7 +9,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>The four designated travelers qualify only while their current basic attack is melee.</summary>
         public static bool IsMelee(string heroId, bool meleeBasicAttack) => meleeBasicAttack &&
-            (heroId == "Hero_Vesper" || heroId == "Hero_Husk" || heroId == "Hero_Mist" || heroId == "Hero_Aurena");
+            (heroId == "Hero_Vesper" || heroId == "Hero_Husk" || heroId == "Hero_Mist" || heroId == "Hero_Aurena"
+             // 拡張旅人（ヒーローコネクタ §6-3）。MeleeCoop の符号化は変えない。
+             || ExtendedHeroes.IsMelee(heroId));
 
         /// <summary>
         /// Attack speed actually gained from <paramref name="rangePct"/> equipment range, as the host applies it:

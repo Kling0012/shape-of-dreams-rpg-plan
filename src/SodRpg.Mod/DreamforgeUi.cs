@@ -581,6 +581,9 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
             if (_s.ForbiddenGearHostNotice != null)
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.ForbiddenGearHostNotice).Append("</color></size>");
+            // 拡張旅人の宣言がホストに無いときも同じ場所に1行（ヒーローコネクタ §9）。
+            if (_s.HeroConnectorHostNotice != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.HeroConnectorHostNotice).Append("</color></size>");
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");

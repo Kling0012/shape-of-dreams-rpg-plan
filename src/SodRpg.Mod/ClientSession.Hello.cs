@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -29,11 +30,22 @@ namespace SodRpg.Mod
         /// <summary>ホストと版が違う／ホストから返事がないときの説明。問題なければ null。</summary>
         private Txt _hostVersionWarning;
         public string HostVersionWarning => _hostVersionWarning?.ToString();
+        private Action<DreamforgeHeroConnectorMsg> _onHeroConnector;
+        /// <summary>ホストの拡張旅人の宣言が自分と一致しない旅人の名前一覧（§9）。差し引きが変わったら文を更新する。</summary>
+        private Txt _heroConnectorWarning;
+        /// <summary>ホストの Dreamforge が自分の拡張旅人を読めないため、その旅人の星が反映されない説明。該当しなければ null。</summary>
+        public string HeroConnectorHostNotice => _heroConnectorWarning?.ToString();
 
         private void RegisterHello(Actor actor)
         {
             if (_onHello == null) _onHello = OnHello;
             actor.CustomRpc_RegisterClientMessageHandler<DreamforgeHelloMsg>(_onHello);
+            try
+            {
+                if (_onHeroConnector == null) _onHeroConnector = OnHeroConnector;
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeHeroConnectorMsg>(_onHeroConnector);
+            }
+            catch (Exception) { }
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
             RegisterBountyCounts(actor);
@@ -46,6 +58,8 @@ namespace SodRpg.Mod
         {
             if (_onHello != null)
                 try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
+            if (_onHeroConnector != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeHeroConnectorMsg>(_onHeroConnector); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
             UnregisterBuildInputCapability(actor);
             UnregisterBountyCounts(actor);
@@ -71,6 +85,7 @@ namespace SodRpg.Mod
             _netLiteReceiveReady = false;
             _hostAutocastPressureCapability = false;
             _nextAutocastPressureReport = 0f;
+            _heroConnectorWarning = null;
             ResetHelloSchedule();
             _hostVersionWarning = null;
             ResetOverflowBonusConnection();
@@ -184,6 +199,44 @@ namespace SodRpg.Mod
                     $"The host's Dreamforge differs ({HostAuthority.DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}; version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.", $"主机的 Dreamforge 存在差异（{HostAuthority.DescribeDifferencesZh(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}。版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。功能将继续运行。");
                 Log.Warn($"Client: compatibility warning: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{HostAuthority.ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}; features continue.");
             }
+        }
+
+        /// <summary>
+        /// ホスト → 参加者: ホストの拡張旅人の登録簿の一覧（§9）。自分の宣言のうちホストに無いもの・
+        /// 宣言の異なるものは、その旅人の星がこの部屋で反映されない（ホストの星図検証で拒否される）ので、
+        /// 1行の知らせで伝える。プレイを止めたりはしない。
+        /// </summary>
+        private void OnHeroConnector(DreamforgeHeroConnectorMsg msg)
+        {
+            try
+            {
+                if (!_heroConnectorEnabled || msg == null || msg.version != 1 || !_hostHeroConnector) return;
+                var hosts = msg.heroes;
+                var hashes = msg.hashes;
+                if (hosts == null || hashes == null || hosts.Length != hashes.Length || hosts.Length > 64) return;
+                var hostSet = new Dictionary<string, string>(hosts.Length, StringComparer.Ordinal);
+                foreach (string key in hosts) if (string.IsNullOrEmpty(key)) return;
+                for (int i = 0; i < hosts.Length; i++) hostSet[hosts[i]] = hashes[i];
+                var mismatched = new List<string>();
+                foreach (var hero in ExtendedHeroes.Registered)
+                    if (!hostSet.TryGetValue(hero.Key, out string hash) || hash != hero.DeclarationHash)
+                        mismatched.Add(HeroNames.Display(hero.Key));
+                if (mismatched.Count == 0)
+                {
+                    _heroConnectorWarning = null;
+                    return;
+                }
+                var warning = new Txt(
+                    $"ホストの Dreamforge が次の拡張旅人を読み込んでいないため、この部屋ではその旅人の星が反映されません: {string.Join("、", mismatched)}",
+                    $"The host's Dreamforge does not have these extended travelers, so their stars will not apply in this room: {string.Join(", ", mismatched)}",
+                    $"主机的 Dreamforge 未加载以下扩展旅人，其星章不会在这个房间生效: {string.Join("、", mismatched)}");
+                if (_heroConnectorWarning?.Ja != warning.Ja)
+                {
+                    _heroConnectorWarning = warning;
+                    Log.Warn("Client: hero connector mismatch with the host: " + string.Join(", ", mismatched) + "; those stars will not apply.");
+                }
+            }
+            catch (Exception ex) { Log.Error("Client: hero connector exchange " + ex); }
         }
     }
 }

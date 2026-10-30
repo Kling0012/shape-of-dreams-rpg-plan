@@ -5289,6 +5289,15 @@ namespace SodRpg.Core.Game
         public static bool TryGetUnique(string id, out UniqueDef def) => UniqueById.TryGetValue(id ?? string.Empty, out def);
         public static bool TryGetTalent(string heroKey, string localId, out TalentDef def)
         {
+            // 拡張旅人（ヒーローコネクタ）は StarClusters に入れないので、ここで先に引く（§6-4）。
+            if (localId != null && ExtendedHeroes.IsExtendedStarId(localId)
+                && HeroSigils.TryGetExtendedTree(heroKey, out var extendedTree))
+            {
+                foreach (var talent in extendedTree)
+                    if (talent.Id == localId) { def = talent; return true; }
+                def = null;
+                return false;
+            }
             if (StarClusters.TryGetRegisteredTalent(heroKey, localId, out def, out bool registered)) return true;
             if (registered) { def = null; return false; }
             return TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);

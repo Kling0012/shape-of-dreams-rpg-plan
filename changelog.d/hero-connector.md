@@ -1,0 +1,2 @@
+### 新機能 / New features
+- ほかの MOD が足した新しい旅人を、Dreamforge の装備・星図・協力プレイで使えるようにする連携の仕組み（ヒーローコネクタ）を追加しました。MOD の作者は JSON ファイルを1つ置くだけで対応できます。作り方は [MOD 作者向けガイド](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.ja.md) にあります。 / Added the Hero Connector: travelers added by other mods can now use Dreamforge's gear, star maps and co-op. Mod authors only need to add one JSON file; see the [guide for mod authors](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.md).
