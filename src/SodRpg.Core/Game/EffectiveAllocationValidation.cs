@@ -224,10 +224,22 @@ namespace SodRpg.Core.Game
         {
             long spent = 0;
             foreach (string keystone in hero.Keystones)
-                if (keystone != null) spent += Talent(keystone)?.KeystoneCost ?? Content.KeystoneCost;
+            {
+                if (keystone == null) continue;
+                var keystoneTalent = Talent(keystone);
+                // 拡張旅人の到達刻印（ヒーローコネクタ §10）で、今の星図に無いものは休眠: ポイントも使わない。
+                if (keystoneTalent == null && ExtendedHeroes.IsExtendedStarId(keystone)) continue;
+                spent += keystoneTalent?.KeystoneCost ?? Content.KeystoneCost;
+            }
             foreach (var rank in hero.Talents)
             {
-                var talent = Talent(rank.Key) ?? throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + rank.Key);
+                var talent = Talent(rank.Key);
+                if (talent == null)
+                {
+                    // 拡張旅人の星（ヒーローコネクタ §10）で、今の星図に無い割り当ては休眠: 効果を持たず、ポイントも使わない。
+                    if (ExtendedHeroes.IsExtendedStarId(rank.Key)) continue;
+                    throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + rank.Key);
+                }
                 spent += (long)Math.Max(0, rank.Value) * talent.RankCost;
             }
             return checked((int)spent);

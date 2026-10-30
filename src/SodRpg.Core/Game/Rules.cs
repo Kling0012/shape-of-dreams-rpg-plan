@@ -2118,6 +2118,13 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>拡張旅人の登録後に、汎用ツリーで作ったままの割り当て検証を作り直させる（ヒーローコネクタ）。</summary>
+        internal static void InvalidateAllocationValidation(string heroKey)
+        {
+            if (string.IsNullOrEmpty(heroKey)) return;
+            lock (allocationValidatorLock) allocationValidators.Remove(heroKey);
+        }
+
         public static EffectiveAllocationValidation AllocationValidationForHero(string heroKey)
         {
             string key = string.IsNullOrEmpty(heroKey) ? "default" : heroKey;

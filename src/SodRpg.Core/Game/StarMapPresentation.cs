@@ -110,7 +110,14 @@ namespace SodRpg.Core.Game
                 return KeystoneSections(combinedBenefit, star.KeystoneCost);
             }
             if (!star.IsKeystone) throw new InvalidOperationException("Not a keystone: " + star.Id);
-            if (star.PerRank > 0) return KeystoneSections(DescribeKeystoneStat(star), star.KeystoneCost);
+            // Stat の刻印（既存9人には無く、ヒーローコネクタの宣言でのみ現れる）。数値の下に宣言の説明文を足す。
+            if (star.PerRank > 0)
+            {
+                string statBenefit = DescribeKeystoneStat(star);
+                if (star.Description != null && !string.IsNullOrWhiteSpace(star.Description.ToString()))
+                    statBenefit += NL + star.Description;
+                return KeystoneSections(statBenefit, star.KeystoneCost);
+            }
             // 旧来の刻印：効果の本文がPowerの説明。
             string benefit = Content.FormatPower(star.Power, star.PowerValue);
             if (star.Description != null && !string.IsNullOrWhiteSpace(star.Description.ToString())) benefit += NL + star.Description;
