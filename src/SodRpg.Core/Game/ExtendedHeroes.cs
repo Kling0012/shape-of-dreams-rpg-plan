@@ -66,8 +66,8 @@ namespace SodRpg.Core.Game
         public IReadOnlyDictionary<Stat, int> PerRankMax;
         /// <summary>通常の星で宣言できる Stat と、その Stat の最大 MaxRank。</summary>
         public IReadOnlyDictionary<Stat, int> MaxRankMax;
-        /// <summary>キーストーンの value の上限（既存9人のキーストーンの値の最大）。</summary>
-        public int KeystoneValueMax;
+        /// <summary>キーストーンの value の Stat ごとの上限（その Stat の通常の星の最大 PerRank × 最大 MaxRank）。</summary>
+        public IReadOnlyDictionary<Stat, int> KeystoneValueMax;
         /// <summary>通常の星の数の上限（既存9人の Core の1旅人の最大）。</summary>
         public int NormalStarsMax;
         /// <summary>キーストーンの数の上限。</summary>
@@ -79,12 +79,12 @@ namespace SodRpg.Core.Game
             sb.Append("Star limits from the nine shipped travelers' cores (apiVersion ").Append(ExtendedHeroes.ApiVersion).Append("):\n");
             sb.Append("  normal stars per tree: ").Append(NormalStarsMax.ToString(CultureInfo.InvariantCulture))
                 .Append(", keystones per tree: ").Append(KeystonesMax.ToString(CultureInfo.InvariantCulture)).Append('\n');
-            sb.Append("  keystone value max: ").Append(KeystoneValueMax.ToString(CultureInfo.InvariantCulture)).Append('\n');
-            sb.Append("  per Stat (perRank max / maxRank max):\n");
+            sb.Append("  per Stat (perRank max / maxRank max / keystone value max):\n");
             foreach (var kv in PerRankMax)
                 sb.Append("    ").Append(kv.Key).Append(": ")
                     .Append(kv.Value.ToString(CultureInfo.InvariantCulture)).Append(" / ")
-                    .Append(MaxRankMax[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
+                    .Append(MaxRankMax[kv.Key].ToString(CultureInfo.InvariantCulture)).Append(" / ")
+                    .Append(KeystoneValueMax[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
             return sb.ToString();
         }
     }
@@ -150,15 +150,13 @@ namespace SodRpg.Core.Game
             var maxRank = new Dictionary<Stat, int>();
             var starsPerHero = new Dictionary<string, int>(StringComparer.Ordinal);
             var keysPerHero = new Dictionary<string, int>(StringComparer.Ordinal);
-            int keystoneValueMax = 0;
             foreach (var t in HeroSigils.CoreBaseline)
             {
                 if (t.HeroKey == null) continue;
                 if (t.IsKeystone)
                 {
-                    starsPerHero.TryGetValue(t.HeroKey, out int keys);
+                    keysPerHero.TryGetValue(t.HeroKey, out int keys);
                     keysPerHero[t.HeroKey] = keys + 1;
-                    if (t.PowerValue > keystoneValueMax) keystoneValueMax = t.PowerValue;
                     continue;
                 }
                 starsPerHero.TryGetValue(t.HeroKey, out int stars);
@@ -171,6 +169,10 @@ namespace SodRpg.Core.Game
             int normalStarsMax = 0, keystonesMax = 0;
             foreach (var kv in starsPerHero) if (kv.Value > normalStarsMax) normalStarsMax = kv.Value;
             foreach (var kv in keysPerHero) if (kv.Value > keystonesMax) keystonesMax = kv.Value;
+            // キーストーンの value の上限は Stat ごとに、その Stat の通常の星の最大 PerRank × 最大 MaxRank
+            // （既存の最も強い通常の星1つを満段にした値）とする。Power 系キーストーンの値とは単位が違うため使わない。
+            var keystoneValueMax = new Dictionary<Stat, int>();
+            foreach (var kv in perRank) keystoneValueMax[kv.Key] = kv.Value * maxRank[kv.Key];
             return new ExtendedStarLimits
             {
                 PerRankMax = perRank,
@@ -377,8 +379,9 @@ namespace SodRpg.Core.Game
                 TalentDef talent;
                 if (keystone)
                 {
-                    if (!node.TryGet("value", out var valueObj) || !(valueObj is long value) || value <= 0 || value > limits.KeystoneValueMax)
-                    { reason = "node '" + id + "': keystone value must be 1.." + limits.KeystoneValueMax.ToString(CultureInfo.InvariantCulture); return null; }
+                    int valueMax = limits.KeystoneValueMax[stat];
+                    if (!node.TryGet("value", out var valueObj) || !(valueObj is long value) || value <= 0 || value > valueMax)
+                    { reason = "node '" + id + "': keystone value for " + stat + " must be 1.." + valueMax.ToString(CultureInfo.InvariantCulture); return null; }
                     if (!TryReadText(node, "description", null, out var description) || description == null)
                     { reason = "node '" + id + "': a keystone requires a description"; return null; }
                     keystones++;
