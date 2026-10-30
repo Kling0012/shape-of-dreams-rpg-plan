@@ -1766,6 +1766,9 @@ namespace SodRpg.Mod
         // ClientSession.Hello.cs と同じ保管（#510: Txt 保持＋getter で解決）。ResetHello の抽出が書く。
         private Txt _hostVersionWarning;
         public string HostVersionWarning => _hostVersionWarning?.ToString();
+        // ヒーローコネクタ（spec hero-connector §9）: ホストの宣言との不一致の1行。ResetHello の抽出が書く。
+        private Txt _heroConnectorWarning;
+        public string HeroConnectorHostNotice => _heroConnectorWarning?.ToString();
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;

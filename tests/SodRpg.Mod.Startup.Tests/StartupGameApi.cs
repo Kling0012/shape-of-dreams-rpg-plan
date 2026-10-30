@@ -109,6 +109,8 @@ namespace SodRpg.Mod
             selectExternal?.Invoke(language) == true ? LocLanguage.External
                 : chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
         public bool overflowDreamDust;
+        // ヒーローコネクタ（spec hero-connector §6-8）。実装側の DreamforgeConfig と同じ既定。
+        public bool heroConnector = true;
         public AutoSalvageRarity autoSalvageRarity;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;

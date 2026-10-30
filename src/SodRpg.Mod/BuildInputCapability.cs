@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -50,6 +51,11 @@ namespace SodRpg.Mod
         private bool _sentHelloInfinity;
         private string _sentHelloRun;
         private Action<DreamforgeBuildInputCapabilityMsg> _onBuildInputCapability;
+        /// <summary>ホストがヒーローコネクタ（拡張旅人の宣言）に対応しているか（§9）。旧ホストは false のまま何も交換しない。</summary>
+        private bool _hostHeroConnector;
+        /// <summary>このセッションでヒーローコネクタが有効（設定 heroConnector）。無効なら広告も交換もしない。</summary>
+        private bool _heroConnectorEnabled = true;
+        private bool _heroConnectorExchanged;
 
         private void ResetHelloSchedule()
         {
@@ -57,6 +63,8 @@ namespace SodRpg.Mod
             _sentCapability = null;
             _sentHelloRun = null;
             _nextBuildInputProbe = 0f;
+            _hostHeroConnector = false;
+            _heroConnectorExchanged = false;
         }
 
         private void RegisterBuildInputCapability(Actor actor)
@@ -91,6 +99,13 @@ namespace SodRpg.Mod
             }
             if (deltaChanged) ResetKillReceiptSchedule();
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
+            // ヒーローコネクタ（§9）: ホストが対応を広告したら登録簿の一覧を1回だけ送る。
+            if (msg.heroConnector == 1 && !_hostHeroConnector)
+            {
+                _hostHeroConnector = true;
+                SendHeroConnectorExchange();
+            }
+            else if (msg.heroConnector != 1) _hostHeroConnector = false;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
             // 下の _hostBuildInputCapability による早期 return より前に処理し、
             // 通常の能力応答を受信済みでも、遅れて届いた禁忌装備対応の宣言で警告を解除する。
@@ -113,6 +128,35 @@ namespace SodRpg.Mod
             _hostBuildInputCapability = true;
             _buildDirty = true;
             _buildCacheFrame = -1;
+        }
+
+        /// <summary>設定 heroConnector の反映（DreamforgeMod から）。無効なら広告も登録簿の交換もしない（§6-8）。</summary>
+        internal void ConfigureHeroConnector(bool enabled) => _heroConnectorEnabled = enabled;
+
+        /// <summary>自分の登録簿の一覧（キーと宣言ハッシュ。ソート済み）。協力の交換に使う。</summary>
+        internal static DreamforgeHeroConnectorMsg CreateHeroConnectorMessage()
+        {
+            var heroes = ExtendedHeroes.Registered;
+            var keys = new List<string>(heroes.Count);
+            var hashes = new List<string>(heroes.Count);
+            foreach (var hero in heroes) { keys.Add(hero.Key); hashes.Add(hero.DeclarationHash); }
+            // 並びを固定する（同じ登録内容なら必ず同じ電文になるように）。
+            var order = new int[heroes.Count];
+            for (int i = 0; i < order.Length; i++) order[i] = i;
+            Array.Sort(order, (a, b) => string.CompareOrdinal(keys[a], keys[b]));
+            var sortedKeys = new string[heroes.Count];
+            var sortedHashes = new string[heroes.Count];
+            for (int i = 0; i < order.Length; i++) { sortedKeys[i] = keys[order[i]]; sortedHashes[i] = hashes[order[i]]; }
+            return new DreamforgeHeroConnectorMsg { heroes = sortedKeys, hashes = sortedHashes };
+        }
+
+        /// <summary>ホストがコネクタ対応を広告したら、登録簿の一覧を1回だけ送る（§9）。</summary>
+        private void SendHeroConnectorExchange()
+        {
+            if (!_hostHeroConnector || _heroConnectorExchanged || _clientRpcOn == null) return;
+            _heroConnectorExchanged = true;
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(CreateHeroConnectorMessage()); }
+            catch (Exception) { _heroConnectorExchanged = false; }
         }
 
         private void ProbeBuildInputCapability(string heroKey) => TickHelloSchedule();
@@ -140,15 +184,17 @@ namespace SodRpg.Mod
             int bounty = _bountyCountsReady ? 1 : 0, lite = _netLiteReceiveReady ? 1 : 0;
             int omens = _omenReceiveReady ? 1 : 0, smith = Forbidden.HasSmith(Profile) ? 1 : 0;
             int grudge = Profile.NemesisGrudge;
+            int connector = _heroConnectorEnabled ? 1 : 0;
             if (now < _nextBuildInputProbe && _sentCapability != null
                 && _sentCapability.bountyCounts == bounty && _sentCapability.netLite == lite
                 && _sentCapability.roomOmens == omens && _sentCapability.forbiddenSmith == smith
-                && _sentCapability.nemesisGrudge == grudge) return;
+                && _sentCapability.nemesisGrudge == grudge && _sentCapability.heroConnector == connector) return;
             var capability = new DreamforgeBuildInputCapabilityMsg
             {
                 bountyCounts = bounty, netLite = lite, stateSnapshots = 1, dynamicRoster = 1,
                 roomOmens = omens, forbiddenSmith = smith, nemesisGrudge = grudge,
                 helloSchedule = 1, killReceiptDelta = 1, autocastPressure = 1,
+                heroConnector = connector,
             };
             _clientRpcOn.CustomRpc_SendMessageToServer(capability);
             if (!_hostAutocastPressureCapability && !_hostHelloSchedule)

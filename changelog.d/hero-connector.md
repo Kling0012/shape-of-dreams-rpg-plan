@@ -1,0 +1,2 @@
+### 新機能 / New features
+- ヒーローコネクタ（apiVersion 1）: 他のMODがキャラクターの宣言（dreamforge.json）を置くだけで、その旅人が Dreamforge の装備・星図に加わります。宣言の読み取り・検証・作者向けの報告ファイル（connector-report.txt）とランタイムAPIを同梱します。 / Hero Connector (apiVersion 1): a mod can add its traveler to Dreamforge's gear and star maps just by dropping a declaration (dreamforge.json). Includes declaration reading with validation, an author-facing report file (connector-report.txt), and a runtime API.

@@ -73,6 +73,13 @@ namespace SodRpg.Mod
         [LabelText("Overflow relics: shards + Dream Dust /\n鞄からあふれた遺物で、欠片に加えてドリームダストも受け取る")]
         public bool overflowDreamDust = false;
 
+        // ヒーローコネクタ（docs/specs/hero-connector.md §6-8）。他MODが置いた宣言（dreamforge.json）の読み取り。
+        // 無効にすると走査もランタイムAPIも登録簿の交換もしない（既存の挙動に戻る）。
+        [LabelText("Hero Connector: read character mods' declarations / ヒーローコネクタ：キャラクターMODの宣言を読む")]
+        [Description("Other mods' character declarations (dreamforge.json) are loaded as extended travelers with their own star trees. Uncheck to ignore them. / "
+            + "他のMODが置いたキャラクターの宣言（dreamforge.json）を拡張旅人として読み込み、専用の星図で遊べるようにします。外すと読みません。")]
+        public bool heroConnector = true;
+
         [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
         public bool roomOmens = true;
 

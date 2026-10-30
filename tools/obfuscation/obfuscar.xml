@@ -42,6 +42,8 @@
     <SkipType name="SodRpg.Mod.DreamforgeConfig" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.FrostFxLifetime" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.NativeDreamContent/SeedTemplateTag" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
+    <!-- ヒーローコネクタのランタイムAPI: 相手MODが FullName で探してリフレクションで呼ぶ（spec hero-connector §8）。 -->
+    <SkipType name="Dreamforge.Api.HeroConnector" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
 
     <!-- 2. 通信と保存の JSON で名前が外に出る型（新しい Msg・DTO を足したらここにも） -->
     <SkipType name="SodRpg.Core.Game.DreamEvent" skipFields="true" skipProperties="true" skipEvents="true" />
@@ -73,6 +75,7 @@
     <SkipType name="SodRpg.Mod.DreamforgeDreamEventStartedMsg" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.DreamforgeGemSlotConflictMsg" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.DreamforgeHelloMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeHeroConnectorMsg" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.DreamforgeInfinityAckMsg" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.DreamforgeInfinityPersonalChoiceAckMsg" skipFields="true" skipProperties="true" skipEvents="true" />
     <SkipType name="SodRpg.Mod.DreamforgeInfinityPersonalChoiceMsg" skipFields="true" skipProperties="true" skipEvents="true" />

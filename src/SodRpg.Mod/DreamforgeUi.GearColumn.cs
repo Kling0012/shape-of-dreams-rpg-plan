@@ -267,6 +267,9 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("旅人：", "Traveler:", "旅人："), _st.Small, PickerCaptionWidth);
             _pickerHeroes.Clear();
             _pickerHeroes.AddRange(KnownHeroes);
+            // 拡張旅人（ヒーローコネクタ §6-3）: Profile に状態が無くても装備欄で選べるように既存9人の後ろに足す。
+            foreach (var hero in ExtendedHeroes.Registered)
+                if (!_pickerHeroes.Contains(hero.Key)) _pickerHeroes.Add(hero.Key);
             foreach (string key in _s.Profile.Heroes.Keys)
                 if (key != "default" && !_pickerHeroes.Contains(key)) _pickerHeroes.Add(key);
             int idx = Math.Max(0, _pickerHeroes.IndexOf(HeroKey));

@@ -47,5 +47,23 @@ namespace SodRpg.Mod
         // #1010 自動分解の設定受け入れ。#1049 再現: 最後に渡された設定を記録してテストから見えるようにする。
         internal AutoSalvageRarity? AutoSalvageApplied;
         internal void ConfigureAutoSalvage(AutoSalvageRarity setting) { AutoSalvageApplied = setting; }
+        // ヒーローコネクタ（spec hero-connector §6-8）: BuildInputCapability.cs は未リンクのため同じ式の模倣。
+        internal bool? HeroConnectorApplied;
+        internal void ConfigureHeroConnector(bool enabled) { HeroConnectorApplied = enabled; }
+        // HostAuthority.Hello.cs の応答が呼ぶ。BuildInputCapability.cs と同じ組み立て。
+        internal static DreamforgeHeroConnectorMsg CreateHeroConnectorMessage()
+        {
+            var heroes = SodRpg.Core.Game.ExtendedHeroes.Registered;
+            var keys = new List<string>(heroes.Count);
+            var hashes = new List<string>(heroes.Count);
+            foreach (var hero in heroes) { keys.Add(hero.Key); hashes.Add(hero.DeclarationHash); }
+            var order = new int[heroes.Count];
+            for (int i = 0; i < order.Length; i++) order[i] = i;
+            System.Array.Sort(order, (a, b) => string.CompareOrdinal(keys[a], keys[b]));
+            var sortedKeys = new string[heroes.Count];
+            var sortedHashes = new string[heroes.Count];
+            for (int i = 0; i < order.Length; i++) { sortedKeys[i] = keys[order[i]]; sortedHashes[i] = hashes[order[i]]; }
+            return new DreamforgeHeroConnectorMsg { heroes = sortedKeys, hashes = sortedHashes };
+        }
     }
 }

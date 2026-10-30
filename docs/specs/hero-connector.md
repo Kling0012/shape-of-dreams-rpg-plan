@@ -49,7 +49,7 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
         "nodes": [
           { "id": "edge", "stat": "AttackPct", "perRank": 3, "maxRank": 3,
             "name": { "en": "Edge", "ja": "刃", "zh": "锋刃" } },
-          { "id": "focus", "stat": "CritChancePct", "perRank": 2, "maxRank": 3, "tier": 2,
+          { "id": "focus", "stat": "CritDamagePct", "perRank": 2, "maxRank": 3, "tier": 2,
             "name": { "en": "Focus", "ja": "集中", "zh": "专注" } },
           { "id": "nova_core", "keystone": true, "stat": "CritDamagePct", "value": 20,
             "name": { "en": "Nova Core", "ja": "新星の核", "zh": "新星之核" },
@@ -66,7 +66,7 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `dreamforgeApi` | 必須 | 整数。この仕様は 1。Dreamforge が知らない大きい値なら、ファイル全体を読まずに警告1回。 |
 | `heroes` | 必須 | 配列。1ファイルに複数の旅人を書ける。 |
 | `heroes[].key` | 必須 | Hero のサブクラスの型名。`Hero_` で始まる英数字と `_`（64文字まで）。 |
-| `heroes[].name` | 任意 | 表示名。`en`・`ja`・`zh`、ほかの言語コードも可（外部翻訳と同じコード）。無ければ `Hero_` を取った型名。足りない言語は `en`、次に型名へ落ちる。 |
+| `heroes[].name` | 任意 | 表示名。`en`・`ja`・`zh`（apiVersion 1 で読むのはこの3言語。ほかの言語コードは無視される）。無ければ `Hero_` を取った型名。足りない言語は `en`、次に型名へ落ちる。 |
 | `heroes[].melee` | 任意 | 近接の旅人なら true（既定 false）。Dreamforge の近接向けの扱い（`TravelerCombat.IsMelee` 系）に入る。 |
 | `heroes[].memories` | 任意 | その旅人の記憶（St_* の型名）と表示名。Dreamforge の画面で記憶名を出すときに使うだけで、装備・リンク・報酬の生成や数値には入らない。 |
 | `heroes[].starTree` | 任意 | 星図。無ければ汎用ツリー（`Content.Talents`。今の未知の旅人と同じ）。 |
@@ -102,9 +102,9 @@ apiVersion 1 で宣言できないもの（わざと入れない）:
 
 上限はコードに数値を書かず、起動時に既存9人の基準の旅人ツリー（`HeroSigils` の Core。ルート・星群・監修星図は含めない）から求める。既存の調整が変われば上限も一緒に動く。
 
-- 使える Stat: 既存9人の Core の通常の星で使われている Stat だけ。キーストーンは、既存9人の Core のキーストーンで使われている Stat だけ。
+- 使える Stat: 既存9人の Core の通常の星で使われている Stat だけ（通常の星・キーストーンの両方。Power 系は宣言できない）。既存9人の Core のキーストーンはすべて Power 系のため、キーストーンの Stat も通常の星と同じ集合から選ぶ。
 - 通常の星: `perRank` はその Stat の既存の最大 `PerRank` 以下、`maxRank` は既存の最大 `MaxRank` 以下。
-- キーストーン: `value` はその Stat の既存キーストーンの最大値以下。
+- キーストーン: `value` は既存9人のキーストーンの値の最大以下（Stat に関係なく一律）。
 - 数: 通常の星の数とキーストーンの数は、それぞれ既存9人の Core の最大以下。
 - 費用（`RankCost`）・熟練度の条件・割り当ての規則（`Rules`）は既存と同じものを使う。宣言では変えられない。
 

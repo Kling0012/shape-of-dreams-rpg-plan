@@ -44,6 +44,8 @@ namespace PressureReportUnderTest
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
         private SodRpg.Core.Game.Txt _hostVersionWarning;
         private string ForbiddenGearHostNotice;
+        // ヒーローコネクタ（spec hero-connector §9）: ClientSession.Hello.cs から抽出される ResetHello が書く。
+        private SodRpg.Core.Game.Txt _heroConnectorWarning;
         private void ResetOverflowBonusConnection() { }
         private void ResetHelloSchedule() => _nextBuildInputProbe = 0f;
         internal void Enable() => _hostAutocastPressureCapability = true;

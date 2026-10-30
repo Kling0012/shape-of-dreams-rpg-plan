@@ -28,6 +28,11 @@ namespace SodRpg.Mod
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
         partial void ApplyNativePerfConfig();
+        // ヒーローコネクタ（docs/specs/hero-connector.md §3-1）: MOD フォルダの dreamforge.json の走査。
+        // partial なので、このファイルだけをテストに含めた環境では呼び出しが消えてコンパイルされる。
+        partial void StartHeroConnectorScan();
+        partial void TickHeroConnectorPending();
+        partial void StopHeroConnectorScan();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -83,6 +88,10 @@ namespace SodRpg.Mod
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _session.ConfigureOverflowBonus(config.overflowDreamDust);
                 _session.ConfigureAutoSalvage(config.autoSalvageRarity);
+                // ヒーローコネクタ: 設定の反映と宣言の走査（起動時の1回。§3-1）。
+                HostAuthority.HeroConnectorEnabled = config.heroConnector;
+                _session.ConfigureHeroConnector(config.heroConnector);
+                StartHeroConnectorScan();
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
@@ -131,6 +140,9 @@ namespace SodRpg.Mod
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             _session?.ConfigureAutoSalvage(config.autoSalvageRarity);
+            // 設定の切り替えは広告・交換・API に即座に効く。走査自体は起動時とMOD読み込みの節目だけ（境界）。
+            HostAuthority.HeroConnectorEnabled = config.heroConnector;
+            _session?.ConfigureHeroConnector(config.heroConnector);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyAutoCastCoopConfig();
@@ -224,6 +236,7 @@ namespace SodRpg.Mod
             HandleKeys();
             LevelEssenceRuntime.Tick();
             TickAutoCastCoopConfig();
+            TickHeroConnectorPending();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();
@@ -464,6 +477,7 @@ namespace SodRpg.Mod
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
             StopNativeKillRewards();
+            StopHeroConnectorScan();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
