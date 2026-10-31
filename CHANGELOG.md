@@ -10,6 +10,20 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.85 — Hero Connector for other mods' travelers, plus co-op and performance fixes（2026-11-01）
+
+### 新機能 / New features
+- ほかの MOD が足した新しい旅人を、Dreamforge の装備・星図・協力プレイで使えるようにする連携の仕組み（ヒーローコネクタ）を追加しました。MOD の作者は JSON ファイルを1つ置くだけで対応できます。作り方は [MOD 作者向けガイド](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.ja.md) にあります。 / Added the Hero Connector: travelers added by other mods can now use Dreamforge's gear, star maps and co-op. Mod authors only need to add one JSON file; see the [guide for mod authors](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.md).
+
+### 不具合の修正 / Bug fixes
+- 協力プレイのゲストでスキルが使えないまま残る場合に備え、復旧用のチャージ再送まで省いていた処理を直しました。必殺技の充填待ちもホストへ照合し、3回の確認後も間隔を空けて再送を続けます。対応するホストとゲストでは、ホストの値と回復の結果をログに残します。 / Fixed charge deduplication suppressing recovery resends for co-op guests whose skills remain unusable. Recovery now checks ultimate charge waits with the host and continues retrying at longer intervals after three attempts. Updated hosts and guests log the host state and the observed recovery result.
+- 長く遊ぶほどメモリが増えて部屋の移動が重くなる問題について、MOD 側で破棄済みオブジェクトを参照し続けていた箇所を、部屋の区切りとホスト権限の終了時に解放するようにしました。 / For the issue where memory grew over long sessions and room changes slowed down, the MOD now releases its references to destroyed objects at room boundaries and when host authority ends.
+
+### 改善 / Improvements
+- プレイ中に Player.log へ書く行を減らし、部屋をクリアしたときなどの引っかかりを軽くしました。 / Reduced the number of lines written to Player.log during play to reduce stutters when clearing rooms and in similar situations.
+
+---
+
 ## v3.8.84 — Fewer redundant summon checks on the host（2026-10-25）
 
 この版では、召喚体を連れた英雄がいるときに、ホストのゲームが結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero had summons.
