@@ -9073,25 +9073,29 @@ namespace SodRpg.Mod
         {
             var code = new List<CodeInstruction>(instructions);
             if (!NativePerfOptions.BossPoolSpawnLog) return code;
-            var log = AccessTools.Method(typeof(Debug), nameof(Debug.Log), new[] { typeof(object) });
-            var concat = AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string[]) });
-            int logSite = -1;
-            for (int i = 0; log != null && i < code.Count; i++)
+            // Native shape (r1.4.1.2 IL checked): ldarg.0 / isinst BossMonster / brfalse <after log>
+            // / [string[7] array, String.Format x2, ternaries with their own internal branches,
+            // String.Join (boxes every element), String.Concat] / Debug.Log(obj). The log only
+            // reports the picked ability pool. Making the isinst always false keeps the branch
+            // taken for every monster, so the log string is never built and the log never runs,
+            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick
+            // stay identical for bosses and non-bosses alike.
+            //
+            // The guarded range is located by its guard (ldarg.0 / isinst BossMonster / brfalse)
+            // and vetted by what its instructions may do — the shipped body branches inside the
+            // range (the message's ternaries), so an exact-ending match like the one this patch
+            // used before r1.4.1.2 rejects the native shape itself and disables the skip. Reads
+            // (fields, 0-argument property getters, ToString, equality operators), string
+            // assembly (String.Format/Join/Concat) and Debug.Log* calls are all it may contain;
+            // no writes to fields or statics, no allocations, no pointer stores, no control
+            // leaving the range (every branch inside stays inside or lands on its merge label,
+            // nothing outside jumps in, no ret/throw), and no local it stores may be read after
+            // the range — so skipping the range removes only diagnostics a boss spawn would
+            // otherwise print. A third-party transpiler that adds an unvetted call inside the
+            // range fails the whitelist and leaves the method untouched with one warning.
+            if (!FindBossLogGuard(code, out int isinstSite, out string reason))
             {
-                if (!code[i].Calls(log)) continue;
-                if (logSite >= 0) { logSite = -2; break; }
-                logSite = i;
-            }
-            // Native shape: ldarg.0 / isinst BossMonster / brfalse <after log> / [string[7] array,
-            // String.Format x2, String.Join (boxes every element), String.Concat] / Debug.Log(obj).
-            // The log only reports the picked ability pool. Making the isinst always false keeps the
-            // branch taken for every monster, so the log string is never built and the log never runs,
-            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick stay
-            // identical for bosses and non-bosses alike.
-            if (logSite < 4 || concat == null || !code[logSite - 1].Calls(concat)
-                || !FindBossLogGuard(code, logSite, out int isinstSite))
-            {
-                NativePerfPatch.Warn(ref _warned, "boss pool log", "native [BossPool] log block changed or already patched");
+                NativePerfPatch.Warn(ref _warned, "boss pool log", reason);
                 return code;
             }
             code[isinstSite - 1].opcode = OpCodes.Nop;
@@ -9100,9 +9104,11 @@ namespace SodRpg.Mod
             return code;
         }
 
-        private static bool FindBossLogGuard(List<CodeInstruction> code, int logSite, out int isinstSite)
+        private static bool FindBossLogGuard(List<CodeInstruction> code, out int isinstSite, out string reason)
         {
             isinstSite = -1;
+            reason = null;
+            int found = -1;
             for (int i = 1; i < code.Count - 1; i++)
             {
                 if (code[i].opcode != OpCodes.Isinst || code[i].operand is not Type guard || guard != typeof(BossMonster)) continue;
@@ -9111,29 +9117,158 @@ namespace SodRpg.Mod
                 int end = -1;
                 for (int j = i + 2; j < code.Count; j++)
                     if (code[j].labels.Contains(skip)) { end = j; break; }
-                if (end != logSite + 1) continue;
-                bool clean = true;
-                for (int j = i + 2; j <= logSite && clean; j++)
+                if (end < 0) continue;
+                if (!IsLoggingOnlyRange(code, i + 2, end, out string why))
                 {
-                    // Nothing inside the block may be jumped at from outside, and every branch
-                    // inside it must stay inside: skipping the guard then skips exactly the log.
-                    if (code[j].labels.Count > 0) { clean = false; break; }
-                    // Branch operands are always a Label (or Label[] for switch); other operand
-                    // types mean this is no branch, so it needs no check.
-                    if (code[j].operand is Label inner)
-                    {
-                        bool inside = false;
-                        for (int k = i + 2; k <= logSite; k++)
-                            if (code[k].labels.Contains(inner)) { inside = true; break; }
-                        if (!inside) clean = false;
-                    }
-                    else if (code[j].operand is Label[]) clean = false;
+                    if (reason == null) reason = why;
+                    continue;
                 }
-                if (!clean) continue;
-                if (isinstSite >= 0) { isinstSite = -1; return false; }
+                if (found >= 0)
+                {
+                    isinstSite = -1;
+                    reason = "native [BossPool] guard block is ambiguous";
+                    return false;
+                }
+                found = i;
                 isinstSite = i;
             }
-            return isinstSite >= 0;
+            if (found < 0)
+            {
+                reason ??= "native [BossPool] log guard not found";
+                return false;
+            }
+            return true;
+        }
+
+        // [start, end) が「ログ文字列の組み立てと出力」だけをしている範囲か。許すのは
+        // 読み取り（ldfld/ldsfld、引数0の get_、ToString、等値演算子）、String の文字列
+        // 組み立て、Debug の Log 系呼び出し。状態を書く命令、確保、間接書き込み、範囲の
+        // 外へ出る制御、範囲の後で読まれるローカルへの書き込みが1つでもあれば偽。
+        private static bool IsLoggingOnlyRange(List<CodeInstruction> code, int start, int end, out string why)
+        {
+            why = null;
+            int stringCalls = 0;
+            var storedLocals = new HashSet<int>();
+            for (int i = start; i < end; i++)
+            {
+                var insn = code[i];
+                if (insn.opcode == OpCodes.Ret || insn.opcode == OpCodes.Jmp || insn.opcode == OpCodes.Throw
+                    || insn.opcode == OpCodes.Rethrow || insn.opcode == OpCodes.Leave || insn.opcode == OpCodes.Leave_S
+                    || insn.opcode == OpCodes.Endfinally)
+                {
+                    why = "guarded range leaves control (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.opcode == OpCodes.Stfld || insn.opcode == OpCodes.Stsfld
+                    || insn.opcode == OpCodes.Newobj || insn.opcode == OpCodes.Calli
+                    || insn.opcode == OpCodes.Starg || insn.opcode == OpCodes.Starg_S
+                    || insn.opcode == OpCodes.Stind_Ref || insn.opcode == OpCodes.Stind_I || insn.opcode == OpCodes.Stind_I1
+                    || insn.opcode == OpCodes.Stind_I2 || insn.opcode == OpCodes.Stind_I4 || insn.opcode == OpCodes.Stind_I8
+                    || insn.opcode == OpCodes.Stind_R4 || insn.opcode == OpCodes.Stind_R8 || insn.opcode == OpCodes.Stobj
+                    || insn.opcode == OpCodes.Ldflda || insn.opcode == OpCodes.Ldsflda
+                    || insn.opcode == OpCodes.Ldftn || insn.opcode == OpCodes.Ldvirtftn)
+                {
+                    why = "guarded range writes state or takes an address (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.operand is MethodInfo method)
+                {
+                    if ((insn.opcode != OpCodes.Call && insn.opcode != OpCodes.Callvirt)
+                        || !IsLoggingCall(method, ref stringCalls))
+                    {
+                        why = "guarded range calls " + (method.DeclaringType?.Name ?? "?") + "." + method.Name;
+                        return false;
+                    }
+                    continue;
+                }
+                if (insn.opcode == OpCodes.Stloc || insn.opcode == OpCodes.Stloc_S)
+                {
+                    if (insn.operand is LocalBuilder stored) storedLocals.Add(stored.LocalIndex);
+                    continue;
+                }
+                if (insn.opcode.Value >= OpCodes.Stloc_0.Value && insn.opcode.Value <= OpCodes.Stloc_3.Value)
+                {
+                    storedLocals.Add(insn.opcode.Value - OpCodes.Stloc_0.Value);
+                    continue;
+                }
+            }
+            if (stringCalls == 0)
+            {
+                why = "guarded range assembles no string";
+                return false;
+            }
+            // 範囲の中の分岐は範囲の中（または直後の合流点）へ。外からの中への飛び込みは不可。
+            var labelIndex = new Dictionary<Label, int>();
+            for (int i = 0; i < code.Count; i++)
+                foreach (var label in code[i].labels)
+                    if (!labelIndex.ContainsKey(label)) labelIndex.Add(label, i);
+            for (int i = 0; i < code.Count; i++)
+            {
+                bool inside = i >= start && i < end;
+                if (code[i].operand is Label target && labelIndex.TryGetValue(target, out int at))
+                {
+                    if (inside ? (at < start || at > end) : (at >= start && at < end))
+                    {
+                        why = "guarded range branch crosses its boundary";
+                        return false;
+                    }
+                }
+                else if (code[i].operand is Label[] targets)
+                {
+                    foreach (var item in targets)
+                        if (labelIndex.TryGetValue(item, out int jump))
+                        {
+                            if (inside ? (jump < start || jump > end) : (jump >= start && jump < end))
+                            {
+                                why = "guarded range branch crosses its boundary";
+                                return false;
+                            }
+                        }
+                }
+            }
+            // 範囲が書いたローカルを範囲の後で読んだら、飛ばすと後続の動作が変わる。
+            for (int i = end; i < code.Count; i++)
+            {
+                int index = LocalIndex(code[i]);
+                if (index >= 0 && storedLocals.Contains(index))
+                {
+                    why = "guarded range stores a local read afterwards";
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static int LocalIndex(CodeInstruction insn)
+        {
+            if (insn.operand is LocalBuilder local
+                && (insn.opcode == OpCodes.Ldloc || insn.opcode == OpCodes.Ldloc_S
+                    || insn.opcode == OpCodes.Ldloca || insn.opcode == OpCodes.Ldloca_S))
+                return local.LocalIndex;
+            if (insn.opcode.Value >= OpCodes.Ldloc_0.Value && insn.opcode.Value <= OpCodes.Ldloc_3.Value)
+                return insn.opcode.Value - OpCodes.Ldloc_0.Value;
+            return -1;
+        }
+
+        private static bool IsLoggingCall(MethodInfo method, ref int stringCalls)
+        {
+            var declaring = method.DeclaringType;
+            if (declaring == typeof(string))
+            {
+                if (method.Name == "Format" || method.Name == "Join" || method.Name == "Concat")
+                {
+                    stringCalls++;
+                    return true;
+                }
+                return false;
+            }
+            if (declaring == typeof(Debug))
+                return method.Name.StartsWith("Log", StringComparison.Ordinal);
+            if (method.Name == "ToString" && method.GetParameters().Length == 0) return true;
+            if (method.Name.StartsWith("get_", StringComparison.Ordinal)
+                && method.GetParameters().Length == 0 && method.ReturnType != typeof(void)) return true;
+            if (method.Name == "op_Equality" || method.Name == "op_Inequality") return true;
+            return false;
         }
     }
 
