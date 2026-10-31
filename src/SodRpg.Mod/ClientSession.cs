@@ -1043,6 +1043,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (!sendStarted)
                 {
                     // Encoding failed before the send API was called, so the host cannot have received this request.
+                    CompleteAutoSalvageLog(t.Token);
                     RestoreSalvageTrade(_trades.Complete(t.Token, false));
                     Log.Error("Client SendTrade preparation: " + ex.Message);
                     SaveNow();
@@ -1068,7 +1069,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             var taken = _trades.TakeLost();
             if (taken.Count == 0) return 0;
             foreach (var t in taken)
+            {
+                CompleteAutoSalvageLog(t.Token);
                 if (t.Kind != TradeKind.SatchelOverflowDust) RestoreSalvageTrade(t);
+            }
             Emit(new GameEvent(EventKind.Warning, Loc.T(
                 $"結果を確認できない取引{taken.Count}件を手放しました（対価は付いていません）。",
                 $"Gave up {taken.Count} trade(s) whose result could not be confirmed (no reward was granted).", $"已放弃{taken.Count}件无法确认结果的交易（未获得报酬）。")));
@@ -1108,7 +1112,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 }
                 if (outcome == TradeOutcome.Failed)
                 {
-                    _autoSalvageTokens.Remove(t.Token); // #1010: 自動分解の失敗はこれ以降 手の分解と同じ扱い
+                    CompleteAutoSalvageLog(t.Token); // #1010: 自動分解の失敗はこれ以降 手の分解と同じ扱い
                     RestoreSalvageTrade(t);
                     if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
                     else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
@@ -1133,11 +1137,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         {
                             // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
                             long paid = CountSalvageDustPaid(t.EarnDust);
-                            var salvageNotice = new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust", $"分解获得梦尘+{paid}"));
-                            // #1010: 自動分解の成功の案内は画面に出さずログにだけ残す。手の分解は従来どおり通知する。
-                            if (_autoSalvageTokens.Remove(t.Token)) EmitLogOnly(salvageNotice);
-                            else Emit(salvageNotice);
+                            // #1010: 自動分解の成功は送信単位のログにまとめる。手の分解は従来どおり通知する。
+                            if (_autoSalvageTokens.ContainsKey(t.Token)) EmitLogOnly(t.Token, paid);
+                            else Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust", $"分解获得梦尘+{paid}")));
                         }
+                        CompleteAutoSalvageLog(t.Token);
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();
                         return;
@@ -1778,6 +1782,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// <summary>終了時：予約済みの保存を書き終えるまで待つ。</summary>
         public void FlushSaves()
         {
+            FlushAutoSalvageLogs();
             if (_writer == null) return;
             bool drained = _writer.Flush();
             // 待機が終わっただけでは書けたことにならない：書き込みの失敗や時間切れは記録に残す
