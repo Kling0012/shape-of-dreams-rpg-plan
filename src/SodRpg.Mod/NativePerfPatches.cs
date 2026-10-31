@@ -5064,8 +5064,13 @@ namespace SodRpg.Mod
         {
             try
             {
+                // 本体のメタデータ上の名前は括弧のまま（"Network<selectedLoadout>k__BackingField"）。
+                // 逆コンパイラが C# の識別子に使えない括弧を _003C_003E へ置き換えて表示するため、
+                // 両方の綴りを試す（後者はテスト境界の型が C# で宣言できる名前）。
                 _target = AccessTools.PropertySetter(typeof(DewPlayer),
-                    "Network_003CselectedLoadout_003Ek__BackingField");
+                    "Network<selectedLoadout>k__BackingField")
+                    ?? AccessTools.PropertySetter(typeof(DewPlayer),
+                        "Network_003CselectedLoadout_003Ek__BackingField");
                 if (_target == null || _target.GetMethodBody() == null)
                     throw new MissingMethodException("DewPlayer.Network_<selectedLoadout>k__BackingField.set");
                 _isEmpty = BuildEmptyCheck(typeof(HeroLoadoutData));
