@@ -4985,8 +4985,10 @@ namespace SodRpg.Mod
         // is the exact shape of the idle loop.
         //
         // This prefix therefore skips the generated setter only when BOTH the incoming
-        // value and the field's current value are content-empty (the four skill ints are
-        // zero and all four star lists are null-or-empty). Anything non-empty passes
+        // value and the field's current value are content-empty — every instance field
+        // at its constructor default (the four skill ints zero, the four star lists
+        // null-or-empty, and anything else the live type holds at its default). Anything
+        // non-empty passes
         // untouched, the first real clear (non-empty -> empty) passes, and a null on
         // either side passes so the native setter keeps full authority over every
         // content change, every hook and every resync — the receiver-visible state after
@@ -4994,58 +4996,93 @@ namespace SodRpg.Mod
         // data the receiver already has. The per-frame `new HeroLoadoutData()` allocation
         // at the call site stays (gen0, one small object); the SyncVar churn, the network
         // resync and the hook storms are what disappear. The nativeMidJoinLoadoutIdle
-        // option turns the skip off; a renamed or missing weaver property — or a
-        // HeroLoadoutData whose instance fields no longer match the emptiness check below —
-        // disables the patch with one warning.
+        // option turns the skip off; a renamed or missing weaver property — or a type
+        // the emptiness predicate cannot be compiled from — disables the patch with one
+        // warning.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
+        private static Func<object, bool> _isEmpty;
 
-        // IsEmpty sees exactly the fields Mirror's weaver-generated writer serializes for
-        // HeroLoadoutData: the four skill ints and the four star lists (decompiled
-        // Dew.Core 2026-10-24 — the type holds no other instance field, public or not).
-        // A game update that adds, renames or drops one would silently narrow "empty" to
-        // a subset of the synced payload and could skip an assignment that changes the
-        // unseen field, so Prepare re-checks this shape at runtime and disables the patch
-        // when the instance fields no longer match by count and name. Non-public fields
-        // count too, because Mirror's weaver can sync a [SyncVar] the game declares
-        // non-public; a hidden extra field must fail the guard, not slip past IsEmpty.
-        internal static readonly string[] EmptyCheckFields =
-        {
-            "skillQ", "skillR", "skillTrait", "skillMovement",
-            "cDestruction", "cLife", "cImagination", "cFlexible",
-        };
-
-        internal static bool LoadoutShapeMatches(Type loadoutType)
+        // IsEmpty is not a remembered name list: Prepare compiles one predicate from the
+        // live type's own instance fields (public and non-public — Mirror's weaver can
+        // sync a [SyncVar] the game declares non-public), so the verdict always covers
+        // exactly the fields the type holds, including a field a game update or a
+        // third-party mod adds, renames or retypes. That keeps the guarantee the old
+        // by-name shape guard was enforcing (an "empty" verdict can never ignore part of
+        // the instance) without standing down over additive drift the runtime can verify
+        // on its own: an unknown field is simply one more default the constructor state
+        // must hold, and a field the fresh constructor state leaves non-default keeps
+        // both sides non-empty, so the skip stops engaging (fail-safe) instead of
+        // skipping an assignment that changes it.
+        internal static Func<object, bool> BuildEmptyCheck(Type loadoutType)
         {
             var fields = loadoutType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (fields.Length != EmptyCheckFields.Length) return false;
-            var expected = new HashSet<string>(EmptyCheckFields);
+            if (fields.Length == 0)
+                throw new MissingFieldException(loadoutType.Name + " has no instance fields to check");
+            var typed = Expression.Parameter(loadoutType, "data");
+            // Null is deliberately NOT empty so every null transition keeps reaching the
+            // setter.
+            Expression body = loadoutType.IsValueType
+                ? Expression.Constant(true)
+                : Expression.Not(Expression.ReferenceEqual(typed, Expression.Constant(null, loadoutType)));
             foreach (var field in fields)
-                if (!expected.Remove(field.Name)) return false;
-            return true;
+            {
+                var access = Expression.Field(typed, field);
+                Expression isEmpty;
+                if (!field.FieldType.IsValueType && typeof(ICollection).IsAssignableFrom(field.FieldType))
+                {
+                    // null OR Count == 0 — the shipped semantics of the star lists, now by
+                    // shape instead of by name (a fresh instance initializes them to empty
+                    // lists; a receiver-rebuilt one may hold nulls).
+                    isEmpty = Expression.OrElse(
+                        Expression.ReferenceEqual(access, Expression.Constant(null, field.FieldType)),
+                        Expression.Equal(
+                            Expression.Property(Expression.Convert(access, typeof(ICollection)), ICollectionCount),
+                            Expression.Constant(0)));
+                }
+                else if (field.FieldType.IsValueType)
+                {
+                    // 0 / false / default(struct) — EqualityComparer handles enums and
+                    // structs uniformly; a float default only ever stores +0, so the
+                    // comparer's 0 == -0 equivalence cannot mask a real constructor value.
+                    isEmpty = Expression.Call(ValueIsDefaultMethod.MakeGenericMethod(field.FieldType), access);
+                }
+                else
+                {
+                    isEmpty = Expression.ReferenceEqual(access, Expression.Constant(null, field.FieldType));
+                }
+                body = Expression.AndAlso(body, isEmpty);
+            }
+            var check = Expression.Lambda(body, typed);
+            var obj = Expression.Parameter(typeof(object), "value");
+            return Expression.Lambda<Func<object, bool>>(
+                Expression.Invoke(check, Expression.Convert(obj, loadoutType)), obj).Compile();
         }
 
-        private static string InstanceFieldNames(Type type)
-        {
-            var names = new List<string>();
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                names.Add(field.Name);
-            return string.Join(",", names);
-        }
+        private static readonly PropertyInfo ICollectionCount =
+            typeof(ICollection).GetProperty(nameof(ICollection.Count));
+
+        private static readonly MethodInfo ValueIsDefaultMethod =
+            typeof(NativeMidJoinLoadoutIdlePerf).GetMethod(nameof(ValueIsDefault),
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+        private static bool ValueIsDefault<T>(T value) => EqualityComparer<T>.Default.Equals(value, default);
 
         private static bool Prepare()
         {
             try
             {
+                // 本体のメタデータ上の名前は括弧のまま（"Network<selectedLoadout>k__BackingField"）。
+                // 逆コンパイラが C# の識別子に使えない括弧を _003C_003E へ置き換えて表示するため、
+                // 両方の綴りを試す（後者はテスト境界の型が C# で宣言できる名前）。
                 _target = AccessTools.PropertySetter(typeof(DewPlayer),
-                    "Network_003CselectedLoadout_003Ek__BackingField");
+                    "Network<selectedLoadout>k__BackingField")
+                    ?? AccessTools.PropertySetter(typeof(DewPlayer),
+                        "Network_003CselectedLoadout_003Ek__BackingField");
                 if (_target == null || _target.GetMethodBody() == null)
                     throw new MissingMethodException("DewPlayer.Network_<selectedLoadout>k__BackingField.set");
-                if (!LoadoutShapeMatches(typeof(HeroLoadoutData)))
-                    throw new MissingFieldException("HeroLoadoutData instance fields ["
-                        + InstanceFieldNames(typeof(HeroLoadoutData)) + "] != emptiness check ["
-                        + string.Join(",", EmptyCheckFields) + "]");
+                _isEmpty = BuildEmptyCheck(typeof(HeroLoadoutData));
                 return true;
             }
             catch (Exception ex)
@@ -5057,17 +5094,11 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
-        // True only when the value mirrors the HeroLoadoutData() constructor's state: the
-        // ints the weaver serializes first and the four star lists empty or absent. Null
-        // is deliberately NOT empty so every null transition keeps reaching the setter.
-        // Prepare's shape check guarantees this enumeration covers every instance field the
-        // weaver serializes, so "empty" can never miss a synced field it does not know.
-        private static bool IsEmpty(HeroLoadoutData data)
-            => data != null && data.skillQ == 0 && data.skillR == 0 && data.skillTrait == 0 && data.skillMovement == 0
-            && IsEmptyList(data.cDestruction) && IsEmptyList(data.cLife)
-            && IsEmptyList(data.cImagination) && IsEmptyList(data.cFlexible);
-
-        private static bool IsEmptyList(List<LoadoutStarItem> list) => list == null || list.Count == 0;
+        // True only when the value mirrors the HeroLoadoutData() constructor's state:
+        // every instance field the live type declares (known or foreign) sits at its
+        // default, per the compiled predicate above. Null is deliberately NOT empty so
+        // every null transition keeps reaching the setter.
+        private static bool IsEmpty(HeroLoadoutData data) => data != null && _isEmpty(data);
 
         private static bool Prefix(DewPlayer __instance, HeroLoadoutData value)
         {
@@ -7802,9 +7833,13 @@ namespace SodRpg.Mod
         // Unity normalizes on read — never match, so those keep writing every frame exactly
         // like the native body; only a bit-identical read-back is skipped. NaN values
         // compare unequal and are written, like in the native body. The transpiler
-        // re-points only those two call sites and
-        // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
-        // any other shape leaves the method unmodified with one warning.
+        // re-points every Transform position/rotation write in the body, whichever count it
+        // finds, because wrapping a call site preserves that call's semantics no matter who
+        // authored it (a third-party transpiler may have added or duplicated writes ahead of
+        // this one — the wrapper still performs the same write except when the transform
+        // already holds the identical bits, and the extra getter read it needs is
+        // side-effect free on a live transform); a body with no Transform write at all is a
+        // shape this patch does not understand, and it stands down with one warning.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -7827,10 +7862,10 @@ namespace SodRpg.Mod
                 if (method.Name == "set_position") position++;
                 else if (method.Name == "set_rotation") rotation++;
             }
-            if (position != 1 || rotation != 1)
+            if (position + rotation == 0)
             {
                 NativePerfPatch.Warn(ref _warned, "cast telegraph idle",
-                    "native UpdatePosition body changed (writes " + position + "/" + rotation + ")");
+                    "native UpdatePosition body has no Transform position/rotation write (writes " + position + "/" + rotation + ")");
                 return code;
             }
             for (int i = 0; i < code.Count; i++)
@@ -9047,25 +9082,29 @@ namespace SodRpg.Mod
         {
             var code = new List<CodeInstruction>(instructions);
             if (!NativePerfOptions.BossPoolSpawnLog) return code;
-            var log = AccessTools.Method(typeof(Debug), nameof(Debug.Log), new[] { typeof(object) });
-            var concat = AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string[]) });
-            int logSite = -1;
-            for (int i = 0; log != null && i < code.Count; i++)
+            // Native shape (r1.4.1.2 IL checked): ldarg.0 / isinst BossMonster / brfalse <after log>
+            // / [string[7] array, String.Format x2, ternaries with their own internal branches,
+            // String.Join (boxes every element), String.Concat] / Debug.Log(obj). The log only
+            // reports the picked ability pool. Making the isinst always false keeps the branch
+            // taken for every monster, so the log string is never built and the log never runs,
+            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick
+            // stay identical for bosses and non-bosses alike.
+            //
+            // The guarded range is located by its guard (ldarg.0 / isinst BossMonster / brfalse)
+            // and vetted by what its instructions may do — the shipped body branches inside the
+            // range (the message's ternaries), so an exact-ending match like the one this patch
+            // used before r1.4.1.2 rejects the native shape itself and disables the skip. Reads
+            // (fields, 0-argument property getters, ToString, equality operators), string
+            // assembly (String.Format/Join/Concat) and Debug.Log* calls are all it may contain;
+            // no writes to fields or statics, no allocations, no pointer stores, no control
+            // leaving the range (every branch inside stays inside or lands on its merge label,
+            // nothing outside jumps in, no ret/throw), and no local it stores may be read after
+            // the range — so skipping the range removes only diagnostics a boss spawn would
+            // otherwise print. A third-party transpiler that adds an unvetted call inside the
+            // range fails the whitelist and leaves the method untouched with one warning.
+            if (!FindBossLogGuard(code, out int isinstSite, out string reason))
             {
-                if (!code[i].Calls(log)) continue;
-                if (logSite >= 0) { logSite = -2; break; }
-                logSite = i;
-            }
-            // Native shape: ldarg.0 / isinst BossMonster / brfalse <after log> / [string[7] array,
-            // String.Format x2, String.Join (boxes every element), String.Concat] / Debug.Log(obj).
-            // The log only reports the picked ability pool. Making the isinst always false keeps the
-            // branch taken for every monster, so the log string is never built and the log never runs,
-            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick stay
-            // identical for bosses and non-bosses alike.
-            if (logSite < 4 || concat == null || !code[logSite - 1].Calls(concat)
-                || !FindBossLogGuard(code, logSite, out int isinstSite))
-            {
-                NativePerfPatch.Warn(ref _warned, "boss pool log", "native [BossPool] log block changed or already patched");
+                NativePerfPatch.Warn(ref _warned, "boss pool log", reason);
                 return code;
             }
             code[isinstSite - 1].opcode = OpCodes.Nop;
@@ -9074,9 +9113,11 @@ namespace SodRpg.Mod
             return code;
         }
 
-        private static bool FindBossLogGuard(List<CodeInstruction> code, int logSite, out int isinstSite)
+        private static bool FindBossLogGuard(List<CodeInstruction> code, out int isinstSite, out string reason)
         {
             isinstSite = -1;
+            reason = null;
+            int found = -1;
             for (int i = 1; i < code.Count - 1; i++)
             {
                 if (code[i].opcode != OpCodes.Isinst || code[i].operand is not Type guard || guard != typeof(BossMonster)) continue;
@@ -9085,29 +9126,158 @@ namespace SodRpg.Mod
                 int end = -1;
                 for (int j = i + 2; j < code.Count; j++)
                     if (code[j].labels.Contains(skip)) { end = j; break; }
-                if (end != logSite + 1) continue;
-                bool clean = true;
-                for (int j = i + 2; j <= logSite && clean; j++)
+                if (end < 0) continue;
+                if (!IsLoggingOnlyRange(code, i + 2, end, out string why))
                 {
-                    // Nothing inside the block may be jumped at from outside, and every branch
-                    // inside it must stay inside: skipping the guard then skips exactly the log.
-                    if (code[j].labels.Count > 0) { clean = false; break; }
-                    // Branch operands are always a Label (or Label[] for switch); other operand
-                    // types mean this is no branch, so it needs no check.
-                    if (code[j].operand is Label inner)
-                    {
-                        bool inside = false;
-                        for (int k = i + 2; k <= logSite; k++)
-                            if (code[k].labels.Contains(inner)) { inside = true; break; }
-                        if (!inside) clean = false;
-                    }
-                    else if (code[j].operand is Label[]) clean = false;
+                    if (reason == null) reason = why;
+                    continue;
                 }
-                if (!clean) continue;
-                if (isinstSite >= 0) { isinstSite = -1; return false; }
+                if (found >= 0)
+                {
+                    isinstSite = -1;
+                    reason = "native [BossPool] guard block is ambiguous";
+                    return false;
+                }
+                found = i;
                 isinstSite = i;
             }
-            return isinstSite >= 0;
+            if (found < 0)
+            {
+                reason ??= "native [BossPool] log guard not found";
+                return false;
+            }
+            return true;
+        }
+
+        // [start, end) が「ログ文字列の組み立てと出力」だけをしている範囲か。許すのは
+        // 読み取り（ldfld/ldsfld、引数0の get_、ToString、等値演算子）、String の文字列
+        // 組み立て、Debug の Log 系呼び出し。状態を書く命令、確保、間接書き込み、範囲の
+        // 外へ出る制御、範囲の後で読まれるローカルへの書き込みが1つでもあれば偽。
+        private static bool IsLoggingOnlyRange(List<CodeInstruction> code, int start, int end, out string why)
+        {
+            why = null;
+            int stringCalls = 0;
+            var storedLocals = new HashSet<int>();
+            for (int i = start; i < end; i++)
+            {
+                var insn = code[i];
+                if (insn.opcode == OpCodes.Ret || insn.opcode == OpCodes.Jmp || insn.opcode == OpCodes.Throw
+                    || insn.opcode == OpCodes.Rethrow || insn.opcode == OpCodes.Leave || insn.opcode == OpCodes.Leave_S
+                    || insn.opcode == OpCodes.Endfinally)
+                {
+                    why = "guarded range leaves control (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.opcode == OpCodes.Stfld || insn.opcode == OpCodes.Stsfld
+                    || insn.opcode == OpCodes.Newobj || insn.opcode == OpCodes.Calli
+                    || insn.opcode == OpCodes.Starg || insn.opcode == OpCodes.Starg_S
+                    || insn.opcode == OpCodes.Stind_Ref || insn.opcode == OpCodes.Stind_I || insn.opcode == OpCodes.Stind_I1
+                    || insn.opcode == OpCodes.Stind_I2 || insn.opcode == OpCodes.Stind_I4 || insn.opcode == OpCodes.Stind_I8
+                    || insn.opcode == OpCodes.Stind_R4 || insn.opcode == OpCodes.Stind_R8 || insn.opcode == OpCodes.Stobj
+                    || insn.opcode == OpCodes.Ldflda || insn.opcode == OpCodes.Ldsflda
+                    || insn.opcode == OpCodes.Ldftn || insn.opcode == OpCodes.Ldvirtftn)
+                {
+                    why = "guarded range writes state or takes an address (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.operand is MethodInfo method)
+                {
+                    if ((insn.opcode != OpCodes.Call && insn.opcode != OpCodes.Callvirt)
+                        || !IsLoggingCall(method, ref stringCalls))
+                    {
+                        why = "guarded range calls " + (method.DeclaringType?.Name ?? "?") + "." + method.Name;
+                        return false;
+                    }
+                    continue;
+                }
+                if (insn.opcode == OpCodes.Stloc || insn.opcode == OpCodes.Stloc_S)
+                {
+                    if (insn.operand is LocalBuilder stored) storedLocals.Add(stored.LocalIndex);
+                    continue;
+                }
+                if (insn.opcode.Value >= OpCodes.Stloc_0.Value && insn.opcode.Value <= OpCodes.Stloc_3.Value)
+                {
+                    storedLocals.Add(insn.opcode.Value - OpCodes.Stloc_0.Value);
+                    continue;
+                }
+            }
+            if (stringCalls == 0)
+            {
+                why = "guarded range assembles no string";
+                return false;
+            }
+            // 範囲の中の分岐は範囲の中（または直後の合流点）へ。外からの中への飛び込みは不可。
+            var labelIndex = new Dictionary<Label, int>();
+            for (int i = 0; i < code.Count; i++)
+                foreach (var label in code[i].labels)
+                    if (!labelIndex.ContainsKey(label)) labelIndex.Add(label, i);
+            for (int i = 0; i < code.Count; i++)
+            {
+                bool inside = i >= start && i < end;
+                if (code[i].operand is Label target && labelIndex.TryGetValue(target, out int at))
+                {
+                    if (inside ? (at < start || at > end) : (at >= start && at < end))
+                    {
+                        why = "guarded range branch crosses its boundary";
+                        return false;
+                    }
+                }
+                else if (code[i].operand is Label[] targets)
+                {
+                    foreach (var item in targets)
+                        if (labelIndex.TryGetValue(item, out int jump))
+                        {
+                            if (inside ? (jump < start || jump > end) : (jump >= start && jump < end))
+                            {
+                                why = "guarded range branch crosses its boundary";
+                                return false;
+                            }
+                        }
+                }
+            }
+            // 範囲が書いたローカルを範囲の後で読んだら、飛ばすと後続の動作が変わる。
+            for (int i = end; i < code.Count; i++)
+            {
+                int index = LocalIndex(code[i]);
+                if (index >= 0 && storedLocals.Contains(index))
+                {
+                    why = "guarded range stores a local read afterwards";
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static int LocalIndex(CodeInstruction insn)
+        {
+            if (insn.operand is LocalBuilder local
+                && (insn.opcode == OpCodes.Ldloc || insn.opcode == OpCodes.Ldloc_S
+                    || insn.opcode == OpCodes.Ldloca || insn.opcode == OpCodes.Ldloca_S))
+                return local.LocalIndex;
+            if (insn.opcode.Value >= OpCodes.Ldloc_0.Value && insn.opcode.Value <= OpCodes.Ldloc_3.Value)
+                return insn.opcode.Value - OpCodes.Ldloc_0.Value;
+            return -1;
+        }
+
+        private static bool IsLoggingCall(MethodInfo method, ref int stringCalls)
+        {
+            var declaring = method.DeclaringType;
+            if (declaring == typeof(string))
+            {
+                if (method.Name == "Format" || method.Name == "Join" || method.Name == "Concat")
+                {
+                    stringCalls++;
+                    return true;
+                }
+                return false;
+            }
+            if (declaring == typeof(Debug))
+                return method.Name.StartsWith("Log", StringComparison.Ordinal);
+            if (method.Name == "ToString" && method.GetParameters().Length == 0) return true;
+            if (method.Name.StartsWith("get_", StringComparison.Ordinal)
+                && method.GetParameters().Length == 0 && method.ReturnType != typeof(void)) return true;
+            if (method.Name == "op_Equality" || method.Name == "op_Inequality") return true;
+            return false;
         }
     }
 

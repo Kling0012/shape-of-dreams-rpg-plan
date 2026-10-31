@@ -21,8 +21,9 @@ namespace Issue73.Native.Tests
     /// 外部から動かされた transform は次の書き込みで計算値に戻ることを確かめる。
     /// あわせて Transpiler の書き込み数チェックを模倣の FxCastTelegraph
     /// （NativeEmbracePositionBoundary.cs の転写）に直接動かし、呼び出し箇所が
-    /// 1つずつの形では2つの書き込みだけをラッパーへ置き換えること、位置の書き込みが
-    /// 2つ並んだ形では命令を1つも変えず警告1回で下りること、置き換え後の
+    /// 1つずつの形では2つの書き込みだけをラッパーへ置き換えること、書き込みが
+    /// 3つに増えた形では3つすべてをラッパーへ置き換えること、書き込みが1つも
+    /// ない形では命令を1つも変えず警告1回で下りること、置き換え後の
     /// UpdatePosition が本体（パッチなし）と同じ最終値にすることを確かめる。
     /// </summary>
     public sealed class CastTelegraphIdlePerfTests
@@ -392,10 +393,14 @@ namespace Issue73.Native.Tests
             }
         }
 
-        // 位置の書き込みが2つ並んだ形の本体では、Transpiler は命令を1つも変えず
-        // （＝パッチが外れ）、警告は最初の1回だけ出る。2回目の照合でも警告は増えない。
+        // 位置の書き込みが2つ並んだ形（他MODの Transpiler が書き込みを足した後に
+        // Dreamforge が当たる場合を含む）では、3つの書き込みすべてをラッパーへ置き換え、
+        // 警告は出ない。ラッパーは「transform が既に同じビット値を保持しているときだけ
+        // 書き込みを省く」もので、書き込みの作者が誰でも同じ意味を保つため。
+        // Transform への書き込みが1つもない形では、このパッチが理解できない形として
+        // 命令を1つも変えず警告1回で下りる。2回目の照合でも警告は増えない。
         [Fact]
-        public void TwoPositionWritesAreLeftAloneWithASingleWarning()
+        public void ExtraWriteSitesAreAllWrappedAndNoWriteShapeStandsDown()
         {
             Assert.True(PreparePatch()); // 対象の解決
             var type = typeof(NativeCastTelegraphIdlePerf);
@@ -405,18 +410,53 @@ namespace Issue73.Native.Tests
             Log.Warnings.Clear();
             try
             {
-                var bad = typeof(FxCastTelegraph).GetMethod("UpdatePositionTwoSites", Hidden);
-                Assert.NotNull(bad);
+                // 2つ並びの形: 3つの書き込みすべてがラッパーへ置き換わる。
+                var two = typeof(FxCastTelegraph).GetMethod("UpdatePositionTwoSites", Hidden);
+                Assert.NotNull(two);
                 var transpiler = type.GetMethod("Transpiler", Hidden);
-                var before = PatchProcessor.GetOriginalInstructions(bad);
-                string original = string.Join(",", before.Select(i => i.opcode.Name));
-                var first = (IEnumerable<CodeInstruction>)transpiler.Invoke(null, new object[] { before });
-                Assert.Equal(original, string.Join(",", first.Select(i => i.opcode.Name))); // 変えていない
+                var before = PatchProcessor.GetOriginalInstructions(two);
+                var originals = before.Select(i => (opcode: i.opcode, operand: i.operand as MethodInfo)).ToArray();
+                var after = ((IEnumerable<CodeInstruction>)transpiler.Invoke(null, new object[] { before })).ToList();
+                Assert.Empty(Log.Warnings); // 警告なしで通る
+                Assert.Equal(originals.Length, after.Count);
+                int replacedPosition = 0, replacedRotation = 0;
+                for (int i = 0; i < after.Count; i++)
+                {
+                    MethodInfo original = originals[i].operand;
+                    if (original != null && original.DeclaringType == typeof(Transform))
+                    {
+                        if (original.Name == "set_position")
+                        {
+                            Assert.Equal(OpCodes.Call, after[i].opcode);
+                            Assert.Equal("WritePosition", Assert.IsAssignableFrom<MethodInfo>(after[i].operand).Name);
+                            replacedPosition++;
+                            continue;
+                        }
+                        if (original.Name == "set_rotation")
+                        {
+                            Assert.Equal(OpCodes.Call, after[i].opcode);
+                            Assert.Equal("WriteRotation", Assert.IsAssignableFrom<MethodInfo>(after[i].operand).Name);
+                            replacedRotation++;
+                            continue;
+                        }
+                    }
+                    Assert.Equal(originals[i].opcode, after[i].opcode); // 書き込み以外は変わらない
+                }
+                Assert.Equal(2, replacedPosition);
+                Assert.Equal(1, replacedRotation);
+
+                // 書き込みがない形: 命令を1つも変えず、警告は最初の1回だけ。
+                var none = typeof(FxCastTelegraph).GetMethod("UpdatePositionNoSites", Hidden);
+                Assert.NotNull(none);
+                var noneBefore = PatchProcessor.GetOriginalInstructions(none);
+                string originalNone = string.Join(",", noneBefore.Select(i => i.opcode.Name));
+                var first = (IEnumerable<CodeInstruction>)transpiler.Invoke(null, new object[] { noneBefore });
+                Assert.Equal(originalNone, string.Join(",", first.Select(i => i.opcode.Name))); // 変えていない
                 Assert.Single(Log.Warnings); // 警告は 1 回
                 Assert.Contains("cast telegraph idle", Log.Warnings[0]);
                 var second = (IEnumerable<CodeInstruction>)transpiler.Invoke(
-                    null, new object[] { PatchProcessor.GetOriginalInstructions(bad) });
-                Assert.Equal(original, string.Join(",", second.Select(i => i.opcode.Name)));
+                    null, new object[] { PatchProcessor.GetOriginalInstructions(none) });
+                Assert.Equal(originalNone, string.Join(",", second.Select(i => i.opcode.Name)));
                 Assert.Single(Log.Warnings); // 2 回目の照合でも警告は増えない
             }
             finally
