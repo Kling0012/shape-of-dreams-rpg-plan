@@ -158,6 +158,7 @@ namespace SodRpg.Mod
                 // essence-caps.json の kill switch で無効化されたパッチクラスは素通しが正しい状態なので、
                 // Prepare の false を失敗にせず診断の対象からも外す（2026-10-16 方針変更）。
                 if (KilledByEssenceCapConfig(type)) continue;
+                PatchMethodOwnership.StartupPatchClass = type;
                 try
                 {
                     var processor = harmony.CreateClassProcessor(type);
@@ -181,6 +182,7 @@ namespace SodRpg.Mod
                         {
                             if (original == null || original.GetMethodBody() == null)
                                 throw new MissingMethodException("Native target unavailable for " + info.method.FullDescription());
+                            PatchMethodOwnership.RecordStartupTarget(type, original);
                             if (!targets.TryGetValue(original, out var transpilers))
                             {
                                 transpilers = new List<HarmonyMethod>();
@@ -195,6 +197,7 @@ namespace SodRpg.Mod
                 {
                     throw new InvalidOperationException("Native preflight target/Prepare failed: " + type.FullName, ex);
                 }
+                finally { PatchMethodOwnership.StartupPatchClass = null; }
             }
             RuntimeHelpers.RunClassConstructor(typeof(HostAuthority).TypeHandle);
             BossDisplacementReuse.Prewarm();
@@ -206,6 +209,7 @@ namespace SodRpg.Mod
             foreach (var target in targets)
             {
                 if (target.Value.Count == 0) continue;
+                PatchMethodOwnership.StartupTarget = target.Key;
                 try
                 {
                     var patches = new List<Patch>();
@@ -228,6 +232,7 @@ namespace SodRpg.Mod
                 {
                     throw new InvalidOperationException("Native preflight composed IL failed: " + target.Key.FullDescription(), ex);
                 }
+                finally { PatchMethodOwnership.StartupTarget = null; }
             }
             Log.Info($"Native preflight passed: {classes} patch classes, {targets.Count} targets, {transpilerCount} transpilers (composed IL; no patches installed).");
         }

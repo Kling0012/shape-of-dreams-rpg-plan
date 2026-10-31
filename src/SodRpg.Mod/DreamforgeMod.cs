@@ -55,10 +55,12 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
+                PatchMethodOwnership.BeginStartup(harmony.Id);
                 // Native/IL/private-API checks are advisory; only actual patch installation
                 // failures can skip their own class, never unrelated features or the whole MOD.
                 try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
+                long preflightMs = startupWatch.ElapsedMilliseconds;
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
@@ -67,6 +69,7 @@ namespace SodRpg.Mod
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
+                long patchesEndMs = startupWatch.ElapsedMilliseconds;
                 stage = "resource initialization";
                 ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
                 Loc.Language = config.ResolveLanguage(ExternalLanguages.Select);
@@ -118,7 +121,9 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
                     + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
-                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupWatch.ElapsedMilliseconds} ms.");
+                long startupMs = startupWatch.ElapsedMilliseconds;
+                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupMs} ms "
+                    + $"(preflight {preflightMs} ms, patches {patchesEndMs - preflightMs} ms, resources {startupMs - patchesEndMs} ms).");
                 _originalGameplayFlag = instance.isAlteringGameplay;
                 _gameplayFlagChanged = true;
                 instance.isAlteringGameplay = true;
@@ -129,6 +134,7 @@ namespace SodRpg.Mod
                 Log.Error("Startup stopped during " + stage + ": " + ex);
                 Stop();
             }
+            finally { PatchMethodOwnership.EndStartup(); }
         }
 
         public override void OnConfigChanged()
@@ -518,6 +524,8 @@ namespace SodRpg.Mod
             int installed = 0;
             int installedInfinity = 0;
             var skipped = new List<string>();
+            var timings = new List<KeyValuePair<string, long>>();
+            var patchWatch = new System.Diagnostics.Stopwatch();
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
                 bool infinity = InfinityMode.IsNativePatch(type);
@@ -525,6 +533,9 @@ namespace SodRpg.Mod
                 bool hunter = type == typeof(InfinityHunterAdvance);
                 // The lobby start messages degrade alone as well: no Infinity switch-off for a missing message hook.
                 bool lobbyGuard = type == typeof(InfinityLobbyStartCondition);
+                bool patchClass = false;
+                PatchMethodOwnership.StartupPatchClass = type;
+                patchWatch.Restart();
                 try
                 {
                     if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
@@ -533,6 +544,7 @@ namespace SodRpg.Mod
                         if (lobbyGuard) InfinityMode.LobbyStartGuardUnavailable("Patch has no native target: " + type.FullName);
                         continue;
                     }
+                    patchClass = true;
                     var targets = harmony.CreateClassProcessor(type).Patch();
                     if (lobbyGuard && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
                     {
@@ -576,7 +588,8 @@ namespace SodRpg.Mod
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
-                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message
+                        + PatchMethodOwnership.ForeignOwners(type, harmony.Id));
                     LevelEssencePatchUnavailable(type);
                     bool earlierCopy = EarlierCopyHookIsLive(type);
                     if (hunter)
@@ -607,9 +620,20 @@ namespace SodRpg.Mod
                     try { RollBackClass(type); }
                     catch (Exception rollback) { Log.Warn("Patch class rollback failed: " + type.FullName + ": " + rollback); }
                 }
+                finally
+                {
+                    patchWatch.Stop();
+                    if (patchClass) timings.Add(new KeyValuePair<string, long>(type.FullName, patchWatch.ElapsedTicks));
+                    PatchMethodOwnership.StartupPatchClass = null;
+                }
             }
             InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+            timings.Sort((left, right) => right.Value.CompareTo(left.Value));
+            var slowest = new List<string>();
+            for (int i = 0; i < Math.Min(5, timings.Count); i++)
+                slowest.Add(timings[i].Key + " " + (timings[i].Value * 1000 / System.Diagnostics.Stopwatch.Frequency) + " ms");
+            Log.Info("Slowest patch classes (top 5): " + string.Join(", ", slowest));
         }
 
         /// <summary>
