@@ -17,11 +17,11 @@ namespace Issue73.Native.Tests
     /// false を返してセッターまで届かない（字段も書いた回数も変わらない。何度繰り返しても
     /// 同じ。星のリストが null の「空」も両側で同じ扱い）、(2) 内容の変わる代入
     /// （空 → 非空・非空 → 空・null が絡む両方向）はすべて本体のセッターに通る、
-    /// (3) 設定が無効のときは「空 → 空」も通る、(4) Prepare の字段照合
-    /// （HeroLoadoutData のインスタンス字段（公開・非公開とも）が空判定の8項目と数・名前で
-    /// 一致するか）は実機と同じ字段構成で通り、字段が増えた（非公開字段の追加を含む）・
-    /// 名前が変わった・減った型では false を返す（ゲーム更新で字段が増えたとき、警告1回で
-    /// 無効になる側）。
+    /// (3) 設定が無効のときは「空 → 空」も通る、(4) Prepare の空判定の組み立て
+    /// （HeroLoadoutData のインスタンス字段（公開・非公開とも）全てから空判定を
+    /// コンパイルする）は実機と同じ字段構成で通り、字段が増えた（非公開字段の追加を
+    /// 含む）・名前が変わった・減った型でも同じ「全字段が既定値か」の判定を組み立て、
+    /// 未知の字段が非既定なら空とは判定しない。
     /// </summary>
     public sealed class MidJoinLoadoutIdlePerfTests : IDisposable
     {
@@ -194,10 +194,11 @@ namespace Issue73.Native.Tests
             }
         }
 
-        // (4) 字段照合。実機と同じ8項目（境界の HeroLoadoutData）は通り、公開字段が
-        // 増えた・名前が変わった（項目数は同じ）・減った型は false。ゲーム更新で
-        // HeroLoadoutData に字段が追加されると Prepare はこの照合に失敗して警告1回で
-        // パッチを無効にする（空判定が同期対象の一部だけを見る事態を防ぐ）。
+        // (4) 空判定の組み立て。Prepare は名前一覧との照合ではなく、型の全インスタンス字段
+        // （公開・非公開とも）から空判定をコンパイルする。実機と同じ8項目の型は既定の new を
+        // 空と判定し、字段が増えた（非公開字段の追加を含む）・名前が変わった・減った型でも
+        // 同じ「全字段が既定値か」の判定が組み立てられ、未知の字段が非既定なら空から外れる
+        // （ゲーム更新や他MODの追加字段があっても、飛ばしてよい代入の範囲は広がらない）。
         private sealed class LoadoutWithExtraField
         {
             public int skillQ, skillR, skillTrait, skillMovement;
@@ -215,9 +216,8 @@ namespace Issue73.Native.Tests
             public List<LoadoutStarItem> cDestruction, cLife, cImagination, cFlexible;
         }
         // 公開8項目はそのままに非公開字段が1つ増えただけの型（#1144 レビュー F1）。
-        // Mirror の weaver は非公開字段への [SyncVar] も同期対象にできるため、公開字段
-        // だけの照合ではこの形がすり抜け、追加字段だけが変わる代入を「空 → 空」と誤って
-        // 飛ばし得る。照合は非公開字段も数・名前に入れるので false になる。
+        // Mirror の weaver は非公開字段への [SyncVar] も同期対象にできるため、空判定は
+        // 非公開字段も実行時に見る。追加字段が既定値でなければ空とは判定されない。
         private sealed class LoadoutWithHiddenSyncVar
         {
             public int skillQ, skillR, skillTrait, skillMovement;
@@ -226,13 +226,34 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
-        public void TheShapeGuardAcceptsTheVanillaFieldsAndRejectsAnyDrift()
+        public void TheEmptyCheckCoversEveryInstanceFieldWhateverItsShape()
         {
-            Assert.True(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(HeroLoadoutData)));
-            Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithExtraField)));
-            Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithRenamedField)));
-            Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutMissingAField)));
-            Assert.False(NativeMidJoinLoadoutIdlePerf.LoadoutShapeMatches(typeof(LoadoutWithHiddenSyncVar)));
+            // 境界（実機と同じ8項目）: 既定の new は空。null は空ではない。
+            var vanilla = NativeMidJoinLoadoutIdlePerf.BuildEmptyCheck(typeof(HeroLoadoutData));
+            Assert.True(vanilla(new HeroLoadoutData()));
+            Assert.False(vanilla(null));
+            Assert.False(vanilla(new HeroLoadoutData { skillQ = 1 }));
+            Assert.True(vanilla(NullListsLoadout())); // 星のリストが null の空も同じ扱い
+
+            // 字段が増えた型: 追加字段が既定の間は空、非既定なら空でない。
+            var extra = NativeMidJoinLoadoutIdlePerf.BuildEmptyCheck(typeof(LoadoutWithExtraField));
+            Assert.True(extra(new LoadoutWithExtraField()));
+            Assert.False(extra(new LoadoutWithExtraField { addedLater = 3 }));
+
+            // 非公開字段（weaver が同期対象にできる）も見る。
+            var hidden = NativeMidJoinLoadoutIdlePerf.BuildEmptyCheck(typeof(LoadoutWithHiddenSyncVar));
+            Assert.True(hidden(new LoadoutWithHiddenSyncVar()));
+            Assert.False(hidden(new LoadoutWithHiddenSyncVar { syncedQuietly = 1 }));
+
+            // 名前が変わっても・減っても、同じ「全字段が既定値か」の判定になる。
+            var renamed = NativeMidJoinLoadoutIdlePerf.BuildEmptyCheck(typeof(LoadoutWithRenamedField));
+            Assert.True(renamed(new LoadoutWithRenamedField()));
+            Assert.False(renamed(new LoadoutWithRenamedField
+            {
+                cStars = new List<LoadoutStarItem> { new LoadoutStarItem() },
+            }));
+            var missing = NativeMidJoinLoadoutIdlePerf.BuildEmptyCheck(typeof(LoadoutMissingAField));
+            Assert.True(missing(new LoadoutMissingAField()));
         }
     }
 }
