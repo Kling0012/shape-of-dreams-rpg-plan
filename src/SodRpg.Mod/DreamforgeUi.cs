@@ -226,8 +226,8 @@ namespace SodRpg.Mod
                 if (e.HintId.HasValue && !_hints.Contains(e.HintId.Value)) _hints.Add(e.HintId.Value);
                 return;
             }
-            if (e.Kind != EventKind.Drop && e.Kind != EventKind.Bounty) Log.Info(e.Text);
-            // #1010: 鞄あふれの欠片への変換は通知に出さない。ログとHUDの再構築は上で済ませているので、ここで止める。
+            if (e.Kind == EventKind.Warning) Log.Info(e.Text);
+            // #1010: 鞄あふれの欠片への変換は通知に出さない。HUDの再構築は上で済ませているので、ここで止める。
             if (e.SatchelOverflowCount > 0) return;
             if (!_cfg().showToasts && e.Kind == EventKind.Drop && e.Rarity.HasValue && e.Rarity.Value < Rarity.Rare) return;
             // #1010: 画面左の通知の最大行数（0〜7、既定7）。0のときはドロップと通常の案内を出さず、
