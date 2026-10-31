@@ -7819,9 +7819,13 @@ namespace SodRpg.Mod
         // Unity normalizes on read — never match, so those keep writing every frame exactly
         // like the native body; only a bit-identical read-back is skipped. NaN values
         // compare unequal and are written, like in the native body. The transpiler
-        // re-points only those two call sites and
-        // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
-        // any other shape leaves the method unmodified with one warning.
+        // re-points every Transform position/rotation write in the body, whichever count it
+        // finds, because wrapping a call site preserves that call's semantics no matter who
+        // authored it (a third-party transpiler may have added or duplicated writes ahead of
+        // this one — the wrapper still performs the same write except when the transform
+        // already holds the identical bits, and the extra getter read it needs is
+        // side-effect free on a live transform); a body with no Transform write at all is a
+        // shape this patch does not understand, and it stands down with one warning.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -7844,10 +7848,10 @@ namespace SodRpg.Mod
                 if (method.Name == "set_position") position++;
                 else if (method.Name == "set_rotation") rotation++;
             }
-            if (position != 1 || rotation != 1)
+            if (position + rotation == 0)
             {
                 NativePerfPatch.Warn(ref _warned, "cast telegraph idle",
-                    "native UpdatePosition body changed (writes " + position + "/" + rotation + ")");
+                    "native UpdatePosition body has no Transform position/rotation write (writes " + position + "/" + rotation + ")");
                 return code;
             }
             for (int i = 0; i < code.Count; i++)

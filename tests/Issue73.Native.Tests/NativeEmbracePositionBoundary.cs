@@ -148,6 +148,16 @@ namespace SodRpg.Mod
             transform.position = targetPosition;
             transform.rotation = targetRotation;
         }
+
+        // Transform の位置・向きの書き込みを1つも持たない形（本体の形が変わった/
+        // 他MODの Transpiler が書き込みを除去した後に Dreamforge が当たる場合の模倣）。
+        internal void UpdatePositionNoSites()
+        {
+            if (followPosition || followRotation)
+            {
+                targetPosition = default;
+            }
+        }
     }
 
     internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
