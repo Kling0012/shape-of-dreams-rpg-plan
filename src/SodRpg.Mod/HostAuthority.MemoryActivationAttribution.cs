@@ -298,8 +298,16 @@ namespace SodRpg.Mod
                 if (typeof(Actor).IsAssignableFrom(types[i])) names.Add(types[i], types[i].Name);
             return names;
         }
-        private static string NativeActorTypeName(Actor actor) =>
-            actor != null && NativeActorNames.TryGetValue(actor.GetType(), out var name) ? name : string.Empty;
+        // Actors from other mods (e.g. a hero mod's own skills) are not in the base assembly
+        // scanned above; name them by type too, or EquippedMechanismMemory rejects the empty
+        // name and the exception escapes into the native cast (Zhuang hero mod, 2026-11-01).
+        private static string NativeActorTypeName(Actor actor)
+        {
+            if (actor == null) return string.Empty;
+            var type = actor.GetType();
+            if (!NativeActorNames.TryGetValue(type, out var name)) NativeActorNames[type] = name = type.Name;
+            return name;
+        }
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
 
