@@ -1,0 +1,41 @@
+====== Vesperの星図 ======
+
+Vesperの星図です。星 881 個、到達刻印 11 個。内容はゲームのデータ（バージョン 3.8.85）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：4個
+  * 記憶の星：472個
+  * 橋の星：98個
+  * 外縁の星：307個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 審問の構え (Inquisitor's Stance) | 効果 \\ 敵からダメージを受けた後3秒間、攻撃力・魔力が25%上がる。重ならず、再発動すると効果時間が延びる。条件つきの攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120%まで。 \\ 必要ポイント：3 \\ Effect \\ Attack damage and ability power +25% for 3s after enemy damage; refreshes without stacking. Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ Cost: 3 points | 3 |
+| 鉄壁の審問 (Unbreakable Inquisition) | 効果 \\ 自分の周囲6m以内の敵1体につき、攻撃速度が4%上がる。最大8体分まで数える。 \\ 必要ポイント：3 \\ Effect \\ Attack speed +4% per enemy within 6m of you, counting up to 8 enemies \\ Cost: 3 points | 3 |
+| 遅れて届く光 (Delayed Light) | 効果 \\ 0.3秒後の追撃ダメージが100%増え、元の2倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 凝縮する日輪 (Condensed Sun) | 効果 \\ 範囲追加ダメージが100%増え、元の2倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ area extra damage: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 長い審判 (Long Judgement) | 効果 \\ 継続ダメージが80%増え、元の1.8倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ damage over time: +80% (×1.8). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 静かな城壁 (Silent Bulwark) | 効果 \\ 自分の障壁量が80%増え、元の1.8倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ self shield amount: +80% (×1.8). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 分かつ灯 (Shared Flame) | 効果 \\ HP回復量が100%増え、元の2倍になる。対象は自分が取得した星による該当効果のすべて。変更されるのは味方の旅人への効果だけで、自分への効果は変わらない。対象は自分だけでなく近くの味方旅人も回復する効果に限る。HP回復量の半径が50%増え、元の1.5倍になる。対象は自分が取得した星による該当効果のすべて。対象は自分だけでなく近くの味方旅人も回復する効果に限る。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ HP restored: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Changes the effect on: allied travelers only (your own effect is unchanged). \\ Applies only to effects that already heal nearby allied travelers as well as yourself. \\ HP restored: radius +50% (×1.5). \\ Applies to: all matching effects from stars you own. \\ Applies only to effects that already heal nearby allied travelers as well as yourself. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 帰還の誓い (Vow of Return) | 効果 \\ 残りクールダウン短縮量が40%増え、元の1.4倍になる。対象は自分が取得した星による該当効果のすべて。効果の受け手は記憶『重装タックル』。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。記憶『重装タックル』を装備している必要がある。 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: +40% (×1.4). \\ Applies to: all matching effects from stars you own. \\ Effect recipient: Memory “Heavy Strike”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ All must be equipped: Memory “Heavy Strike” \\ Cost: 1 point | 1 |
+| 一振りへの誓約 (Pledge of the Single Blow) | 効果 \\ 次の通常攻撃の追加ダメージが80%増え、元の1.8倍になる。対象は自分が取得した星による該当効果のすべて。次の通常攻撃の追加ダメージの持続時間を5秒から8秒に変更する。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ next basic attack extra damage: +80% (×1.8). \\ Applies to: all matching effects from stars you own. \\ next basic attack extra damage: duration 5s → 8s. \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 火種の評議 (Council of Embers) | 効果 \\ 敵の属性の種類数に応じた追加ダメージが80%増え、元の1.8倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ extra damage per element type on the enemy: +80% (×1.8). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 盾壁 (Shield Wall) | 効果 \\ 6m以内の味方に自分の防御の50%を加える。挑発系の記憶を使うと、その味方を狙う敵も自分へ引きつける。協力距離は10mまで全量、18mで0、範囲外は2秒の猶予。ソロでは発動しない。取得するには星『連撃の分かれ道』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Allies within 6m gain 50% of your armor. Taunting memories also draw enemies targeting those allies to you. Cooperation is full within 10m, falls to zero at 18m and has a 2s exit grace. Inactive solo. \\ Acquisition prerequisites (all required): star “Crossroads of the Flurry” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_vesper_core|核の星]]
+  * [[dreamforge:starmap_vesper_memory_1|記憶の星 1/3]]
+  * [[dreamforge:starmap_vesper_memory_2|記憶の星 2/3]]
+  * [[dreamforge:starmap_vesper_memory_3|記憶の星 3/3]]
+  * [[dreamforge:starmap_vesper_bridge|橋の星]]
+  * [[dreamforge:starmap_vesper_outer_1|外縁の星 1/2]]
+  * [[dreamforge:starmap_vesper_outer_2|外縁の星 2/2]]

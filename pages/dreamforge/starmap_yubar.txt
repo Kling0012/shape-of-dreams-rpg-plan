@@ -1,0 +1,41 @@
+====== Yubarの星図 ======
+
+Yubarの星図です。星 878 個、到達刻印 11 個。内容はゲームのデータ（バージョン 3.8.85）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：3個
+  * 記憶の星：304個
+  * 橋の星：105個
+  * 外縁の星：466個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 収束する星 (Converging Light) | 効果 \\ 奥義の記憶を使った後5秒間、攻撃力・魔力が20%上がる。重ならず、再使用すると効果時間が延びる。条件つきの攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120%まで。 \\ 必要ポイント：3 \\ Effect \\ Attack damage and ability power +20% for 5s after using an Ultimate memory; refreshes without stacking. Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ Cost: 3 points | 3 |
+| 星の盾 (Stellar Ward) | 効果 \\ 奥義の記憶を使ったとき、最大HPの15%の障壁を5秒間得る。 \\ 必要ポイント：3 \\ Effect \\ Shield +15% of your maximum health, granted to yourself for 5s when using an Ultimate memory \\ Cost: 3 points | 3 |
+| 散る星の記録 (Scattered Star Record) | 効果 \\ 0.3秒後の追撃ダメージ・範囲追加ダメージ・継続ダメージが60%増え、元の1.6倍になる。対象は記憶『エキゾチック物質』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『広がりの岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s / area extra damage / damage over time: +60% (×1.6). \\ Applies to: Memory “Exotic Matter”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork in the Spread” \\ Cost: 1 point | 1 |
+| 巡る軌道 (Returning Orbit) | 効果 \\ 0.3秒後の追撃ダメージ・範囲追加ダメージ・敵の属性の種類数に応じた追加ダメージが50%増え、元の1.5倍になる。対象は記憶『集まる星々』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『着弾の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s / area extra damage / extra damage per element type on the enemy: +50% (×1.5). \\ Applies to: Memory “Converging Stars”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork in the Landing” \\ Cost: 1 point | 1 |
+| 一点の星 (Single Star) | 効果 \\ 記憶の元々のダメージが35%増え、元の1.35倍になる。対象は記憶『エーテルの影響力』による該当効果。記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。発動元は、記憶が元々持つ効果に限る。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『炸裂の岐路』と星『残る光の層』と星『再発の爆光』をすべて取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Memory original damage: +35% (×1.35). \\ Applies to: Memory “Ether's Influence”. Changes only the memory's original damage, not star-generated extra damage. \\ Source: the memory's original effect. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork in the Detonation”, star “Layered Light”, star “Relit Radiance” \\ Cost: 1 point | 1 |
+| 遠い星雲 (Distant Nebula) | 効果 \\ 範囲追加ダメージの半径が80%増え、元の1.8倍になる。対象は記憶『超新星』による該当効果。範囲追加ダメージが40%増え、元の1.4倍になる。対象は記憶『超新星』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『爆轟の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ area extra damage: radius +80% (×1.8). \\ Applies to: Memory “Supernova”. \\ area extra damage: +40% (×1.4). \\ Applies to: Memory “Supernova”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork in the Blast” \\ Cost: 1 point | 1 |
+| 星雨の記憶 (Memory of Meteor Rain) | 効果 \\ 0.3秒後の追撃ダメージ・範囲追加ダメージ・継続ダメージが50%増え、元の1.5倍になる。対象は記憶『カタクリスム』による該当効果。継続ダメージの持続時間が50%増え、元の1.5倍になる。対象は記憶『カタクリスム』による該当効果。毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える。総量の上限は変わらない。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『衝撃の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s / area extra damage / damage over time: +50% (×1.5). \\ Applies to: Memory “Cataclysm”. \\ damage over time: duration +50% (×1.5). \\ Applies to: Memory “Cataclysm”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork in the Shock” \\ Cost: 1 point | 1 |
+| 凪の継承 (Calm Relay) | 効果 \\ 記憶の直接ダメージ増加量の持続時間が100%増え、元の2倍になる。対象は記憶『平静』による該当効果。記憶の直接ダメージ増加量が50%増え、元の1.5倍になる。対象は記憶『平静』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『静寂の癒やし』と星『凪の帷』をすべて取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Memory direct damage bonus: duration +100% (×2). \\ Applies to: Memory “Tranquility”. \\ Memory direct damage bonus: +50% (×1.5). \\ Applies to: Memory “Tranquility”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Healing Calm”, star “Curtain of Calm” \\ Cost: 1 point | 1 |
+| 超新星の残光 (Afterglow of the Supernova) | 効果 \\ 記憶『超新星』を使用したとき、8秒以内の次の自分の通常攻撃に、攻撃力・魔力の高い方の25%の追加ダメージを上乗せする。重ならず、次の通常攻撃への上乗せが複数あっても、消費されるのは最大の1つだけで、残りは保持される。1回の使用につき1回まで。再発動の間隔制限はない。取得するには星『爆轟の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Next basic attack extra damage +25% of the higher of attack damage and ability power. \\ Memory “Supernova” is used: 8s to use on your next basic attack (does not stack). Only the largest of all next-basic-attack bonuses is consumed; the others remain ready. \\ At most once per use. \\ No time-based cooldown. \\ Acquisition prerequisites (all required): star “Fork in the Blast” \\ Cost: 1 point | 1 |
+| 不安定な軌道 (Unstable Orbit) | 効果 \\ スキル加速が15増え、記憶のクールダウン回復が速くなる。 \\ 必要ポイント：1 \\ Effect \\ Gain 15 ability haste, speeding up memory cooldown recovery. \\ Cost: 1 point | 1 |
+| 共鳴する星屑 (Resonant Stardust) | 効果 \\ 直近2秒以内に味方が当てた敵への通常攻撃が30%強くなり、周囲2mへ魔力の40%の星屑ダメージを与える。内部クールダウン0.5秒。協力距離は10mまで全量、18mで0、範囲外は2秒の猶予。ソロでは発動しない。取得するには星『広がりの岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Basic attacks against enemies hit by allies within 2s deal 30% more damage and scatter 40% ability-power stardust within 2m. Cooldown: 0.5s. Cooperation is full within 10m, falls to zero at 18m and has a 2s exit grace. Inactive solo. \\ Acquisition prerequisites (all required): star “Fork in the Spread” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_yubar_core|核の星]]
+  * [[dreamforge:starmap_yubar_memory_1|記憶の星 1/2]]
+  * [[dreamforge:starmap_yubar_memory_2|記憶の星 2/2]]
+  * [[dreamforge:starmap_yubar_bridge|橋の星]]
+  * [[dreamforge:starmap_yubar_outer_1|外縁の星 1/3]]
+  * [[dreamforge:starmap_yubar_outer_2|外縁の星 2/3]]
+  * [[dreamforge:starmap_yubar_outer_3|外縁の星 3/3]]

@@ -1,0 +1,38 @@
+====== Aurenaの星図 ======
+
+Aurenaの星図です。星 744 個、到達刻印 11 個。内容はゲームのデータ（バージョン 3.8.85）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 記憶の星：444個
+  * 橋の星：120個
+  * 外縁の星：180個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 血の献身 (Blood Devotion) | 効果 \\ 自分の障壁量・範囲追加ダメージ・敵のスタン時間・0.3秒後の追撃ダメージ・火・冷気・光・闇の付与・敵の属性の種類数に応じた追加ダメージ・敵が自分から受けるダメージ増加量・命中した敵の数に応じた障壁量・近くの別の敵への追加ダメージ・敵の与ダメージ減少量・継続ダメージが100%増え、元の2倍になる。対象は装備中のQの記憶による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。 \\ 必要ポイント：3 \\ Effect \\ self shield amount / area extra damage / enemy stun duration / follow-up damage after 0.3s / Fire, Cold, Light or Dark application / extra damage per element type on the enemy / enemy damage taken from you / shield amount per enemy hit / extra damage to other nearby enemies / enemy damage dealt reduction / damage over time: +100% (×2). \\ Applies to: equipped Q memory. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 3 points | 3 |
+| 満ちた聖杯 (Brimming Chalice) | 効果 \\ 記憶『ゴールデンバースト』または記憶『還元』が元々行うHP支払いのたびに、実際に支払ったHPの50%の障壁を4秒間得る。1回の付与は最大HPの10%までで、通常の被ダメージは対象外。HP支払い自体は減らない。再発動の間隔制限はない。付与者と受け手の組ごとに、通常の星の障壁と1つを共有する。重ならず、残量の大きい方を保ったまま時間が延びる。 \\ 必要ポイント：3 \\ Effect \\ Shield +50% of HP actually paid (4s; each award capped at 10% maximum HP). \\ Applies only to the original HP payment of Memory “Golden Explosion” or Memory “Reduction”, not ordinary damage taken. Does not reduce the HP cost. No cooldown. \\ Shares one shield with ordinary star shields for each caster and recipient pair (does not stack; keeps the larger remaining amount and refreshes the duration). \\ Cost: 3 points | 3 |
+| 引き裂く証明 (Proof of Tearing) | 効果 \\ 継続ダメージが100%増え、元の2倍になる。対象は記憶『分解の爪』による該当効果。継続ダメージの持続時間が50%増え、元の1.5倍になる。対象は記憶『分解の爪』による該当効果。毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える。総量の上限は変わらない。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『爪の業の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ damage over time: +100% (×2). \\ Applies to: Memory “Dismantling Claw”. \\ damage over time: duration +50% (×1.5). \\ Applies to: Memory “Dismantling Claw”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Clawcraft Crossroads” \\ Cost: 1 point | 1 |
+| 散りゆく金羽 (Scattering Golden Feathers) | 効果 \\ 近くの別の敵への追加ダメージの対象数が1体増える。上限は2体まで。対象は記憶『美しい脅威』による該当効果。近くの別の敵への追加ダメージの半径が50%増え、元の1.5倍になる。対象は記憶『美しい脅威』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『羽の飛び先』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ extra damage to other nearby enemies: target count +1 targets. Cap: 2 targets. \\ Applies to: Memory “Beautiful Threat”. \\ extra damage to other nearby enemies: radius +50% (×1.5). \\ Applies to: Memory “Beautiful Threat”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Where Feathers Fly” \\ Cost: 1 point | 1 |
+| 静かな分解 (Quiet Decomposition) | 効果 \\ 継続ダメージが80%増え、元の1.8倍になる。対象は記憶『ゴールデンバースト』と記憶『還元』と記憶『連鎖反応』による該当効果。継続ダメージの持続時間が100%増え、元の2倍になる。対象は記憶『ゴールデンバースト』と記憶『還元』と記憶『連鎖反応』による該当効果。毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える。総量の上限は変わらない。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『陣の残し方』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ damage over time: +80% (×1.8). \\ Applies to: Memory “Golden Explosion”, Memory “Reduction”, Memory “Chain Reaction”. \\ damage over time: duration +100% (×2). \\ Applies to: Memory “Golden Explosion”, Memory “Reduction”, Memory “Chain Reaction”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “What the Array Leaves” \\ Cost: 1 point | 1 |
+| 広がる結論 (Wide Conclusion) | 効果 \\ 範囲追加ダメージの半径が100%増え、元の2倍になる。対象は記憶『危険な理論』による該当効果。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『結論の波及』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ area extra damage: radius +100% (×2). \\ Applies to: Memory “Dangerous Theory”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Reach of the Conclusion” \\ Cost: 1 point | 1 |
+| 分かち合う金膜 (Shared Golden Veil) | 効果 \\ 自分・味方の障壁量が100%増え、元の2倍になる。対象は自分が取得した星による該当効果のすべて。自分・味方の障壁量の持続時間が50%増え、元の1.5倍になる。対象は自分が取得した星による該当効果のすべて。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『金華の咲き方』と星『射ち出す輪の岐路』と星『陣の果ての岐路』をすべて取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Shield amount for yourself and allies: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Shield amount for yourself and allies: duration +50% (×1.5). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “How the Gold Blooms”, star “Crossroads of the Ring”, star “Crossroads of the Array’s End” \\ Cost: 1 point | 1 |
+| 帰路への集中 (Focus on the Return Path) | 効果 \\ 残りクールダウン短縮量が100%増え、元の2倍になる。対象は星『羽根が開く退路』と星『止めの羽の帰道』と星『理論の後の羽ばたき』と星『撃破の余勢の翼』と星『命中が呼ぶ帰路』と星『討てば開く帰路』と星『帰路の作り方』と星『撃って湧く追風』と星『仕留めて得る風』と星『理論からの追風』と星『己の型が呼ぶ風』と星『獲物の果ての風』と星『己の術の帰り道』と星『速射の合間の翼』と星『術の後の翼』と星『術のちの整え』による該当効果。効果の受け手は記憶『フェザーダッシュ』。倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。取得するには星『術のちの整え』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: +100% (×2). \\ Applies to: star “Escape the Feathers Open”, star “Homeward Path of the Kill”, star “Wingbeat After Theory”, star “Wings on Kill’s Momentum”, star “Hits That Call the Way Home”, star “Kills That Open the Way”, star “Ways to Forge the Way Home”, star “Tailwind Raised by Strikes”, star “Wind Won by the Kill”, star “Tailwind from Theory”, star “Wind Called by One’s Form”, star “Wind When Prey Falls”, star “Homeward by One’s Own Art”, star “Wings Between Volleys”, star “Wings After the Art”, star “Settling After the Art”. \\ Effect recipient: Memory “Feathery Dash”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Settling After the Art” \\ Cost: 1 point | 1 |
+| 黄金の余熱 (Golden Afterglow) | 効果 \\ 自分が与える障壁の量が40%増える。 \\ 必要ポイント：1 \\ Effect \\ Increases shields you grant by 40%. \\ Cost: 1 point | 1 |
+| 連鎖の鼓動 (Reaction Pulse) | 効果 \\ スキル加速が12増え、記憶のクールダウン回復が速くなる。 \\ 必要ポイント：1 \\ Effect \\ Gain 12 ability haste, speeding up memory cooldown recovery. \\ Cost: 1 point | 1 |
+| 黄金の託し (Golden Trust) | 効果 \\ 自分が回復した味方の与ダメージを3秒間15%増やす。その味方の与ダメージの10%で自分を回復する。協力距離は10mまで全量、18mで0、範囲外は2秒の猶予。ソロでは発動しない。取得するには星『爪の業の岐路』を取得している必要がある。 \\ 必要ポイント：1 \\ Effect \\ Allies you heal deal 15% more damage for 3s. Their damage heals you for 10%. Cooperation is full within 10m, falls to zero at 18m and has a 2s exit grace. Inactive solo. \\ Acquisition prerequisites (all required): star “Clawcraft Crossroads” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_aurena_memory_1|記憶の星 1/3]]
+  * [[dreamforge:starmap_aurena_memory_2|記憶の星 2/3]]
+  * [[dreamforge:starmap_aurena_memory_3|記憶の星 3/3]]
+  * [[dreamforge:starmap_aurena_bridge|橋の星]]
+  * [[dreamforge:starmap_aurena_outer|外縁の星]]
