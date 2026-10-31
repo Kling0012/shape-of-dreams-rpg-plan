@@ -125,6 +125,12 @@ namespace SodRpg.Mod
             }
         }
 
+        /// <summary>
+        /// サーバー停止後は SnapToOwners を呼ぶホスト権限のティック自体が止まるため、
+        /// 破棄された食材アクターが Tracked に残る。ホスト権限の終了時に参照を切る。
+        /// </summary>
+        internal static void ClearTracked() => Tracked.Clear();
+
         private static void Disable(Exception ex)
         {
             Stop();

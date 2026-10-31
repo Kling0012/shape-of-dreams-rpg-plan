@@ -1489,6 +1489,8 @@ namespace SodRpg.Mod
             _spawnQueue.Clear();
             _regen.Clear();
             _nightmares.Clear();
+            // メモリ: サーバー停止後はティックが止まるため、食材の追跡リストもここで切る。
+            try { CulinaryMagnet.ClearTracked(); } catch (Exception) { }
             if (_registeredOn != null)
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
