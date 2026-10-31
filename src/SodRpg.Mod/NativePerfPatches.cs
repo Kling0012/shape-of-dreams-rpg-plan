@@ -180,7 +180,11 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
-                if (target != null && target.GetMethodBody() != null) return target;
+                if (target != null && target.GetMethodBody() != null)
+                {
+                    PatchMethodOwnership.RecordStartupTarget(PatchMethodOwnership.StartupPatchClass, target);
+                    return target;
+                }
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
             catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
@@ -192,7 +196,11 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, arguments);
-                if (target != null && target.GetMethodBody() != null) return target;
+                if (target != null && target.GetMethodBody() != null)
+                {
+                    PatchMethodOwnership.RecordStartupTarget(PatchMethodOwnership.StartupPatchClass, target);
+                    return target;
+                }
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
             catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
@@ -203,7 +211,8 @@ namespace SodRpg.Mod
         {
             if (warned) return;
             warned = true;
-            Log.Warn("Native performance patch disabled: " + feature + ": " + reason);
+            Log.Warn("Native performance patch disabled: " + feature + ": " + reason
+                + PatchMethodOwnership.StartupForeignOwners());
         }
     }
 
