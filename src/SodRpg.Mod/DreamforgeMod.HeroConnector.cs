@@ -208,8 +208,11 @@ namespace SodRpg.Mod
             {
                 sb.Append("\nRegistered heroes:\n");
                 foreach (var hero in registered)
+                {
                     sb.Append("- ").Append(hero.Key).Append(" (").Append(string.IsNullOrEmpty(hero.SourceModId) ? "?" : hero.SourceModId)
                         .Append(hero.Tree != null ? ", own star tree" : ", generic star tree").Append(")\n");
+                    foreach (string warning in hero.EventWarnings) sb.Append("  warning: ").Append(warning).Append('\n');
+                }
             }
             return sb.ToString();
         }
