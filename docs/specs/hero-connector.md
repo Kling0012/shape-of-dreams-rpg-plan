@@ -68,19 +68,44 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `heroes[].key` | 必須 | Hero のサブクラスの型名。`Hero_` で始まる英数字と `_`（64文字まで）。 |
 | `heroes[].name` | 任意 | 表示名。`en`・`ja`・`zh`（apiVersion 1 で読むのはこの3言語。ほかの言語コードは無視される）。無ければ `Hero_` を取った型名。足りない言語は `en`、次に型名へ落ちる。 |
 | `heroes[].melee` | 任意 | 近接の旅人なら true（既定 false）。Dreamforge の近接向けの扱い（`TravelerCombat.IsMelee` 系）に入る。 |
-| `heroes[].memories` | 任意 | その旅人の記憶（St_* の型名）と表示名。Dreamforge の画面で記憶名を出すときに使うだけで、装備・リンク・報酬の生成や数値には入らない。 |
+| `heroes[].memories` | 任意 | その旅人の記憶（St_* の型名）と表示名。Dreamforge の画面での記憶名と、記憶の星の対象・装着条件の判定に使う。装備・リンク・報酬・図鑑の生成対象には加えない。 |
 | `heroes[].starTree` | 任意 | 星図。無ければ汎用ツリー（`Content.Talents`。今の未知の旅人と同じ）。 |
 | `starTree.nodes[].id` | 必須 | `[a-z0-9_]`、32文字まで。旅人の中で一意。実際の星IDは `x.<key>.<id>`。 |
-| `nodes[].stat` | 必須 | `Stat` の名前（例 `AttackPct`）。使える Stat と上限は §5。 |
-| `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。 |
+| `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。`stat`・`link`・`power` のうち1つを書く。使える種類と上限は §5。 |
+| `nodes[].link` / `memory` | 記憶の星で必須 | `LinkKind` の名前と、対象の記憶の型名。その旅人の `memories` で受け付けた記憶か、`Links` の名前簿にある既存の記憶だけを指定できる。キーストーンには使えない。 |
+| `nodes[].power` | Power の星で必須 | `Power` の名前。`keystone: true` と併用すると Power のキーストーンになる。 |
+| `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。 |
 | `nodes[].tier` | 任意 | 1（既定）または 2（奥の星）。 |
-| `nodes[].keystone` / `value` / `description` | キーストーンで必須 | キーストーン（到達刻印）。熟練度の条件は既存と同じ `HeroSigils.KeystoneMastery`。 |
+| `nodes[].keystone` / `value` | キーストーンで必須 | `keystone: true` と正の整数の `value` を書く。熟練度の条件は既存と同じ `HeroSigils.KeystoneMastery`。 |
+| `nodes[].description` | Stat のキーストーンで必須 | 説明文。Power のキーストーンでは省略でき、既存の Power の説明文を使う。 |
 | `nodes[].name` | 任意 | 表示名。無ければ id。 |
+| `nodes[].requires` | 任意 | 同じ旅人の星の `id` の配列。挙げた星のどれか1つを取ると、この星へ進める。省略した星は今までの自動のつながりを使う。空配列なら中心につながる。 |
+| `nodes[].position` | 任意 | `{ "ring": 1, "angle": -90 }` の形。`ring` は1以上の整数、`angle` は度を表す数値。0度は右、90度は下。省略した星は今までの自動配置を使う。 |
 
-apiVersion 1 で宣言できないもの（わざと入れない）:
+最初の例は従来の3星の宣言で、登録される星と配置は変わらない。次は、その例の `nodes` に追加できる記憶の星と Power の星・キーストーンの例。キーストーンの合計は §5 の上限内に収める。
+
+```json
+{ "id": "blink_damage", "link": "MemoryDamage", "memory": "St_Q_NovaBlink",
+  "perRank": 1, "maxRank": 3, "requires": ["edge", "focus"],
+  "position": { "ring": 2, "angle": -45.5 } }
+```
+
+```json
+{ "id": "aegis", "power": "Aegis", "perRank": 1, "maxRank": 3,
+  "requires": ["blink_damage"], "position": { "ring": 3, "angle": 0 } }
+```
+
+```json
+{ "id": "retaliation", "power": "Retaliation", "keystone": true, "value": 1,
+  "requires": ["aegis"], "position": { "ring": 4, "angle": 0 } }
+```
+
+`requires` は既存の星図と同じ無向の辺になる。通常の到達判定を使うため、取得した星から辺を逆向きにも進める。宣言に循環がある、参照先の id が無い、中心から届かない星がある場合は、その旅人の星図だけを汎用ツリーに戻し、理由を報告する。位置の半径は ring 1 が `InnerRadius`、2 が `DeepRadius`、3以降が `BranchRadius + BranchStep × (ring - 3)`。
+
+apiVersion 1 で宣言できないもの
 
 - 難易度・報酬・部屋の予兆などの旅人別スケール。拡張旅人は常に既定値（1.0）。
-- ペア連携、記憶ルート、監修星図、星群、Power 系の星、仕掛けを持つ星。
+- ペア連携、仕掛け（Gimmick）、選択の星（Choice）、監修星図の契約や機構、記憶ルート・夢の輪・星群そのものの定義。
 - 既存の旅人・既存の星・既存の記憶の値の変更。
 
 ## 4. 受け付けと拒否（fail-soft）
@@ -100,15 +125,14 @@ apiVersion 1 で宣言できないもの（わざと入れない）:
 
 ## 5. 星図の上限
 
-上限はコードに数値を書かず、起動時に既存9人の基準の旅人ツリー（`HeroSigils` の Core。ルート・星群・監修星図は含めない）から求める。既存の調整が変われば上限も一緒に動く。
+上限はコードに数値を書かず、起動時に既存9人の星から求める。既存の調整が変われば上限も一緒に動く。Stat の上限は従来のまま、新しい種類の上限は次の原典から求める。
 
-- 使える Stat: 既存9人の Core の通常の星で使われている Stat だけ（通常の星・キーストーンの両方。Power 系は宣言できない）。既存9人の Core のキーストーンはすべて Power 系のため、キーストーンの Stat も通常の星と同じ集合から選ぶ。
-- 通常の星: `perRank` はその Stat の既存の最大 `PerRank` 以下、`maxRank` は既存の最大 `MaxRank` 以下。
-- キーストーン: `value` は 1 以上、その Stat の通常の星の最大 `PerRank` × 最大 `MaxRank` 以下（既存の最も強い通常の星1つを満段にした値と同じ）。既存のキーストーンの値は Power 系で単位が違うため、上限の計算には使わない。
-- 数: 通常の星の数とキーストーンの数は、それぞれ既存9人の Core の最大以下。
-- 費用（`RankCost`）・熟練度の条件・割り当ての規則（`Rules`）は既存と同じものを使う。宣言では変えられない。
-
-並び（星図の座標）は既存の自動配置（調整座標の無い星の扇状配置）を使う。apiVersion 1 では座標を宣言しない。
+- Stat: 既存9人の Core の通常の星で使われている Stat だけを宣言できる。`perRank` はその Stat の既存の最大 `PerRank` 以下、`maxRank` は既存の最大 `MaxRank` 以下。Power の星を Stat の上限に数える従来の計算も変えない。
+- Stat のキーストーン: `value` は 1 以上、その Stat の通常の星の最大 `PerRank` × 最大 `MaxRank` 以下。既存の Power のキーストーンとは単位が違うため、その値は使わない。
+- 記憶の星: 既存9人の `HeroStarRoutes` の記憶ルートで使われている LinkKind だけを宣言できる（現在は `Guard`・`MemoryDamage`・`MemorySurge`・`MemoryHaste`）。`perRank` と `maxRank` は、それぞれその LinkKind の既存の最大 `LinkPerRank.Value` と最大 `MaxRank` 以下。`MemoryDamage` の値は丸めずに千分率まで受け付ける。
+- Power: 既存9人の Core・記憶ルート・深層で使われている Power だけを宣言できる。通常の星の `perRank` と `maxRank` は、それぞれその Power の通常の星の最大 `PerRank` と最大 `MaxRank` 以下。キーストーンの `value` は、その Power の既存のキーストーンの最大 `PowerValue` 以下。該当する種類の星が無い Power は、その種類には使えない。
+- 数: Stat・記憶・Power を合わせた通常の星の数は、既存9人の `TreeFor` の結果（Core・ルート・夢の輪・星群を含む）の通常の星数の最大以下。キーストーンの数は従来どおり Core の最大以下。
+- 費用（`RankCost`）・熟練度の条件・割り当ての規則（`Rules`）は既存と同じものを使う。宣言では変えられない。星を増やしても、取るためのポイントの獲得量は変わらない。
 
 ## 6. Dreamforge 側の変更点
 
@@ -119,7 +143,7 @@ apiVersion 1 で宣言できないもの（わざと入れない）:
 3. `TravelerCombat.IsMelee` は登録簿の `melee` を見る。MeleeCoop の設定の符号化（ビット列）は既存の旅人のまま変えない。
 4. 星図: 宣言が通った旅人は、既存の監修ツリーの登録口（`StarClusters` / `AuthoredStarRegistration` の TryGetRegisteredTree 系）と同じ形で `HeroSigils.TreeFor` から引ける。既存の監修星図の契約（`AuthoredStarContract`）は流用しなくてよい。拡張旅人専用の小さい登録口を作り、§5 の検証を通す。
 5. 装備欄の旅人選択（`DreamforgeUi.GearColumn` の KnownHeroes）に、登録簿の旅人を既存9人の後ろへ足す（Profile に状態が無くても選べる）。
-6. 記憶名: Dreamforge が記憶の表示名を引く所は、既存の名前簿に無ければ登録簿を見る。装備・リンク・報酬・図鑑の生成には入れない。
+6. 記憶: Dreamforge が記憶の表示名を引く所は、既存の名前簿に無ければ登録簿を見る。`Links.IsMemory` と装着条件の判定も拡張記憶を扱う。ただし、星図で参照できる拡張記憶はその旅人自身が宣言したものだけ。装備・リンク・報酬・図鑑の生成には入れない。
 7. 難易度・報酬・予兆の旅人別スケールは、拡張旅人では既存の `default`（1.0）を通るだけで、変更は要らない。
 8. 設定 `heroConnector`（`DreamforgeConfig`、既定 true）。false ならファイルを読まず、ランタイムAPIの登録も受け付けない。
 
@@ -129,7 +153,7 @@ apiVersion 1 で宣言できないもの（わざと入れない）:
 
 - Dreamforge の版と apiVersion。
 - 読んだファイル（供給元の id とパス）、受け付けた旅人、拒否した旅人と理由、星図を汎用にした理由。
-- §5 の上限表（使える Stat ごとの最大 perRank・maxRank・キーストーン値、星の数の上限）。作者はこの表を見て値を決められる。
+- §5 の上限表（Stat ごとの最大 perRank・maxRank・キーストーン値、LinkKind ごとの最大 perRank・maxRank、Power ごとの最大 perRank・maxRank・キーストーン値、星の数の上限）。作者はこの表を見て値を決められる。Power の表の 0 は、その種類の星を宣言できないことを表す。
 
 書き込みに失敗しても、警告1回で続ける。
 
@@ -189,5 +213,5 @@ static System.Type FindDreamforgeConnector()
 ## 12. 範囲外（この版ではしない）
 
 - Hero プレハブの登録、解錠、ロビーの並び（本体の仕組み。相手のMODの仕事）。
-- 拡張旅人の専用のペア連携・記憶ルート・監修星図・Power 系の星・旅人別スケール。
+- 拡張旅人の専用のペア連携、記憶ルート・夢の輪・星群そのものの定義、Gimmick・Choice・監修星図の契約や機構、旅人別スケール。
 - ほかの種類のMOD（記憶・本質・遺物を足すMOD）の接続。必要になったら同じファイルに新しい欄を足す形で広げる。

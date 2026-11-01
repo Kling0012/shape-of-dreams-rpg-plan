@@ -1,0 +1,2 @@
+### 新機能 / New features
+- ヒーローコネクタの星図に、記憶の星、Power の通常星とキーストーン、星の接続と位置を指定する欄を追加しました。通常星数の上限を既存9人の星図全体から求め、種類ごとの上限を作者向けの報告に載せます。従来の宣言はそのまま使えます。 / Added Hero Connector fields for memory stars, normal Power stars and Power keystones, connections, and positions. The normal-star count limit now follows the complete trees of the nine shipped travelers, and the author report lists limits by kind. Existing declarations remain compatible.
