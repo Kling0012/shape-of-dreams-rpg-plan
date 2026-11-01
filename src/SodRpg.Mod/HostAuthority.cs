@@ -354,23 +354,57 @@ namespace SodRpg.Mod
         // #161: null = 未判定（ティックの最初）。判定はティックごとに1回。
         private bool? _tickBossProfiles;
 
-        public void Tick()
+        public void Tick(PerfMeter.TickTimings timings = null)
         {
+            if (timings == null)
+            {
+                if (!NetworkServer.active)
+                {
+                    if (_pressurePlayerCount >= 0 || _registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
+                    return;
+                }
+                NativeInstance = this;
+                TickCoopTrade();
+                EnsureRegistered();
+                AutocastPressure.TickHost(this, _registeredOn);
+                if (_registeredOn == null) return;
+                if (_tickStages == null) BuildTickStages();
+                _tickBossProfiles = null;
+                _tickNow = Time.time;
+                _tickGuard.Run(Time.unscaledTime);
+                return;
+            }
             if (!NetworkServer.active)
             {
-                if (_pressurePlayerCount >= 0 || _registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
+                if (_pressurePlayerCount >= 0 || _registeredOn != null || _cem != null || _am != null || _zone != null)
+                {
+                    long detachStart = timings.BeginStage();
+                    try { Detach(); }
+                    finally { timings.EndStage(1, detachStart); }
+                }
                 return;
             }
             NativeInstance = this;
-            TickCoopTrade();
-            EnsureRegistered();
-            AutocastPressure.TickHost(this, _registeredOn);
+            long stageStart = timings.BeginStage();
+            try { TickCoopTrade(); }
+            finally { timings.EndStage(2, stageStart); }
+            stageStart = timings.BeginStage();
+            try { EnsureRegistered(); }
+            finally { timings.EndStage(3, stageStart); }
+            stageStart = timings.BeginStage();
+            try { AutocastPressure.TickHost(this, _registeredOn); }
+            finally { timings.EndStage(4, stageStart); }
             if (_registeredOn == null) return;
-            if (_tickStages == null) BuildTickStages();
+            if (_tickStages == null)
+            {
+                stageStart = timings.BeginStage();
+                try { BuildTickStages(); }
+                finally { timings.EndStage(5, stageStart); }
+            }
             // #161: ダメージイベントごとの全走査をやめ、ティックごとに1回だけ判定する。
             _tickBossProfiles = null;
             _tickNow = Time.time;
-            _tickGuard.Run(Time.unscaledTime);
+            _tickGuard.Run(Time.unscaledTime, timings, 6);
         }
 
         private void BuildTickStages()

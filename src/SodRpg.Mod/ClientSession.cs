@@ -263,7 +263,7 @@ namespace SodRpg.Mod
         private string[] _tickStepNames;
         private float[] _tickStepNextLog;
 
-        public void Tick()
+        public void Tick(PerfMeter.TickTimings timings = null)
         {
             if (_tickSteps == null)
             {
@@ -271,8 +271,30 @@ namespace SodRpg.Mod
                 _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "auto salvage", "curse resync", "skill lock watchdog", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
+            if (timings == null)
+            {
+                for (int i = 0; i < _tickSteps.Length; i++)
+                {
+                    try
+                    {
+                        _tickSteps[i]();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log at most every 10 s per step so a persistent fault does not flood the log every frame.
+                        if (Time.unscaledTime >= _tickStepNextLog[i])
+                        {
+                            _tickStepNextLog[i] = Time.unscaledTime + 10f;
+                            Log.Error("Client tick (" + _tickStepNames[i] + "): " + ex);
+                        }
+                    }
+                }
+                return;
+            }
+            timings.SetSteps(_tickSteps);
             for (int i = 0; i < _tickSteps.Length; i++)
             {
+                long stageStart = timings.BeginStage();
                 try
                 {
                     _tickSteps[i]();
@@ -285,6 +307,10 @@ namespace SodRpg.Mod
                         _tickStepNextLog[i] = Time.unscaledTime + 10f;
                         Log.Error("Client tick (" + _tickStepNames[i] + "): " + ex);
                     }
+                }
+                finally
+                {
+                    timings.EndStage(i, stageStart);
                 }
             }
         }

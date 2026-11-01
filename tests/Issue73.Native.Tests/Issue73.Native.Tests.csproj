@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="../../src/SodRpg.Mod/ExternalLanguages.cs" Link="ModUnderTest/ExternalLanguages.cs" />
     <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
+    <Compile Include="../../src/SodRpg.Mod/PerfMeter.cs" Link="ModUnderTest/PerfMeter.cs" />
     <Compile Include="../../src/SodRpg.Mod/ImeInput.cs" Link="ModUnderTest/ImeInput.cs" />
     <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
