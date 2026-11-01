@@ -237,24 +237,33 @@ namespace SodRpg.Mod
         private void Update()
         {
             if (!_running) return;
-            _perf.Frame(Time.unscaledDeltaTime);
-            _perf.Begin();
+            bool measure = _perfLogEnabled || _perfPolled;
+            if (measure)
+            {
+                _perf.Frame(Time.unscaledDeltaTime);
+                _perf.Begin();
+            }
             HandleKeys();
             LevelEssenceRuntime.Tick();
             TickAutoCastCoopConfig();
             TickHeroConnectorPending();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
-            _perf.BeginClient();
-            _session.Tick();
-            _perf.EndClient();
+            if (measure) _perf.BeginClient();
+            _session.Tick(measure ? _perf.ClientStages : null);
+            if (measure) _perf.EndClient();
             try
             {
-                _perf.BeginHost();
+                if (measure) _perf.BeginHost();
                 // 第2段: 重いフレームから持ち越された反応弾の生成を、ホスト処理の前に捌く。
-                NativeProcSpawnSpread.Tick();
-                _host?.Tick();
-                _perf.EndHost();
+                if (measure)
+                {
+                    long stageStart = _perf.HostStages.BeginStage();
+                    try { NativeProcSpawnSpread.Tick(); }
+                    finally { _perf.HostStages.EndStage(0, stageStart); }
+                }
+                else NativeProcSpawnSpread.Tick();
+                _host?.Tick(measure ? _perf.HostStages : null);
             }
             catch (Exception ex)
             {
@@ -266,6 +275,10 @@ namespace SodRpg.Mod
                     Log.Error("Host tick: " + ex);
                 }
             }
+            finally
+            {
+                if (measure) _perf.EndHost();
+            }
             // GUILayout を使うパネルが無いときは、IMGUI のレイアウト処理（OnGUI の Layout イベント）自体を止める。
             if (_ui != null)
             {
@@ -273,15 +286,15 @@ namespace SodRpg.Mod
                 _ui.LayoutEnabled = layout;
                 useGUILayout = layout;
             }
-            _perf.EndUpdate();
+            if (measure) _perf.EndUpdate();
             // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
-            TabPerf.Enabled = _perfLogEnabled || _perfPolled;
-            if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
+            TabPerf.Enabled = measure;
+            if (measure) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
                 Debug.Log("[DreamforgeRPG] perf " + _perf.Report() + TabPerf.Report() +
-                    $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+                    $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}" + _perf.ReportSpikes());
             }
         }
 
@@ -290,7 +303,7 @@ namespace SodRpg.Mod
         // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
         private bool _perfLogEnabled;
         private float _nextPerfLog;
-        // 計測用：dreamforge_perf が一度でも呼ばれたら、GC の割り当て計測を続ける。
+        // 計測用：dreamforge_perf が一度でも呼ばれたら、処理時間と GC の計測を続ける。
         private bool _perfPolled;
 
         private void HandleKeys()
@@ -327,10 +340,11 @@ namespace SodRpg.Mod
         private void OnGUI()
         {
             if (!_running) return;
-            _perf.Begin();
+            bool measure = _perfLogEnabled || _perfPolled;
+            if (measure) _perf.Begin();
             _session?.DrawBossEffects();
             _ui.Draw();
-            _perf.EndGui();
+            if (measure) _perf.EndGui();
         }
 
         private bool _devCommands;
@@ -348,9 +362,9 @@ namespace SodRpg.Mod
         private void PerfCommand()
         {
             if (!CommandAllowed()) return;
-            _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
+            _perfPolled = true; // 以後のフレームで処理時間と GC 割り当てを測る。
             Debug.Log("[DreamforgeRPG] " + _perf.Report() + TabPerf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
-                $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+                $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}" + _perf.ReportSpikes());
         }
 
         [ConsoleCommand("Dreamforge: toggle the gear/forge tab draw caches off/on to compare dreamforge_perf results (#500)", "dreamforge_perf_nocache")]

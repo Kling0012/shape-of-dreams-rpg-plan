@@ -419,12 +419,20 @@ namespace SodRpg.Mod
         public void Begin() { }
         public void EndUpdate() { }
         public void EndGui() { }
+        public readonly TickTimings ClientStages = new TickTimings();
+        public readonly TickTimings HostStages = new TickTimings();
         public void BeginClient() { }
         public void EndClient() { }
         public void BeginHost() { }
         public void EndHost() { }
         public void SampleGC() { }
         public string Report() => "";
+        public string ReportSpikes() => "";
+        internal sealed class TickTimings
+        {
+            public long BeginStage() => 0;
+            public void EndStage(int index, long start) { }
+        }
     }
     internal sealed class PerformanceTuner
     {
@@ -481,7 +489,7 @@ namespace SodRpg.Mod
         private void ResetInfinitySaveHold() { }
         public ClientSession(string dir, Action<GameEvent> notify) { SavePath = dir; _notify = notify; }
         public void FirstLaunch() { }
-        public void Tick() { }
+        public void Tick(PerfMeter.TickTimings timings = null) { }
         public void DrawBossEffects() { }
         public void SaveNow() { }
         public void FlushSaves() { }
@@ -515,7 +523,7 @@ namespace SodRpg.Mod
         public bool IsActive;
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }
-        public void Tick() { }
+        public void Tick(PerfMeter.TickTimings timings = null) { }
         public void RefreshLevelGemSlots() { }
         internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
