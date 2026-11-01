@@ -12,7 +12,8 @@ namespace SodRpg.Mod
     /// 本体が読み込んだ有効なMODのフォルダ直下の dreamforge.json を読み、Core の登録簿（ExtendedHeroes）へ渡す。
     /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は再解析しても重ねて登録しない。
     /// 遠征中は登録を変えない（§3-1）: 届いた宣言は保留し、遠征から出たら反映する。
-    /// この実装は本体の MOD API（DewMod）に依存するため、テスト用プロジェクトには含めない。
+    /// この実装は本体の MOD API（DewMod）に依存する。検証（Issue73.Native.Tests）は
+    /// HeroConnectorBoundary.cs の形だけの境界を介してこの実ソースをコンパイルする。
     /// DreamforgeMod.cs からの呼び出しは partial メソッド経由で、ここが無ければ呼び出し自体が消える。
     /// </summary>
     public partial class DreamforgeMod
@@ -22,14 +23,13 @@ namespace SodRpg.Mod
         /// <summary>供給元 id → 宣言ファイルのパス（報告ファイル用）。</summary>
         private static readonly Dictionary<string, string> DeclarationPathByModId = new Dictionary<string, string>(StringComparer.Ordinal);
         /// <summary>遠征中に届いた宣言（走査とランタイムAPIの両方）。遠征から出たら反映する。</summary>
-        private static readonly List<KeyValuePair<string, string>> PendingDeclarations = new List<KeyValuePair<string, string>>();
-        /// <summary>供給元ごとの直近の走査・API 登録の結果（§7 の報告の材料）。</summary>
-        private static readonly List<ExtendedHeroFileResult> LastResults = new List<ExtendedHeroFileResult>();
+        private static readonly List<(string ModId, string Text, bool ThroughApi)> PendingDeclarations = new List<(string ModId, string Text, bool ThroughApi)>();
+        /// <summary>供給元・経路ごとの直近の登録結果（§7 の報告の材料）。</summary>
+        private static readonly List<(bool ThroughApi, ExtendedHeroFileResult Result)> LastResults = new List<(bool ThroughApi, ExtendedHeroFileResult Result)>();
         // Scan callbacks, pending updates, and runtime API registration run on Unity's main thread.
         // Connector collections rely on that host/caller contract, just like LastResults.
-        private static readonly Dictionary<string, ConnectorDeclaration> LastDeclarationByModId = new Dictionary<string, ConnectorDeclaration>(StringComparer.Ordinal);
-        /// <summary>ランタイムAPIで登録した供給元。走査で見つからなくても報告から外さない。</summary>
-        private static readonly HashSet<string> ApiRegisteredModIds = new HashSet<string>(StringComparer.Ordinal);
+        // A MOD can supply different declarations through its file and the runtime API.
+        private static readonly Dictionary<(string ModId, bool ThroughApi), ConnectorDeclaration> LastDeclarations = new Dictionary<(string ModId, bool ThroughApi), ConnectorDeclaration>();
 
         private sealed class ConnectorDeclaration
         {
@@ -68,7 +68,7 @@ namespace SodRpg.Mod
             if (PendingDeclarations.Count == 0 || !HostAuthority.HeroConnectorEnabled || InExpedition) return;
             var pending = PendingDeclarations.ToArray();
             PendingDeclarations.Clear();
-            foreach (var kv in pending) ApplyDeclaration(kv.Key, kv.Value);
+            foreach (var declaration in pending) ApplyDeclaration(declaration.ModId, declaration.Text, declaration.ThroughApi);
         }
 
         /// <summary>遠征中か（§3-1: 遠征中は登録簿を変えない）。</summary>
@@ -128,13 +128,14 @@ namespace SodRpg.Mod
         {
             for (int i = LastResults.Count - 1; i >= 0; i--)
             {
-                string source = LastResults[i].SourceModId ?? "";
-                if (!scanned.Contains(source) && !ApiRegisteredModIds.Contains(source)) LastResults.RemoveAt(i);
+                var entry = LastResults[i];
+                string source = entry.Result.SourceModId ?? "";
+                if (!entry.ThroughApi && !scanned.Contains(source)) LastResults.RemoveAt(i);
             }
-            var stale = new List<string>();
-            foreach (var modId in LastDeclarationByModId.Keys)
-                if (!scanned.Contains(modId) && !ApiRegisteredModIds.Contains(modId)) stale.Add(modId);
-            foreach (var modId in stale) LastDeclarationByModId.Remove(modId);
+            var stale = new List<(string ModId, bool ThroughApi)>();
+            foreach (var source in LastDeclarations.Keys)
+                if (!source.ThroughApi && !scanned.Contains(source.ModId)) stale.Add(source);
+            foreach (var source in stale) LastDeclarations.Remove(source);
         }
 
         /// <summary>サイズを制限して宣言とマニフェストを読む。</summary>
@@ -186,19 +187,20 @@ namespace SodRpg.Mod
             return ReadConnectorFile(full);
         }
 
-        private static void ApplyDeclaration(string modId, string text)
+        private static void ApplyDeclaration(string modId, string text, bool throughApi = false)
         {
             if (InExpedition)
             {
-                PendingDeclarations.Add(new KeyValuePair<string, string>(modId, text));
+                PendingDeclarations.Add((modId, text, throughApi));
                 return;
             }
-            RecordConnectorResult(RegisterConnectorDeclaration(modId, text));
+            RecordConnectorResult(RegisterConnectorDeclaration(modId, text, throughApi), throughApi);
             WriteConnectorReport();
         }
 
-        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text)
+        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text, bool throughApi)
         {
+            var source = (ModId: modId, ThroughApi: throughApi);
             var manifests = new Dictionary<string, string>(StringComparer.Ordinal);
             bool cacheable = true;
             string Read(string path)
@@ -216,7 +218,7 @@ namespace SodRpg.Mod
                     throw;
                 }
             }
-            if (LastDeclarationByModId.TryGetValue(modId, out var previous) && previous.Text == text)
+            if (LastDeclarations.TryGetValue(source, out var previous) && previous.Text == text)
             {
                 bool unchanged = true;
                 foreach (var manifest in previous.Manifests)
@@ -227,22 +229,25 @@ namespace SodRpg.Mod
                 if (unchanged) return previous.Result;
             }
             var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
+            // A rejection is deterministic while the text and its manifests are unchanged, so cache it too:
+            // re-parsing would only repeat the same warning on every scan. A manifest read failure
+            // (cacheable=false) is the transient kind and stays uncached for the next scan to retry.
             if (cacheable)
-                LastDeclarationByModId[modId] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
+                LastDeclarations[source] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
             else
-                LastDeclarationByModId.Remove(modId);
+                LastDeclarations.Remove(source);
             return result;
         }
 
-        private static void RecordConnectorResult(ExtendedHeroFileResult result)
+        private static void RecordConnectorResult(ExtendedHeroFileResult result, bool throughApi)
         {
             for (int i = 0; i < LastResults.Count; i++)
-                if (LastResults[i].SourceModId == result.SourceModId)
+                if (LastResults[i].ThroughApi == throughApi && LastResults[i].Result.SourceModId == result.SourceModId)
                 {
-                    LastResults[i] = result;
+                    LastResults[i] = (throughApi, result);
                     return;
                 }
-            LastResults.Add(result);
+            LastResults.Add((throughApi, result));
         }
 
         /// <summary>ランタイムAPI（Dreamforge.Api.HeroConnector.RegisterHeroes）からの登録。走査と同じ道を通る。</summary>
@@ -262,17 +267,15 @@ namespace SodRpg.Mod
                     return false;
                 }
                 string source = string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId;
-                // API で登録した供給元は走査対象外なので、走査後の整理でも報告から外さない。
-                ApiRegisteredModIds.Add(source);
                 if (InExpedition)
                 {
                     // §8: 遠征中は保留して true を返し、error に保留の旨を入れる。
-                    PendingDeclarations.Add(new KeyValuePair<string, string>(source, json));
+                    PendingDeclarations.Add((source, json, true));
                     error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
                     return true;
                 }
-                var result = RegisterConnectorDeclaration(source, json);
-                RecordConnectorResult(result);
+                var result = RegisterConnectorDeclaration(source, json, true);
+                RecordConnectorResult(result, true);
                 WriteConnectorReport();
                 bool all = result.FileError == null;
                 foreach (var hero in result.Heroes)
@@ -312,11 +315,13 @@ namespace SodRpg.Mod
             catch (Exception ex) { sb.Append("Star limits unavailable: ").Append(ex.Message).Append('\n'); }
             sb.Append("\nDeclaration files:\n");
             bool any = false;
-            foreach (var result in LastResults)
+            foreach (var entry in LastResults)
             {
+                var result = entry.Result;
                 any = true;
                 sb.Append("- ").Append(string.IsNullOrEmpty(result.SourceModId) ? "?" : result.SourceModId);
-                if (DeclarationPathByModId.TryGetValue(result.SourceModId ?? "", out string path)) sb.Append(": ").Append(path);
+                if (entry.ThroughApi) sb.Append(": runtime API");
+                else if (DeclarationPathByModId.TryGetValue(result.SourceModId ?? "", out string path)) sb.Append(": ").Append(path);
                 sb.Append('\n');
                 if (result.FileError != null) sb.Append("  file rejected: ").Append(result.FileError).Append('\n');
                 foreach (var hero in result.Heroes)
