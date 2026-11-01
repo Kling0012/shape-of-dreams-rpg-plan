@@ -473,17 +473,24 @@ namespace SodRpg.Core.Game
 
         private static bool ManifestMessageNamesStar(string message, string id)
         {
-            bool IdChar(char c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
-                || c >= '0' && c <= '9' || c == '_' || c == '.' || c == '-';
+            // 空 ID は IndexOf が常に現在位置を返し、境界判定が偽のまま start も進まなくなるため対象外にする。
+            if (string.IsNullOrEmpty(id)) return false;
+            bool WordChar(char c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+                || c >= '0' && c <= '9' || c == '_';
+            bool IdChar(char c) => WordChar(c) || c == '.' || c == '-';
+            // '.' と '-' は ID の区切りにも句読点にもなる。直後が単語文字なら長い ID の続き、
+            // そうでなければ "…on star x.hero.foo." の文末句読点とみなして語の終わりとする。
+            bool WordEnds(string text, int at) => at >= text.Length || !IdChar(text[at])
+                || (text[at] == '.' || text[at] == '-') && (at + 1 >= text.Length || !WordChar(text[at + 1]));
             int start = 0;
             while (start < message.Length)
             {
                 int at = message.IndexOf(id, start, StringComparison.Ordinal);
                 if (at < 0) return false;
                 int end = at + id.Length;
-                if ((at == 0 || !IdChar(message[at - 1])) && (end == message.Length || !IdChar(message[end])))
+                if ((at == 0 || !IdChar(message[at - 1])) && WordEnds(message, end))
                     return true;
-                start = end;
+                start = at + 1;
             }
             return false;
         }

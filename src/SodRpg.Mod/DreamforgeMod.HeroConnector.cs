@@ -26,6 +26,8 @@ namespace SodRpg.Mod
         /// <summary>供給元ごとの直近の走査・API 登録の結果（§7 の報告の材料）。</summary>
         private static readonly List<ExtendedHeroFileResult> LastResults = new List<ExtendedHeroFileResult>();
         private static readonly Dictionary<string, ConnectorDeclaration> LastDeclarationByModId = new Dictionary<string, ConnectorDeclaration>(StringComparer.Ordinal);
+        /// <summary>ランタイムAPIで登録した供給元。走査で見つからなくても報告から外さない。</summary>
+        private static readonly HashSet<string> ApiRegisteredModIds = new HashSet<string>(StringComparer.Ordinal);
 
         private sealed class ConnectorDeclaration
         {
@@ -74,6 +76,7 @@ namespace SodRpg.Mod
         private static void ScanDeclarations()
         {
             if (!HostAuthority.HeroConnectorEnabled) return;
+            var scanned = new HashSet<string>(StringComparer.Ordinal);
             try
             {
                 var instances = DewMod.loadedInstances;
@@ -98,9 +101,12 @@ namespace SodRpg.Mod
                         catch (Exception ex)
                         {
                             Log.Warn("[Dreamforge/Connector] " + modId + ": could not read " + file + ": " + ex.Message);
+                            // 読み取りに失敗しても宣言ファイルはまだあるので、前回の結果は報告に残す。
+                            scanned.Add(modId);
                             continue;
                         }
                         // A referenced starManifest can change while dreamforge.json remains identical.
+                        scanned.Add(modId);
                         DeclarationPathByModId[modId] = file;
                         ApplyDeclaration(modId, text);
                     }
@@ -109,7 +115,22 @@ namespace SodRpg.Mod
             {
                 Log.Warn("[Dreamforge/Connector] mod folder scan failed: " + ex.Message);
             }
+            ForgetUnscannedConnectorResults(scanned);
             WriteConnectorReport();
+        }
+
+        /// <summary>宣言ファイルを消した MOD・取り外した MOD の古い結果を外す。API で登録した供給元は残す。</summary>
+        private static void ForgetUnscannedConnectorResults(HashSet<string> scanned)
+        {
+            for (int i = LastResults.Count - 1; i >= 0; i--)
+            {
+                string source = LastResults[i].SourceModId ?? "";
+                if (!scanned.Contains(source) && !ApiRegisteredModIds.Contains(source)) LastResults.RemoveAt(i);
+            }
+            var stale = new List<string>();
+            foreach (var modId in LastDeclarationByModId.Keys)
+                if (!scanned.Contains(modId) && !ApiRegisteredModIds.Contains(modId)) stale.Add(modId);
+            foreach (var modId in stale) LastDeclarationByModId.Remove(modId);
         }
 
         /// <summary>サイズを制限して宣言とマニフェストを読む。</summary>
@@ -236,14 +257,17 @@ namespace SodRpg.Mod
                     error = "the declaration is empty";
                     return false;
                 }
+                string source = string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId;
+                // API で登録した供給元は走査対象外なので、走査後の整理でも報告から外さない。
+                ApiRegisteredModIds.Add(source);
                 if (InExpedition)
                 {
                     // §8: 遠征中は保留して true を返し、error に保留の旨を入れる。
-                    PendingDeclarations.Add(new KeyValuePair<string, string>(string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, json));
+                    PendingDeclarations.Add(new KeyValuePair<string, string>(source, json));
                     error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
                     return true;
                 }
-                var result = RegisterConnectorDeclaration(string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, json);
+                var result = RegisterConnectorDeclaration(source, json);
                 RecordConnectorResult(result);
                 WriteConnectorReport();
                 bool all = result.FileError == null;
