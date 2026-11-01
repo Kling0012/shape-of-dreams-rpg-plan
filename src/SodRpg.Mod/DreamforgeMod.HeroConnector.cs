@@ -25,6 +25,8 @@ namespace SodRpg.Mod
         private static readonly List<KeyValuePair<string, string>> PendingDeclarations = new List<KeyValuePair<string, string>>();
         /// <summary>供給元ごとの直近の走査・API 登録の結果（§7 の報告の材料）。</summary>
         private static readonly List<ExtendedHeroFileResult> LastResults = new List<ExtendedHeroFileResult>();
+        // Scan callbacks, pending updates, and runtime API registration run on Unity's main thread.
+        // Connector collections rely on that host/caller contract, just like LastResults.
         private static readonly Dictionary<string, ConnectorDeclaration> LastDeclarationByModId = new Dictionary<string, ConnectorDeclaration>(StringComparer.Ordinal);
         /// <summary>ランタイムAPIで登録した供給元。走査で見つからなくても報告から外さない。</summary>
         private static readonly HashSet<string> ApiRegisteredModIds = new HashSet<string>(StringComparer.Ordinal);
@@ -77,6 +79,7 @@ namespace SodRpg.Mod
         {
             if (!HostAuthority.HeroConnectorEnabled) return;
             var scanned = new HashSet<string>(StringComparer.Ordinal);
+            bool scanCompleted = false;
             try
             {
                 var instances = DewMod.loadedInstances;
@@ -110,12 +113,13 @@ namespace SodRpg.Mod
                         DeclarationPathByModId[modId] = file;
                         ApplyDeclaration(modId, text);
                     }
+                scanCompleted = true;
             }
             catch (Exception ex)
             {
                 Log.Warn("[Dreamforge/Connector] mod folder scan failed: " + ex.Message);
             }
-            ForgetUnscannedConnectorResults(scanned);
+            if (scanCompleted) ForgetUnscannedConnectorResults(scanned);
             WriteConnectorReport();
         }
 
