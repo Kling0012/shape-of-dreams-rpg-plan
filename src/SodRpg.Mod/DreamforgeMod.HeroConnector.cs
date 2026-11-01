@@ -12,7 +12,8 @@ namespace SodRpg.Mod
     /// 本体が読み込んだ有効なMODのフォルダ直下の dreamforge.json を読み、Core の登録簿（ExtendedHeroes）へ渡す。
     /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は再解析しても重ねて登録しない。
     /// 遠征中は登録を変えない（§3-1）: 届いた宣言は保留し、遠征から出たら反映する。
-    /// この実装は本体の MOD API（DewMod）に依存するため、テスト用プロジェクトには含めない。
+    /// この実装は本体の MOD API（DewMod）に依存する。検証（Issue73.Native.Tests）は
+    /// HeroConnectorBoundary.cs の形だけの境界を介してこの実ソースをコンパイルする。
     /// DreamforgeMod.cs からの呼び出しは partial メソッド経由で、ここが無ければ呼び出し自体が消える。
     /// </summary>
     public partial class DreamforgeMod
@@ -228,8 +229,10 @@ namespace SodRpg.Mod
                 if (unchanged) return previous.Result;
             }
             var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
-            // FileError does not retain the exception type. Retry all file failures, including unexpected failures.
-            if (cacheable && result.FileError == null)
+            // A rejection is deterministic while the text and its manifests are unchanged, so cache it too:
+            // re-parsing would only repeat the same warning on every scan. A manifest read failure
+            // (cacheable=false) is the transient kind and stays uncached for the next scan to retry.
+            if (cacheable)
                 LastDeclarations[source] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
             else
                 LastDeclarations.Remove(source);

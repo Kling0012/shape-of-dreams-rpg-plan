@@ -84,6 +84,8 @@
     <Compile Include="../../src/SodRpg.Mod/NativeSkillLockRecovery.cs" Link="ModUnderTest/NativeSkillLockRecovery.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeCooldownSafety.cs" Link="ModUnderTest/NativeCooldownSafety.cs" />
     <Compile Include="../../src/SodRpg.Mod/BossSegmentPlacement.cs" Link="ModUnderTest/BossSegmentPlacement.cs" />
+    <!-- #1231: 旅人連携の宣言キャッシュ（HeroConnectorCacheTests が確かめる）。本体 API は HeroConnectorBoundary.cs の境界。 -->
+    <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.HeroConnector.cs" Link="ModUnderTest/DreamforgeMod.HeroConnector.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
     <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
   </ItemGroup>
