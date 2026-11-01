@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using SodRpg.Core.Internal;
 
 namespace SodRpg.Core.Game
@@ -32,6 +33,8 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<TalentDef> Tree { get; }
         /// <summary>宣言の旅人部分の正規化JSONのハッシュ。協力の照合と指紋に使う。</summary>
         public string DeclarationHash { get; }
+        /// <summary>受理した星図で、外部MODのイベント通知が必要になる記憶。</summary>
+        public IReadOnlyList<string> EventWarnings { get; internal set; } = Array.Empty<string>();
     }
 
     internal sealed class ExtendedStarPlacement
@@ -175,6 +178,7 @@ namespace SodRpg.Core.Game
                     .Append(" / ").Append(ScopedTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("  named shipped gimmicks (read-only references):\n");
             foreach (var kv in Gimmicks) sb.Append("    ").Append(kv.Key).Append('\n');
+            ExtendedHeroes.DescribeAuthoredEffectReferences(sb);
             return sb.ToString();
         }
     }
@@ -506,10 +510,16 @@ namespace SodRpg.Core.Game
                         return outcome;
                     }
                     var def = new ExtendedHeroDef(key, sourceModId, name, melee, memories, tree, declarationHash);
+                    if (tree != null && tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t })
+                        .Any(t => t.Gimmick != null || t.Mechanism != null || t.EffectChannel != null || t.KeystoneDefinition != null))
+                        def.EventWarnings = memories.Keys.Where(m => !Links.IsBuiltinMemory(m))
+                            .Select(m => m + ": external memory accepted; mechanisms require the mod to deliver the existing cast, hit, kill and owned-attack events. Custom damage/summon paths may not deliver them; affected effects then do not activate.")
+                            .ToArray();
                     lock (RegistryLock)
                     {
                         HeroesByKey[key] = def;
                         HeroesInOrder.Add(def);
+                        IndexAuthoredEffects(def);
                     }
                     if (treeReason != null)
                     {
@@ -614,6 +624,7 @@ namespace SodRpg.Core.Game
             var built = new List<TalentDef>(nodes.Count);
             var placements = new Dictionary<string, ExtendedStarPlacement>(StringComparer.Ordinal);
             var clusters = ReadClusters(tree, heroKey, limits);
+            var bindings = ReadEffectBindings(tree, heroKey, memories);
             string prefix = "x." + heroKey + ".";
             bool customLayout = false;
             int normalStars = 0, keystones = 0, choices = 0;
@@ -623,7 +634,7 @@ namespace SodRpg.Core.Game
                 if (!node.TryGet("id", out var idObj) || !(idObj is string id) || !ValidNodeId(id))
                     throw new FormatException("invalid node id (expected [a-z0-9_], up to 32 chars)");
                 if (!ids.Add(id)) throw new FormatException("duplicate node id '" + id + "'");
-                var talent = ReadNode(node, prefix + id, heroKey, memories, limits, clusters, false);
+                var talent = ReadNode(node, prefix + id, heroKey, memories, limits, clusters, false, bindings);
                 if (talent.IsKeystone) keystones++; else normalStars++;
                 if (talent.IsChoice) choices++;
                 var placement = new ExtendedStarPlacement();
@@ -679,6 +690,8 @@ namespace SodRpg.Core.Game
             ValidateExtendedPrerequisites(built);
             ValidateExtendedEffects(built);
             FractionalScopedModifiers.ValidateTree(built);
+            if (built.Any(t => t.Mechanism != null || t.KeystoneDefinition != null || t.EffectChannel != null
+                || t.Choices.Any(o => o.Mechanism != null || o.EffectChannel != null))) ValidateEffectBindings(built, bindings);
             // Cluster and dream-ring metadata are rendered by the existing presentation, with connector edges/positions.
             if (customLayout || clusters.Count > 0 || built.Exists(t => t.IsDreamRing))
             {
@@ -711,36 +724,37 @@ namespace SodRpg.Core.Game
         }
 
         private static TalentDef ReadNode(JsonObject node, string id, string heroKey, IReadOnlyDictionary<string, Txt> memories,
-            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option)
+            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option, EffectBindings bindings, int? parentRankCost = null)
         {
-            try { return ReadNodeCore(node, id, heroKey, memories, limits, clusters, option); }
+            try { return ReadNodeCore(node, id, heroKey, memories, limits, clusters, option, bindings, parentRankCost); }
             catch (Exception error) { throw new FormatException("node '" + id + "': " + error.Message, error); }
         }
 
         private static TalentDef ReadNodeCore(JsonObject node, string id, string heroKey, IReadOnlyDictionary<string, Txt> memories,
-            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option)
+            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option, EffectBindings bindings, int? parentRankCost)
         {
             TryReadText(node, "name", id.Substring(id.LastIndexOf('.') + 1), out var name);
             name = name ?? new Txt(id, id, id);
             bool keystone = ReadBool(node, "keystone"), dreamRing = ReadBool(node, "isDreamRing");
             int tier = ReadInteger(node, "tier", 1, 1, 2);
-            int rankCost = ReadInteger(node, "rankCost", keystone ? Content.KeystoneCost : 1, 1, limits.RankCostMax);
+            int rankCost = ReadInteger(node, "rankCost", parentRankCost ?? (keystone ? Content.KeystoneCost : 1), 1, limits.RankCostMax);
             bool choice = node.TryGet("choices", out var choicesObj);
+            bool authoredEffect = node.TryGet("authoredEffect", out var authoredObj);
             bool hasStat = node.TryGet("stat", out var statObj), hasPower = node.TryGet("power", out var powerObj);
             bool hasLink = node.TryGet("link", out var linkObj), hasNative = node.TryGet("nativeModifier", out var nativeObj);
             bool hasScoped = node.TryGet("scopedModifier", out var scopedObj), hasBoost = node.TryGet("gimmickBoost", out var boostObj);
             bool hasParam = node.TryGet("gimmickParam", out var paramObj), hasGimmick = node.TryGet("gimmick", out var gimmickObj);
             int effects = (hasStat ? 1 : 0) + (hasPower ? 1 : 0) + (hasLink ? 1 : 0) + (hasNative ? 1 : 0)
-                + (hasScoped ? 1 : 0) + (hasBoost ? 1 : 0) + (hasParam ? 1 : 0) + (choice ? 1 : 0);
+                + (hasScoped ? 1 : 0) + (hasBoost ? 1 : 0) + (hasParam ? 1 : 0) + (choice ? 1 : 0) + (authoredEffect ? 1 : 0);
             if (effects != 1 && !(effects == 0 && hasGimmick))
                 throw new FormatException("specify one effect or choices (a named gimmick may accompany stat, link or power)");
-            if (hasGimmick && (choice || hasNative || hasScoped || hasBoost || hasParam || keystone))
+            if (hasGimmick && (choice || hasNative || hasScoped || hasBoost || hasParam || keystone || authoredEffect))
                 throw new FormatException("a named gimmick cannot accompany this effect");
             if (option && (choice || keystone || node.TryGet("id", out _) || node.TryGet("cluster", out _)
                 || node.TryGet("requires", out _) || node.TryGet("position", out _) || node.TryGet("center", out _)
                 || node.TryGet("requiredStars", out _) || node.TryGet("requiredAnyStars", out _)))
                 throw new FormatException("a choice option cannot declare a choice, keystone, id, cluster, requires or position");
-            if (keystone && (!hasStat && !hasPower || option)) throw new FormatException("keystones require stat or power");
+            if (keystone && (!hasStat && !hasPower && !authoredEffect || option)) throw new FormatException("keystones require stat or power");
             string memory = null;
             if (node.TryGet("memory", out var memoryObj)) memory = ReadMemoryReference(memoryObj, memories);
             if ((hasLink || hasNative || hasScoped || hasBoost || hasParam || hasGimmick) && memory == null)
@@ -748,7 +762,15 @@ namespace SodRpg.Core.Game
             int maxRank = keystone ? 1 : ReadInteger(node, "maxRank", null, 1, limits.RanksMax);
             TalentDef talent;
             ClusterStarKind inferred;
-            if (choice)
+            if (authoredEffect)
+            {
+                if (node.TryGet("perRank", out _) || node.TryGet("value", out _)) throw new FormatException("authoredEffect values are read-only");
+                talent = ReadAuthoredEffect(authoredObj, id, name, maxRank, rankCost, keystone, bindings);
+                if (memory != null && memory != talent.RouteMemory) throw new FormatException("authoredEffect memory must agree with effectBindings.memories");
+                memory = talent.RouteMemory;
+                inferred = keystone ? ClusterStarKind.Keystone : ClusterStarKind.Notable;
+            }
+            else if (choice)
             {
                 if (!(choicesObj is List<object> options) || options.Count < 2 || options.Count > limits.OptionsPerChoiceMax)
                     throw new FormatException("choices requires 2.." + limits.OptionsPerChoiceMax + " non-choice options");
@@ -756,7 +778,7 @@ namespace SodRpg.Core.Game
                 foreach (var entry in options)
                 {
                     if (!(entry is JsonObject definition)) throw new FormatException("a choice option must be an object");
-                    var selected = ReadNode(definition, id, heroKey, memories, limits, clusters, true);
+                    var selected = ReadNode(definition, id, heroKey, memories, limits, clusters, true, bindings, rankCost);
                     if (selected.MaxRank != maxRank) throw new FormatException("choice options must have the parent's maxRank");
                     if (definition.TryGet("rankCost", out _) && selected.RankCost != rankCost) throw new FormatException("choice options must use the parent rankCost");
                     selected.RankCost = rankCost;
@@ -764,6 +786,16 @@ namespace SodRpg.Core.Game
                     choices.Add(selected);
                 }
                 talent = new TalentDef(id, Line.Offense, name, default(Stat), 0, maxRank) { Choices = choices.AsReadOnly() };
+                var prerequisites = choices.Where(t => t.AuthoredStar != null).Select(t => t.AuthoredStar).ToArray();
+                if (prerequisites.Length > 0)
+                {
+                    var alternatives = prerequisites.Where(t => t.RequiredAnyStarIds.Count > 0).Select(t => t.RequiredAnyStarIds).ToArray();
+                    if (alternatives.Any(a => !new HashSet<string>(a, StringComparer.Ordinal).SetEquals(alternatives[0])))
+                        throw new FormatException("choice authored effects require the same alternative prerequisites");
+                    talent.AuthoredStar = new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true,
+                        RequiredStarIds = prerequisites.SelectMany(t => t.RequiredStarIds).Distinct(StringComparer.Ordinal).ToArray(),
+                        RequiredAnyStarIds = alternatives.FirstOrDefault() ?? Array.Empty<string>() };
+                }
                 inferred = ClusterStarKind.Choice;
             }
             else if (hasStat || hasPower)
@@ -876,11 +908,27 @@ namespace SodRpg.Core.Game
             if (node.TryGet("requiredStars", out var allObj) || node.TryGet("requiredAnyStars", out _))
             {
                 string prefix = "x." + heroKey + ".";
+                var original = talent.AuthoredStar;
+                var any = node.TryGet("requiredAnyStars", out var anyObj) ? ReadIds(anyObj, prefix, "requiredAnyStars") : original?.RequiredAnyStarIds ?? Array.Empty<string>();
+                if (original?.RequiredAnyStarIds.Count > 0 && !new HashSet<string>(original.RequiredAnyStarIds, StringComparer.Ordinal).SetEquals(any))
+                    throw new FormatException("authoredEffect cannot change its alternative prerequisites");
                 talent.AuthoredStar = new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true,
-                    RequiredStarIds = allObj == null ? Array.Empty<string>() : ReadIds(allObj, prefix, "requiredStars"),
-                    RequiredAnyStarIds = node.TryGet("requiredAnyStars", out var anyObj) ? ReadIds(anyObj, prefix, "requiredAnyStars") : Array.Empty<string>() };
+                    RequiredStarIds = (original?.RequiredStarIds ?? Array.Empty<string>()).Concat(allObj == null ? Array.Empty<string>() : ReadIds(allObj, prefix, "requiredStars")).Distinct(StringComparer.Ordinal).ToArray(),
+                    RequiredAnyStarIds = any };
+            }
+            if (talent.Mechanism?.Bridge != null)
+            {
+                talent.AuthoredStar = talent.AuthoredStar ?? new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true };
+                talent.AuthoredStar.Region = ClusterRegion.Bridge(id);
+            }
+            if (authoredEffect && talent.KeystoneDefinition != null)
+            {
+                talent.AuthoredStar = talent.AuthoredStar ?? new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true };
+                talent.AuthoredStar.RequiredStarIds = System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Concat(
+                    talent.AuthoredStar.RequiredStarIds, talent.KeystoneDefinition.Prerequisites)).ToArray();
             }
             talent.HeroKey = heroKey;
+            if (talent.AuthoredStar != null) talent.AuthoredStar.HeroKey = heroKey;
             talent.Tier = tier;
             talent.RankCost = rankCost;
             talent.RouteMemory = memory;
@@ -896,12 +944,14 @@ namespace SodRpg.Core.Game
             var starKind = explicitKind ? ReadEnum<ClusterStarKind>(kindObj, "kind") : inferred;
             if (starKind != inferred && !(hasLink && starKind == ClusterStarKind.Notable))
                 throw new FormatException("kind does not match the effect");
+            var sourceStar = talent.ClusterStar;
             if (cluster != null || choice || explicitKind || option)
                 talent.ClusterStar = new ClusterStarDef { Kind = starKind, Name = name, Memory = memory,
-                    Amount = talent.LinkPerRank?.Value ?? (talent.GimmickBoost > 0 ? talent.GimmickBoost : talent.GimmickParameter.HasValue ? talent.GimmickParamAmount : keystone && hasPower ? talent.PowerValue : talent.PerRank),
-                    Param = talent.GimmickParameter ?? talent.ScopedModifier?.Param ?? default,
+                    Amount = sourceStar?.Amount ?? talent.LinkPerRank?.Value ?? (talent.GimmickBoost > 0 ? talent.GimmickBoost : talent.GimmickParameter.HasValue ? talent.GimmickParamAmount : keystone && hasPower ? talent.PowerValue : talent.PerRank),
+                    Param = sourceStar?.Param ?? talent.GimmickParameter ?? talent.ScopedModifier?.Param ?? default,
                     Power = keystone ? talent.Power : talent.RankPower, Stat = talent.Stat, MaxRank = maxRank, RankCost = rankCost,
                     NativeModifier = talent.NativeModifier, ScopedModifier = talent.ScopedModifier, Gimmick = talent.Gimmick,
+                    Mechanism = talent.Mechanism, KeystoneDefinition = talent.KeystoneDefinition, EffectChannel = talent.EffectChannel,
                     Options = choice ? new List<ClusterStarDef>(System.Linq.Enumerable.Select(talent.Choices, t => t.ClusterStar)) : null };
             if (talent.IsChoice)
                 foreach (var selected in talent.Choices) { selected.Cluster = cluster; selected.ClusterOrder = talent.ClusterOrder; }

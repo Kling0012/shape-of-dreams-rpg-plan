@@ -72,13 +72,13 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `heroes[].starTree` | 任意 | 従来の星図。`starManifest` が無い、または読めないときに使う。これも無ければ汎用ツリー（`Content.Talents`）。 |
 | `heroes[].starManifest` | 任意 | MOD フォルダからの相対パス。正準 JSON の監修星図を本体と同じ登録へ渡す。§3-3 を参照。`dreamforgeApi` / `ApiVersion` は1のまま。 |
 | `starTree.nodes[].id` | 必須 | `[a-z0-9_]`、32文字まで。旅人の中で一意。実際の星IDは `x.<key>.<id>`。 |
-| `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。効果は `stat`・`link`・`power`・`nativeModifier`・`scopedModifier`・`gimmickBoost`・`gimmickParam`・`choices` のうち1つ。名前参照の `gimmick` だけでも通常星を宣言できる。使える種類と上限は §5。 |
+| `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。効果は `stat`・`link`・`power`・`nativeModifier`・`scopedModifier`・`gimmickBoost`・`gimmickParam`・`authoredEffect`・`choices` のうち1つ。名前参照の `gimmick` だけでも通常星を宣言できる。使える種類と上限は §5。 |
 | `nodes[].link` / `memory` | 記憶の星で必須 | `LinkKind` の名前と、対象の記憶の型名。その旅人の `memories` で受け付けた記憶か、`Links` の名前簿にある既存の記憶だけを指定できる。キーストーンには使えない。 |
 | `nodes[].power` | Power の星で必須 | `Power` の名前。`keystone: true` と併用すると Power のキーストーンになる。 |
-| `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。1段あたりの値・段数・1星の合計（値×段数）の3つとも §5 の種類ごとの上限以下にする。 |
+| `nodes[].perRank` / `maxRank` | 数値を指定する通常星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。1段あたりの値・段数・1星の合計（値×段数）の3つとも §5 の種類ごとの上限以下にする。`authoredEffect` は `maxRank` だけを指定し、`perRank` は指定できない。 |
 | `nodes[].tier` | 任意 | 1（既定）または 2（奥の星）。 |
-| `nodes[].keystone` / `value` | キーストーンで必須 | `keystone: true` と正の整数の `value` を書く。熟練度の条件は既存と同じ `HeroSigils.KeystoneMastery`。 |
-| `nodes[].description` | Stat のキーストーンで必須 | 説明文。Power のキーストーンでは省略でき、既存の Power の説明文を使う。 |
+| `nodes[].keystone` / `value` | キーストーンで必須 | `keystone: true` と正の整数の `value` を書く。`authoredEffect` では `keystone: true` だけを指定し、`value` は指定できない。熟練度の条件は既存と同じ `HeroSigils.KeystoneMastery`。 |
+| `nodes[].description` | Stat のキーストーンで必須 | 説明文。Power のキーストーンでは省略でき、既存の Power の説明文を使う。`authoredEffect` では参照元の説明文を使う。 |
 | `nodes[].name` | 任意 | 表示名。無ければ id。 |
 | `nodes[].requires` | 任意 | 同じ旅人の星の `id` の配列。挙げた星のどれか1つを取ると、この星へ進める。省略した星は今までの自動のつながりを使う。空配列なら中心につながる。 |
 | `nodes[].position` | 任意 | `{ "ring": 1, "angle": -90 }` または `{ "x": 120.5, "y": -30 }`。両形式は併用できない。`ring` は1以上の整数、`angle` は度を表す数値。0度は右、90度は下。省略した星は自動配置を使う。 |
@@ -96,6 +96,9 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `nodes[].scopedModifier` | Scoped 修飾で必須 | `scope`（`Memory` / `EffectChannel` / `Receiver`）、任意の `param`、ローカル星IDの `targets` 配列、`GimmickEffect` 名の `effects` 配列、任意の `capProfile`。値は通常 `amountUnits`（100で1%）、Chance は `probabilityUnits`（10000で100%）、ExtraTargets は `extraTargets`。該当しない値欄は0。`memory`・`maxRank` も指定する。既存の検証で対象なし・未知の対象・意味のないパラメータを拒否する。 |
 | `nodes[].requiredStars` / `requiredAnyStars` | 任意 | 取得済みでなければならない星のローカルID配列。前者はすべて、後者はいずれか。`requires` の無向辺とは別の条件。既存の取得判定を使い、未知参照・自己参照・取得不能な依存を拒否する。 |
 | `nodes[].routeOrder` | 任意 | 元の記憶ルート内の順序（既定0）。書き出し時の末尾星などの表示種別を保つために使う。 |
+| `nodes[].authoredEffect` | 機構などの参照で必須 | `{ "hero": "Hero_Vesper", "star": "outer.ward.a2" }`。既存9人の機構・機構付きキーストーン・EffectChannel・ペア連携の星を参照する。`hero` と `star` は必須。選択肢の効果は親星のIDと0始まりの `option` を指定する。 |
+| `starTree.effectBindings.stars` | `authoredEffect` で必須 | 元の星IDから、この宣言のローカル星IDへの対応表。所有星・取得条件・橋の両端・置換先・キーストーンの対象星を含め、必要な参照をすべて指定する。存在しない星や複数の元星を同じ星へ対応させる宣言は拒否する。 |
+| `starTree.effectBindings.memories` | 任意 | 元の既存記憶から、既存記憶またはその旅人が宣言した記憶への対応表。省略した記憶は元のまま。省略分も含めて対応が重複してはいけない。チャンネルとペアのIDは拡張旅人ごとに分ける。 |
 
 最初の例は従来の3星の宣言で、登録される星と配置は変わらない。次は、その例の `nodes` に追加できる記憶の星と Power の星・キーストーンの例。キーストーンの合計は §5 の上限内に収める。
 
@@ -143,10 +146,16 @@ Choice・星群・仕掛けの修飾を併用する場合の `starTree` の例�
 
 `requires` は既存の星図と同じ無向の辺になる。通常の到達判定を使うため、取得した星から辺を逆向きにも進める。宣言に循環がある、参照先の id が無い、中心から届かない星がある場合は、その旅人の星図だけを汎用ツリーに戻し、理由を報告する。位置の半径は ring 1 が `InnerRadius`、2 が `DeepRadius`、3以降が `BranchRadius + BranchStep × (ring - 3)`。
 
+`authoredEffect` は既存の定義を複製し、数値・発動条件・段数表をそのまま使う。`perRank`・`value` や名前参照の `gimmick` との併用は拒否する。`maxRank` は参照元以下、`rankCost` は参照元以上にする。キーストーンの参照では `keystone: true` を指定し、通常星への変更はできない。Choice では親の費用を検証に使う。元の取得条件は引き継ぎ、全取得の条件は追加できるが、元の「いずれか」の条件を別の集合へ変えることはできない。選択肢の参照元が持つ取得条件も親の星に引き継ぐ。
+
+外部記憶を使う汎用の機構は受け付ける。相手のMODから既存の発動・命中・撃破・所有攻撃の通知が届かなければ効果が動かない場合があるため、宣言した外部記憶の一覧とこの注意を §7 の報告へ残す。独自のダメージ・召喚処理が通知を送ることまでは保証しない。
+
+Native 固有の処理は付け替えを制限する。選択中の元キーストーンIDが必要な `StunSourceFilter`・`SacrificeShield`、未接続の Native adapter が必要な橋は拒否する。MemoryTuning、RelayWindow、固有の会心・移動攻撃・速度連動の IdentityStrike、Native の段階を読む橋、Circle of Life の所有攻撃発射、SharedCrystalField・ShieldWall・ShadowCue の固定記憶は別の記憶へ付け替えられない。
+
 apiVersion 1 で宣言できないもの
 
 - 難易度・報酬・部屋の予兆などの旅人別スケール。拡張旅人は常に既定値（1.0）。
-- ペア連携、旅人別の RunGrowth プログラム。`starTree` の仕掛けは既存の単独 Gimmick の名前参照に限る。`starManifest` では、本体で使う型付き仕掛け・修飾・機構付きキーストーンを宣言できる。ただし Power 系は `starManifest` の範囲外。
+- 新しいペア連携、旅人別の RunGrowth プログラム。`starTree` は既存の Gimmick の名前参照と `authoredEffect` の定義参照を扱う。`starManifest` では、本体で使う型付き仕掛け・修飾・機構付きキーストーンを宣言できる。ただし Power 系は `starManifest` の範囲外。
 - 既存の旅人・既存の星・既存の記憶の値の変更。
 
 ### 3-3. 本体と同じ監修星図（starManifest）
@@ -190,6 +199,7 @@ apiVersion 1 で宣言できないもの
 - GimmickBoost・GimmickParam: 9人の元定義に残る通常星と選択肢も含め、種類・パラメータごとの値・段数・1星の合計の最大値を使う。GimmickBoost の1段あたりの値は `gimmickBoost` 欄の値。
 - ScopedModifier: scope・param・capProfile の組み合わせごとに、既存の値・段数・1星の合計の最大値を使う。通常は `amountUnits`、Chance は `probabilityUnits`、ExtraTargets は `extraTargets` の単位で集計し、合計の検証にも同じ単位を使う。
 - NativeModifier: 同種・同上限定義の既存の `valueUnits`・段数・1星の合計の最大値を使う。コネクタ用上限定義は既存の MemoryDamage / MemoryHaste から求め、合計の上限はその種類の1星の合計上限を100倍した units とする。新しい計算式や新しい効果の種類は作らない。
+- AuthoredEffect: 参照元1星の定義を上限とテンプレートにする。数値・発動条件・段数表の直接指定は受け付けない。段数は参照元以下、費用は参照元以上。記憶・星・チャンネル・ペアの参照だけを対応表で付け替える。参照先は `hero` と `star` で区別する（同じ星IDでも旅人ごとに効果が違う場合がある）。
 - 数: 全星数・通常星数・キーストーン数・Choice数・1星の選択肢数・星群数を、9人の `TreeFor` 全体の最大以下にする。選択肢は独立した配置星には数えず、選択肢数の上限で検証する。
 - `rankCost` と全体の段数も既存の最大以下。熟練度の条件と割り当ての規則（`Rules`）は既存どおり。星を増やしても、取るためのポイントの獲得量は変わらない。
 
@@ -199,20 +209,24 @@ apiVersion 1 で宣言できないもの
 
 ### 5-1. 既存星図を再現できる範囲
 
-`tools/hero-connector` は Core を参照するコンソール。指定した既存旅人の `TreeFor` と `HeroTreeLayout` を宣言へ書き出し、別キーで登録して比較する。JSON はリポジトリへ入れず `$TMPDIR` などの作業領域に置く。
+`tools/hero-connector` は Core を参照するコンソール。指定した既存旅人の `TreeFor` と `HeroTreeLayout` を宣言へ書き出し、別キーで登録して比較する。JSON とビルド成果物はリポジトリへ入れず、HDD 上の `$TMPDIR` に置く。
 
 ```sh
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Vesper "$TMPDIR/vesper-dreamforge.json" Hero_TestVesper
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Bismuth "$TMPDIR/bismuth-dreamforge.json" Hero_TestBismuth
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release --artifacts-path "$TMPDIR/hero-connector-artifacts" -- Hero_Vesper "$TMPDIR/vesper-dreamforge.json" Hero_TestVesper
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release --artifacts-path "$TMPDIR/hero-connector-artifacts" -- Hero_Bismuth "$TMPDIR/bismuth-dreamforge.json" Hero_TestBismuth
 ```
 
 比較するのは星数、Stat・Power・LinkDef の値と記憶、段数、RankCost、Tier、Gimmick と修飾、Choice と全選択肢、星群のまとまりと表示名、IsDreamRing、取得条件、位置と表示種別、残した星同士の辺、キーストーン。異なる値は終了コード1と報告書へ出す。宣言の隣に `.report.txt` を出し、除外した星をIDごとに理由つきで列挙する。
 
-監修機構、機構付きキーストーン、ペア連携の橋、EffectChannel・RunGrowth のプログラムは除外する。その一部を残して普通の星と呼ぶことはしない。Choice の片方だけが再現できない場合はChoice全体を除外し、対象機構や取得条件への依存が残る星も除外する。
+監修機構、機構付きキーストーン、ペア連携の橋、EffectChannel は `authoredEffect` で参照する。RunGrowth と元の選択キー専用 adapter など、対応できない定義は除外する。その一部を残して普通の星と呼ぶことはしない。Choice の片方だけが再現できない場合はChoice全体を除外し、対象機構や取得条件への依存が残る星も除外する。
 
 機構を外すと中心から切り離される成分や、取得条件と辺の組み合わせで進めなくなる箇所には、書き出し道具が中心への辺を補う。これは元と異なる接続として、辺を補った星のIDを報告書の `Layout adaptations` に列挙する。残した星同士の辺と座標は保つ。元の星図全体の取得経路が一致するという保証ではない。
 
-2026-11-01 の比較では、Vesper は892星から231星（Choice5・星群26）、Bismuth は747星から196星（Choice5・星群29）を再現した。両者の11キーストーンはすべて機構付きのため除外した。中心への入口の補完を報告したうえで、再現対象の比較は不一致0。実機は未確認。
+2026-11-01 の比較では、Vesper は892星から888星（Choice53・星群52）、Bismuth は747星すべて（Choice40・星群42）を再現した。Vesper の除外4星はすべて RunGrowth。RunGrowth を除く再現率は両者100%で、キーストーンもそれぞれ11個すべてを含む。中心への辺の補完は両者0、効果・取得条件・座標・辺などの比較も不一致0だった。
+
+再登録した各星と各選択肢を、全星を取得条件の判定用状態へ入れたうえで、個別に `Build.ComputeForTree` と `Build.Encode` / `Decode` の往復へ通す。Vesper は941件、Bismuth は787件で往復の不一致0。これは合法な割り当て手順や全組み合わせの同値性、ゲーム内のイベント発火を証明するものではない。実機は未確認。
+
+`--check <宣言JSON>` は宣言の受理結果と外部記憶の警告を表示する。`--snapshot` は拡張旅人を登録する前の指紋と既存9人の定義・配置を出力する。
 
 ### 5-2. starManifest の上限
 
@@ -242,6 +256,9 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 - Dreamforge の版と apiVersion。
 - 読んだファイル（供給元の id とパス）、受け付けた旅人、拒否した旅人と理由、星図を汎用にした理由。
 - §5 の上限表。Stat・LinkKind・Power、GimmickBoost・GimmickParam、NativeModifier・ScopedModifier について、1段あたりの値・段数・1星の合計の上限を載せる。合計は各種類の値と同じ単位で示す。キーストーン値、星数・Choice数・選択肢数・星群数・RankCostも載せる。名前で参照できる既存の仕掛けも列挙する。作者はこの表を見て値を決められる。Power の表の 0 はその種類の星を宣言できないことを表す。
+
+- `authoredEffect` の参照元（旅人・星・選択肢）、段数と最低費用。Native 固有の制限と、対応表を含む検証が別途必要であることも記す。
+- 外部記憶を宣言し、仕掛けや機構を持つ旅人について、既存イベントの通知が必要であり、独自のダメージ・召喚経路では通知が届かず効果が動かない場合があるという警告。受理済みの登録簿に保持し、再走査後も報告する。
 
 書き込みに失敗しても、警告1回で続ける。
 
@@ -301,5 +318,5 @@ static System.Type FindDreamforgeConnector()
 ## 12. 範囲外（この版ではしない）
 
 - Hero プレハブの登録、解錠、ロビーの並び（本体の仕組み。相手のMODの仕事）。
-- 拡張旅人の専用ペア連携、旅人別スケール・RunGrowth。Power 系は `starManifest` では範囲外（既存 `starTree` の Power は引き続き使える）。監修星図・星群・橋・外縁・Choice・型付き仕掛け・機構付きキーストーンは §3-3 の範囲で宣言できる。
+- 拡張旅人の専用ペア連携、旅人別スケール・RunGrowth。Power 系は `starManifest` では範囲外（既存 `starTree` の Power と §3-2 の既存効果参照は引き続き使える）。監修星図・星群・橋・外縁・Choice・型付き仕掛け・機構付きキーストーンは §3-3 の範囲で宣言できる。
 - ほかの種類のMOD（記憶・本質・遺物を足すMOD）の接続。必要になったら同じファイルに新しい欄を足す形で広げる。

@@ -92,7 +92,7 @@ APIから登録する場合も、既存の `Dreamforge.Api.HeroConnector.Registe
 ゲームを起動せずに登録を確かめるには、リポジトリの診断コマンドを使えます。
 
 ```sh
-dotnet run --project tools/hero-connector -- --manifest "<旅人MODのフォルダ>"
+dotnet run --project tools/hero-connector --artifacts-path "$TMPDIR/hero-connector-artifacts" -- --manifest "<旅人MODのフォルダ>"
 ```
 
 出力の `Authored: true` は監修星図の登録、`Stars` は自動ルートを含む星数です。終了コード0でも `starTree` に戻っている場合があるため、警告と `Authored` を確認してください。

@@ -80,9 +80,11 @@ namespace SodRpg.Core.Game
         }
         public static IReadOnlyList<PairComboDef> RegisteredAll => StarClusters.RegisteredPairs(All);
         public static PairComboDef ForBridge(string bridgeId) => bridgeId != null && ByBridge.TryGetValue(bridgeId, out var def) ? def
-            : StarClusters.RegisteredPair(bridgeId, true);
+            : StarClusters.RegisteredPair(bridgeId, true)
+                ?? (ExtendedHeroes.IsExtendedStarId(bridgeId) ? ExtendedHeroes.ConnectorPair(bridgeId, true) : null);
         public static PairComboDef Get(string id) => id != null && ById.TryGetValue(id, out var def) ? def
-            : StarClusters.RegisteredPair(id, false);
+            : StarClusters.RegisteredPair(id, false)
+                ?? (ExtendedHeroes.IsExtendedStarId(id) ? ExtendedHeroes.ConnectorPair(id, false) : null);
         public static PairComboEntry Clamp(PairComboEntry entry)
         {
             var def = entry?.Def == null ? null : Get(entry.Def.Id);

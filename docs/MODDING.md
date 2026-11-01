@@ -92,7 +92,7 @@ Invalid stars are omitted with a warning; dangling references are pruned repeate
 The repository also includes an offline registration command:
 
 ```sh
-dotnet run --project tools/hero-connector -- --manifest "<source-MOD-folder>"
+dotnet run --project tools/hero-connector --artifacts-path "$TMPDIR/hero-connector-artifacts" -- --manifest "<source-MOD-folder>"
 ```
 
 `Authored: true` indicates an authored tree was registered; `Stars` includes generated routes. Exit code 0 can also mean a successful fallback, so inspect warnings and `Authored`.
