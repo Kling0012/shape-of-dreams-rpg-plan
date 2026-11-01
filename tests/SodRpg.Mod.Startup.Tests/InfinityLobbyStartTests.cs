@@ -305,6 +305,10 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.False(zone.IsNodeConnected(1, 2));
             zone.CmdTravelToNode(2, new NetworkConnectionToClient { Player = DewPlayer.local });
             Assert.Equal(2, zone.LastTravelTo);
+            Assert.Equal(InfinityPhase.BossDue, state.Phase);
+            zone.SetCurrentNodeIndexAndRevealAdjacent(2);
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
+            InfinityMode.Tick();
             Assert.Equal(InfinityPhase.BossFight, state.Phase);
         }
 

@@ -88,6 +88,8 @@ namespace SodRpg.Mod.Startup.Tests
                     Assert.Equal(infinity, InfinityMode.Enabled);
                     // TravelToNode only records dispatch in StartupGameApi; model arrival explicitly.
                     zone.SetCurrentNodeIndexAndRevealAdjacent(destination);
+                    SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
+                    InfinityMode.Tick();
                 }
 
                 if (infinity)

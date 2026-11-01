@@ -624,9 +624,9 @@ namespace SodRpg.Mod
             { DisableFeature("Infinity combat-clear counter exhausted."); return; }
             if (zone.currentNode.type == WorldNodeType.ExitBoss)
             {
-                // The pure-white preparation gate (Shrine_PrimusDoor) loads the boss node
-                // directly, bypassing RouteTravel: arriving there makes this graph's boss the
-                // cycle boss (finale graphs are due on arrival) and starts the fight.
+                // Commit boss entry only after native travel actually reaches an active room.
+                // This also covers the pure-white gate (Shrine_PrimusDoor), which loads the boss
+                // directly; finale graphs promote that boss without inventing combat clears.
                 var beforeArrival = state.Phase;
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
@@ -691,11 +691,8 @@ namespace SodRpg.Mod
                 return false;
             }
             ClearPendingTravel();
-            if (state.Phase == InfinityPhase.BossDue && zone.nodes[to].type == WorldNodeType.ExitBoss)
-            {
-                if (!state.TryEnterBoss()) return false;
-                ClientSession.PersistHostInfinityState();
-            }
+            // Native travel interrupts can still cancel or redirect this request. Keep BossDue
+            // until TickNative observes the active boss room, so a cancelled move can be retried.
             return true;
         }
 
