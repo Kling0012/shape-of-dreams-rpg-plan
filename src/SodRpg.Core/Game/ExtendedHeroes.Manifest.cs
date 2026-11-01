@@ -459,7 +459,7 @@ namespace SodRpg.Core.Game
                     string blamed = ex.Data["AuthoredStarId"] as string;
                     var offenders = definitions.Where(d => d.LocalStarId == blamed).ToArray();
                     if (offenders.Length == 0 && ex.Message.Length > 0)
-                        offenders = definitions.Where(d => ex.Message.Contains(d.LocalStarId)).ToArray();
+                        offenders = definitions.Where(d => ManifestMessageNamesStar(ex.Message, d.LocalStarId)).ToArray();
                     if (offenders.Length == 0) offenders = new[] { definitions[definitions.Count - 1] };
                     foreach (var def in offenders)
                     {
@@ -469,6 +469,23 @@ namespace SodRpg.Core.Game
                 }
             }
             return definitions.AsReadOnly();
+        }
+
+        private static bool ManifestMessageNamesStar(string message, string id)
+        {
+            bool IdChar(char c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+                || c >= '0' && c <= '9' || c == '_' || c == '.' || c == '-';
+            int start = 0;
+            while (start < message.Length)
+            {
+                int at = message.IndexOf(id, start, StringComparison.Ordinal);
+                if (at < 0) return false;
+                int end = at + id.Length;
+                if ((at == 0 || !IdChar(message[at - 1])) && (end == message.Length || !IdChar(message[end])))
+                    return true;
+                start = end;
+            }
+            return false;
         }
 
         private static void BindManifestModifiers(IReadOnlyList<AuthoredStarDef> definitions, ManifestShippedIndex shipped)

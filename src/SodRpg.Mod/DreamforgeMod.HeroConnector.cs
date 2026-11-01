@@ -23,8 +23,16 @@ namespace SodRpg.Mod
         private static readonly Dictionary<string, string> DeclarationPathByModId = new Dictionary<string, string>(StringComparer.Ordinal);
         /// <summary>遠征中に届いた宣言（走査とランタイムAPIの両方）。遠征から出たら反映する。</summary>
         private static readonly List<KeyValuePair<string, string>> PendingDeclarations = new List<KeyValuePair<string, string>>();
-        /// <summary>直近の走査・API 登録の結果（§7 の報告の材料）。走査のたびに作り直す。</summary>
+        /// <summary>供給元ごとの直近の走査・API 登録の結果（§7 の報告の材料）。</summary>
         private static readonly List<ExtendedHeroFileResult> LastResults = new List<ExtendedHeroFileResult>();
+        private static readonly Dictionary<string, ConnectorDeclaration> LastDeclarationByModId = new Dictionary<string, ConnectorDeclaration>(StringComparer.Ordinal);
+
+        private sealed class ConnectorDeclaration
+        {
+            internal string Text;
+            internal Dictionary<string, string> Manifests;
+            internal ExtendedHeroFileResult Result;
+        }
         private static string _connectorReportPath;
         private static string _connectorReport;
         private static bool _connectorReportWriteFailed;
@@ -66,7 +74,6 @@ namespace SodRpg.Mod
         private static void ScanDeclarations()
         {
             if (!HostAuthority.HeroConnectorEnabled) return;
-            LastResults.Clear();
             try
             {
                 var instances = DewMod.loadedInstances;
@@ -161,9 +168,56 @@ namespace SodRpg.Mod
                 PendingDeclarations.Add(new KeyValuePair<string, string>(modId, text));
                 return;
             }
-            var result = ExtendedHeroes.Register(text, modId, Log.Warn, path => ReadStarManifest(modId, path));
-            LastResults.Add(result);
+            RecordConnectorResult(RegisterConnectorDeclaration(modId, text));
             WriteConnectorReport();
+        }
+
+        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text)
+        {
+            var manifests = new Dictionary<string, string>(StringComparer.Ordinal);
+            bool cacheable = true;
+            string Read(string path)
+            {
+                if (manifests.TryGetValue(path, out var content)) return content;
+                try
+                {
+                    content = ReadStarManifest(modId, path);
+                    manifests.Add(path, content);
+                    return content;
+                }
+                catch
+                {
+                    cacheable = false;
+                    throw;
+                }
+            }
+            if (LastDeclarationByModId.TryGetValue(modId, out var previous) && previous.Text == text)
+            {
+                bool unchanged = true;
+                foreach (var manifest in previous.Manifests)
+                {
+                    try { if (Read(manifest.Key) != manifest.Value) unchanged = false; }
+                    catch (Exception) { unchanged = false; }
+                }
+                if (unchanged) return previous.Result;
+            }
+            var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
+            if (cacheable)
+                LastDeclarationByModId[modId] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
+            else
+                LastDeclarationByModId.Remove(modId);
+            return result;
+        }
+
+        private static void RecordConnectorResult(ExtendedHeroFileResult result)
+        {
+            for (int i = 0; i < LastResults.Count; i++)
+                if (LastResults[i].SourceModId == result.SourceModId)
+                {
+                    LastResults[i] = result;
+                    return;
+                }
+            LastResults.Add(result);
         }
 
         /// <summary>ランタイムAPI（Dreamforge.Api.HeroConnector.RegisterHeroes）からの登録。走査と同じ道を通る。</summary>
@@ -189,8 +243,8 @@ namespace SodRpg.Mod
                     error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
                     return true;
                 }
-                var result = ExtendedHeroes.Register(json, string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, Log.Warn, path => ReadStarManifest(sourceModId, path));
-                LastResults.Add(result);
+                var result = RegisterConnectorDeclaration(string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, json);
+                RecordConnectorResult(result);
                 WriteConnectorReport();
                 bool all = result.FileError == null;
                 foreach (var hero in result.Heroes)

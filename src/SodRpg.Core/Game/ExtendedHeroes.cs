@@ -17,6 +17,9 @@ namespace SodRpg.Core.Game
             Name = name;
             Melee = melee;
             MemoryNames = memoryNames;
+            var memoryKeys = memoryNames.Keys.ToArray();
+            Array.Sort(memoryKeys, StringComparer.Ordinal);
+            MemoryKeys = Array.AsReadOnly(memoryKeys);
             Tree = tree;
             DeclarationHash = declarationHash;
         }
@@ -29,6 +32,7 @@ namespace SodRpg.Core.Game
         public bool Melee { get; }
         /// <summary>その旅人の記憶（St_*）の表示名。装備・リンク・報酬の生成には入らない。</summary>
         public IReadOnlyDictionary<string, Txt> MemoryNames { get; }
+        internal IReadOnlyList<string> MemoryKeys { get; }
         /// <summary>宣言から作った星図。汎用ツリー（Content.Talents）のままのとき null。</summary>
         public IReadOnlyList<TalentDef> Tree { get; }
         /// <summary>宣言の旅人部分の正規化JSONのハッシュ。協力の照合と指紋に使う。</summary>
@@ -416,12 +420,17 @@ namespace SodRpg.Core.Game
             var result = new ExtendedHeroFileResult { SourceModId = sourceModId };
             try
             {
-                if (string.IsNullOrWhiteSpace(json) || json.Length > ManifestTextLimit)
-                    throw new FormatException("the declaration is empty or exceeds the connector text limit");
-                if (!(Json.ParseConnector(json) is JsonObject root))
+                if (string.IsNullOrWhiteSpace(json)) throw new FormatException("the file is empty");
+                if (json.Length > ManifestTextLimit)
+                    throw new FormatException("the declaration exceeds the connector text limit");
+                object parsed;
+                try { parsed = Json.ParseConnector(json); }
+                catch (Exception ex) { throw new FormatException("not readable as JSON: " + ex.Message); }
+                if (!(parsed is JsonObject root))
                     throw new FormatException("the top level must be a JSON object");
                 if (!root.TryGet("dreamforgeApi", out var apiObj) || !(apiObj is long api) || api != ApiVersion)
-                    throw new FormatException("unsupported dreamforgeApi " + Describe(apiObj));
+                    throw new FormatException("unsupported dreamforgeApi " + Describe(apiObj)
+                        + " (this Dreamforge reads version " + ApiVersion + ")");
                 if (!root.TryGet("heroes", out var heroesObj) || !(heroesObj is List<object> heroes))
                     throw new FormatException("heroes must be an array");
                 foreach (var entry in heroes)
@@ -429,7 +438,7 @@ namespace SodRpg.Core.Game
             }
             catch (Exception ex)
             {
-                result.FileError = ex.Message;
+                result.FileError = ex is FormatException ? ex.Message : "unexpected failure: " + ex.Message;
                 Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
             }
             return result;
@@ -444,17 +453,25 @@ namespace SodRpg.Core.Game
             {
                 if (!(entry is JsonObject hero)) return Rejected(outcome, warn, "a hero entry must be a JSON object");
                 if (!hero.TryGet("key", out var keyObj) || !(keyObj is string key) || !ValidHeroKey(key))
-                    return Rejected(outcome, warn, "invalid hero key");
+                    return Rejected(outcome, warn, "invalid key: expected a Hero_ subclass type name (alphanumeric and _, up to 64 chars)");
                 outcome.Key = key;
-                if (HeroSigils.IsCoreTraveler(key)) return Rejected(outcome, warn, "key is one of the nine shipped travelers");
+                if (HeroSigils.IsCoreTraveler(key)) return Rejected(outcome, warn, "key " + key + " is one of the nine shipped travelers");
+                bool hasManifest = hero.TryGet("starManifest", out var manifestPath) && manifestPath != null;
+                string declarationHash = StarClusters.RegistryHash(Json.Write(hero));
                 ExtendedHeroDef previous;
                 lock (RegistryLock) HeroesByKey.TryGetValue(key, out previous);
-                if (previous != null && previous.SourceModId != sourceModId)
-                    return Rejected(outcome, warn, "key is already declared by " + previous.SourceModId + "; the first declaration wins");
+                if (previous != null && !hasManifest && previous.DeclarationHash == declarationHash)
+                {
+                    outcome.Accepted = true;
+                    outcome.DeclarationHash = declarationHash;
+                    return outcome;
+                }
+                if (previous != null && (!hasManifest || previous.SourceModId != sourceModId))
+                    return Rejected(outcome, warn, "key " + key + " is already declared by " + previous.SourceModId + "; the first declaration wins");
                 if (!TryReadText(hero, "name", null, out var name) || name == null)
                 {
                     string fallback = key.Substring(5);
-                    name = new Txt(fallback, fallback, fallback);
+                    name = new Txt(fallback, fallback, hasManifest ? fallback : null);
                 }
                 bool melee = hero.TryGet("melee", out var meleeObj) && meleeObj is bool b && b;
                 var memories = new Dictionary<string, Txt>(StringComparer.Ordinal);
@@ -469,14 +486,13 @@ namespace SodRpg.Core.Game
                                 provisionalMemories.Add(memory.Key);
                             }
                 var tree = ReadTree(hero, key, memories, out var layout, out string treeReason);
-                string declarationHash = StarClusters.RegistryHash(Json.Write(hero));
                 var provisional = new ExtendedHeroDef(key, sourceModId, name, melee, memories, tree, declarationHash);
                 // Authored ownership requires a registered traveler. Publish its identity before validating its tree.
                 if (previous == null)
                     lock (RegistryLock) HeroesByKey.Add(key, provisional);
                 try
                 {
-                    if (hero.TryGet("starManifest", out var manifestPath) && manifestPath != null)
+                    if (hasManifest)
                     {
                         try
                         {
