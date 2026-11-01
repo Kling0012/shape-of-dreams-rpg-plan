@@ -214,7 +214,10 @@ namespace SodRpg.Core.Game
             return new Txt(target, target);
         }
 
-        public static bool IsMemory(string target) => target != null && MemoryNames.ContainsKey(target);
+        public static bool IsMemory(string target) => IsBuiltinMemory(target)
+            || (target != null && ExtendedHeroes.TryGetMemoryName(target, out _));
+
+        internal static bool IsBuiltinMemory(string target) => target != null && MemoryNames.ContainsKey(target);
         public static bool IsEssence(string target) => target != null && EssenceNames.ContainsKey(Canon(target));
         public static bool IsTraveler(string target)
         {
@@ -278,7 +281,7 @@ namespace SodRpg.Core.Game
                 if (!IsKnown(t)) return false;
                 for (int j = 0; j < i; j++)
                     if (Canon(link.Requires[j]) == t) return false;
-                if (MemoryNames.ContainsKey(t)) hasMemory = true;
+                if (IsMemory(t)) hasMemory = true;
             }
             if ((link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge || link.Kind == LinkKind.MemoryDamage) && !hasMemory) return false;
             return true;
@@ -291,7 +294,7 @@ namespace SodRpg.Core.Game
             target = Canon(target);
             if (target == null) return false;
             if (TravelerNames.ContainsKey(target)) return heroKey == target || (nearbyAllyHeroes != null && nearbyAllyHeroes.Contains(target));
-            if (MemoryNames.ContainsKey(target)) return equippedMemories != null && equippedMemories.Contains(target);
+            if (IsMemory(target)) return equippedMemories != null && equippedMemories.Contains(target);
             if (EssenceNames.ContainsKey(target))
             {
                 if (equippedEssences == null) return false;

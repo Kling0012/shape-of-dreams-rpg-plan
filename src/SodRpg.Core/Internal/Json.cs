@@ -33,6 +33,41 @@ namespace SodRpg.Core.Internal
         }
     }
 
+    // Connector numbers retain their token so unsupported precision cannot be rounded during parsing or hashing.
+    internal sealed class ConnectorNumber
+    {
+        internal ConnectorNumber(string token) { Token = token; }
+        internal string Token { get; }
+
+        internal bool TryDecimal(out decimal value)
+        {
+            if (!decimal.TryParse(Token, NumberStyles.Float, CultureInfo.InvariantCulture, out value)) return false;
+            return Normalize(Token) == Normalize(value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static string Normalize(string token)
+        {
+            int exponentAt = token.IndexOfAny(new[] { 'e', 'E' });
+            int exponent = 0;
+            if (exponentAt >= 0)
+            {
+                if (!int.TryParse(token.Substring(exponentAt + 1), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out exponent)) return token;
+                token = token.Substring(0, exponentAt);
+            }
+            bool negative = token[0] == '-';
+            if (negative) token = token.Substring(1);
+            int point = token.IndexOf('.');
+            long scale = exponent;
+            if (point >= 0) { scale -= token.Length - point - 1; token = token.Remove(point, 1); }
+            token = token.TrimStart('0');
+            if (token.Length == 0) return "0";
+            int length = token.Length;
+            token = token.TrimEnd('0');
+            scale += length - token.Length;
+            return (negative ? "-" : "") + token + "e" + scale.ToString(CultureInfo.InvariantCulture);
+        }
+    }
+
     /// <summary>
     /// 依存なしの最小JSON。扱う値は JsonObject / List&lt;object&gt; / string / long / bool / null のみ。
     /// 小数は台帳に現れないため拒否する。出力は決定的（キー順を保持）で、チェックサムの再計算に使う。
@@ -51,10 +86,14 @@ namespace SodRpg.Core.Internal
         public static object Parse(string text) => Parse(text, false);
 
         // External translation files discard non-string values, including JSON numbers outside Int64.
-        internal static object Parse(string text, bool allowNonIntegerNumbers)
+        internal static object Parse(string text, bool allowNonIntegerNumbers) => Parse(text, allowNonIntegerNumbers, false);
+
+        internal static object ParseConnector(string text) => Parse(text, false, true);
+
+        private static object Parse(string text, bool allowNonIntegerNumbers, bool connectorNumbers)
         {
             if (text == null) throw new LedgerFormatException("JSONが空です。");
-            var p = new Parser(text, allowNonIntegerNumbers);
+            var p = new Parser(text, allowNonIntegerNumbers, connectorNumbers);
             p.SkipWhitespace();
             var v = p.ParseValue(0);
             p.SkipWhitespace();
@@ -77,6 +116,9 @@ namespace SodRpg.Core.Internal
                     break;
                 case int i:
                     sb.Append(i.ToString(CultureInfo.InvariantCulture));
+                    break;
+                case ConnectorNumber number:
+                    sb.Append(number.Token);
                     break;
                 case bool b:
                     sb.Append(b ? "true" : "false");
@@ -132,10 +174,11 @@ namespace SodRpg.Core.Internal
         {
             private readonly string _s;
             private readonly bool _allowNonIntegerNumbers;
+            private readonly bool _connectorNumbers;
             private static readonly object NonIntegerNumber = new object();
             private int _i;
 
-            public Parser(string s, bool allowNonIntegerNumbers) { _s = s; _allowNonIntegerNumbers = allowNonIntegerNumbers; }
+            public Parser(string s, bool allowNonIntegerNumbers, bool connectorNumbers) { _s = s; _allowNonIntegerNumbers = allowNonIntegerNumbers; _connectorNumbers = connectorNumbers; }
 
             public bool AtEnd => _i >= _s.Length;
 
@@ -172,6 +215,15 @@ namespace SodRpg.Core.Internal
 
             private object ParseInteger()
             {
+                if (_connectorNumbers)
+                {
+                    int tokenStart = _i;
+                    ParseTranslationNumber();
+                    string token = _s.Substring(tokenStart, _i - tokenStart);
+                    if (token.IndexOfAny(new[] { '.', 'e', 'E' }) < 0
+                        && long.TryParse(token, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long integer)) return integer;
+                    return new ConnectorNumber(token);
+                }
                 if (_allowNonIntegerNumbers) return ParseTranslationNumber();
                 int start = _i;
                 if (_s[_i] == '-') _i++;
