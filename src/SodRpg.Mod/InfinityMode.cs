@@ -614,7 +614,7 @@ namespace SodRpg.Mod
             var state = State;
             if (zone == null || state == null) return;
             RegisterAcks();
-            if (!NativeSaveAgreement || !ClientSession.HostInfinitySaveHoldSatisfied) return;
+            if (!NativeSaveAgreement) return;
             if (zone.isInAnyTransition) return;
             if (!CurrentZoneMatches(zone.currentZone, state.FixedZoneId))
             { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
@@ -630,18 +630,21 @@ namespace SodRpg.Mod
                 var beforeArrival = state.Phase;
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
-                // A clear callback can arrive while save/transition/activity guards still hold BossDue.
+                // A clear callback can arrive while transition/activity guards still hold BossDue.
                 if (room.didClearRoom) state.ObserveBossClear();
                 if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
+                // Native soul selection continues while the profile writer is pending. Observe
+                // its lifetime now; otherwise a soul consumed during that hold is lost forever.
                 bool soul = (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish)
                     && HasActiveBossSoul();
                 var before = state.Phase;
                 bool seen = state.SoulObserved;
                 state.ObserveSoul(soul, room.didClearRoom, Rift_RoomExit.instance != null && !Rift_RoomExit.instance.isLocked);
                 if (before != state.Phase || seen != state.SoulObserved) ClientSession.PersistHostInfinityState();
-                if (state.Phase == InfinityPhase.AwaitingChoice) ClientSession.OpenHostInfinityChoice();
+                if (state.Phase == InfinityPhase.AwaitingChoice && ClientSession.HostInfinitySaveHoldSatisfied)
+                    ClientSession.OpenHostInfinityChoice();
             }
-            else if (state.Phase == InfinityPhase.Exploring
+            else if (ClientSession.HostInfinitySaveHoldSatisfied && state.Phase == InfinityPhase.Exploring
                 && room.didClearRoom && !HasNextRoom(zone))
             {
                 var choice = CurrentChoice;

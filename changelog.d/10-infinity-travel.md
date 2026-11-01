@@ -1,2 +1,2 @@
 ### 不具合の修正 / Bug fixes
-- リンボ6を含むインフィニティモードで、ボス部屋への移動が中断された後に再移動できなくなる問題を修正しました。 / Fixed progression getting stuck after travel to a boss room was interrupted in Infinity mode, including Limbo 6.
+- リンボ6を含むインフィニティモードで、ボス部屋への移動中断後や、保存待ち中にボスの魂を回収した後に進行できなくなる問題を修正しました。 / Fixed progression getting stuck after interrupted boss-room travel or after collecting a boss soul while a profile save was pending in Infinity mode, including Limbo 6.
