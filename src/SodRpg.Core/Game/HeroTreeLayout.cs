@@ -284,14 +284,16 @@ namespace SodRpg.Core.Game
             IReadOnlyDictionary<string, ExtendedStarPlacement> placements, out string reason)
         {
             reason = null;
-            // Connector clusters carry presentation metadata, not the shipped authored placement program.
+            // Connector metadata identifies effects and presentation, not the shipped authored placement program.
             var skeleton = new List<TalentDef>(talents.Count);
             var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
             bool metadata = false;
             foreach (var talent in talents)
             {
                 definitions.Add(talent.Id, talent);
-                metadata |= talent.Cluster != null || talent.IsDreamRing;
+                // A connector may import one route effect without the shipped route chain or its deep-ring entrance.
+                // Route ids still identify effects, but do not opt into the shipped route placement program.
+                metadata |= talent.Cluster != null || talent.IsDreamRing || talent.RouteId != null;
                 var plain = talent.IsKeystone
                     ? new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.Description)
                     : new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.MaxRank);

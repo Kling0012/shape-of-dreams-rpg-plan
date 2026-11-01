@@ -668,8 +668,8 @@ namespace SodRpg.Core.Game
             FractionalScopedModifiers.ValidateTree(built);
             if (built.Any(t => t.Mechanism != null || t.KeystoneDefinition != null || t.EffectChannel != null
                 || t.Choices.Any(o => o.Mechanism != null || o.EffectChannel != null))) ValidateEffectBindings(built, bindings);
-            // Cluster and dream-ring metadata are rendered by the existing presentation, with connector edges/positions.
-            if (customLayout || clusters.Count > 0 || built.Exists(t => t.IsDreamRing))
+            // Keep connector route effects out of the shipped route layout, which requires deep-ring entrance stars.
+            if (customLayout || clusters.Count > 0 || built.Exists(t => t.IsDreamRing || t.RouteId != null))
             {
                 layout = HeroTreeLayout.CreateExtended(built, placements, out reason);
                 if (layout == null) return null;

@@ -147,6 +147,26 @@ Choice・星群・仕掛けの修飾を併用する場合の `starTree` の例�
 
 `authoredEffect` は既存の定義を複製し、数値・発動条件・段数表をそのまま使う。`perRank`・`value` や名前参照の `gimmick` との併用は拒否する。`maxRank` は参照元以下、`rankCost` は参照元以上にする。キーストーンの参照では `keystone: true` を指定し、通常星への変更はできない。Choice では親の費用を検証に使う。元の取得条件は引き継ぎ、全取得の条件は追加できるが、元の「いずれか」の条件を別の集合へ変えることはできない。選択肢の参照元が持つ取得条件も親の星に引き継ぐ。
 
+小さな星図では使う効果の星と、その効果が参照する星だけを宣言できる。元の記憶ルートの前後の星は不要で、`routeOrder` も省略できる。コネクタはルートの配列を配置に使わず、通常の星として自動配置する。`requires`・`position` で接続と位置を指定する場合も同じ。効果が使う記憶とルートの識別子は保持する。
+
+例えば、次の `starTree` は能力値の星と Vesper の突進の効果だけを持つ。`St_Q_NovaBlink` は §3-2 冒頭の `memories` に宣言する。`memory` は省略でき、その場合も `effectBindings.memories` の対応を使う。この例には、参照先の星を足す必要はない。
+
+```json
+{
+  "effectBindings": {
+    "stars": { "h.vesper.route.charge.2": "impact" },
+    "memories": { "St_M_Charge": "St_Q_NovaBlink" }
+  },
+  "nodes": [
+    { "id": "edge", "stat": "AttackPct", "perRank": 3, "maxRank": 3 },
+    { "id": "impact", "maxRank": 3, "requires": ["edge"],
+      "authoredEffect": { "hero": "Hero_Vesper", "star": "h.vesper.route.charge.2" } }
+  ]
+}
+```
+
+取得条件・置換先・橋の両端・キーストーンの対象など、効果が別の星を参照する場合は、その星も `nodes` に書き、元の星IDからローカルIDへの対応を `effectBindings.stars` に加える。追加した星にも参照があれば同じように補う。対応が足りない場合は、`requires a star binding: <元の星ID>` などの理由で星図だけを拒否する。対応先の星が `nodes` に無い場合も、そのIDを示して拒否する。必要な星の宣言は §5-1 の `--probe-small` が出す JSON でも確認できる。
+
 外部記憶を使う汎用の機構は受け付ける。相手のMODから既存の発動・命中・撃破・所有攻撃の通知が届かなければ効果が動かない場合があるため、宣言した外部記憶の一覧とこの注意を §7 の報告へ残す。独自のダメージ・召喚処理が通知を送ることまでは保証しない。
 
 Native 固有の処理は付け替えを制限する。選択中の元キーストーンIDが必要な `StunSourceFilter`・`SacrificeShield`、未接続の Native adapter が必要な橋は拒否する。MemoryTuning、RelayWindow、固有の会心・移動攻撃・速度連動の IdentityStrike、Native の段階を読む橋、Circle of Life の所有攻撃発射、SharedCrystalField・ShieldWall・ShadowCue の固定記憶は別の記憶へ付け替えられない。
@@ -212,6 +232,15 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 再登録した各星と各選択肢を、全星を取得条件の判定用状態へ入れたうえで、個別に `Build.ComputeForTree` と `Build.Encode` / `Decode` の往復へ通す。Vesper は941件、Bismuth は787件で往復の不一致0。これは合法な割り当て手順や全組み合わせの同値性、ゲーム内のイベント発火を証明するものではない。実機は未確認。
 
 `--check <宣言JSON>` は宣言の受理結果と外部記憶の警告を表示する。`--snapshot` は拡張旅人を登録する前の指紋と既存9人の定義・配置を出力する。
+
+`--probe-small <旅人> [出力先ディレクトリ]` は、見本に含むすべての `authoredEffect` を1件ずつ、能力値の星1つと参照に必要な星だけの宣言へ通す。Choice の参照は元の選択肢を両方残す。必要な参照をたどったあと、対象以外の星を1つずつ外して再登録し、受理に不要な星を取り除く。残した各星を単独で外すと拒否されるところまで確認する。元の `routeOrder` を保つ宣言、省略する宣言、接続も省略する自動配置の宣言を作る。さらに `effectBindings.stars` の各対応を1つずつ外し、必要な対応の不足を星IDつきの理由で拒否することを確かめる。受理と理由つき拒否は正常な結果とし、内部例外による拒否や説明のない失敗があれば終了コード1を返す。JSON と結果の一覧は出力先に残す。出力先の省略時は一時ディレクトリを使う。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release --artifacts-path "$TMPDIR/hero-connector-artifacts" -- --probe-small Hero_Vesper "$TMPDIR/vesper-small"
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release --artifacts-path "$TMPDIR/hero-connector-artifacts" -- --probe-small Hero_Bismuth "$TMPDIR/bismuth-small"
+```
+
+2026-11-01 の確認では、Vesper は158参照（親星156個）×3通りで474件、Bismuth は122参照×3通りで366件を受理した。理由つき拒否・内部例外はともに0件。補った参照星は1宣言あたり Vesper が最大57個、Bismuth が最大63個。対応表を1件ずつ欠いた確認は計3947件で、3739件が不足した星IDつきの拒否、208件が不要な対応の省略として受理された。説明のない失敗は0件。
 
 ## 6. Dreamforge 側の変更点
 
