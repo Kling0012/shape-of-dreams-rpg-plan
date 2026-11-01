@@ -29,6 +29,8 @@ Keep `dreamforgeApi` at 1. `starManifest` names a file relative to the source MO
 
 Runtime registration uses the existing `Dreamforge.Api.HeroConnector.RegisterHeroes` API. Set `sourceModId` to the loaded traveler mod's ID; the host resolves referenced files within that MOD folder. Registrations during an expedition are deferred until it ends.
 
+Mechanisms need the existing cast, hit, kill, and owned-attack event notifications. A traveler's custom damage or summon implementation may not deliver them; effects that depend on those notifications then do not activate. The connector report includes this warning for external memories.
+
 ## Star manifest
 
 Use the [canonical one-object-per-star format](../tools/star-manifest/README.md). This complete `stars.json` example contains one MemoryDamage star. Numeric values are checked against registered stars of the same kind from the nine shipped travelers.
