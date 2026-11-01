@@ -263,7 +263,7 @@ namespace SodRpg.Core.Game
             ?? (s.Relay != null ? RelayWindowDefinition.SourceMemory : s.Dividend?.SourceMemory ?? s.IdentityStrike?.Identity ?? s.Tuning?.Memory)
             ?? s.Recharge?.Source.Memory ?? s.Source?.Memory;
         internal static string ReceiverMemory(AuthoredMechanismSpec s) => s.Recharge?.Recipient.Memory ?? s.Relay?.TargetMemory ?? SourceMemory(s);
-        internal static bool Matches(ScopedModifierDef modifier, AuthoredMechanismEntry entry)
+        public static bool Matches(ScopedModifierDef modifier, AuthoredMechanismEntry entry)
         {
             var s = entry.Spec;
             // A recharge that hands cooldown to another memory is boosted from the receiving side only (source/receiver separation).

@@ -446,6 +446,7 @@ namespace SodRpg.Core.Game
         public EffectChannelDef EffectChannel { get; set; }
         public NativeMemoryModifierDef NativeModifier { get; set; }
         public AuthoredMechanismSpec Mechanism { get; set; }
+        internal string ConnectorEffectSource { get; set; }
         public KeystoneDefinition KeystoneDefinition { get; set; }
         /// <summary>v1.32 B：遠征を通して成長する仕組み（重要な星）。なければ null。</summary>
         public RunGrowthDef RunGrowth { get; set; }
