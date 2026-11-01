@@ -38,9 +38,12 @@ if (args.Length == 2 && args[0] == "--check")
         foreach (string warning in hero.EventWarnings) Console.WriteLine("warning: " + warning);
     return registration.Heroes.Count > 0 && registration.Heroes.All(h => h.Accepted && !h.GenericTree) ? 0 : 1;
 }
+bool probeSmall = args.Length >= 2 && args[0] == "--probe-small";
+if (probeSmall)
+    args = new[] { args[1], args.Length > 2 ? args[2] : Path.Combine(Path.GetTempPath(), "hero-connector-small-" + Guid.NewGuid().ToString("N")) };
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper $TMPDIR/vesper.json [Hero_TestVesper]");
+    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper $TMPDIR/vesper.json [Hero_TestVesper]\n       --probe-small Hero_Vesper [$TMPDIR/probe-directory]\n       --check declaration.json | --snapshot [declaration.json]");
     return 2;
 }
 try
@@ -214,6 +217,191 @@ try
         region = c.Region.Kind.ToString(), regionId = c.Region.Id, shape = c.Shape.ToString() }).ToArray();
     var declaration = new { dreamforgeApi = 1, heroes = new[] { new { key = target, name = new { ja = target, en = target, zh = target },
         starTree = new { effectBindings = new { stars = ids }, clusters, nodes } } } };
+    if (probeSmall)
+    {
+        Directory.CreateDirectory(output);
+        var parents = included.SelectMany(t => Effects(t).Select(e => (Effect: e, Parent: t)))
+            .GroupBy(p => p.Effect.Id).ToDictionary(g => g.Key, g => g.First().Parent, StringComparer.Ordinal);
+        var byId = included.ToDictionary(t => t.Id, StringComparer.Ordinal);
+        var authored = included.SelectMany(t => Effects(t).Where(e => e.Mechanism != null || e.KeystoneDefinition != null
+            || e.EffectChannel != null || e.PairCombo != null).Select(e => (Parent: t, Effect: e))).ToArray();
+        var rows = new List<string>();
+        int accepted = 0, rejected = 0, internalErrors = 0, caseNumber = 0, dependencyCount = 0, maxDependencies = 0;
+        int missingBindingChecks = 0, missingBindingFailures = 0, optionalBindings = 0, minimalityChecks = 0;
+        bool InternalReason(string reason) => string.IsNullOrWhiteSpace(reason)
+            || reason.StartsWith("unexpected failure:", StringComparison.Ordinal)
+            || new[] { "Index", "bounds", "NullReference", "KeyNotFound", "Object reference", "given key", "ArgumentOutOfRange", "Sequence contains" }
+                .Any(marker => reason.Contains(marker, StringComparison.OrdinalIgnoreCase));
+        Dictionary<string, object> SmallNode(string id, string mode)
+        {
+            var node = Definition(byId[id], false);
+            node.Remove("cluster"); node.Remove("clusterOrder");
+            if (mode != "explicit")
+            {
+                node.Remove("routeOrder");
+                if (node.TryGetValue("choices", out var choiceNodes))
+                    foreach (var choiceNode in (Dictionary<string, object>[])choiceNodes) choiceNode.Remove("routeOrder");
+            }
+            if (mode != "automatic") node["requires"] = new[] { "edge" };
+            return node;
+        }
+        List<Dictionary<string, object>> SmallNodes(IEnumerable<string> selectedIds, string mode)
+        {
+            var result = new List<Dictionary<string, object>>
+            {
+                new Dictionary<string, object> { ["id"] = "edge", ["stat"] = "AttackPct", ["perRank"] = 1, ["maxRank"] = 1 }
+            };
+            result.AddRange(selectedIds.Select(id => SmallNode(id, mode)));
+            return result;
+        }
+        string SmallJson(string key, IEnumerable<string> selectedIds, List<Dictionary<string, object>> smallNodes)
+        {
+            var selectedSet = new HashSet<string>(selectedIds, StringComparer.Ordinal);
+            var smallBindings = ids.Where(p => selectedSet.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
+            return JsonSerializer.Serialize(new { dreamforgeApi = 1, heroes = new[] { new { key,
+                starTree = new { effectBindings = new { stars = smallBindings }, nodes = smallNodes } } } }, options);
+        }
+        foreach (var reference in authored)
+        {
+            var selected = new HashSet<string>(StringComparer.Ordinal);
+            void Include(string id)
+            {
+                if (!parents.TryGetValue(id, out var parent)) return;
+                if (!selected.Add(parent.Id)) return;
+                if (parent.AuthoredStar != null)
+                    foreach (string required in parent.AuthoredStar.RequiredStarIds.Concat(parent.AuthoredStar.RequiredAnyStarIds)) Include(required);
+                foreach (var effect in Effects(parent))
+                {
+                    if (effect.AuthoredStar != null)
+                        foreach (string required in effect.AuthoredStar.RequiredStarIds.Concat(effect.AuthoredStar.RequiredAnyStarIds)) Include(required);
+                    void Mechanism(AuthoredMechanismSpec spec)
+                    {
+                        if (spec == null) return;
+                        foreach (string replaced in spec.Replaces) Include(replaced);
+                        if (spec.Dividend != null) foreach (string contributor in spec.Dividend.ContributorIds) Include(contributor);
+                        if (spec.Bridge != null) foreach (var endpoint in spec.Bridge.Endpoints) Include(endpoint.StarId);
+                        if (spec.Condition != AuthoredMechanismCondition.Always)
+                            foreach (var bridge in included.SelectMany(Effects).Where(t => t.Mechanism?.Bridge?.PairId == spec.PairId)) Include(bridge.Id);
+                    }
+                    Mechanism(effect.Mechanism);
+                    if (effect.KeystoneDefinition != null)
+                    {
+                        var key = effect.KeystoneDefinition;
+                        foreach (string required in key.Prerequisites) Include(required);
+                        foreach (string targetId in key.Upside.SelectMany(t => t.Scope.TargetEffectIds)) Include(targetId);
+                        foreach (var grant in key.Grants) Mechanism(grant);
+                    }
+                    if (effect.ScopedModifier != null)
+                    {
+                        var m = effect.ScopedModifier;
+                        foreach (string targetId in m.TargetEffectIds) Include(targetId);
+                        if (!m.TargetEffectIds.Any())
+                        {
+                            var recipient = included.SelectMany(Effects).FirstOrDefault(t =>
+                                t.Gimmick != null && FractionalScopedModifiers.Matches(m, new GimmickEntry { StarId = t.Id, Memory = t.RouteMemory, Def = t.Gimmick, Channel = t.EffectChannel })
+                                || t.Mechanism != null && AuthoredMechanisms.Matches(m, new AuthoredMechanismEntry { StarId = t.Id, ContributorIds = new[] { t.Id }, Spec = t.Mechanism }));
+                            if (recipient != null) Include(recipient.Id);
+                        }
+                    }
+                    if (effect.GimmickBoost > 0 || effect.GimmickParameter.HasValue)
+                    {
+                        var recipient = included.SelectMany(Effects).FirstOrDefault(t => t.RouteMemory == effect.RouteMemory && t.Gimmick != null
+                            && (!effect.GimmickParameter.HasValue || Gimmicks.SupportsParameter(t.Gimmick, effect.GimmickParameter.Value)));
+                        if (recipient != null) Include(recipient.Id);
+                    }
+                }
+            }
+            Include(reference.Parent.Id);
+            // Keep only necessary reference nodes, never the source route's layout neighbors.
+            // A dependency is removable only when the real connector still accepts the remaining declaration.
+            bool reduced;
+            do
+            {
+                reduced = false;
+                foreach (string candidate in selected.Where(id => id != reference.Parent.Id).ToArray())
+                {
+                    var remaining = selected.Where(id => id != candidate).ToArray();
+                    string minimalKey = "Hero_MinimalProbe" + minimalityChecks++;
+                    var trial = ExtendedHeroes.Register(SmallJson(minimalKey, remaining, SmallNodes(remaining, "explicit")), "hero-connector-minimal-probe", null);
+                    var outcome = trial.Heroes.SingleOrDefault();
+                    if (outcome?.Accepted == true && !outcome.GenericTree)
+                    {
+                        selected.Remove(candidate);
+                        reduced = true;
+                    }
+                    else if (InternalReason(outcome?.Reason ?? trial.FileError))
+                    {
+                        internalErrors++;
+                        rows.Add(reference.Effect.Id + " removedNode=" + candidate + " result=internal-error reason=" + (outcome?.Reason ?? trial.FileError));
+                    }
+                }
+            } while (reduced);
+            int dependencies = selected.Count - 1;
+            dependencyCount += dependencies;
+            maxDependencies = Math.Max(maxDependencies, dependencies);
+            foreach (string mode in new[] { "explicit", "no-route-order", "automatic" })
+            {
+                string probeKey = "Hero_SmallProbe" + caseNumber++;
+                var smallNodes = SmallNodes(selected, mode);
+                var smallBindings = ids.Where(p => selected.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
+                string smallJson = SmallJson(probeKey, selected, smallNodes);
+                string path = Path.Combine(output, probeKey + ".json");
+                File.WriteAllText(path, smallJson);
+                var warnings = new List<string>();
+                string reason = null;
+                bool ok = false, internalError = false;
+                try
+                {
+                    var result = ExtendedHeroes.Register(smallJson, "hero-connector-small-probe", warnings.Add);
+                    var outcome = result.Heroes.SingleOrDefault();
+                    ok = outcome?.Accepted == true && !outcome.GenericTree;
+                    reason = outcome?.Reason ?? result.FileError;
+                    // Force the same lazy layout used after registration, including declarations with no placement fields.
+                    if (ok) HeroTreeLayout.ForHero(probeKey);
+                    internalError = !ok && InternalReason(reason);
+                }
+                catch (Exception error)
+                {
+                    reason = error.GetType().Name + ": " + error.Message;
+                    internalError = true;
+                    ok = false;
+                }
+                if (ok) accepted++; else if (internalError) internalErrors++; else rejected++;
+                rows.Add(reference.Effect.Id + " mode=" + mode + " dependencies=" + dependencies
+                    + " result=" + (ok ? "accepted" : internalError ? "internal-error" : "rejected") + " reason=" + reason + " declaration=" + path);
+                if (mode == "explicit")
+                {
+                    // Omit each binding in turn. A required source must be named in the rejection, never surface as an internal exception.
+                    foreach (string sourceId in smallBindings.Keys.ToArray())
+                    {
+                        var missing = smallBindings.Where(p => p.Key != sourceId).ToDictionary(p => p.Key, p => p.Value);
+                        string missingKey = "Hero_MissingProbe" + missingBindingChecks++;
+                        var missingDeclaration = new { dreamforgeApi = 1, heroes = new[] { new { key = missingKey,
+                            starTree = new { effectBindings = new { stars = missing }, nodes = smallNodes } } } };
+                        var result = ExtendedHeroes.Register(JsonSerializer.Serialize(missingDeclaration, options), "hero-connector-missing-probe", null);
+                        var outcome = result.Heroes.SingleOrDefault();
+                        bool explained = outcome?.GenericTree == true && outcome.Reason?.Contains(sourceId, StringComparison.Ordinal) == true
+                            && (outcome.Reason.Contains("requires a star binding:", StringComparison.Ordinal)
+                                || outcome.Reason.Contains("targets an unbound star:", StringComparison.Ordinal));
+                        bool optional = outcome?.Accepted == true && !outcome.GenericTree;
+                        if (optional) optionalBindings++;
+                        else if (!explained) missingBindingFailures++;
+                        rows.Add(reference.Effect.Id + " missingBinding=" + sourceId + " result=" + (explained ? "explained-rejection" : optional ? "optional-binding" : "unexpected")
+                            + " reason=" + (outcome?.Reason ?? result.FileError));
+                    }
+                }
+            }
+        }
+        string probeReport = "source=" + hero + " references=" + authored.Length + " stars=" + authored.Select(r => r.Parent.Id).Distinct().Count()
+            + " dependencies=" + dependencyCount + " maxDependencies=" + maxDependencies + " cases=" + caseNumber
+            + " accepted=" + accepted + " rejected=" + rejected + " internalErrors=" + internalErrors
+            + " minimalityChecks=" + minimalityChecks + " missingBindingChecks=" + missingBindingChecks
+            + " optionalBindings=" + optionalBindings + " missingBindingFailures=" + missingBindingFailures;
+        File.WriteAllText(Path.Combine(output, "report.txt"), probeReport + "\n" + string.Join("\n", rows) + "\n");
+        Console.WriteLine(probeReport);
+        Console.WriteLine("Report: " + Path.Combine(output, "report.txt"));
+        return internalErrors == 0 && missingBindingFailures == 0 && authored.Length > 0 ? 0 : 1;
+    }
     string json = JsonSerializer.Serialize(declaration, options);
     File.WriteAllText(output, json);
     var registered = ExtendedHeroes.Register(json, "hero-connector-export", Console.Error.WriteLine);
