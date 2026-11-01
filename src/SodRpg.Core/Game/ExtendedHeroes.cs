@@ -73,18 +73,24 @@ namespace SodRpg.Core.Game
     {
         internal readonly Dictionary<Stat, int> StatValues = new Dictionary<Stat, int>();
         internal readonly Dictionary<Stat, int> StatRanks = new Dictionary<Stat, int>();
+        internal readonly Dictionary<Stat, decimal> StatTotals = new Dictionary<Stat, decimal>();
         internal readonly Dictionary<Stat, int> StatKeystoneCaps = new Dictionary<Stat, int>();
         internal readonly Dictionary<LinkKind, decimal> LinkValues = new Dictionary<LinkKind, decimal>();
         internal readonly Dictionary<LinkKind, int> LinkRanks = new Dictionary<LinkKind, int>();
+        internal readonly Dictionary<LinkKind, decimal> LinkTotals = new Dictionary<LinkKind, decimal>();
         internal readonly Dictionary<Power, int> PowerValues = new Dictionary<Power, int>();
         internal readonly Dictionary<Power, int> PowerRanks = new Dictionary<Power, int>();
+        internal readonly Dictionary<Power, decimal> PowerTotals = new Dictionary<Power, decimal>();
         internal readonly Dictionary<Power, int> PowerKeystoneCaps = new Dictionary<Power, int>();
         internal readonly Dictionary<GimmickParam, int> GimmickParamValues = new Dictionary<GimmickParam, int>();
         internal readonly Dictionary<GimmickParam, int> GimmickParamRanks = new Dictionary<GimmickParam, int>();
+        internal readonly Dictionary<GimmickParam, decimal> GimmickParamTotals = new Dictionary<GimmickParam, decimal>();
         internal readonly Dictionary<string, int> NativeValues = new Dictionary<string, int>(StringComparer.Ordinal);
         internal readonly Dictionary<string, int> NativeRanks = new Dictionary<string, int>(StringComparer.Ordinal);
+        internal readonly Dictionary<string, decimal> NativeTotals = new Dictionary<string, decimal>(StringComparer.Ordinal);
         internal readonly Dictionary<string, int> ScopedValues = new Dictionary<string, int>(StringComparer.Ordinal);
         internal readonly Dictionary<string, int> ScopedRanks = new Dictionary<string, int>(StringComparer.Ordinal);
+        internal readonly Dictionary<string, decimal> ScopedTotals = new Dictionary<string, decimal>(StringComparer.Ordinal);
         internal readonly Dictionary<string, GimmickDef> Gimmicks = new Dictionary<string, GimmickDef>(StringComparer.Ordinal);
         public IReadOnlyDictionary<Stat, int> PerRankMax;
         public IReadOnlyDictionary<Stat, int> MaxRankMax;
@@ -116,6 +122,7 @@ namespace SodRpg.Core.Game
         public int RanksMax;
         public int GimmickBoostMax;
         public int GimmickBoostRanksMax;
+        internal decimal GimmickBoostTotalMax;
         internal static string NativeKey(LinkKind kind, string profile) => kind + "/" + (profile ?? "");
         internal static string ScopedKey(ScopeKind scope, GimmickParam? param, string profile) =>
             scope + "/" + (param?.ToString() ?? "amount") + "/" + (profile ?? "");
@@ -128,15 +135,17 @@ namespace SodRpg.Core.Game
                 .Append(", keystones=").Append(KeystonesMax).Append(", choices=").Append(ChoicesMax)
                 .Append(", options per choice=").Append(OptionsPerChoiceMax).Append(", clusters=").Append(ClustersMax)
                 .Append(", rankCost=").Append(RankCostMax).Append(", maxRank=").Append(RanksMax).Append('\n');
-            sb.Append("  per Stat (perRank max / maxRank max / keystone value max):\n");
+            sb.Append("  Ranked stars must satisfy perRank, maxRank and single-star total maxima together.\n");
+            sb.Append("  per Stat (perRank max / maxRank max / single-star total max / keystone value max):\n");
             foreach (var kv in StatValues)
                 sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ")
-                    .Append(StatRanks[kv.Key]).Append(" / ").Append(StatKeystoneCaps[kv.Key]).Append('\n');
-            sb.Append("  per LinkKind (perRank max / maxRank max):\n");
+                    .Append(StatRanks[kv.Key]).Append(" / ").Append(StatTotals[kv.Key].ToString(CultureInfo.InvariantCulture))
+                    .Append(" / ").Append(StatKeystoneCaps[kv.Key]).Append('\n');
+            sb.Append("  per LinkKind (perRank max / maxRank max / single-star total max):\n");
             foreach (var kv in LinkValues)
                 sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value.ToString(CultureInfo.InvariantCulture))
-                    .Append(" / ").Append(LinkRanks[kv.Key]).Append('\n');
-            sb.Append("  per Power (perRank max / maxRank max / keystone value max; 0 = unavailable):\n");
+                    .Append(" / ").Append(LinkRanks[kv.Key]).Append(" / ").Append(LinkTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
+            sb.Append("  per Power (perRank max / maxRank max / single-star total max / keystone value max; 0 = unavailable):\n");
             var powers = new HashSet<Power>(PowerValues.Keys);
             powers.UnionWith(PowerKeystoneCaps.Keys);
             var ordered = new List<Power>(powers);
@@ -145,19 +154,25 @@ namespace SodRpg.Core.Game
             {
                 PowerValues.TryGetValue(power, out int perRank);
                 PowerRanks.TryGetValue(power, out int ranks);
+                PowerTotals.TryGetValue(power, out decimal total);
                 PowerKeystoneCaps.TryGetValue(power, out int value);
-                sb.Append("    ").Append(power).Append(": ").Append(perRank).Append(" / ").Append(ranks).Append(" / ").Append(value).Append('\n');
+                sb.Append("    ").Append(power).Append(": ").Append(perRank).Append(" / ").Append(ranks)
+                    .Append(" / ").Append(total.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(value).Append('\n');
             }
-            sb.Append("  GimmickBoost (perRank max / maxRank max): ").Append(GimmickBoostMax).Append(" / ").Append(GimmickBoostRanksMax).Append('\n');
-            sb.Append("  per GimmickParam (perRank max / maxRank max):\n");
+            sb.Append("  GimmickBoost (perRank max / maxRank max / single-star total max): ").Append(GimmickBoostMax)
+                .Append(" / ").Append(GimmickBoostRanksMax).Append(" / ").Append(GimmickBoostTotalMax.ToString(CultureInfo.InvariantCulture)).Append('\n');
+            sb.Append("  per GimmickParam (perRank max / maxRank max / single-star total max):\n");
             foreach (var kv in GimmickParamValues)
-                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(GimmickParamRanks[kv.Key]).Append('\n');
-            sb.Append("  NativeModifier kind/capProfile (value hundredths max / maxRank max; unavailable if absent):\n");
+                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(GimmickParamRanks[kv.Key])
+                    .Append(" / ").Append(GimmickParamTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
+            sb.Append("  NativeModifier kind/capProfile (value hundredths max / maxRank max / single-star total hundredths max; unavailable if absent):\n");
             foreach (var kv in NativeValues)
-                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(NativeRanks[kv.Key]).Append('\n');
-            sb.Append("  ScopedModifier scope/parameter/capProfile (amount hundredths, probability ten-thousandths, or target count max / maxRank max):\n");
+                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(NativeRanks[kv.Key])
+                    .Append(" / ").Append(NativeTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
+            sb.Append("  ScopedModifier scope/parameter/capProfile (amount hundredths, probability ten-thousandths, or target count max / maxRank max / single-star total max in the same units):\n");
             foreach (var kv in ScopedValues)
-                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(ScopedRanks[kv.Key]).Append('\n');
+                sb.Append("    ").Append(kv.Key).Append(": ").Append(kv.Value).Append(" / ").Append(ScopedRanks[kv.Key])
+                    .Append(" / ").Append(ScopedTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("  named shipped gimmicks (read-only references):\n");
             foreach (var kv in Gimmicks) sb.Append("    ").Append(kv.Key).Append('\n');
             return sb.ToString();
@@ -227,6 +242,12 @@ namespace SodRpg.Core.Game
                 values.TryGetValue(key, out int best);
                 if (value > best) values[key] = value;
             }
+            void MaxTotal<TKey>(Dictionary<TKey, decimal> totals, TKey key, decimal perRank, int maxRank)
+            {
+                totals.TryGetValue(key, out decimal best);
+                decimal total = perRank * maxRank;
+                if (total > best) totals[key] = total;
+            }
             void Inspect(TalentDef t)
             {
                 result.RankCostMax = Math.Max(result.RankCostMax, t.RankCost);
@@ -240,11 +261,13 @@ namespace SodRpg.Core.Game
                 {
                     Max(result.PowerValues, t.RankPower, t.PerRank);
                     Max(result.PowerRanks, t.RankPower, t.MaxRank);
+                    MaxTotal(result.PowerTotals, t.RankPower, t.PerRank, t.MaxRank);
                 }
                 else if (t.PerRank > 0)
                 {
                     Max(result.StatValues, t.Stat, t.PerRank);
                     Max(result.StatRanks, t.Stat, t.MaxRank);
+                    MaxTotal(result.StatTotals, t.Stat, t.PerRank, t.MaxRank);
                 }
                 if (t.LinkPerRank != null)
                 {
@@ -252,6 +275,7 @@ namespace SodRpg.Core.Game
                     result.LinkValues.TryGetValue(link.Kind, out decimal best);
                     if (link.Value > best) result.LinkValues[link.Kind] = link.Value;
                     Max(result.LinkRanks, link.Kind, t.MaxRank);
+                    MaxTotal(result.LinkTotals, link.Kind, link.Value, t.MaxRank);
                 }
                 if (t.Gimmick != null && t.Mechanism == null && t.EffectChannel == null)
                 {
@@ -262,11 +286,13 @@ namespace SodRpg.Core.Game
                 {
                     result.GimmickBoostMax = Math.Max(result.GimmickBoostMax, t.GimmickBoost);
                     result.GimmickBoostRanksMax = Math.Max(result.GimmickBoostRanksMax, t.MaxRank);
+                    result.GimmickBoostTotalMax = Math.Max(result.GimmickBoostTotalMax, (decimal)t.GimmickBoost * t.MaxRank);
                 }
                 if (t.GimmickParameter.HasValue)
                 {
                     Max(result.GimmickParamValues, t.GimmickParameter.Value, t.GimmickParamAmount);
                     Max(result.GimmickParamRanks, t.GimmickParameter.Value, t.MaxRank);
+                    MaxTotal(result.GimmickParamTotals, t.GimmickParameter.Value, t.GimmickParamAmount, t.MaxRank);
                 }
                 if (t.NativeModifier != null)
                 {
@@ -274,6 +300,7 @@ namespace SodRpg.Core.Game
                     string key = ExtendedStarLimits.NativeKey(n.Kind, n.CapProfileId);
                     Max(result.NativeValues, key, n.Value.Units);
                     Max(result.NativeRanks, key, t.MaxRank);
+                    MaxTotal(result.NativeTotals, key, n.Value.Units, t.MaxRank);
                 }
                 if (t.ScopedModifier != null)
                 {
@@ -283,6 +310,7 @@ namespace SodRpg.Core.Game
                         : m.Param == GimmickParam.Chance ? m.Probability.Units : m.Amount.Units;
                     Max(result.ScopedValues, key, amount);
                     Max(result.ScopedRanks, key, t.MaxRank);
+                    MaxTotal(result.ScopedTotals, key, amount, t.MaxRank);
                 }
                 result.OptionsPerChoiceMax = Math.Max(result.OptionsPerChoiceMax, t.Choices.Count);
                 foreach (var option in t.Choices) Inspect(option);
@@ -298,6 +326,7 @@ namespace SodRpg.Core.Game
                 {
                     Max(result.StatValues, t.Stat, t.PerRank);
                     Max(result.StatRanks, t.Stat, t.MaxRank);
+                    MaxTotal(result.StatTotals, t.Stat, t.PerRank, t.MaxRank);
                 }
             }
             foreach (var talent in HeroStarRoutes.All) if (heroKeys.Contains(talent.HeroKey)) Inspect(talent);
@@ -325,11 +354,13 @@ namespace SodRpg.Core.Game
                 {
                     result.GimmickBoostMax = Math.Max(result.GimmickBoostMax, (int)star.Amount);
                     result.GimmickBoostRanksMax = Math.Max(result.GimmickBoostRanksMax, star.MaxRank);
+                    result.GimmickBoostTotalMax = Math.Max(result.GimmickBoostTotalMax, (decimal)(int)star.Amount * star.MaxRank);
                 }
                 if (star.Kind == ClusterStarKind.GimmickParam && star.ScopedModifier == null)
                 {
                     Max(result.GimmickParamValues, star.Param, (int)star.Amount);
                     Max(result.GimmickParamRanks, star.Param, star.MaxRank);
+                    MaxTotal(result.GimmickParamTotals, star.Param, (int)star.Amount, star.MaxRank);
                 }
                 if (star.Options != null) foreach (var option in star.Options) InspectLegacy(option);
             }
@@ -340,6 +371,7 @@ namespace SodRpg.Core.Game
                     string key = ExtendedStarLimits.NativeKey(kind, "dreamforge.connector.native." + kind);
                     result.NativeValues[key] = ValueUnits.FromPercent(value).Units;
                     result.NativeRanks[key] = result.LinkRanks[kind];
+                    result.NativeTotals[key] = result.LinkTotals[kind] * 100m;
                 }
             foreach (var kv in result.StatValues)
                 Max(result.StatKeystoneCaps, kv.Key, kv.Value * result.StatRanks[kv.Key]);
@@ -730,6 +762,8 @@ namespace SodRpg.Core.Game
                 {
                     int ranks = hasStat ? Lookup(limits.StatRanks, stat, "stat") : Lookup(limits.PowerRanks, power, "power");
                     if (maxRank > ranks) throw new FormatException("maxRank exceeds the shipped max " + ranks);
+                    decimal totalCap = hasStat ? Lookup(limits.StatTotals, stat, "stat") : Lookup(limits.PowerTotals, power, "power");
+                    ValidateTotal(amount, maxRank, totalCap, hasStat ? stat.ToString() : power.ToString());
                     talent = hasStat ? new TalentDef(id, Line.Offense, name, stat, amount, maxRank)
                         : new TalentDef(id, Line.Offense, name, power, amount, maxRank);
                     inferred = hasPower ? ClusterStarKind.Notable : ClusterStarKind.Stat;
@@ -743,6 +777,7 @@ namespace SodRpg.Core.Game
                     || kind != LinkKind.MemoryDamage && value != decimal.Truncate(value))
                     throw new FormatException("invalid perRank for " + kind + "; shipped max is " + cap.ToString(CultureInfo.InvariantCulture));
                 if (maxRank > limits.LinkRanks[kind]) throw new FormatException("maxRank exceeds the shipped max for " + kind);
+                ValidateTotal(value, maxRank, limits.LinkTotals[kind], kind.ToString());
                 talent = new TalentDef(id, Line.Offense, name, new LinkDef { Kind = kind, Value = value, Requires = new[] { memory } }, maxRank);
                 inferred = kind == LinkKind.MemoryHaste ? ClusterStarKind.MemoryHaste : kind == LinkKind.MemoryDamage ? ClusterStarKind.MemoryDamage : ClusterStarKind.Notable;
             }
@@ -758,6 +793,7 @@ namespace SodRpg.Core.Game
                     string capKey = ExtendedStarLimits.NativeKey(kind, profile);
                     int value = ReadInteger(native, "valueUnits", null, 1, Lookup(limits.NativeValues, capKey, "native kind/capProfile"));
                     if (maxRank > limits.NativeRanks[capKey]) throw new FormatException("nativeModifier maxRank exceeds the shipped max");
+                    ValidateTotal(value, maxRank, limits.NativeTotals[capKey], "nativeModifier " + capKey);
                     talent.NativeModifier = new NativeMemoryModifierDef { Memory = memory, Kind = kind, Value = new ValueUnits(value), CapProfileId = profile };
                     inferred = kind == LinkKind.MemoryHaste ? ClusterStarKind.MemoryHaste : ClusterStarKind.MemoryDamage;
                 }
@@ -773,6 +809,8 @@ namespace SodRpg.Core.Game
                     int probability = ReadInteger(scoped, "probabilityUnits", 0, 0, cap);
                     int extra = ReadInteger(scoped, "extraTargets", 0, 0, cap);
                     if (maxRank > limits.ScopedRanks[capKey]) throw new FormatException("scopedModifier maxRank exceeds the shipped max");
+                    int perRank = param == GimmickParam.ExtraTargets ? extra : param == GimmickParam.Chance ? probability : amount;
+                    ValidateTotal(perRank, maxRank, limits.ScopedTotals[capKey], "scopedModifier " + capKey);
                     var targets = scoped.TryGet("targets", out var targetObj) ? ReadIds(targetObj, "x." + heroKey + ".", "scoped targets") : Array.Empty<string>();
                     var effectsList = new List<GimmickEffect>();
                     if (scoped.TryGet("effects", out var effectObj))
@@ -789,6 +827,7 @@ namespace SodRpg.Core.Game
                 {
                     if (!(boostObj is long boost) || boost < 1 || boost > limits.GimmickBoostMax || maxRank > limits.GimmickBoostRanksMax)
                         throw new FormatException("gimmickBoost exceeds the shipped value/rank max");
+                    ValidateTotal(boost, maxRank, limits.GimmickBoostTotalMax, "gimmickBoost");
                     talent.GimmickBoost = (int)boost;
                     inferred = ClusterStarKind.GimmickBoost;
                 }
@@ -797,6 +836,7 @@ namespace SodRpg.Core.Game
                     var param = ReadEnum<GimmickParam>(paramObj, "gimmickParam");
                     int amount = ReadInteger(node, "perRank", null, 1, Lookup(limits.GimmickParamValues, param, "gimmickParam"));
                     if (maxRank > limits.GimmickParamRanks[param]) throw new FormatException("gimmickParam maxRank exceeds the shipped max");
+                    ValidateTotal(amount, maxRank, limits.GimmickParamTotals[param], "gimmickParam " + param);
                     talent.GimmickParameter = param;
                     talent.GimmickParamAmount = amount;
                     inferred = ClusterStarKind.GimmickParam;
@@ -842,6 +882,14 @@ namespace SodRpg.Core.Game
             if (talent.IsChoice)
                 foreach (var selected in talent.Choices) { selected.Cluster = cluster; selected.ClusterOrder = talent.ClusterOrder; }
             return talent;
+        }
+
+        private static void ValidateTotal(decimal perRank, int maxRank, decimal cap, string kind)
+        {
+            decimal total = perRank * maxRank;
+            if (total > cap)
+                throw new FormatException(kind + " total (perRank * maxRank) " + total.ToString(CultureInfo.InvariantCulture)
+                    + " exceeds the shipped single-star total max " + cap.ToString(CultureInfo.InvariantCulture));
         }
 
         private static void ValidateExtendedEffects(IReadOnlyList<TalentDef> tree)

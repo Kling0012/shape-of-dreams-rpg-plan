@@ -74,7 +74,7 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。効果は `stat`・`link`・`power`・`nativeModifier`・`scopedModifier`・`gimmickBoost`・`gimmickParam`・`choices` のうち1つ。名前参照の `gimmick` だけでも通常星を宣言できる。使える種類と上限は §5。 |
 | `nodes[].link` / `memory` | 記憶の星で必須 | `LinkKind` の名前と、対象の記憶の型名。その旅人の `memories` で受け付けた記憶か、`Links` の名前簿にある既存の記憶だけを指定できる。キーストーンには使えない。 |
 | `nodes[].power` | Power の星で必須 | `Power` の名前。`keystone: true` と併用すると Power のキーストーンになる。 |
-| `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。 |
+| `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。1段あたりの値・段数・1星の合計（値×段数）の3つとも §5 の種類ごとの上限以下にする。 |
 | `nodes[].tier` | 任意 | 1（既定）または 2（奥の星）。 |
 | `nodes[].keystone` / `value` | キーストーンで必須 | `keystone: true` と正の整数の `value` を書く。熟練度の条件は既存と同じ `HeroSigils.KeystoneMastery`。 |
 | `nodes[].description` | Stat のキーストーンで必須 | 説明文。Power のキーストーンでは省略でき、既存の Power の説明文を使う。 |
@@ -167,14 +167,18 @@ apiVersion 1 で宣言できないもの
 
 上限はコードに数値を書かず、既存9人の星から求める。実運用と書き出し道具は、生成済み星図を登録してから上限を取得する。既存の調整が変われば上限も一緒に動く。
 
-- Stat・LinkKind・Power: 9人の `TreeFor` 全体とその選択肢から、種類ごとの最大値と最大段数を求める。従来の Core・記憶ルートの定義も含め、古い宣言で使えた種類を保つ。Stat キーストーンは既存の最大値と「通常星の最大値×最大段数」の大きい方、Power キーストーンはその Power の既存の最大値を使う。通常星・キーストーンの片方しか存在しない Power は、存在する側だけ宣言できる。
-- GimmickBoost・GimmickParam: 9人の元定義に残る通常星と選択肢も含め、種類・パラメータごとの値と段数の最大を使う。
-- ScopedModifier: scope・param・capProfile の組み合わせごとに、既存の値と段数の最大を使う。Chance・ExtraTargets はそれぞれ専用の単位で集計する。
-- NativeModifier: 同種・同上限定義の既存値を使う。コネクタ用上限定義は、既存の MemoryDamage / MemoryHaste の最大値と段数から求める。新しい計算式や新しい効果の種類は作らない。
+段のある星は1段あたりの値・段数・1星の合計（1段あたりの値×段数）の3つの上限をすべて満たす必要がある。合計の上限は同じ種類の既存の星1つごとに合計を計算し、その最大値を使う。別々の星の値と段数の最大を掛け合わせて、合計の上限にはしない。Choice の各選択肢にも同じ検証を行う。
+
+- Stat・LinkKind・Power: 9人の `TreeFor` 全体とその選択肢から、種類ごとの1段あたりの値・段数・1星の合計の最大値を求める。従来の Core・記憶ルートの定義も含め、古い宣言で使えた種類を保つ。キーストーンの上限は従来どおりで、Stat は既存の最大値と「通常星の最大値×最大段数」の大きい方、Power はその Power の既存の最大値を使う。通常星・キーストーンの片方しか存在しない Power は、存在する側だけ宣言できる。
+- GimmickBoost・GimmickParam: 9人の元定義に残る通常星と選択肢も含め、種類・パラメータごとの値・段数・1星の合計の最大値を使う。GimmickBoost の1段あたりの値は `gimmickBoost` 欄の値。
+- ScopedModifier: scope・param・capProfile の組み合わせごとに、既存の値・段数・1星の合計の最大値を使う。通常は `amountUnits`、Chance は `probabilityUnits`、ExtraTargets は `extraTargets` の単位で集計し、合計の検証にも同じ単位を使う。
+- NativeModifier: 同種・同上限定義の既存の `valueUnits`・段数・1星の合計の最大値を使う。コネクタ用上限定義は既存の MemoryDamage / MemoryHaste から求め、合計の上限はその種類の1星の合計上限を100倍した units とする。新しい計算式や新しい効果の種類は作らない。
 - 数: 全星数・通常星数・キーストーン数・Choice数・1星の選択肢数・星群数を、9人の `TreeFor` 全体の最大以下にする。選択肢は独立した配置星には数えず、選択肢数の上限で検証する。
 - `rankCost` と全体の段数も既存の最大以下。熟練度の条件と割り当ての規則（`Rules`）は既存どおり。星を増やしても、取るためのポイントの獲得量は変わらない。
 
 2026-11-01 の生成済み星図では、全星906・通常星895・キーストーン11・Choice99・1星の選択肢2・星群94・RankCost5・段数5。これは説明用の記録で、実際の判定は計算した上限を使う。上限を超えた場合は丸めず、その旅人の星図だけを汎用へ戻す。
+
+同日の MemoryDamage は1段あたり150.21・段数3・1星の合計150.21がそれぞれの上限。`perRank: 150.21, maxRank: 3` は合計450.63となるため拒否し、`perRank: 150.21, maxRank: 1` は受け付ける。NativeModifier の既定の MemoryDamage も、合計の上限は15021 units。
 
 ### 5-1. 既存星図を再現できる範囲
 
@@ -212,7 +216,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 
 - Dreamforge の版と apiVersion。
 - 読んだファイル（供給元の id とパス）、受け付けた旅人、拒否した旅人と理由、星図を汎用にした理由。
-- §5 の上限表。Stat・LinkKind・Power の値と段数、キーストーン値、GimmickBoost・GimmickParam、NativeModifier・ScopedModifier の単位ごとの値と段数、星数・Choice数・選択肢数・星群数・RankCostを載せる。名前で参照できる既存の仕掛けも列挙する。作者はこの表を見て値を決められる。Power の表の 0 は、その種類の星を宣言できないことを表す。
+- §5 の上限表。Stat・LinkKind・Power、GimmickBoost・GimmickParam、NativeModifier・ScopedModifier について、1段あたりの値・段数・1星の合計の上限を載せる。合計は各種類の値と同じ単位で示す。キーストーン値、星数・Choice数・選択肢数・星群数・RankCostも載せる。名前で参照できる既存の仕掛けも列挙する。作者はこの表を見て値を決められる。Power の表の 0 はその種類の星を宣言できないことを表す。
 
 書き込みに失敗しても、警告1回で続ける。
 

@@ -1,0 +1,2 @@
+### 不具合の修正 / Bug fixes
+- ヒーローコネクタで、別々の既存星の値と段数の最大を組み合わせると、既存のどの同種の星よりも合計が大きい星を宣言できた問題を直しました。段のある各効果と Choice の選択肢で1星の合計も検証し、上限と拒否理由を作者向け報告に載せます。 / Fixed Hero Connector declarations combining per-rank and rank maxima from different shipped stars to exceed every shipped star of the same kind. Ranked effects and choice options now also validate each star's total, with limits and rejection reasons included in the author report.
