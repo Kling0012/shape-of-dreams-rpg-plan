@@ -104,6 +104,40 @@ namespace SodRpg.Mod
             catch (Exception) { return ""; }
         }
 
+        // A plain class-level target is complete without running user Prepare/TargetMethod(s).
+        // Dynamic targets and method-level annotations retain the exhaustive lookup.
+        internal static IEnumerable<MethodBase> SearchTargets(Type patchClass)
+        {
+            try
+            {
+                var attribute = HarmonyMethodExtensions.GetMergedFromType(patchClass);
+                if (attribute.declaringType != null && attribute.methodName != null
+                    && (!attribute.methodType.HasValue || attribute.methodType == MethodType.Normal))
+                {
+                    bool plain = true;
+                    foreach (var annotation in patchClass.GetCustomAttributes(true))
+                        if (annotation.GetType().FullName == typeof(HarmonyPatchAll).FullName) plain = false;
+                    foreach (var method in AccessTools.GetDeclaredMethods(patchClass))
+                    {
+                        if (method.Name == "TargetMethod" || method.Name == "TargetMethods") plain = false;
+                        foreach (var annotation in method.GetCustomAttributes(true))
+                        {
+                            string name = annotation.GetType().FullName;
+                            if (name == typeof(HarmonyPatch).FullName || name == typeof(HarmonyTargetMethod).FullName
+                                || name == typeof(HarmonyTargetMethods).FullName) plain = false;
+                        }
+                    }
+                    if (plain)
+                    {
+                        var target = AccessTools.DeclaredMethod(attribute.declaringType, attribute.methodName, attribute.argumentTypes);
+                        if (target != null) return new[] { target };
+                    }
+                }
+            }
+            catch (Exception) { /* An unrecognized declaration uses the original exhaustive lookup. */ }
+            return Harmony.GetAllPatchedMethods();
+        }
+
         /// <summary>パッチがこのクラス（またはその入れ子の型）で宣言されたかどうか。解決できないパッチは所属不明として扱う。</summary>
         internal static bool DeclaresPatch(Patch patch, Type patchClass)
         {
