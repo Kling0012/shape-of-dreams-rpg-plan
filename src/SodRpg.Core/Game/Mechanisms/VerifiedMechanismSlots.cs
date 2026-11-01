@@ -146,10 +146,7 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<string> ForHero(string heroKey)
         {
             if (heroKey != null && HeroMemories.TryGetValue(heroKey, out var memories)) return memories;
-            if (!ExtendedHeroes.TryGet(heroKey, out var external)) return Array.Empty<string>();
-            var declared = new List<string>(external.MemoryNames.Keys);
-            declared.Sort(StringComparer.Ordinal);
-            return declared.AsReadOnly();
+            return ExtendedHeroes.TryGet(heroKey, out var external) ? external.MemoryKeys : Array.Empty<string>();
         }
 
 
