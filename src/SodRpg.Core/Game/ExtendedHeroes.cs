@@ -482,8 +482,9 @@ namespace SodRpg.Core.Game
                         {
                             if (!(manifestPath is string path) || readManifest == null)
                                 throw new FormatException("starManifest requires a relative path and a loaded source MOD folder");
-                            var baseline = CreateManifestRoutes(key, memories);
-                            var manifest = ReadManifest(readManifest(path), key, memories, baseline, sourceModId, warn, out var registry);
+                            var shipped = new ManifestShippedIndex();
+                            var baseline = CreateManifestRoutes(key, memories, shipped);
+                            var manifest = ReadManifest(readManifest(path), key, memories, baseline, sourceModId, warn, shipped, out var registry);
                             if (manifest.Count == 0) throw new FormatException("no valid authored stars remain");
                             var generated = registry.TreeFor(key);
                             declarationHash = StarClusters.RegistryHash(ManifestDeclaration(hero) + "|starManifest|" + ManifestAcceptedFingerprint(generated) + "|routes|" + ManifestRouteFingerprint(baseline));

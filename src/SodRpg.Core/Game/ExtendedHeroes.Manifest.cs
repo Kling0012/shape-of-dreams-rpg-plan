@@ -17,13 +17,144 @@ namespace SodRpg.Core.Game
         private static IEnumerable<TalentDef> ManifestEffects(TalentDef node) =>
             node.IsChoice ? node.Choices : new[] { node };
 
-        private static IReadOnlyList<TalentDef> CreateManifestRoutes(string hero, IReadOnlyDictionary<string, Txt> memories)
+        /// <summary>
+        /// 本体9人の全ツリーを登録1回につき1度だけ列挙した索引。以降の検証・valueRef の解決はこの辞書引きで
+        /// 済ませ、全星の再走査を繰り返して登録を遅くしない（#459 と同じ種類の遅れの予防）。
+        /// 候補はこの索引を作った時点の本体データだけで決まるので、正規化の決定性も担保する。
+        /// </summary>
+        private sealed class ManifestShippedIndex
         {
-            var shipped = ManifestShippedTrees().ToArray();
+            public readonly TalentDef[] Nodes;
+            public readonly TalentDef[] Effects;
+            public readonly KeystoneDefinition[] Keystones;
+            readonly Dictionary<string, TalentDef> byId = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            readonly Dictionary<string, List<decimal>> stats = new Dictionary<string, List<decimal>>();
+            readonly Dictionary<string, List<decimal>> memoryModifiers = new Dictionary<string, List<decimal>>();
+            readonly Dictionary<string, List<decimal>> scopedModifiers = new Dictionary<string, List<decimal>>();
+            readonly Dictionary<string, Dictionary<string, List<decimal>>> mechanisms =
+                new Dictionary<string, Dictionary<string, List<decimal>>>();
+            readonly Dictionary<string, List<KeystoneTransform>> transforms = new Dictionary<string, List<KeystoneTransform>>();
+            readonly Dictionary<string, Dictionary<string, decimal[]>> transformTotals =
+                new Dictionary<string, Dictionary<string, decimal[]>>();
+            readonly Dictionary<string, Dictionary<string, decimal[]>> grantTotals =
+                new Dictionary<string, Dictionary<string, decimal[]>>();
+            readonly decimal[] upsideCounts;
+            readonly decimal[] grantCounts;
+
+            public ManifestShippedIndex()
+            {
+                var nodes = new List<TalentDef>();
+                var effects = new List<TalentDef>();
+                foreach (var node in ManifestShippedTrees())
+                {
+                    nodes.Add(node);
+                    if (!byId.ContainsKey(node.Id)) byId[node.Id] = node;
+                    effects.AddRange(ManifestEffects(node));
+                }
+                Nodes = nodes.ToArray();
+                Effects = effects.ToArray();
+                var keystones = new List<KeystoneDefinition>();
+                var upsideSums = new List<Dictionary<string, decimal[]>>();
+                var grantSums = new List<Dictionary<string, decimal[]>>();
+                foreach (var effect in Effects)
+                {
+                    if (effect.PerRank > 0 && !effect.IsPowerNode)
+                        Values(stats, effect.Stat + "/" + effect.IsKeystone).Add(effect.PerRank);
+                    if (effect.LinkPerRank != null)
+                        Values(memoryModifiers, effect.LinkPerRank.Kind.ToString()).Add(effect.LinkPerRank.Value);
+                    if (effect.NativeModifier != null)
+                        Values(memoryModifiers, effect.NativeModifier.Kind.ToString())
+                            .Add(effect.NativeModifier.Value.Units / 100m);
+                    if (effect.ScopedModifier != null)
+                        Values(scopedModifiers, Key(effect.ScopedModifier.ScopeKind, effect.ScopedModifier.Param,
+                            effect.ScopedModifier.CapProfileId)).Add(ManifestModifierValue(effect.ScopedModifier));
+                    foreach (var spec in (effect.Mechanism == null ? Array.Empty<AuthoredMechanismSpec>() : new[] { effect.Mechanism })
+                        .Concat(effect.KeystoneDefinition?.Grants ?? Array.Empty<AuthoredMechanismSpec>()))
+                    {
+                        var numbers = ManifestMechanismNumbers(spec);
+                        var fields = Values(mechanisms, ManifestMechanismKind(spec));
+                        foreach (var field in numbers) Values(fields, field.Key).Add(field.Value);
+                    }
+                    if (effect.KeystoneDefinition == null) continue;
+                    keystones.Add(effect.KeystoneDefinition);
+                    var keyUpside = new Dictionary<string, decimal[]>(StringComparer.Ordinal);
+                    foreach (var group in effect.KeystoneDefinition.Upside.GroupBy(ManifestTransformKind))
+                    {
+                        Values(transforms, group.Key).AddRange(group);
+                        keyUpside[group.Key] = new[]
+                        {
+                            group.Sum(t => (decimal)t.MagnitudeUnits.Units),
+                            group.Sum(t => t.Seconds),
+                            group.Sum(t => (decimal)t.Count)
+                        };
+                    }
+                    upsideSums.Add(keyUpside);
+                    var keyGrants = new Dictionary<string, decimal[]>(StringComparer.Ordinal);
+                    foreach (var group in effect.KeystoneDefinition.Grants.GroupBy(ManifestMechanismKind))
+                        keyGrants[group.Key] = new[]
+                        {
+                            group.Select(ManifestMechanismNumbers).Where(n => n.ContainsKey("value")).Sum(n => n["value"]),
+                            group.Select(ManifestMechanismNumbers).Where(n => n.ContainsKey("rankValue")).Sum(n => n["rankValue"])
+                        };
+                    grantSums.Add(keyGrants);
+                }
+                Keystones = keystones.ToArray();
+                upsideCounts = keystones.Select(k => (decimal)k.Upside.Count).ToArray();
+                grantCounts = keystones.Select(k => (decimal)k.Grants.Count).ToArray();
+                foreach (var kind in transforms.Keys)
+                    transformTotals[kind] = new Dictionary<string, decimal[]>
+                    {
+                        ["magnitude"] = Sums(upsideSums, kind, 0),
+                        ["seconds"] = Sums(upsideSums, kind, 1),
+                        ["count"] = Sums(upsideSums, kind, 2)
+                    };
+                foreach (var kind in grantSums.SelectMany(sums => sums.Keys).Distinct(StringComparer.Ordinal))
+                    grantTotals[kind] = new Dictionary<string, decimal[]>
+                    {
+                        ["value"] = Sums(grantSums, kind, 0),
+                        ["rankValue"] = Sums(grantSums, kind, 1)
+                    };
+            }
+
+            static string Key(ScopeKind scope, GimmickParam? param, string profile) =>
+                scope + "/" + (param?.ToString() ?? "amount") + "/" + (profile ?? "");
+            static List<decimal> Values(Dictionary<string, List<decimal>> map, string key) =>
+                map.TryGetValue(key, out var list) ? list : map[key] = new List<decimal>();
+            static List<KeystoneTransform> Values(Dictionary<string, List<KeystoneTransform>> map, string key) =>
+                map.TryGetValue(key, out var list) ? list : map[key] = new List<KeystoneTransform>();
+            static Dictionary<string, List<decimal>> Values(Dictionary<string, Dictionary<string, List<decimal>>> map, string key) =>
+                map.TryGetValue(key, out var fields) ? fields : map[key] = new Dictionary<string, List<decimal>>();
+            static decimal[] Sums(List<Dictionary<string, decimal[]>> perKey, string kind, int column) =>
+                perKey.Select(sums => sums.TryGetValue(kind, out var values) ? values[column] : 0m).ToArray();
+
+            public TalentDef Star(string id) => byId.TryGetValue(id, out var node) ? node : null;
+            public decimal[] StatCandidates(Stat stat, bool keystone) => Values(stats, stat + "/" + keystone).ToArray();
+            public decimal[] MemoryCandidates(LinkKind kind) => Values(memoryModifiers, kind.ToString()).ToArray();
+            public decimal[] ScopedCandidates(ScopeKind scope, GimmickParam? param, string profile) =>
+                Values(scopedModifiers, Key(scope, param, profile)).ToArray();
+            public decimal[] MechanismCandidates(string kind, string field) =>
+                mechanisms.TryGetValue(kind, out var fields) && fields.TryGetValue(field, out var list)
+                    ? list.ToArray() : Array.Empty<decimal>();
+            public decimal[] UpsideCounts() => upsideCounts;
+            public decimal[] GrantCounts() => grantCounts;
+            public IReadOnlyList<KeystoneTransform> Transforms(string kind) =>
+                transforms.TryGetValue(kind, out var list) ? list : Array.Empty<KeystoneTransform>();
+            /// <summary>本体にその種類が無いときも、本体各キーストーンの寄与 0 を候補として返す（従来の走査と同じ）。</summary>
+            public decimal[] TransformTotals(string kind, string field) =>
+                transformTotals.TryGetValue(kind, out var fields) && fields.TryGetValue(field, out var list)
+                    ? list : new decimal[Keystones.Length];
+            public decimal[] GrantTotals(string kind, string field) =>
+                grantTotals.TryGetValue(kind, out var fields) && fields.TryGetValue(field, out var list)
+                    ? list : new decimal[Keystones.Length];
+        }
+
+        private static IReadOnlyList<TalentDef> CreateManifestRoutes(string hero, IReadOnlyDictionary<string, Txt> memories,
+            ManifestShippedIndex shipped)
+        {
             var route = HeroStarRoutes.All.Where(n => n.RouteId != null)
                 .GroupBy(n => n.RouteId).FirstOrDefault(g => g.Count() == 7);
             if (route == null) throw new FormatException("shipped memory route template is unavailable");
-            int health = shipped.SelectMany(ManifestEffects).Where(n => !n.IsPowerNode && !n.IsKeystone
+            int health = shipped.Effects.Where(n => !n.IsPowerNode && !n.IsKeystone
                 && n.Stat == Stat.MaxHealthPct && n.PerRank > 0).Select(n => n.PerRank).DefaultIfEmpty(0).Min();
             if (health <= 0) throw new FormatException("shipped health route value is unavailable");
             var result = new List<TalentDef>();
@@ -111,22 +242,22 @@ namespace SodRpg.Core.Game
             return Restrict(selector);
         }
 
-        private static decimal ManifestNumber(object raw)
+        private static decimal ManifestNumber(object raw, ManifestShippedIndex shipped)
         {
             if (raw is JsonObject reference)
             {
                 if (reference.Properties.Count != 1) throw new FormatException("numeric reference has extra fields");
-                return ManifestValueReference(ManifestString(reference, "valueRef"));
+                return ManifestValueReference(ManifestString(reference, "valueRef"), shipped);
             }
             if (!TryNumber(raw, out decimal value)) throw new FormatException("an exact decimal number is required");
             return value;
         }
 
-        private static decimal ManifestNumber(JsonObject obj, string field, decimal? fallback = null)
+        private static decimal ManifestNumber(JsonObject obj, string field, ManifestShippedIndex shipped, decimal? fallback = null)
         {
             object value = ManifestField(obj, field);
             if (value == null && fallback.HasValue) return fallback.Value;
-            return ManifestNumber(value);
+            return ManifestNumber(value, shipped);
         }
 
         private static int ManifestWhole(decimal value)
@@ -136,20 +267,20 @@ namespace SodRpg.Core.Game
             return (int)value;
         }
 
-        private static decimal ManifestValue(JsonObject obj)
+        private static decimal ManifestValue(JsonObject obj, ManifestShippedIndex shipped)
         {
             object value = ManifestField(obj, "value"), reference = ManifestField(obj, "valueRef");
             if ((value == null) == (reference == null)) throw new FormatException("supply exactly one value or valueRef");
-            return reference == null ? ManifestNumber(value) : ManifestValueReference(reference as string);
+            return reference == null ? ManifestNumber(value, shipped) : ManifestValueReference(reference as string, shipped);
         }
 
-        private static decimal ManifestValueReference(string reference)
+        private static decimal ManifestValueReference(string reference, ManifestShippedIndex shipped)
         {
             if (reference == null || reference.Length > 512) throw new FormatException("invalid shipped valueRef");
             int slash = reference.IndexOf('/');
             if (slash <= 0) throw new FormatException("valueRef requires a shipped star and payload path");
             string id = reference.Substring(0, slash), path = reference.Substring(slash + 1);
-            var node = ManifestShippedTrees().FirstOrDefault(n => n.Id == id);
+            var node = shipped.Star(id);
             if (node == null) throw new FormatException("valueRef star is not a registered shipped star: " + id);
             if (path.StartsWith("options/", StringComparison.Ordinal))
             {
@@ -248,7 +379,8 @@ namespace SodRpg.Core.Game
         }
 
         private static IReadOnlyList<AuthoredStarDef> ReadManifest(string json, string hero, IReadOnlyDictionary<string, Txt> memories,
-            IReadOnlyList<TalentDef> baseline, string sourceMod, Action<string> warn, out AuthoredStarRegistry registry)
+            IReadOnlyList<TalentDef> baseline, string sourceMod, Action<string> warn, ManifestShippedIndex shipped,
+            out AuthoredStarRegistry registry)
         {
             registry = null;
             if (json == null || json.Length > ManifestTextLimit) throw new FormatException("manifest exceeds 4 MiB");
@@ -259,7 +391,7 @@ namespace SodRpg.Core.Game
             if (baseline.Count >= maximum) throw new FormatException("generated routes exhaust the shipped star count limit");
             var definitions = new List<AuthoredStarDef>();
             var ids = new HashSet<string>(baseline.Select(n => n.Id), StringComparer.Ordinal);
-            var occupied = new HashSet<string>(ManifestShippedTrees().Select(n => n.Id)
+            var occupied = new HashSet<string>(shipped.Nodes.Select(n => n.Id)
                 .Concat(Registered.Where(h => h.Key != hero).SelectMany(h => h.Tree ?? Array.Empty<TalentDef>()).Select(n => n.Id)), StringComparer.Ordinal);
             foreach (object raw in rows)
             {
@@ -271,7 +403,7 @@ namespace SodRpg.Core.Game
                     if (!ids.Add(id) || occupied.Contains(id)) throw new FormatException("duplicate or already registered star ID; first definition wins");
                     if (id.StartsWith("x." + hero + ".route.", StringComparison.Ordinal)) throw new FormatException("routes are generated and cannot be overridden");
                     if (definitions.Count + baseline.Count >= maximum) throw new FormatException("shipped star count limit exceeded");
-                    definitions.Add(ReadManifestStar(row, hero, memories, baseline));
+                    definitions.Add(ReadManifestStar(row, hero, memories, baseline, shipped));
                 }
                 catch (Exception ex) { Warn(warn, sourceMod, id, "star omitted: " + ex.Message); }
             }
@@ -314,7 +446,7 @@ namespace SodRpg.Core.Game
                 }
                 try
                 {
-                    BindManifestModifiers(definitions);
+                    BindManifestModifiers(definitions, shipped);
                     registry = StarClusters.GenerateAuthored(definitions, baseline);
                     BuildLimits.ValidateAuthoredProducer(registry.TreeFor(hero));
                     HeroTreeLayout.ForTalents(registry.TreeFor(hero));
@@ -323,17 +455,23 @@ namespace SodRpg.Core.Game
                 catch (Exception ex)
                 {
                     // Shared validators identify the offending saved ID. Capacity failures have no individual ID.
-                    var def = definitions.FirstOrDefault(d => d.LocalStarId == ex.Data["AuthoredStarId"] as string)
-                        ?? definitions.Where(d => ex.Message.Contains(d.LocalStarId)).OrderByDescending(d => d.LocalStarId.Length).FirstOrDefault()
-                        ?? definitions[definitions.Count - 1];
-                    definitions.Remove(def);
-                    Warn(warn, sourceMod, def.LocalStarId, "star omitted: " + ex.Message);
+                    // 例外が名指しした星はまとめて外し、星図全体の再生成回数を減らす。
+                    string blamed = ex.Data["AuthoredStarId"] as string;
+                    var offenders = definitions.Where(d => d.LocalStarId == blamed).ToArray();
+                    if (offenders.Length == 0 && ex.Message.Length > 0)
+                        offenders = definitions.Where(d => ex.Message.Contains(d.LocalStarId)).ToArray();
+                    if (offenders.Length == 0) offenders = new[] { definitions[definitions.Count - 1] };
+                    foreach (var def in offenders)
+                    {
+                        definitions.Remove(def);
+                        Warn(warn, sourceMod, def.LocalStarId, "star omitted: " + ex.Message);
+                    }
                 }
             }
             return definitions.AsReadOnly();
         }
 
-        private static void BindManifestModifiers(IReadOnlyList<AuthoredStarDef> definitions)
+        private static void BindManifestModifiers(IReadOnlyList<AuthoredStarDef> definitions, ManifestShippedIndex shipped)
         {
             IEnumerable<ClusterStarDef> Effects(ClusterStarDef effect) => effect.Kind == ClusterStarKind.Choice
                 ? effect.Options : new[] { effect };
@@ -350,7 +488,7 @@ namespace SodRpg.Core.Game
                             : e.Spec.Gimmick?.Effect != GimmickEffect.Reload).ToArray();
                     if (recipients.Length == 0) throw new FormatException(def.LocalStarId + ": no concrete supporting modifier recipient");
                     if (modifier.ScopeKind != ScopeKind.Receiver) modifier.ScopeKind = ScopeKind.EffectChannel;
-                    try { ValidateManifestEffectBounds(effect); }
+                    try { ValidateManifestEffectBounds(effect, shipped); }
                     catch (Exception ex) { throw new FormatException(def.LocalStarId + ": " + ex.Message, ex); }
                     modifier.TargetEffectIds = recipients.Select(e => e.Id).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToArray();
                     if (modifier.TargetEffects.Length == 0)
@@ -379,7 +517,7 @@ namespace SodRpg.Core.Game
         }
 
         private static AuthoredStarDef ReadManifestStar(JsonObject row, string hero, IReadOnlyDictionary<string, Txt> memories,
-            IReadOnlyList<TalentDef> baseline)
+            IReadOnlyList<TalentDef> baseline, ManifestShippedIndex shipped)
         {
             ManifestFields(row, "id", "region", "cluster", "shape", "anchor", "edges", "requires", "requiresAny", "kind",
                 "memory", "value", "valueRef", "param", "receiver", "target", "gimmick", "power", "stat", "options", "keystone",
@@ -401,10 +539,10 @@ namespace SodRpg.Core.Game
                 Edges = ManifestIds(row, "edges", hero).Select(other => new AuthoredStarEdge(id, other)).ToArray(),
                 ReceiverOnlyBridge = kind == ClusterRegionKind.Bridge
             };
-            int rank = ManifestWhole(ManifestNumber(row, "maxRank", 1));
-            int cost = ManifestWhole(ManifestNumber(row, "rankCost", 1));
+            int rank = ManifestWhole(ManifestNumber(row, "maxRank", shipped, 1));
+            int cost = ManifestWhole(ManifestNumber(row, "rankCost", shipped, 1));
             if (rank != 1 || cost < 1 || cost > Limits().RankCostMax) throw new FormatException("new stars require one rank and a shipped point cost");
-            def.Effect = ReadManifestEffect(row, id, hero, memories, cost, false);
+            def.Effect = ReadManifestEffect(row, id, hero, memories, cost, false, shipped);
             if (def.Effect.Kind != ClusterStarKind.Keystone && cost != 1) throw new FormatException("ordinary stars cost one point");
             if ((def.Effect.Kind == ClusterStarKind.Keystone) != (kind == ClusterRegionKind.Keystone))
                 throw new FormatException("keystone kind and region must agree");
@@ -416,12 +554,12 @@ namespace SodRpg.Core.Game
             if (kind == ClusterRegionKind.Memory && def.AnchorId != null)
                 def.Region.Id = baseline.FirstOrDefault(n => n.Id == def.AnchorId)?.RouteId;
             def.RequiresExplicitSelection = def.Effect.Kind == ClusterStarKind.Choice;
-            ValidateManifestEffectBounds(def.Effect);
+            ValidateManifestEffectBounds(def.Effect, shipped);
             return def;
         }
 
         private static ClusterStarDef ReadManifestEffect(JsonObject row, string id, string hero,
-            IReadOnlyDictionary<string, Txt> memories, int cost, bool option)
+            IReadOnlyDictionary<string, Txt> memories, int cost, bool option, ManifestShippedIndex shipped)
         {
             if (option) ManifestFields(row, "kind", "memory", "value", "valueRef", "param", "receiver", "target", "gimmick",
                 "power", "stat", "nameJa", "nameEn", "nameZh");
@@ -444,13 +582,13 @@ namespace SodRpg.Core.Game
                     if (ManifestField(row, field) != null) throw new FormatException("Choice parent cannot carry effects");
                 var options = ManifestArray(ManifestField(row, "options"), "options");
                 if (options.Count != 2) throw new FormatException("Choice requires exactly two options");
-                effect.Options = options.Select(o => ReadManifestEffect(ManifestObject(o, "option"), id, hero, memories, cost, true)).ToArray();
+                effect.Options = options.Select(o => ReadManifestEffect(ManifestObject(o, "option"), id, hero, memories, cost, true, shipped)).ToArray();
             }
             else if (kind == "MemoryDamage" || kind == "MemoryHaste")
             {
                 effect.Memory = ManifestMemory(memory, memories);
                 if (receiver != null || memory.StartsWith("St_M_", StringComparison.Ordinal)) throw new FormatException("native memory modifiers require a nonmovement source");
-                effect.Amount = ManifestValue(row);
+                effect.Amount = ManifestValue(row, shipped);
                 if (kind == "MemoryHaste") ManifestWhole(effect.Amount);
                 else BuildPrecision.FromDecimal(effect.Amount);
             }
@@ -462,9 +600,9 @@ namespace SodRpg.Core.Game
                 {
                     ManifestFields(stat, "name", "perRank");
                     effect.Stat = ReadEnum<Stat>(ManifestField(stat, "name"), "stat");
-                    effect.Amount = ManifestWhole(ManifestNumber(stat, "perRank"));
+                    effect.Amount = ManifestWhole(ManifestNumber(stat, "perRank", shipped));
                 }
-                if (kind == "Keystone") effect.KeystoneDefinition = ReadManifestKeystone(row, id, hero, memories, cost, effect.Amount > 0);
+                if (kind == "Keystone") effect.KeystoneDefinition = ReadManifestKeystone(row, id, hero, memories, cost, effect.Amount > 0, shipped);
                 else if (effect.Amount <= 0) throw new FormatException("Stat requires a positive stat payload");
             }
             else if (kind == "GimmickBoost" || kind == "GimmickParam")
@@ -482,7 +620,7 @@ namespace SodRpg.Core.Game
                 if (kind == "GimmickParam") modifier.Param = ReadEnum<GimmickParam>(ManifestField(row, "param"), "param");
                 if (modifier.Param == GimmickParam.MarkDuration || modifier.Param == GimmickParam.WindowDuration)
                     throw new FormatException("dedicated pair parameters are unsupported");
-                decimal amount = ManifestValue(row);
+                decimal amount = ManifestValue(row, shipped);
                 if (amount <= 0) throw new FormatException("modifier must be positive");
                 if (modifier.Param == GimmickParam.Chance) modifier.Probability = ProbabilityUnits.FromPercent(amount);
                 else if (modifier.Param == GimmickParam.ExtraTargets) modifier.ExtraTargets = ManifestWhole(amount);
@@ -492,7 +630,7 @@ namespace SodRpg.Core.Game
                 effect.ScopedModifier = modifier;
             }
             else if (kind == "Notable") effect.Mechanism = ReadManifestMechanism(
-                ManifestObject(ManifestField(row, "gimmick"), "gimmick"), id, hero, memory, receiver, memories);
+                ManifestObject(ManifestField(row, "gimmick"), "gimmick"), id, hero, memory, receiver, memories, shipped);
             else throw new FormatException("unsupported external star kind");
             foreach (string field in new[] { "gimmick", "stat", "keystone", "options", "target", "param", "value", "valueRef" })
             {
@@ -519,7 +657,7 @@ namespace SodRpg.Core.Game
         };
 
         private static AuthoredMechanismSpec ReadManifestMechanism(JsonObject g, string id, string hero, string memory, string receiver,
-            IReadOnlyDictionary<string, Txt> memories)
+            IReadOnlyDictionary<string, Txt> memories, ManifestShippedIndex shipped)
         {
             ManifestFields(g, "trigger", "effect", "value", "arg", "cooldown", "target", "condition", "once", "everyN",
                 "valuesByRank", "triggerByIdentity", "replaces", "basis", "pool");
@@ -539,17 +677,17 @@ namespace SodRpg.Core.Game
                 : (trigger == MemoryEventKind.Hit || trigger == MemoryEventKind.CriticalHit)
                     && new[] { "Sap", "Wound", "Expose", "Daze", "Rampart" }.Contains(name) && !once
                     ? AttributionBudget.PerActivationVictim : AttributionBudget.PerActivation;
-            decimal value = ManifestNumber(g, "value"), arg = ManifestNumber(g, "arg"), cooldown = ManifestNumber(g, "cooldown");
+            decimal value = ManifestNumber(g, "value", shipped), arg = ManifestNumber(g, "arg", shipped), cooldown = ManifestNumber(g, "cooldown", shipped);
             if (value <= 0 || cooldown < 0) throw new FormatException("mechanism requires a positive value and nonnegative cooldown");
             var spec = new AuthoredMechanismSpec { ChannelId = id, Source = source, Trigger = trigger, Budget = budget,
-                EveryN = ManifestWhole(ManifestNumber(g, "everyN", 1)), Once = once };
+                EveryN = ManifestWhole(ManifestNumber(g, "everyN", shipped, 1)), Once = once };
             object replaces = ManifestField(g, "replaces");
             if (replaces is string replace) spec.Replaces = new[] { ManifestId(replace, hero) };
             else if (replaces != null) spec.Replaces = ManifestArray(replaces, "replaces").Select(r => ManifestId(r as string, hero)).ToArray();
             if (ManifestField(g, "valuesByRank") is List<object> ranks)
             {
-                if (ranks.Count != 1 || ManifestNumber(ranks[0]) != value) throw new FormatException("rank table must match the one paid rank");
-                spec.ValuesByRank = ranks.Select(r => ManifestWhole(ManifestNumber(r) * 100m)).ToArray();
+                if (ranks.Count != 1 || ManifestNumber(ranks[0], shipped) != value) throw new FormatException("rank table must match the one paid rank");
+                spec.ValuesByRank = ranks.Select(r => ManifestWhole(ManifestNumber(r, shipped) * 100m)).ToArray();
             }
             if (ManifestField(g, "triggerByIdentity") is JsonObject identities)
                 foreach (var identity in identities.Properties)
@@ -611,7 +749,7 @@ namespace SodRpg.Core.Game
         }
 
         private static KeystoneDefinition ReadManifestKeystone(JsonObject row, string id, string hero,
-            IReadOnlyDictionary<string, Txt> memories, int cost, bool statOnly)
+            IReadOnlyDictionary<string, Txt> memories, int cost, bool statOnly, ManifestShippedIndex shipped)
         {
             var key = ManifestObject(ManifestField(row, "keystone"), "keystone");
             ManifestFields(key, "upside", "downside", "upsideSpec", "downsideSpec");
@@ -666,13 +804,13 @@ namespace SodRpg.Core.Game
                     var grantObject = ManifestObject(ManifestField(entry, "gimmick"), "grant");
                     if (ManifestString(grantObject, "effect") != effect) throw new FormatException("Grant effect and payload disagree");
                     spec.Grant = ReadManifestMechanism(ManifestObject(ManifestField(entry, "gimmick"), "grant"),
-                        id + ".grant" + specs.Count, hero, memory, receiver, memories);
+                        id + ".grant" + specs.Count, hero, memory, receiver, memories, shipped);
                 }
                 else
                 {
                     if (ManifestField(entry, "gimmick") != null) throw new FormatException("only Grant carries a gimmick");
                     spec.Field = AuthoredKeystoneCompiler.Field(field == "Total" || field == "SelfValue" || field == "AllyValue" ? "Value" : field);
-                    decimal? Number(string name) => ManifestField(entry, name) == null ? (decimal?)null : ManifestNumber(entry, name);
+                    decimal? Number(string name) => ManifestField(entry, name) == null ? (decimal?)null : ManifestNumber(entry, name, shipped);
                     spec.Percent = Number("pct"); spec.From = Number("from"); spec.To = Number("to");
                     spec.Delta = Number("delta"); spec.Maximum = Number("max");
                 }
@@ -722,14 +860,11 @@ namespace SodRpg.Core.Game
                 throw new FormatException(field + " exceeds registered shipped bounds");
         }
 
-        private static void ValidateManifestMechanismBounds(AuthoredMechanismSpec spec)
+        private static void ValidateManifestMechanismBounds(AuthoredMechanismSpec spec, ManifestShippedIndex shipped)
         {
-            var candidates = ManifestShippedTrees().SelectMany(ManifestEffects).SelectMany(n =>
-                (n.Mechanism == null ? Array.Empty<AuthoredMechanismSpec>() : new[] { n.Mechanism })
-                    .Concat(n.KeystoneDefinition?.Grants ?? Array.Empty<AuthoredMechanismSpec>()))
-                .Where(s => ManifestMechanismKind(s) == ManifestMechanismKind(spec)).Select(ManifestMechanismNumbers).ToArray();
+            string kind = ManifestMechanismKind(spec);
             foreach (var field in ManifestMechanismNumbers(spec))
-                ManifestBound(field.Value, candidates.Where(c => c.ContainsKey(field.Key)).Select(c => c[field.Key]),
+                ManifestBound(field.Value, shipped.MechanismCandidates(kind, field.Key),
                     "mechanism " + field.Key, field.Key == "everyN" || field.Key == "cooldown" || field.Key == "rechargeEveryN");
         }
 
@@ -737,39 +872,33 @@ namespace SodRpg.Core.Game
             + t.Scope.PayloadKind + ":" + string.Join(",", t.Scope.TargetEffectSet.OrderBy(e => e)) + ":" + t.Scope.SourceKind
             + ":" + t.Scope.Recipient + ":" + t.Scope.Argument;
 
-        private static void ValidateManifestEffectBounds(ClusterStarDef effect)
+        private static void ValidateManifestEffectBounds(ClusterStarDef effect, ManifestShippedIndex shipped)
         {
-            var shipped = ManifestShippedTrees().SelectMany(ManifestEffects).ToArray();
             if (effect.Kind == ClusterStarKind.Choice)
             {
-                foreach (var option in effect.Options) ValidateManifestEffectBounds(option);
+                foreach (var option in effect.Options) ValidateManifestEffectBounds(option, shipped);
                 return;
             }
             if (effect.Kind == ClusterStarKind.Stat || effect.Kind == ClusterStarKind.Keystone && effect.Amount > 0)
-                ManifestBound(effect.Amount, shipped.Where(n => n.Stat == effect.Stat && n.PerRank > 0
-                    && !n.IsPowerNode && n.IsKeystone == (effect.Kind == ClusterStarKind.Keystone)).Select(n => (decimal)n.PerRank), "stat");
+                ManifestBound(effect.Amount, shipped.StatCandidates(effect.Stat, effect.Kind == ClusterStarKind.Keystone), "stat");
             if (effect.Kind == ClusterStarKind.MemoryDamage || effect.Kind == ClusterStarKind.MemoryHaste)
             {
                 var kind = effect.Kind == ClusterStarKind.MemoryDamage ? LinkKind.MemoryDamage : LinkKind.MemoryHaste;
-                ManifestBound(effect.Amount, shipped.Where(n => n.LinkPerRank?.Kind == kind).Select(n => n.LinkPerRank.Value)
-                    .Concat(shipped.Where(n => n.NativeModifier?.Kind == kind).Select(n => n.NativeModifier.Value.Units / 100m)), "memory modifier");
+                ManifestBound(effect.Amount, shipped.MemoryCandidates(kind), "memory modifier");
             }
             if (effect.ScopedModifier != null)
             {
                 var m = effect.ScopedModifier;
-                ManifestBound(ManifestModifierValue(m), shipped.Where(n => n.ScopedModifier != null
-                    && n.ScopedModifier.ScopeKind == m.ScopeKind && n.ScopedModifier.Param == m.Param
-                    && n.ScopedModifier.CapProfileId == m.CapProfileId).Select(n => ManifestModifierValue(n.ScopedModifier)), "scoped modifier");
+                ManifestBound(ManifestModifierValue(m), shipped.ScopedCandidates(m.ScopeKind, m.Param, m.CapProfileId), "scoped modifier");
             }
-            if (effect.Mechanism != null) ValidateManifestMechanismBounds(effect.Mechanism);
+            if (effect.Mechanism != null) ValidateManifestMechanismBounds(effect.Mechanism, shipped);
             if (effect.KeystoneDefinition != null)
             {
-                var keys = shipped.Where(n => n.KeystoneDefinition != null).Select(n => n.KeystoneDefinition).ToArray();
-                ManifestBound(effect.KeystoneDefinition.Upside.Count, keys.Select(k => (decimal)k.Upside.Count), "keystone transform count");
-                ManifestBound(effect.KeystoneDefinition.Grants.Count, keys.Select(k => (decimal)k.Grants.Count), "keystone grant count");
+                ManifestBound(effect.KeystoneDefinition.Upside.Count, shipped.UpsideCounts(), "keystone transform count");
+                ManifestBound(effect.KeystoneDefinition.Grants.Count, shipped.GrantCounts(), "keystone grant count");
                 foreach (var transform in effect.KeystoneDefinition.Upside)
                 {
-                    var matches = keys.SelectMany(k => k.Upside).Where(t => ManifestTransformKind(t) == ManifestTransformKind(transform)).ToArray();
+                    var matches = shipped.Transforms(ManifestTransformKind(transform));
                     ManifestBound(transform.MagnitudeUnits.Units, matches.Select(t => (decimal)t.MagnitudeUnits.Units), "keystone scale", true);
                     ManifestBound(transform.Seconds, matches.Select(t => t.Seconds), "keystone value", true);
                     ManifestBound(transform.Count, matches.Select(t => (decimal)t.Count), "keystone count", true);
@@ -778,21 +907,17 @@ namespace SodRpg.Core.Game
                 }
                 foreach (var group in effect.KeystoneDefinition.Upside.GroupBy(ManifestTransformKind))
                 {
-                    ManifestBound(group.Sum(t => (decimal)t.MagnitudeUnits.Units), keys.Select(k =>
-                        k.Upside.Where(t => ManifestTransformKind(t) == group.Key).Sum(t => (decimal)t.MagnitudeUnits.Units)), "keystone combined scale");
-                    ManifestBound(group.Sum(t => t.Seconds), keys.Select(k =>
-                        k.Upside.Where(t => ManifestTransformKind(t) == group.Key).Sum(t => t.Seconds)), "keystone combined value");
-                    ManifestBound(group.Sum(t => (decimal)t.Count), keys.Select(k =>
-                        k.Upside.Where(t => ManifestTransformKind(t) == group.Key).Sum(t => (decimal)t.Count)), "keystone combined count");
+                    ManifestBound(group.Sum(t => (decimal)t.MagnitudeUnits.Units), shipped.TransformTotals(group.Key, "magnitude"), "keystone combined scale");
+                    ManifestBound(group.Sum(t => t.Seconds), shipped.TransformTotals(group.Key, "seconds"), "keystone combined value");
+                    ManifestBound(group.Sum(t => (decimal)t.Count), shipped.TransformTotals(group.Key, "count"), "keystone combined count");
                 }
-                foreach (var grant in effect.KeystoneDefinition.Grants) ValidateManifestMechanismBounds(grant);
+                foreach (var grant in effect.KeystoneDefinition.Grants) ValidateManifestMechanismBounds(grant, shipped);
                 foreach (var group in effect.KeystoneDefinition.Grants.GroupBy(ManifestMechanismKind))
                     foreach (string field in new[] { "value", "rankValue" })
                     {
                         decimal Total(IEnumerable<AuthoredMechanismSpec> grants) => grants.Select(ManifestMechanismNumbers)
                             .Where(n => n.ContainsKey(field)).Sum(n => n[field]);
-                        ManifestBound(Total(group), keys.Select(k => Total(k.Grants.Where(g => ManifestMechanismKind(g) == group.Key))),
-                            "keystone combined grant " + field);
+                        ManifestBound(Total(group), shipped.GrantTotals(group.Key, field), "keystone combined grant " + field);
                     }
             }
         }
