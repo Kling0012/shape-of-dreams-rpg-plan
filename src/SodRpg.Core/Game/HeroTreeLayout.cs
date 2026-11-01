@@ -284,7 +284,22 @@ namespace SodRpg.Core.Game
             IReadOnlyDictionary<string, ExtendedStarPlacement> placements, out string reason)
         {
             reason = null;
-            var automatic = Create(talents, true, true);
+            // Connector clusters carry presentation metadata, not the shipped authored placement program.
+            var skeleton = new List<TalentDef>(talents.Count);
+            var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            bool metadata = false;
+            foreach (var talent in talents)
+            {
+                definitions.Add(talent.Id, talent);
+                metadata |= talent.Cluster != null || talent.IsDreamRing;
+                var plain = talent.IsKeystone
+                    ? new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.Description)
+                    : new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.MaxRank);
+                plain.Tier = talent.Tier;
+                plain.HeroKey = talent.HeroKey;
+                skeleton.Add(plain);
+            }
+            var automatic = Create(metadata ? skeleton : talents, true, true);
             var indices = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 1; i < automatic.Nodes.Count; i++) indices.Add(automatic.Nodes[i].Id, i);
             var state = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -314,17 +329,22 @@ namespace SodRpg.Core.Game
             foreach (var original in automatic.Nodes)
             {
                 float x = original.X, y = original.Y;
-                if (placements.TryGetValue(original.Id, out var placement) && placement.Ring > 0)
+                if (placements.TryGetValue(original.Id, out var placement))
                 {
-                    double radius = placement.Ring == 1 ? InnerRadius : placement.Ring == 2 ? DeepRadius
-                        : BranchRadius + (double)BranchStep * (placement.Ring - 3);
-                    double angle = (double)(placement.Angle % 360) * Math.PI / 180;
-                    x = (float)(radius * Math.Cos(angle));
-                    y = (float)(radius * Math.Sin(angle));
+                    if (placement.X.HasValue) { x = placement.X.Value; y = placement.Y.Value; }
+                    else if (placement.Ring > 0)
+                    {
+                        double radius = placement.Ring == 1 ? InnerRadius : placement.Ring == 2 ? DeepRadius
+                            : BranchRadius + (double)BranchStep * (placement.Ring - 3);
+                        double angle = (double)(placement.Angle % 360) * Math.PI / 180;
+                        x = (float)(radius * Math.Cos(angle));
+                        y = (float)(radius * Math.Sin(angle));
+                    }
                 }
                 var adjacent = new List<int>();
                 neighbors.Add(adjacent);
-                nodes.Add(new HeroTreeNode(original.Id, x, y, original.Kind, original.Talent, adjacent));
+                var talent = original.Talent == null ? null : definitions[original.Id];
+                nodes.Add(new HeroTreeNode(original.Id, x, y, talent == null ? original.Kind : Kind(talent), talent, adjacent));
             }
             void Join(int a, int b)
             {
@@ -333,17 +353,16 @@ namespace SodRpg.Core.Game
                 neighbors[b].Add(a);
                 edges.Add(new HeroTreeEdge(a, b));
             }
-            // Automatic edges are authored parent -> child. Explicit requires replace that child's automatic parents.
+            // Explicit requires replace the child's automatic parents. center can preserve a root edge alongside other edges.
             foreach (var edge in automatic.Edges)
                 if (!placements.TryGetValue(nodes[edge.B].Id, out var child) || child.Requires == null)
-                    Join(edge.A, edge.B);
+                    if (edge.A != 0 || child == null || child.Center != false) Join(edge.A, edge.B);
             foreach (var entry in placements)
             {
                 var required = entry.Value.Requires;
-                if (required == null) continue;
                 int child = indices[entry.Key];
-                if (required.Length == 0) Join(0, child);
-                else foreach (string parent in required) Join(indices[parent], child);
+                if (entry.Value.Center == true || required != null && required.Length == 0 && entry.Value.Center != false) Join(0, child);
+                if (required != null) foreach (string parent in required) Join(indices[parent], child);
             }
             var visited = new bool[nodes.Count];
             var pending = new Queue<int>();
