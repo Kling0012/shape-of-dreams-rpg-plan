@@ -644,7 +644,7 @@ namespace SodRpg.Mod
         /// </summary>
         private bool EarlierCopyHookIsLive(Type type)
         {
-            foreach (var target in Harmony.GetAllPatchedMethods())
+            foreach (var target in PatchMethodOwnership.SearchTargets(type))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;
@@ -679,7 +679,7 @@ namespace SodRpg.Mod
 
         private bool HasInstalledClass(Type type)
         {
-            foreach (var target in harmony.GetPatchedMethods())
+            foreach (var target in PatchMethodOwnership.SearchTargets(type))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;
@@ -693,7 +693,7 @@ namespace SodRpg.Mod
         /// <summary>Remove only the patch methods declared by this class (and its nested types), leaving every other patch in place.</summary>
         private void RollBackClass(Type type)
         {
-            foreach (var target in new List<MethodBase>(harmony.GetPatchedMethods()))
+            foreach (var target in new List<MethodBase>(PatchMethodOwnership.SearchTargets(type)))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;
