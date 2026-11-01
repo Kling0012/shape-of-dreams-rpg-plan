@@ -473,6 +473,8 @@ namespace SodRpg.Core.Game
 
         private static bool ManifestMessageNamesStar(string message, string id)
         {
+            // 空のIDは境界判定が start から進まなくなるので、対象外として扱う。
+            if (string.IsNullOrEmpty(id)) return false;
             bool IdChar(char c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
                 || c >= '0' && c <= '9' || c == '_' || c == '.' || c == '-';
             int start = 0;
@@ -483,7 +485,7 @@ namespace SodRpg.Core.Game
                 int end = at + id.Length;
                 if ((at == 0 || !IdChar(message[at - 1])) && (end == message.Length || !IdChar(message[end])))
                     return true;
-                start = end;
+                start = at + 1;
             }
             return false;
         }

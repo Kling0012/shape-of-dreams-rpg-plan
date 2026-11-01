@@ -23,9 +23,16 @@ namespace SodRpg.Mod
         private static readonly Dictionary<string, string> DeclarationPathByModId = new Dictionary<string, string>(StringComparer.Ordinal);
         /// <summary>遠征中に届いた宣言（走査とランタイムAPIの両方）。遠征から出たら反映する。</summary>
         private static readonly List<KeyValuePair<string, string>> PendingDeclarations = new List<KeyValuePair<string, string>>();
-        /// <summary>供給元ごとの直近の走査・API 登録の結果（§7 の報告の材料）。</summary>
-        private static readonly List<ExtendedHeroFileResult> LastResults = new List<ExtendedHeroFileResult>();
+        /// <summary>走査・API 登録の結果（§7 の報告の材料）。走査は供給元ごとに置き換え、API は1件ずつ残す。</summary>
+        private static readonly List<ConnectorReportEntry> LastResults = new List<ConnectorReportEntry>();
+        /// <summary>走査で読み込んだ宣言の控え（供給元 id → 本文・参照マニフェスト・結果）。供給元を名乗らない "?" は対象外。</summary>
         private static readonly Dictionary<string, ConnectorDeclaration> LastDeclarationByModId = new Dictionary<string, ConnectorDeclaration>(StringComparer.Ordinal);
+
+        private sealed class ConnectorReportEntry
+        {
+            internal ExtendedHeroFileResult Result;
+            internal bool FromApi;
+        }
 
         private sealed class ConnectorDeclaration
         {
@@ -168,20 +175,21 @@ namespace SodRpg.Mod
                 PendingDeclarations.Add(new KeyValuePair<string, string>(modId, text));
                 return;
             }
-            RecordConnectorResult(RegisterConnectorDeclaration(modId, text));
+            RecordConnectorResult(RegisterConnectorDeclaration(modId, text, modId, fromApi: false), fromApi: false);
             WriteConnectorReport();
         }
 
-        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text)
+        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text, string manifestModId, bool fromApi)
         {
             var manifests = new Dictionary<string, string>(StringComparer.Ordinal);
-            bool cacheable = true;
+            // 控えは走査の読み込みだけのもの。API とは鍵が重ならず、供給元を名乗らない "?" も対象外。
+            bool cacheable = !fromApi && modId != "?";
             string Read(string path)
             {
                 if (manifests.TryGetValue(path, out var content)) return content;
                 try
                 {
-                    content = ReadStarManifest(modId, path);
+                    content = ReadStarManifest(manifestModId, path);
                     manifests.Add(path, content);
                     return content;
                 }
@@ -191,7 +199,7 @@ namespace SodRpg.Mod
                     throw;
                 }
             }
-            if (LastDeclarationByModId.TryGetValue(modId, out var previous) && previous.Text == text)
+            if (cacheable && LastDeclarationByModId.TryGetValue(modId, out var previous) && previous.Text == text)
             {
                 bool unchanged = true;
                 foreach (var manifest in previous.Manifests)
@@ -204,20 +212,27 @@ namespace SodRpg.Mod
             var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
             if (cacheable)
                 LastDeclarationByModId[modId] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
-            else
+            else if (!fromApi)
                 LastDeclarationByModId.Remove(modId);
             return result;
         }
 
-        private static void RecordConnectorResult(ExtendedHeroFileResult result)
+        private static void RecordConnectorResult(ExtendedHeroFileResult result, bool fromApi)
         {
+            // API の結果は走査とは別枠で1件ずつ残す。供給元を名乗らない呼び出し同士や、
+            // 同じ供給元の走査と API が互いの結果を上書きしないようにするため。
+            if (fromApi)
+            {
+                LastResults.Add(new ConnectorReportEntry { Result = result, FromApi = true });
+                return;
+            }
             for (int i = 0; i < LastResults.Count; i++)
-                if (LastResults[i].SourceModId == result.SourceModId)
+                if (!LastResults[i].FromApi && LastResults[i].Result.SourceModId == result.SourceModId)
                 {
-                    LastResults[i] = result;
+                    LastResults[i].Result = result;
                     return;
                 }
-            LastResults.Add(result);
+            LastResults.Add(new ConnectorReportEntry { Result = result, FromApi = false });
         }
 
         /// <summary>ランタイムAPI（Dreamforge.Api.HeroConnector.RegisterHeroes）からの登録。走査と同じ道を通る。</summary>
@@ -243,8 +258,8 @@ namespace SodRpg.Mod
                     error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
                     return true;
                 }
-                var result = RegisterConnectorDeclaration(string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, json);
-                RecordConnectorResult(result);
+                var result = RegisterConnectorDeclaration(string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, json, sourceModId, fromApi: true);
+                RecordConnectorResult(result, fromApi: true);
                 WriteConnectorReport();
                 bool all = result.FileError == null;
                 foreach (var hero in result.Heroes)
@@ -284,11 +299,13 @@ namespace SodRpg.Mod
             catch (Exception ex) { sb.Append("Star limits unavailable: ").Append(ex.Message).Append('\n'); }
             sb.Append("\nDeclaration files:\n");
             bool any = false;
-            foreach (var result in LastResults)
+            foreach (var entry in LastResults)
             {
+                var result = entry.Result;
                 any = true;
                 sb.Append("- ").Append(string.IsNullOrEmpty(result.SourceModId) ? "?" : result.SourceModId);
-                if (DeclarationPathByModId.TryGetValue(result.SourceModId ?? "", out string path)) sb.Append(": ").Append(path);
+                if (entry.FromApi) sb.Append(" (runtime api)");
+                else if (DeclarationPathByModId.TryGetValue(result.SourceModId ?? "", out string path)) sb.Append(": ").Append(path);
                 sb.Append('\n');
                 if (result.FileError != null) sb.Append("  file rejected: ").Append(result.FileError).Append('\n');
                 foreach (var hero in result.Heroes)
