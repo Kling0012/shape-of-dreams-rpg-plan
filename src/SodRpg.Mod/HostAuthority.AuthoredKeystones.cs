@@ -180,14 +180,13 @@ namespace SodRpg.Mod
         }
 
         internal KeystoneResult TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver,
-            KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self,
-            decimal? targetHealthPercent = null, bool? withinRetaliationWindow = null)
+            KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self)
         {
             RefreshAuthoredKeystone(hero);
             var result = !_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.Active
                 ? ScopedKeystoneModifiers.ApplyUnmodified(payload)
                 : binding.Runtime.Apply(payload, new KeystoneContext(binding.Epoch, source, sourceKind, receiver, recipient,
-                    binding.Equipment, targetHealthPercent: targetHealthPercent, withinRetaliationWindow: withinRetaliationWindow));
+                    binding.Equipment));
             return StarDamageScaling.ScaleResult(binding?.Build
                 ?? (hero != null && _runtimes.TryGetValue(hero, out var owner) ? owner.Powers.Build : null), payload, result);
         }
@@ -217,12 +216,7 @@ namespace SodRpg.Mod
                 && family.Memory == identity.SourceMemory) effectId = family.EffectId;
             var payload = new KeystonePayload(KeystoneLayer.NativeDamage, (decimal)damage.currentAmount,
                 UnlimitedKeystoneCaps, effectId: effectId);
-            decimal? healthPercent = target != null && target.maxHealth > 0f
-                ? (decimal?)(100m * (decimal)target.currentHealth / (decimal)target.maxHealth) : null;
-            bool? withinRetaliation = _runtimes.TryGetValue(hero, out var owner)
-                ? (bool?)owner.Powers.WithinRetaliationWindow(UnityEngine.Time.time) : null;
-            var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind,
-                targetHealthPercent: healthPercent, withinRetaliationWindow: withinRetaliation);
+            var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind);
             float ratio = (float)(result.Value / payload.Value);
             if (ratio < 1f) damage.ApplyReduction(1f - ratio);
             else if (ratio > 1f) damage.ApplyAmplification(ratio - 1f);

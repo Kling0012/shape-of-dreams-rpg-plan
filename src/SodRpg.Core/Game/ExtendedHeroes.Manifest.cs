@@ -647,16 +647,8 @@ namespace SodRpg.Core.Game
                     : new[] { "AlliedWard", "AllyWard", "SummonWard", "AllyShield" }.Contains(effect) ? KeystonePayloadKind.AlliedWard : KeystonePayloadKind.None;
                 var effects = layer != KeystoneLayer.ModEffect || payload == KeystonePayloadKind.AlliedWard
                     ? Array.Empty<GimmickEffect>() : ManifestEffectSet(effect);
-                decimal? threshold = null; bool outside = false;
-                string condition = ReadOptionalString(entry, "condition");
-                if (condition == "OutsideRetaliationWindow") outside = true;
-                else if (condition != null)
-                {
-                    const string prefix = "TargetHealthBelow:";
-                    if (!condition.StartsWith(prefix, StringComparison.Ordinal) || !decimal.TryParse(condition.Substring(prefix.Length),
-                        NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal percent)) throw new FormatException("unsupported keystone condition");
-                    threshold = percent;
-                }
+                if (ReadOptionalString(entry, "condition") != null)
+                    throw new FormatException("conditional keystone transforms are unsupported");
                 var scope = new KeystoneScope(targetEffectSet: effects, payloadKind: payload,
                     recipient: named == "self-only MOD" || named == "star-map added self shield" || field == "SelfValue" ? KeystoneRecipientKind.Self
                         : field == "AllyValue" ? KeystoneRecipientKind.AlliedHero : KeystoneRecipientKind.Any,
@@ -664,12 +656,11 @@ namespace SodRpg.Core.Game
                     sourceKind: effect == "DirectBasicAttack" ? KeystoneSourceKind.OwnedBasicAttack
                         : effect == "SummonDirectDamage" ? KeystoneSourceKind.OwnedSummon
                         : layer == KeystoneLayer.NativeDamage ? (KeystoneSourceKind?)KeystoneSourceKind.NativeMemory : null,
-                    sourceSelectors: sources, receiverSelectors: receiver == null ? null : new[] { ManifestSelector(receiver, memories) },
-                    targetHealthBelowPercent: threshold, outsideRetaliationWindow: outside);
+                    sourceSelectors: sources, receiverSelectors: receiver == null ? null : new[] { ManifestSelector(receiver, memories) });
                 var spec = new AuthoredKeystoneSpec { Layer = layer, Scope = scope };
                 if (field == "Grant")
                 {
-                    if (condition != null || named != null || ManifestField(entry, "memories") != null
+                    if (named != null || ManifestField(entry, "memories") != null
                         || new[] { "pct", "from", "to", "delta", "max" }.Any(f => ManifestField(entry, f) != null))
                         throw new FormatException("Grant cannot ignore transform scopes or numbers");
                     var grantObject = ManifestObject(ManifestField(entry, "gimmick"), "grant");
@@ -744,7 +735,7 @@ namespace SodRpg.Core.Game
 
         private static string ManifestTransformKind(KeystoneTransform t) => t.TargetLayer + ":" + t.Field + ":" + t.Operation + ":"
             + t.Scope.PayloadKind + ":" + string.Join(",", t.Scope.TargetEffectSet.OrderBy(e => e)) + ":" + t.Scope.SourceKind
-            + ":" + t.Scope.Recipient + ":" + t.Scope.Argument + ":" + t.Scope.TargetHealthBelowPercent.HasValue + ":" + t.Scope.OutsideRetaliationWindow;
+            + ":" + t.Scope.Recipient + ":" + t.Scope.Argument;
 
         private static void ValidateManifestEffectBounds(ClusterStarDef effect)
         {
@@ -784,8 +775,6 @@ namespace SodRpg.Core.Game
                     ManifestBound(transform.Count, matches.Select(t => (decimal)t.Count), "keystone count", true);
                     if (transform.Maximum.HasValue) ManifestBound(transform.Maximum.Value, matches.Where(t => t.Maximum.HasValue).Select(t => t.Maximum.Value), "keystone maximum", true);
                     if (transform.ExpectedFrom.HasValue) ManifestBound(transform.ExpectedFrom.Value, matches.Where(t => t.ExpectedFrom.HasValue).Select(t => t.ExpectedFrom.Value), "keystone from", true);
-                    if (transform.Scope.TargetHealthBelowPercent.HasValue)
-                        ManifestBound(transform.Scope.TargetHealthBelowPercent.Value, matches.Where(t => t.Scope.TargetHealthBelowPercent.HasValue).Select(t => t.Scope.TargetHealthBelowPercent.Value), "keystone health condition", true);
                 }
                 foreach (var group in effect.KeystoneDefinition.Upside.GroupBy(ManifestTransformKind))
                 {

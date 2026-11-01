@@ -188,7 +188,7 @@ apiVersion 1 で宣言できないもの
 - 宣言記憶ごとに本体のルートから形・順序・段数・費用をコピーする。ID は `x.<key>.route.<記憶ID>.<順序>`。現行の形は7星で、最初の6星は3段・各1ポイント、最後は1段・3ポイント。効果は本体9人の登録済み通常星にある正の MaxHealthPct の最小値を使う（装備記憶で条件づけない通常Stat）。ルートの効果や費用を JSON で変えることはできない。
 - `memory` の入口 `anchor` は自動ルートの星を指定する。同じ星群内は入口の anchor を継承できる。外縁はルート・記憶領域または効果を持つ Stat 根から入る。Keystone は取得条件の星を入口にできる。`edges` は無向の接続、`requires` は全件、`requiresAny` はいずれか1件の購入条件として共通検証へ渡す。
 - 数値は実値、または本体の数値原本を参照する `valueRef` を使う。typed payload では `{ "valueRef": "…" }`。外部固有 ID に本体の原本は無いので通常は実値を書く。MemoryDamage は0.001刻み、ほかの整数欄は整数制約を保つ。解決後の数値を §5-2 で検証し、丸めて採用しない。
-- ペア条件、旅人別スケール・RunGrowth、Power、固有記憶の native adapter は受け付けない。通常 Gimmick、DirectedRecharge、MemoryPrimed、AlliedWard と、その修飾・型付き Keystone 変換・Grant を扱う。受け手側の修飾は `memory: null` とし、送り手を限定した受信修飾は受け付けない。native damage の条件は `TargetHealthBelow:<百分率>` と `OutsideRetaliationWindow` の型付き条件を扱う。本体に同種が無い効果や数値は除外する。
+- ペア条件、旅人別スケール・RunGrowth、Power、固有記憶の native adapter は受け付けない。通常 Gimmick、DirectedRecharge、MemoryPrimed、AlliedWard と、その修飾・型付き Keystone 変換・Grant を扱う。受け手側の修飾は `memory: null` とし、送り手を限定した受信修飾は受け付けない。条件付きの変換（`condition`）は受け付けず、除外する。本体に同種が無い効果や数値は除外する。
 - 読み込むファイルは各4 MiBまで、JSON の深さは64まで。同じ object のキー重複は拒否する。パスの絶対指定、`.` / `..`、空の構成要素、シンボリックリンクを拒否する。API から登録する場合も、`sourceModId` が有効な MOD のフォルダへ解決できる必要がある。
 
 ## 4. 受け付けと拒否（fail-soft）

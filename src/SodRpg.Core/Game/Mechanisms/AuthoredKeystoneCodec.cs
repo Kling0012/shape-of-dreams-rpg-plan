@@ -16,15 +16,12 @@ namespace SodRpg.Core.Game
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                 {
                     // Grammar 3 is byte-identical to every keystone without a retained Power; grammar 4 appends it.
-                    // Grammar 5 adds native event conditions; unconditional definitions keep their original bytes.
+                    // Grammars 1/2 carried upside+downside transform lists and scoped conditions (removed with keystone drawbacks).
                     bool retained = definition.RetainedPower != Power.None;
-                    bool conditional = definition.Upside.Any(t => t.Scope.TargetHealthBelowPercent.HasValue || t.Scope.OutsideRetaliationWindow);
-                    writer.Write((byte)(conditional ? 5 : retained ? 4 : 3));
-                    if (conditional) writer.Write(retained);
-                    writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
+                    writer.Write((byte)(retained ? 4 : 3)); writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
                     Strings(writer, definition.RequiredMemories); Strings(writer, definition.Prerequisites);
                     writer.Write(definition.Payloads.Count); foreach (var payload in definition.Payloads) writer.Write((int)payload);
-                    Transforms(writer, definition.Upside, conditional);
+                    Transforms(writer, definition.Upside);
                     writer.Write(definition.Grants.Count);
                     foreach (var grant in definition.Grants) writer.Write(AuthoredMechanismCodec.Encode(new AuthoredMechanismEntry
                         { StarId = definition.KeystoneId, ContributorIds = new[] { definition.KeystoneId }, Spec = grant }));
@@ -41,12 +38,11 @@ namespace SodRpg.Core.Game
             using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
             {
                 byte grammar = reader.ReadByte();
-                if (grammar != 3 && grammar != 4 && grammar != 5) throw new FormatException("Unknown keystone grammar.");
-                bool retained = grammar == 5 ? reader.ReadBoolean() : grammar == 4;
+                if (grammar != 3 && grammar != 4) throw new FormatException("Unknown keystone grammar.");
                 string id = Token(reader); int cost = reader.ReadInt32(); var memories = Strings(reader); var prerequisites = Strings(reader);
                 var kinds = new List<KeystonePayloadKind>(); int count = Count(reader);
                 for (int i = 0; i < count; i++) kinds.Add((KeystonePayloadKind)reader.ReadInt32());
-                var up = Transforms(reader, grammar == 5);
+                var up = Transforms(reader);
                 var grants = new List<AuthoredMechanismSpec>(); count = Count(reader);
                 for (int i = 0; i < count; i++)
                 {
@@ -56,7 +52,7 @@ namespace SodRpg.Core.Game
                     grants.Add(entry.Spec);
                 }
                 var power = Power.None; int powerValue = 0;
-                if (retained)
+                if (grammar == 4)
                 {
                     int rawPower = reader.ReadInt32(); powerValue = reader.ReadInt32();
                     if (!Enum.IsDefined(typeof(Power), rawPower) || rawPower == (int)Power.None || powerValue <= 0)
@@ -83,7 +79,7 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < count; i++) selectors[i] = MemorySelector.Parse(reader.ReadString());
             return selectors;
         }
-        private static void Transforms(BinaryWriter writer, IReadOnlyList<KeystoneTransform> transforms, bool conditional)
+        private static void Transforms(BinaryWriter writer, IReadOnlyList<KeystoneTransform> transforms)
         {
             writer.Write(transforms.Count);
             foreach (var t in transforms)
@@ -98,15 +94,9 @@ namespace SodRpg.Core.Game
                 writer.Write(s.Argument.HasValue); if (s.Argument.HasValue) writer.Write(s.Argument.Value);
                 writer.Write(s.SourceKind.HasValue); if (s.SourceKind.HasValue) writer.Write((int)s.SourceKind.Value);
                 Selectors(writer, s.SourceSelectors); Selectors(writer, s.ReceiverSelectors);
-                if (conditional)
-                {
-                    writer.Write(s.TargetHealthBelowPercent.HasValue);
-                    if (s.TargetHealthBelowPercent.HasValue) writer.Write(s.TargetHealthBelowPercent.Value);
-                    writer.Write(s.OutsideRetaliationWindow);
-                }
             }
         }
-        private static KeystoneTransform[] Transforms(BinaryReader reader, bool conditional)
+        private static KeystoneTransform[] Transforms(BinaryReader reader)
         {
             int count = Count(reader); var result = new KeystoneTransform[count];
             for (int i = 0; i < count; i++)
@@ -134,10 +124,8 @@ namespace SodRpg.Core.Game
                 int? argument = reader.ReadBoolean() ? reader.ReadInt32() : (int?)null;
                 KeystoneSourceKind? source = reader.ReadBoolean() ? (KeystoneSourceKind)reader.ReadInt32() : (KeystoneSourceKind?)null;
                 var sourceSelectors = Selectors(reader); var receiverSelectors = Selectors(reader);
-                decimal? threshold = conditional && reader.ReadBoolean() ? reader.ReadDecimal() : (decimal?)null;
-                bool outside = conditional && reader.ReadBoolean();
                 var scope = new KeystoneScope(memories, effects, ids, receivers, recipient, payload, argument, source,
-                    sourceSelectors, receiverSelectors, threshold, outside);
+                    sourceSelectors, receiverSelectors);
                 switch (operation)
                 {
                     case KeystoneOperation.Scale: result[i] = KeystoneTransform.Scale(layer, field, magnitude, scope); break;
