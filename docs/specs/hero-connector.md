@@ -71,7 +71,7 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `heroes[].memories` | 任意 | その旅人の記憶（St_* の型名）と表示名。Dreamforge の画面での記憶名と、記憶の星の対象・装着条件の判定に使う。装備・リンク・報酬・図鑑の生成対象には加えない。 |
 | `heroes[].starTree` | 任意 | 星図。無ければ汎用ツリー（`Content.Talents`。今の未知の旅人と同じ）。 |
 | `starTree.nodes[].id` | 必須 | `[a-z0-9_]`、32文字まで。旅人の中で一意。実際の星IDは `x.<key>.<id>`。 |
-| `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。`stat`・`link`・`power` のうち1つを書く。使える種類と上限は §5。 |
+| `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。効果は `stat`・`link`・`power`・`nativeModifier`・`scopedModifier`・`gimmickBoost`・`gimmickParam`・`choices` のうち1つ。名前参照の `gimmick` だけでも通常星を宣言できる。使える種類と上限は §5。 |
 | `nodes[].link` / `memory` | 記憶の星で必須 | `LinkKind` の名前と、対象の記憶の型名。その旅人の `memories` で受け付けた記憶か、`Links` の名前簿にある既存の記憶だけを指定できる。キーストーンには使えない。 |
 | `nodes[].power` | Power の星で必須 | `Power` の名前。`keystone: true` と併用すると Power のキーストーンになる。 |
 | `nodes[].perRank` / `maxRank` | 通常の星で必須 | 1段あたりの値と段数。Stat と Power の値・段数は正の整数。記憶の星の値は `MemoryDamage` だけ小数点以下3桁まで、ほかの LinkKind は正の整数。 |
@@ -80,7 +80,21 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `nodes[].description` | Stat のキーストーンで必須 | 説明文。Power のキーストーンでは省略でき、既存の Power の説明文を使う。 |
 | `nodes[].name` | 任意 | 表示名。無ければ id。 |
 | `nodes[].requires` | 任意 | 同じ旅人の星の `id` の配列。挙げた星のどれか1つを取ると、この星へ進める。省略した星は今までの自動のつながりを使う。空配列なら中心につながる。 |
-| `nodes[].position` | 任意 | `{ "ring": 1, "angle": -90 }` の形。`ring` は1以上の整数、`angle` は度を表す数値。0度は右、90度は下。省略した星は今までの自動配置を使う。 |
+| `nodes[].position` | 任意 | `{ "ring": 1, "angle": -90 }` または `{ "x": 120.5, "y": -30 }`。両形式は併用できない。`ring` は1以上の整数、`angle` は度を表す数値。0度は右、90度は下。省略した星は自動配置を使う。 |
+| `nodes[].center` | 任意 | 中心への辺の有無。true なら `requires` の辺に加えて中心にもつなぐ。false なら空の `requires` でも中心につながない。省略時は従来どおり。 |
+| `nodes[].rankCost` | 任意 | 1段の費用。通常星は1、キーストーンは既存の費用が既定。上限は §5。Choice の選択肢は親と同じ費用にする。 |
+| `nodes[].isDreamRing` | 任意 | 夢の輪の星として扱うか。既定 false。接続と位置はほかの宣言星と同じ方法で指定する。 |
+| `nodes[].kind` | 任意 | `ClusterStarKind` の名前。効果と一致する種類だけを受け付ける。Power の通常星は `Notable`、記憶の星は `MemoryDamage` / `MemoryHaste`。 |
+| `nodes[].choices` | 選択の星で必須 | 選択肢の配列。親は独立した効果を持たず、`maxRank` を指定する。選択肢は同じ段数の通常星で、id・星群・接続・位置・取得条件を持たない。入れ子の Choice は不可。 |
+| `starTree.clusters` | 任意 | 星群の配列。各要素に一意な `id` と表示名 `name` を書く。`region` は `ClusterRegionKind`（既定 `Outer`）、`regionId` は任意の領域名、`shape` は `Fan` / `Ring` / `Chain`（既定 `Chain`）。配置プログラムは持たない。空の星群は不可。 |
+| `nodes[].cluster` / `clusterOrder` | 任意 | `clusters` のローカル id と、星群内の並び順（既定0）。星群名は既存の表示処理で表示する。 |
+| `nodes[].gimmick` | 任意 | 既存9人の単独の `GimmickDef` を持つ星のID。例 `h.vesper.route.resolve.2`。定義をコピーして既存の効果処理へ渡す。Stat・Link・Power の通常星と併用できる。新しい仕掛けの定義、機構の取り出し、キーストーンとの併用は不可。 |
+| `nodes[].gimmickBoost` | 仕掛け強化で必須 | 1段の強化量（正の整数）。`memory` と `maxRank` を指定し、同じ記憶に参照先の仕掛けが必要。 |
+| `nodes[].gimmickParam` | 仕掛けパラメータで必須 | `GimmickParam` の名前。`perRank`・`maxRank`・`memory` を指定する。対象の仕掛けがそのパラメータに対応している必要がある。 |
+| `nodes[].nativeModifier` | Native 修飾で必須 | `{ "kind": "MemoryDamage", "valueUnits": 100 }`。`memory`・`maxRank` も指定する。100 units は1%。`capProfile` は作者向け報告の NativeModifier 表にある同種の名前だけを指定でき、省略時は既存の記憶星から求めたコネクタ用上限を使う。移動記憶は不可。 |
+| `nodes[].scopedModifier` | Scoped 修飾で必須 | `scope`（`Memory` / `EffectChannel` / `Receiver`）、任意の `param`、ローカル星IDの `targets` 配列、`GimmickEffect` 名の `effects` 配列、任意の `capProfile`。値は通常 `amountUnits`（100で1%）、Chance は `probabilityUnits`（10000で100%）、ExtraTargets は `extraTargets`。該当しない値欄は0。`memory`・`maxRank` も指定する。既存の検証で対象なし・未知の対象・意味のないパラメータを拒否する。 |
+| `nodes[].requiredStars` / `requiredAnyStars` | 任意 | 取得済みでなければならない星のローカルID配列。前者はすべて、後者はいずれか。`requires` の無向辺とは別の条件。既存の取得判定を使い、未知参照・自己参照・取得不能な依存を拒否する。 |
+| `nodes[].routeOrder` | 任意 | 元の記憶ルート内の順序（既定0）。書き出し時の末尾星などの表示種別を保つために使う。 |
 
 最初の例は従来の3星の宣言で、登録される星と配置は変わらない。次は、その例の `nodes` に追加できる記憶の星と Power の星・キーストーンの例。キーストーンの合計は §5 の上限内に収める。
 
@@ -100,12 +114,38 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
   "requires": ["aegis"], "position": { "ring": 4, "angle": 0 } }
 ```
 
+Choice・星群・仕掛けの修飾を併用する場合の `starTree` の例。`St_Q_NovaBlink` は最初の例と同じ `memories` に宣言する。
+
+```json
+{
+  "clusters": [{ "id": "blink", "name": { "en": "Blink", "ja": "瞬き", "zh": "闪烁" } }],
+  "nodes": [
+    { "id": "gimmick", "memory": "St_Q_NovaBlink", "gimmick": "h.vesper.route.resolve.2",
+      "maxRank": 1, "cluster": "blink", "requires": [] },
+    { "id": "boost", "memory": "St_Q_NovaBlink", "gimmickBoost": 1,
+      "maxRank": 1, "cluster": "blink", "requires": ["gimmick"] },
+    { "id": "duration", "memory": "St_Q_NovaBlink", "gimmickParam": "Duration", "perRank": 1,
+      "maxRank": 1, "cluster": "blink", "requires": ["gimmick"] },
+    { "id": "native", "memory": "St_Q_NovaBlink", "nativeModifier": { "valueUnits": 100 },
+      "maxRank": 1, "cluster": "blink", "requires": ["gimmick"] },
+    { "id": "scoped", "memory": "St_Q_NovaBlink",
+      "scopedModifier": { "scope": "Memory", "targets": ["gimmick"], "amountUnits": 100 },
+      "maxRank": 1, "cluster": "blink", "requires": ["gimmick"] },
+    { "id": "choice", "maxRank": 1, "rankCost": 2, "cluster": "blink", "isDreamRing": true,
+      "requires": ["boost", "duration"], "choices": [
+        { "stat": "AttackPct", "perRank": 1, "maxRank": 1 },
+        { "power": "Aegis", "perRank": 1, "maxRank": 1 }
+      ] }
+  ]
+}
+```
+
 `requires` は既存の星図と同じ無向の辺になる。通常の到達判定を使うため、取得した星から辺を逆向きにも進める。宣言に循環がある、参照先の id が無い、中心から届かない星がある場合は、その旅人の星図だけを汎用ツリーに戻し、理由を報告する。位置の半径は ring 1 が `InnerRadius`、2 が `DeepRadius`、3以降が `BranchRadius + BranchStep × (ring - 3)`。
 
 apiVersion 1 で宣言できないもの
 
 - 難易度・報酬・部屋の予兆などの旅人別スケール。拡張旅人は常に既定値（1.0）。
-- ペア連携、仕掛け（Gimmick）、選択の星（Choice）、監修星図の契約や機構、記憶ルート・夢の輪・星群そのものの定義。
+- ペア連携、監修機構、機構付きキーストーン、EffectChannel の新規定義、RunGrowth のプログラム。既存の単独 Gimmick の名前参照はできるが、新しい GimmickDef は宣言できない。
 - 既存の旅人・既存の星・既存の記憶の値の変更。
 
 ## 4. 受け付けと拒否（fail-soft）
@@ -125,14 +165,33 @@ apiVersion 1 で宣言できないもの
 
 ## 5. 星図の上限
 
-上限はコードに数値を書かず、起動時に既存9人の星から求める。既存の調整が変われば上限も一緒に動く。Stat の上限は従来のまま、新しい種類の上限は次の原典から求める。
+上限はコードに数値を書かず、既存9人の星から求める。実運用と書き出し道具は、生成済み星図を登録してから上限を取得する。既存の調整が変われば上限も一緒に動く。
 
-- Stat: 既存9人の Core の通常の星で使われている Stat だけを宣言できる。`perRank` はその Stat の既存の最大 `PerRank` 以下、`maxRank` は既存の最大 `MaxRank` 以下。Power の星を Stat の上限に数える従来の計算も変えない。
-- Stat のキーストーン: `value` は 1 以上、その Stat の通常の星の最大 `PerRank` × 最大 `MaxRank` 以下。既存の Power のキーストーンとは単位が違うため、その値は使わない。
-- 記憶の星: 既存9人の `HeroStarRoutes` の記憶ルートで使われている LinkKind だけを宣言できる（現在は `Guard`・`MemoryDamage`・`MemorySurge`・`MemoryHaste`）。`perRank` と `maxRank` は、それぞれその LinkKind の既存の最大 `LinkPerRank.Value` と最大 `MaxRank` 以下。`MemoryDamage` の値は丸めずに千分率まで受け付ける。
-- Power: 既存9人の Core・記憶ルート・深層で使われている Power だけを宣言できる。通常の星の `perRank` と `maxRank` は、それぞれその Power の通常の星の最大 `PerRank` と最大 `MaxRank` 以下。キーストーンの `value` は、その Power の既存のキーストーンの最大 `PowerValue` 以下。該当する種類の星が無い Power は、その種類には使えない。
-- 数: Stat・記憶・Power を合わせた通常の星の数は、既存9人の `TreeFor` の結果（Core・ルート・夢の輪・星群を含む）の通常の星数の最大以下。キーストーンの数は従来どおり Core の最大以下。
-- 費用（`RankCost`）・熟練度の条件・割り当ての規則（`Rules`）は既存と同じものを使う。宣言では変えられない。星を増やしても、取るためのポイントの獲得量は変わらない。
+- Stat・LinkKind・Power: 9人の `TreeFor` 全体とその選択肢から、種類ごとの最大値と最大段数を求める。従来の Core・記憶ルートの定義も含め、古い宣言で使えた種類を保つ。Stat キーストーンは既存の最大値と「通常星の最大値×最大段数」の大きい方、Power キーストーンはその Power の既存の最大値を使う。通常星・キーストーンの片方しか存在しない Power は、存在する側だけ宣言できる。
+- GimmickBoost・GimmickParam: 9人の元定義に残る通常星と選択肢も含め、種類・パラメータごとの値と段数の最大を使う。
+- ScopedModifier: scope・param・capProfile の組み合わせごとに、既存の値と段数の最大を使う。Chance・ExtraTargets はそれぞれ専用の単位で集計する。
+- NativeModifier: 同種・同上限定義の既存値を使う。コネクタ用上限定義は、既存の MemoryDamage / MemoryHaste の最大値と段数から求める。新しい計算式や新しい効果の種類は作らない。
+- 数: 全星数・通常星数・キーストーン数・Choice数・1星の選択肢数・星群数を、9人の `TreeFor` 全体の最大以下にする。選択肢は独立した配置星には数えず、選択肢数の上限で検証する。
+- `rankCost` と全体の段数も既存の最大以下。熟練度の条件と割り当ての規則（`Rules`）は既存どおり。星を増やしても、取るためのポイントの獲得量は変わらない。
+
+2026-11-01 の生成済み星図では、全星906・通常星895・キーストーン11・Choice99・1星の選択肢2・星群94・RankCost5・段数5。これは説明用の記録で、実際の判定は計算した上限を使う。上限を超えた場合は丸めず、その旅人の星図だけを汎用へ戻す。
+
+### 5-1. 既存星図を再現できる範囲
+
+`tools/hero-connector` は Core を参照するコンソール。指定した既存旅人の `TreeFor` と `HeroTreeLayout` を宣言へ書き出し、別キーで登録して比較する。JSON はリポジトリへ入れず `/tmp` などに置く。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Vesper /tmp/vesper-dreamforge.json Hero_TestVesper
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Bismuth /tmp/bismuth-dreamforge.json Hero_TestBismuth
+```
+
+比較するのは星数、Stat・Power・LinkDef の値と記憶、段数、RankCost、Tier、Gimmick と修飾、Choice と全選択肢、星群のまとまりと表示名、IsDreamRing、取得条件、位置と表示種別、残した星同士の辺、キーストーン。異なる値は終了コード1と報告書へ出す。宣言の隣に `.report.txt` を出し、除外した星をIDごとに理由つきで列挙する。
+
+監修機構、機構付きキーストーン、ペア連携の橋、EffectChannel・RunGrowth のプログラムは除外する。その一部を残して普通の星と呼ぶことはしない。Choice の片方だけが再現できない場合はChoice全体を除外し、対象機構や取得条件への依存が残る星も除外する。
+
+機構を外すと中心から切り離される成分や、取得条件と辺の組み合わせで進めなくなる箇所には、書き出し道具が中心への辺を補う。これは元と異なる接続として、辺を補った星のIDを報告書の `Layout adaptations` に列挙する。残した星同士の辺と座標は保つ。元の星図全体の取得経路が一致するという保証ではない。
+
+2026-11-01 の比較では、Vesper は892星から231星（Choice5・星群26）、Bismuth は747星から196星（Choice5・星群29）を再現した。両者の11キーストーンはすべて機構付きのため除外した。中心への入口の補完を報告したうえで、再現対象の比較は不一致0。実機は未確認。
 
 ## 6. Dreamforge 側の変更点
 
@@ -153,7 +212,7 @@ apiVersion 1 で宣言できないもの
 
 - Dreamforge の版と apiVersion。
 - 読んだファイル（供給元の id とパス）、受け付けた旅人、拒否した旅人と理由、星図を汎用にした理由。
-- §5 の上限表（Stat ごとの最大 perRank・maxRank・キーストーン値、LinkKind ごとの最大 perRank・maxRank、Power ごとの最大 perRank・maxRank・キーストーン値、星の数の上限）。作者はこの表を見て値を決められる。Power の表の 0 は、その種類の星を宣言できないことを表す。
+- §5 の上限表。Stat・LinkKind・Power の値と段数、キーストーン値、GimmickBoost・GimmickParam、NativeModifier・ScopedModifier の単位ごとの値と段数、星数・Choice数・選択肢数・星群数・RankCostを載せる。名前で参照できる既存の仕掛けも列挙する。作者はこの表を見て値を決められる。Power の表の 0 は、その種類の星を宣言できないことを表す。
 
 書き込みに失敗しても、警告1回で続ける。
 
@@ -213,5 +272,5 @@ static System.Type FindDreamforgeConnector()
 ## 12. 範囲外（この版ではしない）
 
 - Hero プレハブの登録、解錠、ロビーの並び（本体の仕組み。相手のMODの仕事）。
-- 拡張旅人の専用のペア連携、記憶ルート・夢の輪・星群そのものの定義、Gimmick・Choice・監修星図の契約や機構、旅人別スケール。
+- 拡張旅人の専用のペア連携、新しい GimmickDef・監修機構・機構付きキーストーン・EffectChannel・RunGrowth のプログラム、旅人別スケール。記憶の星・夢の輪の属性・星群・Choice は §3-2 の範囲で宣言できる。
 - ほかの種類のMOD（記憶・本質・遺物を足すMOD）の接続。必要になったら同じファイルに新しい欄を足す形で広げる。
