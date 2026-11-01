@@ -10,7 +10,7 @@ namespace SodRpg.Mod
     /// <summary>
     /// ヒーローコネクタの走査（docs/specs/hero-connector.md §3-1, §7）。
     /// 本体が読み込んだ有効なMODのフォルダ直下の dreamforge.json を読み、Core の登録簿（ExtendedHeroes）へ渡す。
-    /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は2回目で何もしない。
+    /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は再解析しても重ねて登録しない。
     /// 遠征中は登録を変えない（§3-1）: 届いた宣言は保留し、遠征から出たら反映する。
     /// この実装は本体の MOD API（DewMod）に依存するため、テスト用プロジェクトには含めない。
     /// DreamforgeMod.cs からの呼び出しは partial メソッド経由で、ここが無ければ呼び出し自体が消える。
@@ -19,8 +19,6 @@ namespace SodRpg.Mod
     {
         private Action _onModLoadEnded;
         private bool _heroConnectorStarted;
-        /// <summary>供給元 id → 最後に読んだ dreamforge.json の中身。同じ内容なら2回目は何もしない（§3-1）。</summary>
-        private static readonly Dictionary<string, string> LastDeclarationByModId = new Dictionary<string, string>(StringComparer.Ordinal);
         /// <summary>供給元 id → 宣言ファイルのパス（報告ファイル用）。</summary>
         private static readonly Dictionary<string, string> DeclarationPathByModId = new Dictionary<string, string>(StringComparer.Ordinal);
         /// <summary>遠征中に届いた宣言（走査とランタイムAPIの両方）。遠征から出たら反映する。</summary>
@@ -88,15 +86,14 @@ namespace SodRpg.Mod
                         try
                         {
                             if (!File.Exists(file)) continue;
-                            text = File.ReadAllText(file, Encoding.UTF8);
+                            text = ReadConnectorFile(file);
                         }
                         catch (Exception ex)
                         {
                             Log.Warn("[Dreamforge/Connector] " + modId + ": could not read " + file + ": " + ex.Message);
                             continue;
                         }
-                        if (LastDeclarationByModId.TryGetValue(modId, out string previous) && previous == text) continue;
-                        LastDeclarationByModId[modId] = text;
+                        // A referenced starManifest can change while dreamforge.json remains identical.
                         DeclarationPathByModId[modId] = file;
                         ApplyDeclaration(modId, text);
                     }
@@ -108,7 +105,54 @@ namespace SodRpg.Mod
             WriteConnectorReport();
         }
 
-        /// <summary>宣言1つを登録する。遠征中は保留して戻る（§3-1）。</summary>
+        /// <summary>サイズを制限して宣言とマニフェストを読む。</summary>
+        private static string ReadConnectorFile(string file)
+        {
+            // Bound the stream as well as FileInfo.Length: a file may grow between stat and read.
+            using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                if (stream.Length > ExtendedHeroes.ManifestTextLimit) throw new IOException("connector file exceeds 4 MiB");
+                using (var reader = new StreamReader(stream, new UTF8Encoding(false, true), true))
+                {
+                    var buffer = new char[8192];
+                    var text = new StringBuilder();
+                    int count;
+                    while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
+                    {
+                        if (text.Length + count > ExtendedHeroes.ManifestTextLimit) throw new IOException("connector text exceeds 4 MiB");
+                        text.Append(buffer, 0, count);
+                    }
+                    return text.ToString();
+                }
+            }
+        }
+
+        private static string ReadStarManifest(string modId, string relative)
+        {
+            if (string.IsNullOrWhiteSpace(relative) || relative.Length > 1024 || Path.IsPathRooted(relative)
+                || relative.IndexOf(':') >= 0 || relative[0] == '/' || relative[0] == '\\')
+                throw new IOException("starManifest must be a MOD-relative path");
+            string folder = null;
+            var instances = DewMod.loadedInstances;
+            if (instances != null)
+                foreach (var loaded in instances)
+                    if (loaded?.mod?.metadata?.id == modId) { folder = loaded.mod.path; break; }
+            if (string.IsNullOrEmpty(folder)) throw new IOException("source MOD folder is unavailable");
+            string root = Path.GetFullPath(folder);
+            string current = root;
+            // Reject traversal and links instead of following a link outside the source MOD.
+            foreach (string part in relative.Replace('\\', '/').Split('/'))
+            {
+                if (part.Length == 0 || part == "." || part == "..") throw new IOException("invalid manifest path component");
+                current = Path.Combine(current, part);
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) throw new IOException("manifest path contains a symbolic link");
+            }
+            string full = Path.GetFullPath(current);
+            if (!full.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                throw new IOException("manifest path leaves the source MOD");
+            return ReadConnectorFile(full);
+        }
+
         private static void ApplyDeclaration(string modId, string text)
         {
             if (InExpedition)
@@ -116,7 +160,7 @@ namespace SodRpg.Mod
                 PendingDeclarations.Add(new KeyValuePair<string, string>(modId, text));
                 return;
             }
-            var result = ExtendedHeroes.Register(text, modId, Log.Warn);
+            var result = ExtendedHeroes.Register(text, modId, Log.Warn, path => ReadStarManifest(modId, path));
             LastResults.Add(result);
             WriteConnectorReport();
         }
@@ -144,7 +188,7 @@ namespace SodRpg.Mod
                     error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
                     return true;
                 }
-                var result = ExtendedHeroes.Register(json, string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, Log.Warn);
+                var result = ExtendedHeroes.Register(json, string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId, Log.Warn, path => ReadStarManifest(sourceModId, path));
                 LastResults.Add(result);
                 WriteConnectorReport();
                 bool all = result.FileError == null;

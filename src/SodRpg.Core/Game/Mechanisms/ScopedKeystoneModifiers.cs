@@ -44,13 +44,20 @@ namespace SodRpg.Core.Game
         public KeystoneSourceKind? SourceKind { get; }
         public IReadOnlyList<MemorySelector> SourceSelectors { get; }
         public IReadOnlyList<MemorySelector> ReceiverSelectors { get; }
+        public decimal? TargetHealthBelowPercent { get; }
+        public bool OutsideRetaliationWindow { get; }
 
         public KeystoneScope(IEnumerable<string> targetMemorySet = null, IEnumerable<GimmickEffect> targetEffectSet = null,
             IEnumerable<string> targetEffectIds = null, IEnumerable<string> receiverMemorySet = null,
             KeystoneRecipientKind recipient = KeystoneRecipientKind.Any, KeystonePayloadKind payloadKind = KeystonePayloadKind.None,
             int? argument = null, KeystoneSourceKind? sourceKind = null,
-            IEnumerable<MemorySelector> sourceSelectors = null, IEnumerable<MemorySelector> receiverSelectors = null)
+            IEnumerable<MemorySelector> sourceSelectors = null, IEnumerable<MemorySelector> receiverSelectors = null,
+            decimal? targetHealthBelowPercent = null, bool outsideRetaliationWindow = false)
         {
+            if (targetHealthBelowPercent.HasValue && (targetHealthBelowPercent.Value < 0m || targetHealthBelowPercent.Value > 100m))
+                throw new ArgumentException("Invalid target health threshold.");
+            TargetHealthBelowPercent = targetHealthBelowPercent;
+            OutsideRetaliationWindow = outsideRetaliationWindow;
             TargetMemorySet = KeystoneValidation.Strings(targetMemorySet);
             TargetEffectIds = KeystoneValidation.Strings(targetEffectIds);
             ReceiverMemorySet = KeystoneValidation.Strings(receiverMemorySet);
@@ -79,6 +86,9 @@ namespace SodRpg.Core.Game
             && (PayloadKind == KeystonePayloadKind.None || PayloadKind == payload.Kind)
             && (!Argument.HasValue || Argument.Value == payload.Argument)
             && (!SourceKind.HasValue || SourceKind.Value == context.SourceKind)
+            && (!TargetHealthBelowPercent.HasValue || context.TargetHealthPercent.HasValue
+                && context.TargetHealthPercent.Value < TargetHealthBelowPercent.Value)
+            && (!OutsideRetaliationWindow || context.WithinRetaliationWindow == false)
             && MatchesSelectors(SourceSelectors, context.SourceMemory, context)
             && MatchesSelectors(ReceiverSelectors, context.ReceiverMemory, context, true);
 
@@ -145,6 +155,9 @@ namespace SodRpg.Core.Game
                 throw new ArgumentException("Invalid keystone layer or field.");
             if (layer != KeystoneLayer.ModEffect && field != KeystoneField.Value)
                 throw new ArgumentException("Damage layers only support value transforms.");
+            if (scope != null && (scope.TargetHealthBelowPercent.HasValue || scope.OutsideRetaliationWindow)
+                && layer != KeystoneLayer.NativeDamage)
+                throw new ArgumentException("Event conditions only apply to final native damage.");
             TargetLayer = layer; Field = field; Scope = scope ?? throw new ArgumentNullException(nameof(scope));
             Operation = operation; MagnitudeUnits = magnitude; Seconds = seconds; Count = count;
             Maximum = maximum; ExpectedFrom = expectedFrom;
@@ -265,9 +278,12 @@ namespace SodRpg.Core.Game
         public MechanismMemorySlot? SourceSlot { get; }
         public MechanismMemorySlot? RecipientSlot { get; }
         public string HeroKey { get; }
+        public decimal? TargetHealthPercent { get; }
+        public bool? WithinRetaliationWindow { get; }
         public KeystoneContext(long equipmentEpoch, string sourceMemory, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory,
             string receiverMemory = null, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self, MechanismEquipment equipment = null,
-            MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null)
+            MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null,
+            decimal? targetHealthPercent = null, bool? withinRetaliationWindow = null)
         {
             if (equipmentEpoch < 0 || !Enum.IsDefined(typeof(KeystoneSourceKind), sourceKind)
                 || !Enum.IsDefined(typeof(KeystoneRecipientKind), recipient) || recipient == KeystoneRecipientKind.Any)
@@ -282,9 +298,11 @@ namespace SodRpg.Core.Game
             Equipment = equipment;
             SourceSlot = sourceSlot; RecipientSlot = recipientSlot;
             HeroKey = heroKey;
+            TargetHealthPercent = targetHealthPercent;
+            WithinRetaliationWindow = withinRetaliationWindow;
         }
         internal KeystoneContext AtEpoch(long epoch) => new KeystoneContext(epoch, SourceMemory, SourceKind, ReceiverMemory, Recipient,
-            Equipment, SourceSlot, RecipientSlot, HeroKey);
+            Equipment, SourceSlot, RecipientSlot, HeroKey, TargetHealthPercent, WithinRetaliationWindow);
     }
 
     /// <summary>Pristine values after ordinary additive, boost and parameter layers, before C07 and final caps.</summary>

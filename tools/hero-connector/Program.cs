@@ -1,6 +1,8 @@
 using System.Text.Json;
 using SodRpg.Core.Game;
 
+if (args.Length > 0 && args[0] == "--manifest") return ManifestCommand.Run(args.Skip(1).ToArray());
+
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper /tmp/vesper.json [Hero_TestVesper]");

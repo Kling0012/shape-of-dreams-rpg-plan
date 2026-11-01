@@ -27,7 +27,7 @@
 
 - 相手のMODフォルダの直下に `dreamforge.json` を置く（`about/` の中ではない）。
 - Dreamforge は、本体が読み込んだ有効なMOD（`DewMod.loadedInstances`、またはそれに相当する有効MODの一覧）のフォルダを走査し、`dreamforge.json` があれば読む。無効にしたMODのフォルダは読まない。
-- 走査の時期は2回。Dreamforge 自身の読み込み時と、本体の `DewMod.onModLoadEnded`（Dreamforge より後に読まれたMODの分）。同じ供給元・同じ内容（ハッシュ）なら2回目は何もしない。
+- 走査の時期は2回。Dreamforge 自身の読み込み時と、本体の `DewMod.onModLoadEnded`（Dreamforge より後に読まれたMODの分）。参照先の `starManifest` も再解析し、同じ供給元・同じ採用内容（ハッシュ）なら重ねて登録しない。同じキーの内容を変更するにはゲームを再起動する。
 - 走査はタイトル・ロビーの時点で終わる。遠征中は登録を変えない（遠征中に届いた登録は次にタイトルへ戻ったときに反映する）。
 
 ### 3-2. 形式
@@ -69,7 +69,8 @@ UTF-8 の JSON。知らない欄は無視する（将来の版の欄が入って
 | `heroes[].name` | 任意 | 表示名。`en`・`ja`・`zh`（apiVersion 1 で読むのはこの3言語。ほかの言語コードは無視される）。無ければ `Hero_` を取った型名。足りない言語は `en`、次に型名へ落ちる。 |
 | `heroes[].melee` | 任意 | 近接の旅人なら true（既定 false）。Dreamforge の近接向けの扱い（`TravelerCombat.IsMelee` 系）に入る。 |
 | `heroes[].memories` | 任意 | その旅人の記憶（St_* の型名）と表示名。Dreamforge の画面での記憶名と、記憶の星の対象・装着条件の判定に使う。装備・リンク・報酬・図鑑の生成対象には加えない。 |
-| `heroes[].starTree` | 任意 | 星図。無ければ汎用ツリー（`Content.Talents`。今の未知の旅人と同じ）。 |
+| `heroes[].starTree` | 任意 | 従来の星図。`starManifest` が無い、または読めないときに使う。これも無ければ汎用ツリー（`Content.Talents`）。 |
+| `heroes[].starManifest` | 任意 | MOD フォルダからの相対パス。正準 JSON の監修星図を本体と同じ登録へ渡す。§3-3 を参照。`dreamforgeApi` / `ApiVersion` は1のまま。 |
 | `starTree.nodes[].id` | 必須 | `[a-z0-9_]`、32文字まで。旅人の中で一意。実際の星IDは `x.<key>.<id>`。 |
 | `nodes[].stat` | Stat の星で必須 | `Stat` の名前（例 `AttackPct`）。効果は `stat`・`link`・`power`・`nativeModifier`・`scopedModifier`・`gimmickBoost`・`gimmickParam`・`choices` のうち1つ。名前参照の `gimmick` だけでも通常星を宣言できる。使える種類と上限は §5。 |
 | `nodes[].link` / `memory` | 記憶の星で必須 | `LinkKind` の名前と、対象の記憶の型名。その旅人の `memories` で受け付けた記憶か、`Links` の名前簿にある既存の記憶だけを指定できる。キーストーンには使えない。 |
@@ -145,8 +146,21 @@ Choice・星群・仕掛けの修飾を併用する場合の `starTree` の例�
 apiVersion 1 で宣言できないもの
 
 - 難易度・報酬・部屋の予兆などの旅人別スケール。拡張旅人は常に既定値（1.0）。
-- ペア連携、監修機構、機構付きキーストーン、EffectChannel の新規定義、RunGrowth のプログラム。既存の単独 Gimmick の名前参照はできるが、新しい GimmickDef は宣言できない。
+- ペア連携、旅人別の RunGrowth プログラム。`starTree` の仕掛けは既存の単独 Gimmick の名前参照に限る。`starManifest` では、本体で使う型付き仕掛け・修飾・機構付きキーストーンを宣言できる。ただし Power 系は `starManifest` の範囲外。
 - 既存の旅人・既存の星・既存の記憶の値の変更。
+
+### 3-3. 本体と同じ監修星図（starManifest）
+
+作者向けの配置例は [MODDING.ja.md](../MODDING.ja.md)、英語版は [MODDING.md](../MODDING.md)。形式は [正準 JSON](../../tools/star-manifest/README.md) の `hero` と `stars` を使い、実行時に解析する。外部ファイルを `gen_cs.py` に渡す作業は要らない。
+
+- `hero` は宣言の `key` と一致させる。`region` は `memory` / `bridge` / `outer` / `keystone`。`kind` は MemoryDamage / MemoryHaste / GimmickBoost / GimmickParam / Notable / Choice / Stat / Keystone。Choice は2択で、入れ子と Keystone の選択肢は不可。
+- ID・星群・参照は `x.<key>.` に統一する。短い ID はこの接頭辞を補う。`h.` や別旅人の `x.` は受け付けない。既存星と自動ルートは上書きできない。同じ ID は先に受け付けた星を優先する。
+- `memory`・`receiver`・選択子の候補は、その旅人の `memories` で宣言した記憶だけを使える。本体の記憶を使う場合も宣言が必要。候補を省いたスロット選択子は宣言記憶に限定する。独自記憶の `St_D_` は Identity、`St_M_` は移動、それ以外は編集可能枠として割り当て時に検証し、実行時は実際の装備枠を使う。
+- 宣言記憶ごとに本体のルートから形・順序・段数・費用をコピーする。ID は `x.<key>.route.<記憶ID>.<順序>`。現行の形は7星で、最初の6星は3段・各1ポイント、最後は1段・3ポイント。効果は本体ルートの正の Guard の最小値を使う。ルートの効果や費用を JSON で変えることはできない。
+- `memory` の入口 `anchor` は自動ルートの星を指定する。同じ星群内は入口の anchor を継承できる。外縁はルート・記憶領域または効果を持つ Stat 根から入る。Keystone は取得条件の星を入口にできる。`edges` は無向の接続、`requires` は全件、`requiresAny` はいずれか1件の購入条件として共通検証へ渡す。
+- 数値は実値、または本体の数値原本を参照する `valueRef` を使う。typed payload では `{ "valueRef": "…" }`。外部固有 ID に本体の原本は無いので通常は実値を書く。MemoryDamage は0.001刻み、ほかの整数欄は整数制約を保つ。解決後の数値を §5-2 で検証し、丸めて採用しない。
+- ペア条件、旅人別スケール・RunGrowth、Power は受け付けない。固有の記憶アダプターは本体と同じ記憶・トリガー条件を必要とする。legacy ID 専用の SacrificeShield / StunSourceFilter は外部 ID へ移せない。型付き実行表現のない条件付き native damage は警告して除外する。
+- 読み込むファイルは各4 MiBまで、JSON の深さは64まで。同じ object のキー重複は拒否する。パスの絶対指定、`.` / `..`、空の構成要素、シンボリックリンクを拒否する。API から登録する場合も、`sourceModId` が有効な MOD のフォルダへ解決できる必要がある。
 
 ## 4. 受け付けと拒否（fail-soft）
 
@@ -160,12 +174,15 @@ apiVersion 1 で宣言できないもの
 | `key` の Hero 型が読み込まれていない | 登録はする。報告に「型が見つからない」と書く（相手のMODが後から型を出す場合があるため） |
 | `starTree` だけが §5 の上限を超える・形式違反 | 旅人の登録（名前・近接・記憶名）は受け付け、星図だけ汎用ツリーにする |
 | `name` などの文字列欄の型違い | その欄だけ無視する |
+| `starManifest` の星が不正・数値超過・ID 重複 | MOD 名・星 ID・理由を警告して、その星だけ除外する |
+| 除外した星に参照が残る | 参照切れの星も反復して除外する |
+| `starManifest` が読めない、全体の形式違反、採用星0件 | 同じ旅人の `starTree` へ戻す。それも無効なら汎用ツリーにする |
 
 値を上限に丸めて受け付けることはしない（作者が気づけないため）。拒否して理由を出す。
 
 ## 5. 星図の上限
 
-上限はコードに数値を書かず、既存9人の星から求める。実運用と書き出し道具は、生成済み星図を登録してから上限を取得する。既存の調整が変われば上限も一緒に動く。
+上限はコードに数値を書かず、既存9人の星から求める。実運用と書き出し道具は、生成済み星図を登録してから上限を取得する。既存の調整が変われば上限も一緒に動く。以下の §5-1 までの規則は従来の `starTree`、§5-2 は `starManifest` に適用する。
 
 段のある星は1段あたりの値・段数・1星の合計（1段あたりの値×段数）の3つの上限をすべて満たす必要がある。合計の上限は同じ種類の既存の星1つごとに合計を計算し、その最大値を使う。別々の星の値と段数の最大を掛け合わせて、合計の上限にはしない。Choice の各選択肢にも同じ検証を行う。
 
@@ -197,6 +214,14 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 
 2026-11-01 の比較では、Vesper は892星から231星（Choice5・星群26）、Bismuth は747星から196星（Choice5・星群29）を再現した。両者の11キーストーンはすべて機構付きのため除外した。中心への入口の補完を報告したうえで、再現対象の比較は不一致0。実機は未確認。
 
+### 5-2. starManifest の上限
+
+自動ルートを含む採用星数は `floor(本体9人の最多星数 × 1.2)` まで。ファイル順に検証し、上限を超える星を警告して除外する。通常星は1段・費用1、Keystone は1段で本体の最大 RankCost 以下。ポイントの供給と刻印の熟練度条件は変更しない。
+
+値の比較は本体9人の登録済み星と Choice、Keystone の変換・Grant から求める。Stat と Keystone Stat、LinkKind、scope と param、仕掛けの kind・trigger・budget・effect、Ward の recipient・basis・pool・profile、固有アダプターの mode / kind、Keystone の layer・field・operation・payload・effect ごとに分ける。同種が無い数値は受け付けない。cooldown と cadence は短縮側の本体最小値も検証する。共有の型検証・上限定義も適用し、clamp が起きる値を採用しない。
+
+全体の通信・効果チャネル容量は既存の `BuildLimits` で確かめる。容量を超えた場合は末尾の星から除外し、参照を再検証する。毎フレームの処理は既存の型付き実行処理を使い、JSON 解析と数値走査は登録時に行う。
+
 ## 6. Dreamforge 側の変更点
 
 調査 §2-2 の門を、拡張旅人に対して開く。既存の旅人の経路は変えない。
@@ -204,7 +229,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 1. 拡張旅人の登録簿（Core）を新設する。`Links.IsTraveler`・`Links.Name` などの旅人の名前簿の問い合わせは、既存の名前簿に無ければ登録簿を見る。
 2. `HeroNames.Of` は登録簿の名前を使う（言語は既存の表示言語の選び方に合わせる）。
 3. `TravelerCombat.IsMelee` は登録簿の `melee` を見る。MeleeCoop の設定の符号化（ビット列）は既存の旅人のまま変えない。
-4. 星図: 宣言が通った旅人は、既存の監修ツリーの登録口（`StarClusters` / `AuthoredStarRegistration` の TryGetRegisteredTree 系）と同じ形で `HeroSigils.TreeFor` から引ける。既存の監修星図の契約（`AuthoredStarContract`）は流用しなくてよい。拡張旅人専用の小さい登録口を作り、§5 の検証を通す。
+4. 星図: `starManifest` は既存コネクタ内で解析し、`AuthoredStarDef` → `GenerateAuthored` → `RegisterAuthored` へ渡す。`AuthoredStarContract`・配置・割り当て・効果処理は本体と共通で、`HeroSigils.TreeFor` と `Content.TryGetTalent` は登録済み監修星図を優先する。`starTree` の経路は残す。
 5. 装備欄の旅人選択（`DreamforgeUi.GearColumn` の KnownHeroes）に、登録簿の旅人を既存9人の後ろへ足す（Profile に状態が無くても選べる）。
 6. 記憶: Dreamforge が記憶の表示名を引く所は、既存の名前簿に無ければ登録簿を見る。`Links.IsMemory` と装着条件の判定も拡張記憶を扱う。ただし、星図で参照できる拡張記憶はその旅人自身が宣言したものだけ。装備・リンク・報酬・図鑑の生成には入れない。
 7. 難易度・報酬・予兆の旅人別スケールは、拡張旅人では既存の `default`（1.0）を通るだけで、変更は要らない。
@@ -255,7 +280,7 @@ static System.Type FindDreamforgeConnector()
 ## 9. 協力プレイ
 
 - 能力の広告: 既存の機能単位の広告（`DreamforgeBuildInputCapabilityMsg` などと同じ作り）に、コネクタの有無を足す。Hello の型には欄を足さない（古い版との直列化の互換を壊さないため）。
-- 広告を返した相手とだけ、新しいメッセージ（例 `DreamforgeHeroConnectorMsg`）で、登録した拡張旅人のキーと宣言のハッシュの一覧を交換する。
+- 広告を返した相手とだけ、新しいメッセージ（例 `DreamforgeHeroConnectorMsg`）で、登録した拡張旅人のキーと宣言のハッシュの一覧を交換する。`starManifest` は、旅人宣言と正規化した採用星図・自動ルートを同じ宣言ハッシュに含める。除外した星の内容は含めない。ファイルの空白や object キー順だけの差は採用星図のハッシュを変えない。
 - ホストは今までどおり自分の登録で参加者の装備を検証する（調査 §4-3）。参加者の拡張旅人の宣言がホストに無い、またはハッシュが違うときは、その参加者の拡張旅人の星は既存の検証で拒否される。装備・汎用の仕組みは今までどおり効く。このとき両側で警告を1回出し、参加者の画面に1行の知らせ（例「ホストの Dreamforge にこの旅人の星図が無いため、この部屋では星図の効果が乗りません」）を出す。
 - 広告を返さない相手（古い Dreamforge、Dreamforge 無し）には何も送らず、今までどおり。
 - `ContentFingerprint`: 拡張旅人が1人以上登録されたときだけ、キーと宣言のハッシュを記録に足す。1人もいなければ指紋は今と同じ値のまま（既存の組み合わせで不一致の警告が増えない）。
@@ -263,7 +288,7 @@ static System.Type FindDreamforgeConnector()
 ## 10. セーブ
 
 - 拡張旅人の状態は既存どおり `profile.json` の `heroes` にキーで入る（調査 §2-4）。
-- 相手のMODを外したとき、その旅人の状態は読み書きでそのまま残す（消さない・作り替えない）。戻せば元どおり。
+- 相手のMODを外したとき、その旅人の状態は読み書きでそのまま残す（消さない・作り替えない）。戻せば元どおり。`x.` の休眠割り当て・二択の選択・刻印は、ロードアウトを切り替えた場合も記録を残す。別旅人の星として効果を適用しない。
 - 星図が変わった（宣言の星が減った、汎用⇔専用が切り替わった）とき、今の星図に無い星IDへの割り当ては効果を持たず、その分のポイントは未使用に戻る。割り当ての記録自体は消さない（星図が戻れば復元できる）。既存の `RegisterMigrations` の考え方に合わせ、破壊ではなく無効化にする。
 - コネクタを持たない古い Dreamforge で、`x.` で始まる星IDを含む profile.json を開いても壊れないことを、コードを読んで確かめる（壊れるなら、読み込み側の受け止めを今回の版に入れておく）。
 
@@ -276,5 +301,5 @@ static System.Type FindDreamforgeConnector()
 ## 12. 範囲外（この版ではしない）
 
 - Hero プレハブの登録、解錠、ロビーの並び（本体の仕組み。相手のMODの仕事）。
-- 拡張旅人の専用のペア連携、新しい GimmickDef・監修機構・機構付きキーストーン・EffectChannel・RunGrowth のプログラム、旅人別スケール。記憶の星・夢の輪の属性・星群・Choice は §3-2 の範囲で宣言できる。
+- 拡張旅人の専用ペア連携、旅人別スケール・RunGrowth。Power 系は `starManifest` では範囲外（既存 `starTree` の Power は引き続き使える）。監修星図・星群・橋・外縁・Choice・型付き仕掛け・機構付きキーストーンは §3-3 の範囲で宣言できる。
 - ほかの種類のMOD（記憶・本質・遺物を足すMOD）の接続。必要になったら同じファイルに新しい欄を足す形で広げる。

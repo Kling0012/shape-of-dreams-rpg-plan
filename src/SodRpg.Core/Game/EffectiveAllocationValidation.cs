@@ -463,6 +463,7 @@ namespace SodRpg.Core.Game
                 foreach (string id in new List<string>(hero.Talents.Keys))
                 {
                     var node = Talent(id);
+                    if (node == null && ExtendedHeroes.IsExtendedStarId(id)) continue;
                     int rank = hero.Talents[id], retained = rank;
                     if (!CanReach(hero, node)) retained = 0;
                     else for (int r = 1; r <= rank; r++)
@@ -473,7 +474,8 @@ namespace SodRpg.Core.Game
                 }
                 foreach (string id in (string[])hero.Keystones.Clone())
                 {
-                    if (id == null || KeystoneUnlocked(hero, heroKey, Talent(id))) continue;
+                    if (id == null || Talent(id) == null && ExtendedHeroes.IsExtendedStarId(id)
+                        || KeystoneUnlocked(hero, heroKey, Talent(id))) continue;
                     Refund(hero, Talent(id), id, 1, refunds);
                     changed = refunded = true;
                 }
