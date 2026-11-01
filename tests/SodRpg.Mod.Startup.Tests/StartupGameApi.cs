@@ -136,6 +136,17 @@ namespace SodRpg.Mod
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
+
+    // DreamforgeMod.HeroConnector.cs の走査と読み込み通知に相当する本体 API の代替。テストでは走査対象を空にする。
+    public static class DewMod
+    {
+        public static readonly List<DewLoadedMod> loadedInstances = new List<DewLoadedMod>();
+        // どのテストもこの通知を出さないため、購読だけを受け付ける。
+        public static event Action onModLoadEnded { add { } remove { } }
+    }
+    public sealed class DewLoadedMod { public DewModInfo mod; }
+    public sealed class DewModInfo { public string path; public DewModMetadata metadata; }
+    public sealed class DewModMetadata { public string id; }
     // This harness models entry-point lifetime, not native encounter spawning.
     internal static class PressureEnemyCount
     {

@@ -12,7 +12,7 @@ namespace SodRpg.Mod
     /// 本体が読み込んだ有効なMODのフォルダ直下の dreamforge.json を読み、Core の登録簿（ExtendedHeroes）へ渡す。
     /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は再解析しても重ねて登録しない。
     /// 遠征中は登録を変えない（§3-1）: 届いた宣言は保留し、遠征から出たら反映する。
-    /// この実装は本体の MOD API（DewMod）に依存するため、テスト用プロジェクトには含めない。
+    /// この実装は本体の MOD API（DewMod）に依存する。Startup テストでは StartupGameApi.cs の代替実装（DewMod・Log）を使う。
     /// DreamforgeMod.cs からの呼び出しは partial メソッド経由で、ここが無ければ呼び出し自体が消える。
     /// </summary>
     public partial class DreamforgeMod
@@ -217,6 +217,10 @@ namespace SodRpg.Mod
                     throw;
                 }
             }
+            // FileError does not retain the exception type, so file failures are always retried;
+            // only their repeated warnings are suppressed. previousError is the last failure of the
+            // same text and manifests.
+            string previousError = null;
             if (LastDeclarations.TryGetValue(source, out var previous) && previous.Text == text)
             {
                 bool unchanged = true;
@@ -225,11 +229,18 @@ namespace SodRpg.Mod
                     try { if (Read(manifest.Key) != manifest.Value) unchanged = false; }
                     catch (Exception) { unchanged = false; }
                 }
-                if (unchanged) return previous.Result;
+                if (unchanged && previous.Result.FileError == null) return previous.Result;
+                if (unchanged) previousError = previous.Result.FileError;
             }
-            var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
-            // FileError does not retain the exception type. Retry all file failures, including unexpected failures.
-            if (cacheable && result.FileError == null)
+            // A file-level failure reaches the logger only through this one Register warning, so an
+            // identical retry with a silent logger repeats nothing. A changed error is still warned
+            // once below, in the same format Core's Register emits for a file-level rejection.
+            Action<string> warn = Log.Warn;
+            if (previousError != null) warn = null;
+            var result = ExtendedHeroes.Register(text, modId, warn, Read);
+            if (previousError != null && result.FileError != null && result.FileError != previousError)
+                Log.Warn("[Dreamforge/Connector] file (" + (string.IsNullOrEmpty(modId) ? "?" : modId) + "): rejected: " + result.FileError);
+            if (cacheable)
                 LastDeclarations[source] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
             else
                 LastDeclarations.Remove(source);
