@@ -5,7 +5,7 @@ if (args.Length > 0 && args[0] == "--manifest") return ManifestCommand.Run(args.
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper /tmp/vesper.json [Hero_TestVesper]");
+    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper <output.json> [Hero_TestVesper]");
     return 2;
 }
 try

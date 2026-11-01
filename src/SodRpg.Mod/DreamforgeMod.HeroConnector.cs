@@ -119,7 +119,8 @@ namespace SodRpg.Mod
                     int count;
                     while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
                     {
-                        if (text.Length + count > ExtendedHeroes.ManifestTextLimit) throw new IOException("connector text exceeds 4 MiB");
+                        if (stream.Position > ExtendedHeroes.ManifestTextLimit || text.Length + count > ExtendedHeroes.ManifestTextLimit)
+                            throw new IOException("connector text exceeds 4 MiB");
                         text.Append(buffer, 0, count);
                     }
                     return text.ToString();

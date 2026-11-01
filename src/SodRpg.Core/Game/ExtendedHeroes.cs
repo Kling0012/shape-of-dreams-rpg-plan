@@ -482,7 +482,7 @@ namespace SodRpg.Core.Game
                             var manifest = ReadManifest(readManifest(path), key, memories, baseline, sourceModId, warn, out var registry);
                             if (manifest.Count == 0) throw new FormatException("no valid authored stars remain");
                             var generated = registry.TreeFor(key);
-                            declarationHash = StarClusters.RegistryHash(Json.Write(hero) + "|starManifest|" + StarClusters.Fingerprint(generated) + "|routes|" + ManifestRouteFingerprint(baseline));
+                            declarationHash = StarClusters.RegistryHash(ManifestDeclaration(hero) + "|starManifest|" + ManifestAcceptedFingerprint(generated) + "|routes|" + ManifestRouteFingerprint(baseline));
                             if (previous == null)
                             {
                                 StarClusters.RegisterAuthored(key, manifest, baseline, registry);

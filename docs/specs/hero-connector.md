@@ -156,10 +156,10 @@ apiVersion 1 で宣言できないもの
 - `hero` は宣言の `key` と一致させる。`region` は `memory` / `bridge` / `outer` / `keystone`。`kind` は MemoryDamage / MemoryHaste / GimmickBoost / GimmickParam / Notable / Choice / Stat / Keystone。Choice は2択で、入れ子と Keystone の選択肢は不可。
 - ID・星群・参照は `x.<key>.` に統一する。短い ID はこの接頭辞を補う。`h.` や別旅人の `x.` は受け付けない。既存星と自動ルートは上書きできない。同じ ID は先に受け付けた星を優先する。
 - `memory`・`receiver`・選択子の候補は、その旅人の `memories` で宣言した記憶だけを使える。本体の記憶を使う場合も宣言が必要。候補を省いたスロット選択子は宣言記憶に限定する。独自記憶の `St_D_` は Identity、`St_M_` は移動、それ以外は編集可能枠として割り当て時に検証し、実行時は実際の装備枠を使う。
-- 宣言記憶ごとに本体のルートから形・順序・段数・費用をコピーする。ID は `x.<key>.route.<記憶ID>.<順序>`。現行の形は7星で、最初の6星は3段・各1ポイント、最後は1段・3ポイント。効果は本体ルートの正の Guard の最小値を使う。ルートの効果や費用を JSON で変えることはできない。
+- 宣言記憶ごとに本体のルートから形・順序・段数・費用をコピーする。ID は `x.<key>.route.<記憶ID>.<順序>`。現行の形は7星で、最初の6星は3段・各1ポイント、最後は1段・3ポイント。効果は本体9人の登録済み通常星にある正の MaxHealthPct の最小値を使う（装備記憶で条件づけない通常Stat）。ルートの効果や費用を JSON で変えることはできない。
 - `memory` の入口 `anchor` は自動ルートの星を指定する。同じ星群内は入口の anchor を継承できる。外縁はルート・記憶領域または効果を持つ Stat 根から入る。Keystone は取得条件の星を入口にできる。`edges` は無向の接続、`requires` は全件、`requiresAny` はいずれか1件の購入条件として共通検証へ渡す。
 - 数値は実値、または本体の数値原本を参照する `valueRef` を使う。typed payload では `{ "valueRef": "…" }`。外部固有 ID に本体の原本は無いので通常は実値を書く。MemoryDamage は0.001刻み、ほかの整数欄は整数制約を保つ。解決後の数値を §5-2 で検証し、丸めて採用しない。
-- ペア条件、旅人別スケール・RunGrowth、Power は受け付けない。固有の記憶アダプターは本体と同じ記憶・トリガー条件を必要とする。legacy ID 専用の SacrificeShield / StunSourceFilter は外部 ID へ移せない。型付き実行表現のない条件付き native damage は警告して除外する。
+- ペア条件、旅人別スケール・RunGrowth、Power、固有記憶の native adapter は受け付けない。通常 Gimmick、DirectedRecharge、MemoryPrimed、AlliedWard と、その修飾・型付き Keystone 変換・Grant を扱う。受け手側の修飾は `memory: null` とし、送り手を限定した受信修飾は受け付けない。native damage の条件は `TargetHealthBelow:<百分率>` と `OutsideRetaliationWindow` の型付き条件を扱う。本体に同種が無い効果や数値は除外する。
 - 読み込むファイルは各4 MiBまで、JSON の深さは64まで。同じ object のキー重複は拒否する。パスの絶対指定、`.` / `..`、空の構成要素、シンボリックリンクを拒否する。API から登録する場合も、`sourceModId` が有効な MOD のフォルダへ解決できる必要がある。
 
 ## 4. 受け付けと拒否（fail-soft）
@@ -199,11 +199,11 @@ apiVersion 1 で宣言できないもの
 
 ### 5-1. 既存星図を再現できる範囲
 
-`tools/hero-connector` は Core を参照するコンソール。指定した既存旅人の `TreeFor` と `HeroTreeLayout` を宣言へ書き出し、別キーで登録して比較する。JSON はリポジトリへ入れず `/tmp` などに置く。
+`tools/hero-connector` は Core を参照するコンソール。指定した既存旅人の `TreeFor` と `HeroTreeLayout` を宣言へ書き出し、別キーで登録して比較する。JSON はリポジトリへ入れず `$TMPDIR` などの作業領域に置く。
 
 ```sh
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Vesper /tmp/vesper-dreamforge.json Hero_TestVesper
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Bismuth /tmp/bismuth-dreamforge.json Hero_TestBismuth
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Vesper "$TMPDIR/vesper-dreamforge.json" Hero_TestVesper
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Release -- Hero_Bismuth "$TMPDIR/bismuth-dreamforge.json" Hero_TestBismuth
 ```
 
 比較するのは星数、Stat・Power・LinkDef の値と記憶、段数、RankCost、Tier、Gimmick と修飾、Choice と全選択肢、星群のまとまりと表示名、IsDreamRing、取得条件、位置と表示種別、残した星同士の辺、キーストーン。異なる値は終了コード1と報告書へ出す。宣言の隣に `.report.txt` を出し、除外した星をIDごとに理由つきで列挙する。
@@ -218,7 +218,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/hero-connector -c Rel
 
 自動ルートを含む採用星数は `floor(本体9人の最多星数 × 1.2)` まで。ファイル順に検証し、上限を超える星を警告して除外する。通常星は1段・費用1、Keystone は1段で本体の最大 RankCost 以下。ポイントの供給と刻印の熟練度条件は変更しない。
 
-値の比較は本体9人の登録済み星と Choice、Keystone の変換・Grant から求める。Stat と Keystone Stat、LinkKind、scope と param、仕掛けの kind・trigger・budget・effect、Ward の recipient・basis・pool・profile、固有アダプターの mode / kind、Keystone の layer・field・operation・payload・effect ごとに分ける。同種が無い数値は受け付けない。cooldown と cadence は短縮側の本体最小値も検証する。共有の型検証・上限定義も適用し、clamp が起きる値を採用しない。
+値の比較は本体9人の登録済み星と Choice、Keystone の変換・Grant から求める。Stat と Keystone Stat、LinkKind、scope と param、仕掛けの kind・trigger・budget・effect、Ward の recipient・basis・pool・profile、Keystone の layer・field・operation・payload・effect ごとに分ける。同種が無い数値は受け付けない。cooldown と cadence は短縮側の本体最小値も検証する。共有の型検証・上限定義も適用し、clamp が起きる値を採用しない。
 
 全体の通信・効果チャネル容量は既存の `BuildLimits` で確かめる。容量を超えた場合は末尾の星から除外し、参照を再検証する。毎フレームの処理は既存の型付き実行処理を使い、JSON 解析と数値走査は登録時に行う。
 
@@ -294,7 +294,7 @@ static System.Type FindDreamforgeConnector()
 
 ## 11. 互換の約束
 
-- apiVersion 1 の欄の意味は変えない。足すときは新しい欄として足し、古い宣言はそのまま読む。
+- apiVersion 1 の欄の意味は変えない。`starManifest` は省略可能な追加欄で、従来の `starTree` と3引数の Core 登録APIを残す。マニフェストを読む場合はホストのファイル読込関数を渡す。新しい公開APIや別のローダーは作らない。
 - 意味を変える必要が出たら apiVersion 2 とし、1 の宣言も読み続ける。
 - `Dreamforge.Api` の名前空間の public メンバーは apiVersion の間は削らない。
 
