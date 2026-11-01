@@ -112,11 +112,15 @@ namespace SodRpg.Core.Game
 
         /// <summary>Replace one hero's authored dataset atomically. An empty set restores the baseline tree.</summary>
         public static AuthoredStarRegistry RegisterAuthored(string heroKey, IEnumerable<AuthoredStarDef> definitions)
+            => RegisterAuthored(heroKey, definitions, null);
+
+        internal static AuthoredStarRegistry RegisterAuthored(string heroKey, IEnumerable<AuthoredStarDef> definitions,
+            IReadOnlyList<TalentDef> baseline, AuthoredStarRegistry prepared = null)
         {
             if (!Links.IsTraveler(heroKey) || definitions == null) throw new ArgumentException("A registered hero and authored dataset are required.");
             var input = definitions.ToArray();
             if (input.Any(x => x == null || x.HeroKey != heroKey)) throw new ArgumentException("All authored nodes must belong to the requested hero.");
-            var registry = GenerateAuthored(input, HeroSigils.BaselineTreeFor(heroKey));
+            var registry = prepared ?? GenerateAuthored(input, baseline ?? HeroSigils.BaselineTreeFor(heroKey));
             var tree = registry.TreeFor(heroKey);
             BuildLimits.ValidateAuthoredProducer(tree);
             var layout = HeroTreeLayout.ForTalents(tree);
@@ -129,6 +133,7 @@ namespace SodRpg.Core.Game
             var installed = new InstalledTree { Tree = tree, Layout = layout, Fingerprint = Fingerprint(tree), Pairs = pairs.AsReadOnly() };
             lock (AuthoredLock)
             {
+                if (baseline != null) HeroSigils.RegisterExtendedTree(heroKey, baseline);
                 Rules.RegisterAllocationValidation(heroKey, validator);
                 if (input.Length == 0) Installed.Remove(heroKey); else Installed[heroKey] = installed;
                 Migrations.Remove(heroKey); // rules were validated against the previous tree
@@ -371,7 +376,7 @@ namespace SodRpg.Core.Game
             KeystoneDefinition = e.KeystoneDefinition == null ? null : AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(e.KeystoneDefinition)),
             // Immutable typed payloads are shared safely.
             RunGrowth = e.RunGrowth, RunGrowthModifier = e.RunGrowthModifier };
-        private static string Fingerprint(IReadOnlyList<TalentDef> tree)
+        internal static string Fingerprint(IReadOnlyList<TalentDef> tree)
         {
             var sb = new StringBuilder();
             foreach (var node in tree.OrderBy(x => x.Id, StringComparer.Ordinal))

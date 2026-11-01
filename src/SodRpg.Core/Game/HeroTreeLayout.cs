@@ -228,7 +228,7 @@ namespace SodRpg.Core.Game
                 for (int j = 0; j < branch.Count; j++)
                 {
                     ordered[j] = Add(branch[j], BranchRadius + BranchStep * j, Angle(i, branches.Count));
-                    Join(j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1], ordered[j]);
+                    Join(j == 0 ? (deep.Count == 0 ? 0 : deepIndices[i * deep.Count / branches.Count]) : ordered[j - 1], ordered[j]);
                 }
                 // A route star that requires a star further along its own route could never be reached: that star is only
                 // adjacent to the route chain. Give the required star (for a list of alternatives, the nearest one) a second
@@ -237,7 +237,7 @@ namespace SodRpg.Core.Game
                 {
                     var authored = branch[j].AuthoredStar;
                     if (authored == null) continue;
-                    int entry = j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1];
+                    int entry = j == 0 ? (deep.Count == 0 ? 0 : deepIndices[i * deep.Count / branches.Count]) : ordered[j - 1];
                     for (int k = j + 1; k < branch.Count; k++)
                         if (System.Linq.Enumerable.Contains(authored.RequiredStarIds, branch[k].Id) && !neighbors[ordered[k]].Contains(entry)) Join(entry, ordered[k]);
                     for (int k = j + 1; k < branch.Count; k++)
@@ -261,8 +261,8 @@ namespace SodRpg.Core.Game
                             Join(deepParents[d], branchNodes[b][0]);
             }
             // Preserve the shipped cyclic bridge endpoints (the eighth uses the later route stars).
-            // 拡張旅人（ヒーローコネクタ）は記憶ルートを持たない（branches.Count==0）ので、この2辺は作らない。
-            if (branches.Count >= 6)
+            // 記憶ルートのない拡張旅人では branches.Count==0 となるので、この2辺は作らない。
+            if (branches.Count >= 6 && HeroSigils.IsCoreTraveler(branches[0][0].HeroKey))
             {
                 for (int i = 0; i < ring.Count; i++)
                 {

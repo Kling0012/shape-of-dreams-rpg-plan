@@ -161,13 +161,42 @@ namespace SodRpg.Core.Game
                 repaired |= engine.RepairSavedAllocation(draft, heroKey);
                 if (repaired) notes?.Add(Loc.T($"{heroKey}: ロードアウト{index + 1}の無効な星を無料で払い戻しました。",
                     $"{heroKey}: Invalid stars in loadout {index + 1} were refunded for free.", $"{heroKey}：配置{index + 1}中的无效星已免费退还点数。"));
-                return StarLoadout.Capture(hero, slot.Name);
+                var restored = StarLoadout.Capture(hero, slot.Name);
+                // Repair only today's active stars. Keep removed connector stars in this slot
+                // so switching loadouts while a MOD is absent does not erase its allocations.
+                foreach (var rank in slot.Talents)
+                    if (engine.Talent(rank.Key) == null && ExtendedHeroes.IsExtendedStarId(rank.Key))
+                    {
+                        restored.Talents[rank.Key] = rank.Value;
+                        if (slot.TalentChoices.TryGetValue(rank.Key, out int choice)) restored.TalentChoices[rank.Key] = choice;
+                    }
+                foreach (string id in slot.Keystones)
+                    if (id != null && engine.Talent(id) == null && ExtendedHeroes.IsExtendedStarId(id)
+                        && Array.IndexOf(restored.Keystones, id) < 0)
+                    {
+                        int empty = Array.IndexOf(restored.Keystones, null);
+                        if (empty >= 0) restored.Keystones[empty] = id;
+                    }
+                return restored;
             }
             catch (Exception ex)
             {
                 notes?.Add(Loc.T($"{heroKey}: ロードアウト{index + 1}を読み込めないため、この枠だけ空にしました（{ex.GetType().Name}）。",
                     $"{heroKey}: Could not load loadout {index + 1}; only this slot was emptied ({ex.GetType().Name}).", $"{heroKey}：无法读取配置{index + 1}，仅清空了此槽位（{ex.GetType().Name}）。"));
-                return new StarLoadout { Name = slot.Name, AuthoredMigrationVersion = StarClusters.MigrationVersionFor(heroKey) };
+                var dormant = new StarLoadout { Name = slot.Name, AuthoredMigrationVersion = StarClusters.MigrationVersionFor(heroKey) };
+                foreach (var rank in slot.Talents)
+                    if (ExtendedHeroes.IsExtendedStarId(rank.Key) && !Content.TryGetTalent(heroKey, rank.Key, out _))
+                    {
+                        dormant.Talents[rank.Key] = rank.Value;
+                        if (slot.TalentChoices.TryGetValue(rank.Key, out int choice)) dormant.TalentChoices[rank.Key] = choice;
+                    }
+                foreach (string id in slot.Keystones)
+                    if (ExtendedHeroes.IsExtendedStarId(id) && !Content.TryGetTalent(heroKey, id, out _))
+                    {
+                        int empty = Array.IndexOf(dormant.Keystones, null);
+                        if (empty >= 0) dormant.Keystones[empty] = id;
+                    }
+                return dormant;
             }
         }
     }

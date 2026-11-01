@@ -1,6 +1,8 @@
 using System.Text.Json;
 using SodRpg.Core.Game;
 
+if (args.Length > 0 && args[0] == "--manifest") return ManifestCommand.Run(args.Skip(1).ToArray());
+
 if (args.Length >= 1 && args[0] == "--snapshot")
 {
     StarClusters.RegisterAllGenerated();
@@ -43,7 +45,7 @@ if (probeSmall)
     args = new[] { args[1], args.Length > 2 ? args[2] : Path.Combine(Path.GetTempPath(), "hero-connector-small-" + Guid.NewGuid().ToString("N")) };
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper $TMPDIR/vesper.json [Hero_TestVesper]\n       --probe-small Hero_Vesper [$TMPDIR/probe-directory]\n       --check declaration.json | --snapshot [declaration.json]");
+    Console.Error.WriteLine("Usage: dotnet run --project tools/hero-connector -- Hero_Vesper <output.json> [Hero_TestVesper]\n       --probe-small Hero_Vesper [$TMPDIR/probe-directory]\n       --check declaration.json | --snapshot [declaration.json]");
     return 2;
 }
 try
