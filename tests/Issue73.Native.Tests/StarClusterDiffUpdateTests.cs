@@ -14,18 +14,27 @@ namespace Issue73.Native.Tests
     // StarNode・依存フィールドも実ソースから抽出し、周辺メソッドと IMGUI だけを境界に置く。
     public sealed class StarClusterDiffUpdateTests : IDisposable
     {
-        private const string Hero = "Hero_Cetus";
+        private const string Hero = "Hero_Vesper";
         private readonly bool _previousJapanese = Loc.Japanese;
+        private static bool _generatedRegistered;
 
         public StarClusterDiffUpdateTests()
         {
+            // 本番（DreamforgeMod の StarClusters.RegisterAllGenerated）と同じ生成版の星図を登録してから
+            // 前提を確かめる。HeroConnectorCacheTests が先に全旅人を登録していても、
+            // HeroTreeLayout.ForHero は登録された木を優先して返すので、このテストは常に本番と同じ木で動く。
+            if (!_generatedRegistered)
+            {
+                _generatedRegistered = true;
+                StarClusters.RegisterGeneratedHero(Hero);
+            }
             var tree = Tree;
             var (distance, _) = BfsFromStart();
             Assert.True(tree.Nodes.Select((_, i) => i).Any(i => distance[i] == 2 && IsPlain(i)
                     && tree.Nodes[i].Neighbors.Any(n => distance[n] == 1 && IsPlain(n))),
-                "Hero_Cetus の木の前提が変わりました。始まりから2歩目に、1歩目の普通の星に隣接する普通の星が必要です。バランスデータとホバー検証の対象を確認してください。");
+                Hero + " の木の前提が変わりました。始まりから2歩目に、1歩目の普通の星に隣接する普通の星が必要です。バランスデータとホバー検証の対象を確認してください。");
             Assert.True(ChoiceNodes(2).Length >= 2,
-                "Hero_Cetus の木の前提が変わりました。本文の差分更新を比較するため、二択の星が2つ以上必要です。バランスデータと二択検証の対象を確認してください。");
+                Hero + " の木の前提が変わりました。本文の差分更新を比較するため、二択の星が2つ以上必要です。バランスデータと二択検証の対象を確認してください。");
             Loc.Japanese = true;
         }
 
