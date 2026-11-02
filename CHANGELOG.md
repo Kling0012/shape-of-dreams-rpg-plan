@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.87 — Hero Connector fixes for mixed file and runtime API registration（2026-11-02）
+
+### 不具合の修正 / Bug fixes
+- 同じMODが宣言ファイルとランタイムAPIを併用したとき、旅人連携の報告とキャッシュが上書きされる問題を直しました。星図の読み込みに失敗したときだけ次の走査で再試行し、宣言が受理されなかった結果は内容が同じあいだ保持して同じ警告を繰り返さないようにしました。 / Fixed hero connector reports and caches overwriting each other when a MOD uses both a declaration file and the runtime API. Only star-manifest read failures are retried on the next scan; rejected declarations are kept while their content is unchanged so the same warning is not repeated.
+
+---
+
 ## v3.8.86 — Full star maps for traveler mods via the Hero Connector（2026-11-02）
 
 ### 新機能 / New features
