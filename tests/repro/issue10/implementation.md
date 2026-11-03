@@ -59,3 +59,12 @@ Exhaustion
 FR-1・FR-2・FR-3は、`src/SodRpg.Mod/InfinityMode.cs` の保存待ち中の観測継続で対応した。ソロのリンボ6・Infinity ONは既存の `Issue10LimboTravelReproTests.cs`、観測と進行待ちの区別は既存の `InfinityIssue528ReproTests.cs` で確認した。
 
 通常モードと他階層への影響懸念には、OFFの早期returnの確認、深度6/5/1のON/OFF対照、既存の通常移動テストで対応した。進行不能の懸念には、魂の観測を逃して `WaitingSoulFinish` に残る経路を塞いだ。ログと停止場所の不足は残るため、実際の報告との一致は断定していない。実機確認用のIssueは作成していない。
+
+## 修正ラウンド：要件の対応付けと戻し確認（2026-11-03）
+
+前ラウンドの指摘は、結果JSONの requirements_done に要件の対応を書いていなかったことだった。コードの修正内容は変えず、要件との対応を次に固定した。
+
+- FR-1: `src/SodRpg.Mod/InfinityMode.cs` の `TickNative`（保存待ち中もボス到着・撃破・魂の出現と消滅を観測する）と `RouteTravel`（ボス到着まで `BossDue` を維持する）。
+- FR-2・FR-3: 同じファイルの同じ処理。ソロ・リンボ6・Infinity ON は `tests/SodRpg.Mod.Startup.Tests/Issue10LimboTravelReproTests.cs` の `Issue10SoloLimboTravelThroughCombatCycle`（深度6・ON）で、1周期の移動を確認している。
+
+戻し確認: `TickNative` の冒頭を、保存待ち中に早期 return する旧条件へ戻すと、`InfinityIssue528ReproTests.PureWhiteBossKilledWhileSaveHoldBlocksTickStillReachesSoulFinish` は `BossFight` を期待して `BossDue` のまま失敗した。修正がこの経路を塞いでいることを確認した。
