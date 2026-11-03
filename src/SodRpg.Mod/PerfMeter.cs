@@ -6,19 +6,18 @@ namespace SodRpg.Mod
     /// <summary>このMODが1フレームに使う時間を測る（dreamforge_perf で表示）。計測自体は Stopwatch の差分だけで軽い。</summary>
     internal sealed class PerfMeter
     {
-        private readonly Stopwatch _sw = Stopwatch.StartNew();
         private long _start;
         private double _updateTotal, _guiTotal, _updateMax, _guiMax;
         private int _updateCount, _guiCount;
 
-        public void Begin() => _start = _sw.ElapsedTicks;
+        public void Begin() => _start = Stopwatch.GetTimestamp();
 
-        private double ElapsedMs() => (_sw.ElapsedTicks - _start) * 1000.0 / Stopwatch.Frequency;
+        private double ElapsedMs() => (Stopwatch.GetTimestamp() - _start) * 1000.0 / Stopwatch.Frequency;
 
         private double _frameTotal, _frameMax;
         private int _frames;
 
-        /// <summary>Update の内訳（ClientSession.Tick / HostAuthority.Tick）。Stopwatch の読み取り2回だけで測る。</summary>
+        /// <summary>Update の内訳（ClientSession.Tick / HostAuthority.Tick）。</summary>
         private long _clientStart, _hostStart;
         private double _clientTotal, _hostTotal, _clientMax, _hostMax;
         private int _clientCount, _hostCount;
@@ -56,24 +55,39 @@ namespace SodRpg.Mod
             if (ms > _guiMax) _guiMax = ms;
         }
 
-        public void BeginClient() => _clientStart = _sw.ElapsedTicks;
+        public readonly TickTimings ClientStages = new TickTimings();
+        public readonly TickTimings HostStages = new TickTimings(
+            "NativeProcSpawnSpread.Tick", "Detach", "TickCoopTrade", "EnsureRegistered",
+            "AutocastPressure.TickHost", "BuildTickStages");
+
+        public void BeginClient()
+        {
+            ClientStages.Begin();
+            _clientStart = Stopwatch.GetTimestamp();
+        }
 
         public void EndClient()
         {
-            double ms = (_sw.ElapsedTicks - _clientStart) * 1000.0 / Stopwatch.Frequency;
+            double ms = (Stopwatch.GetTimestamp() - _clientStart) * 1000.0 / Stopwatch.Frequency;
             _clientTotal += ms;
             _clientCount++;
             if (ms > _clientMax) _clientMax = ms;
+            ClientStages.End(ms);
         }
 
-        public void BeginHost() => _hostStart = _sw.ElapsedTicks;
+        public void BeginHost()
+        {
+            HostStages.Begin();
+            _hostStart = Stopwatch.GetTimestamp();
+        }
 
         public void EndHost()
         {
-            double ms = (_sw.ElapsedTicks - _hostStart) * 1000.0 / Stopwatch.Frequency;
+            double ms = (Stopwatch.GetTimestamp() - _hostStart) * 1000.0 / Stopwatch.Frequency;
             _hostTotal += ms;
             _hostCount++;
             if (ms > _hostMax) _hostMax = ms;
+            HostStages.End(ms);
         }
 
         /// <summary>メインスレッドの割り当て量を1フレームぶん記録する。動かない環境では1回の失敗で止まる（fail-soft）。</summary>
@@ -115,6 +129,74 @@ namespace SodRpg.Mod
             _gcTotal = _gcSeconds = 0;
             _gcSamples = 0;
             return r;
+        }
+
+        public string ReportSpikes() => ClientStages.Report("client") + HostStages.Report("host");
+
+        internal sealed class TickTimings
+        {
+            // Enough for the registered Tick stages and host prelude; reused for every frame.
+            private readonly long[] _current = new long[64];
+            private readonly long[] _spike = new long[64];
+            private readonly string[] _prefixNames;
+            private Action[] _steps;
+            private double _maxMs;
+
+            public TickTimings(params string[] prefixNames) => _prefixNames = prefixNames;
+
+            public void SetSteps(Action[] steps) => _steps = steps;
+
+            public void Begin() => Array.Clear(_current, 0, _current.Length);
+
+            public long BeginStage() => Stopwatch.GetTimestamp();
+
+            public void EndStage(int index, long start)
+            {
+                if ((uint)index < (uint)_current.Length)
+                    _current[index] += Stopwatch.GetTimestamp() - start;
+            }
+
+            public void End(double ms)
+            {
+                if (ms < 5 || ms <= _maxMs) return;
+                _maxMs = ms;
+                Array.Copy(_current, _spike, _current.Length);
+            }
+
+            public string Report(string label)
+            {
+                if (_maxMs < 5) return string.Empty;
+                int first = -1, second = -1, third = -1;
+                for (int i = 0; i < _spike.Length; i++)
+                {
+                    if (_spike[i] <= 0) continue;
+                    if (first < 0 || _spike[i] > _spike[first])
+                    {
+                        third = second; second = first; first = i;
+                    }
+                    else if (second < 0 || _spike[i] > _spike[second])
+                    {
+                        third = second; second = i;
+                    }
+                    else if (third < 0 || _spike[i] > _spike[third]) third = i;
+                }
+                string result = " | " + label + " spike " +
+                    _maxMs.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "ms:";
+                if (first >= 0) result += " " + StageReport(first);
+                if (second >= 0) result += ", " + StageReport(second);
+                if (third >= 0) result += ", " + StageReport(third);
+                _maxMs = 0;
+                return result;
+            }
+
+            private string StageReport(int index)
+            {
+                string name = index < _prefixNames.Length ? _prefixNames[index]
+                    : _steps != null && index - _prefixNames.Length < _steps.Length
+                        ? _steps[index - _prefixNames.Length].Method.Name : "unknown";
+                return name + " " + (_spike[index] * 1000.0 / Stopwatch.Frequency)
+                    .ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+            }
         }
     }
 }

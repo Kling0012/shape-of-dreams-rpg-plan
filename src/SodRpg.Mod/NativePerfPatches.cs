@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using Mirror;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -18,6 +19,7 @@ namespace SodRpg.Mod
         {
             NativePerfOptions.StatusDuration = config.nativeStatusDurationSync;
             NativePerfOptions.GemCooldown = config.nativeGemCooldownSync;
+            NativePerfOptions.GemWorldModelCache = config.nativeGemWorldModelCache;
             NativePerfOptions.WeaponFx = config.nativeWeaponFxScan;
             NativePerfOptions.ObstacleAvoidance = config.nativeObstacleAvoidance;
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
@@ -31,6 +33,8 @@ namespace SodRpg.Mod
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
             NativeSkillLockRecovery.Enabled = config.guestSkillLockRecovery;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
+            NativePerfOptions.TransformSyncWriteSkip = config.nativeTransformSyncWriteSkip;
+            NativePerfOptions.TransformSyncHold = config.nativeTransformSyncHold;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CastIndicatorLine = config.nativeCastIndicatorLine;
@@ -44,6 +48,7 @@ namespace SodRpg.Mod
             NativePerfOptions.UltChargeRpcIdle = config.nativeUltChargeRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
+            NativePerfOptions.SkillWorldModelCache = config.nativeSkillWorldModelCache;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
             NativePerfOptions.ChaosShrineChoice = config.nativeChaosShrineChoiceCache;
@@ -56,6 +61,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
+            NativePerfOptions.RoomPlayerPathableScan = config.nativeRoomPlayerPathableScan;
             NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
             NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
             NativePerfOptions.PickupIdle = config.nativePickupIdle;
@@ -74,6 +80,19 @@ namespace SodRpg.Mod
             NativePerfOptions.ChaosPetalIdle = config.nativeChaosPetalIdle;
             NativePerfOptions.GibsRestSkip = config.nativeGibsRestSkip;
             NativePerfOptions.GamepadRumbleIdle = config.nativeGamepadRumbleIdle;
+            NativePerfOptions.GemResponsibilityHitCache = config.nativeGemResponsibilityHitCache;
+            NativePerfOptions.MusicSourceIdle = config.nativeMusicSourceIdle;
+            NativePerfOptions.TransitionIdle = config.nativeTransitionIdle;
+            NativePerfOptions.AgentVelocityIdle = config.nativeAgentVelocityIdle;
+            NativePerfOptions.MidJoinLoadoutIdle = config.nativeMidJoinLoadoutIdle;
+            NativePerfOptions.EntityAnimationLayerWeightIdle = config.nativeEntityAnimLayerWeightIdle;
+            NativePerfOptions.ChaosStatBonusTooltipCache = config.nativeChaosStatBonusTooltipCache;
+            NativePerfOptions.EntityOwnerClientFast = config.nativeEntityOwnerClientFast;
+            NativePerfOptions.ProjectileTargetClientFast = config.nativeProjectileTargetClientFast;
+            NativePerfOptions.EntityAbilitySubscribeDedup = config.nativeEntityAbilitySubscribeDedup;
+            NativePerfOptions.BossPoolSpawnLog = config.nativeBossPoolSpawnLog;
+            NativePerfOptions.RoomPrewarmResolveOnce = config.nativeRoomPrewarmResolveOnce;
+            NativePerfOptions.HeroKnockoutHealthIdle = config.nativeHeroKnockoutHealthIdle;
         }
     }
 
@@ -81,6 +100,7 @@ namespace SodRpg.Mod
     {
         internal static bool StatusDuration = true;
         internal static bool GemCooldown = true;
+        internal static bool GemWorldModelCache = true;
         internal static bool WeaponFx = true;
         internal static bool ObstacleAvoidance = true;
         internal static bool AggroPropagation = true;
@@ -93,6 +113,8 @@ namespace SodRpg.Mod
         internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
         internal static bool TransformSyncIdle = true;
+        internal static bool TransformSyncWriteSkip = true;
+        internal static bool TransformSyncHold = true;
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CastIndicatorLine = true;
@@ -106,6 +128,7 @@ namespace SodRpg.Mod
         internal static bool UltChargeRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
+        internal static bool SkillWorldModelCache = true;
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ChaosShrineHitScan = true;
         internal static bool ChaosShrineChoice = true;
@@ -118,6 +141,7 @@ namespace SodRpg.Mod
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
         internal static bool RoomStartDependency = true;
+        internal static bool RoomPlayerPathableScan = true;
         internal static bool ChatMuteCheckAlloc = true;
         internal static bool ProxyPositionIdle = true;
         internal static bool PickupIdle = true;
@@ -136,6 +160,19 @@ namespace SodRpg.Mod
         internal static bool ChaosPetalIdle = true;
         internal static bool GibsRestSkip = true;
         internal static bool GamepadRumbleIdle = true;
+        internal static bool GemResponsibilityHitCache = true;
+        internal static bool MusicSourceIdle = true;
+        internal static bool TransitionIdle = true;
+        internal static bool AgentVelocityIdle = true;
+        internal static bool MidJoinLoadoutIdle = true;
+        internal static bool EntityAnimationLayerWeightIdle = true;
+        internal static bool ChaosStatBonusTooltipCache = true;
+        internal static bool EntityOwnerClientFast = true;
+        internal static bool ProjectileTargetClientFast = true;
+        internal static bool EntityAbilitySubscribeDedup = true;
+        internal static bool BossPoolSpawnLog = true;
+        internal static bool RoomPrewarmResolveOnce = true;
+        internal static bool HeroKnockoutHealthIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -145,7 +182,11 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
-                if (target != null && target.GetMethodBody() != null) return target;
+                if (target != null && target.GetMethodBody() != null)
+                {
+                    PatchMethodOwnership.RecordStartupTarget(PatchMethodOwnership.StartupPatchClass, target);
+                    return target;
+                }
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
             catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
@@ -157,7 +198,11 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, arguments);
-                if (target != null && target.GetMethodBody() != null) return target;
+                if (target != null && target.GetMethodBody() != null)
+                {
+                    PatchMethodOwnership.RecordStartupTarget(PatchMethodOwnership.StartupPatchClass, target);
+                    return target;
+                }
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
             catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
@@ -168,7 +213,8 @@ namespace SodRpg.Mod
         {
             if (warned) return;
             warned = true;
-            Log.Warn("Native performance patch disabled: " + feature + ": " + reason);
+            Log.Warn("Native performance patch disabled: " + feature + ": " + reason
+                + PatchMethodOwnership.StartupForeignOwners());
         }
     }
 
@@ -578,6 +624,74 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    // EntityControl.DoMovementProcessorFrameUpdate — the per-frame movement integration for
+    // every entity whose movement this peer processes (the host for all monsters, summons and
+    // NPCs, a guest for its own hero) — starts its manual integration with
+    // `_agent.velocity = Vector3.zero`, unconditionally, once per entity per frame. The write
+    // stops the NavMeshAgent's self-motion so the method can move the agent through
+    // nextPosition. The agent never writes its own velocity (updatePosition/updateRotation are
+    // false since OnStart, and the real DLL IL has exactly one NavMeshAgent set_velocity in all
+    // of EntityControl — this callsite), so once the velocity is zero it stays zero until some
+    // code deliberately writes it, and every further frame re-stores the same value through a
+    // native setter. The Transpiler swaps that one callsite for a guard that reads the agent's
+    // current velocity and only reaches the native setter when it differs from the written value
+    // by component-wise float == equality (the written value is always zero, so the -0/+0 and
+    // NaN corners of == cannot arise here). While it differs the native traffic is one getter
+    // plus one setter instead of the shipped single setter; when it is equal, the setter call
+    // becomes a getter call and storing the same value is not observable through any reader of
+    // the property (the next reader is the same getter), so skipping it cannot change movement,
+    // avoidance, collisions or the synced state.
+    [HarmonyPatch]
+    internal static class NativeAgentVelocityIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(EntityControl), "DoMovementProcessorFrameUpdate", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setter = AccessTools.PropertySetter(typeof(NavMeshAgent), nameof(NavMeshAgent.velocity));
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(setter)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "agent velocity idle", "native setter callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeAgentVelocityIdlePerf), nameof(SetVelocity));
+            return code;
+        }
+
+        private static void SetVelocity(NavMeshAgent agent, Vector3 value)
+        {
+            if (!_disabled && NativePerfOptions.AgentVelocityIdle)
+            {
+                try
+                {
+                    Vector3 current = agent.velocity;
+                    if (current.x == value.x && current.y == value.y && current.z == value.z) return;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "agent velocity idle", ex.Message);
+                }
+            }
+            agent.velocity = value;
         }
     }
 
@@ -1346,6 +1460,352 @@ namespace SodRpg.Mod
             }
             return true;
         }
+    }
+
+    // ActorTransformSync は座標サンプル（SyncVar の _syncData）を2つの経路で Transform へ
+    // 書き戻す。サーバは LogicUpdate ごと（最大30Hz）に受信済みサンプルを再適用し、
+    // それ以外の全クライアント（ホストと参加者）は FrameUpdate ごとに補間値の
+    // _renderPos / _renderRot / _renderScale を書く。対象が静止して補間が収束した後は
+    // SmoothDamp の出力が毎フレーム同じビット列になるため、これらの書き込みは
+    // 全アクター×毎フレームの「同じ値の再書き込み」になる。実機の Transform の setter は
+    // 値を比較しないので、同一値でも階層の変更印の付け直しというネイティブ呼び出しが
+    // 毎回走る（同一値の書き込みでも Transform.hasChanged が立つ。ゲーム内コードは
+    // hasChanged を読んでいないことを逆コンパイル全体で確認済み）。
+    //
+    // そこで LogicUpdate と FrameUpdate の中の set_position / set_rotation / set_localScale
+    // （実 DLL r1.4.1.2 の IL で各1箇所）を、読み戻した現在値と書く値がビット単位で一致する
+    // ときだけ書き込みを省く静的メソッドへ置き換える。SyncMovementData.Has の分岐は本体の
+    // ままなので、無効チャンネルや teleport の扱いには触れない。比較は Unity の Vector3 /
+    // Quaternion の ==（許容差つき）ではなくビット一致にする（NativeCastTelegraphIdlePerf と
+    // 同じ理由。近似一致で省くと本体なら書けたビット列を Transform が保持しないままになる）。
+    // 動いている・ワープした・初回サンプルでは値が違うので、本体と同じ書き込みがそのまま走る。
+    // 外部（アニメーション等）が Transform を動かした後も毎回読み戻すため、その値と
+    // 異なれば書き直る。破壊済みアクターの読み書きで出る NullReferenceException /
+    // MissingReferenceException は本体と同じ例外としてそのまま投げる（他のアクター分の
+    // 最適化を止めない）。
+    //
+    // 形の検証: SharedPrepare で両メソッドの IL を数え、Transform への setter が各1・
+    // SyncMovementData.Has が3でなければ、この2つのパッチだけを外して1回警告する。
+    [HarmonyPatch]
+    internal static class NativeTransformSyncWriteSkipPerf
+    {
+        private const string Feature = "transform sync write skip";
+
+        private static MethodBase _frame;
+        private static MethodBase _logic;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static void WarnOnce(string reason) => NativePerfPatch.Warn(ref _warned, Feature, reason);
+
+        // Shared by both patch classes below so a rejected shape keeps the render side and
+        // the server re-apply side off together.
+        internal static bool SharedPrepare()
+        {
+            if (_disabled) return false;
+            if (_frame != null && _logic != null) return true;
+            _disabled = true;
+            try
+            {
+                _frame = NativePerfPatch.Find(typeof(ActorTransformSync), "FrameUpdate", ref _warned);
+                if (_frame == null) return false;
+                _logic = NativePerfPatch.Find(typeof(ActorTransformSync), "LogicUpdate", new[] { typeof(float) }, ref _warned);
+                if (_logic == null) return false;
+                if (!ValidateBody(PatchProcessor.GetOriginalInstructions(_frame))
+                    || !ValidateBody(PatchProcessor.GetOriginalInstructions(_logic)))
+                    return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(ex.Message);
+                return false;
+            }
+        }
+
+        // LogicUpdate と FrameUpdate はどちらも SyncMovementData.Has ×3 と、Transform への
+        // set_position / set_rotation / set_localScale を各1回だけ含む。数が違うときは本体の
+        // 形が変わっているので、何も置き換えずに外れる。
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var has = AccessTools.Method(typeof(SyncMovementData), "Has");
+            int hasCount = 0, position = 0, rotation = 0, scale = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (has != null && code[i].Calls(has)) hasCount++;
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+                else if (method.Name == "set_localScale") scale++;
+            }
+            if (hasCount == 3 && position == 1 && rotation == 1 && scale == 1) return true;
+            WarnOnce("native sync write body changed (has " + hasCount + ", writes " + position + "/" + rotation + "/" + scale + ")");
+            return false;
+        }
+
+        internal static MethodBase LogicTarget => _logic;
+
+        private static bool Prepare() => SharedPrepare();
+
+        private static MethodBase TargetMethod() => _frame;
+
+        internal static IEnumerable<CodeInstruction> Apply(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int position = 0, rotation = 0, scale = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                if (method.Name == "set_position") position++;
+                else if (method.Name == "set_rotation") rotation++;
+                else if (method.Name == "set_localScale") scale++;
+            }
+            if (position != 1 || rotation != 1 || scale != 1)
+            {
+                WarnOnce("native sync write body changed (writes " + position + "/" + rotation + "/" + scale + ")");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo method) || method.DeclaringType != typeof(Transform)) continue;
+                switch (method.Name)
+                {
+                    case "set_position":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WritePosition));
+                        break;
+                    case "set_rotation":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WriteRotation));
+                        break;
+                    case "set_localScale":
+                        code[i].opcode = OpCodes.Call;
+                        code[i].operand = AccessTools.Method(typeof(NativeTransformSyncWriteSkipPerf), nameof(WriteLocalScale));
+                        break;
+                }
+            }
+            return code;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            => Apply(instructions);
+
+        // float == reads 0f and -0f as equal while the native write would store the -0's
+        // sign bit, so the bit comparison decides; the != first keeps NaN never-equal
+        // (a NaN value writes every frame, like in the native body).
+        private static bool BitsDiffer(float a, float b)
+            => a != b || BitConverter.SingleToInt32Bits(a) != BitConverter.SingleToInt32Bits(b);
+
+        // Actors can die mid-frame too; preserve the native write's exception without
+        // disabling the optimization for every other actor.
+        private static bool IsGoneTransform(Exception ex)
+            => ex is NullReferenceException || ex is MissingReferenceException;
+
+        // 以下は置き換え先。本体が書くはずの値を Transform がすでにビット単位で保持している
+        // ときだけ書き込みを省く。設定OFF・無効化後は本体と同じ無条件の書き込みへ落ちる。
+        internal static void WritePosition(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.position = value; return; }
+            try
+            {
+                Vector3 current = tr.position;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.position = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.position = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.position = value;
+            }
+        }
+
+        internal static void WriteRotation(Transform tr, Quaternion value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.rotation = value; return; }
+            try
+            {
+                Quaternion current = tr.rotation;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z) || BitsDiffer(current.w, value.w)) tr.rotation = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.rotation = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.rotation = value;
+            }
+        }
+
+        internal static void WriteLocalScale(Transform tr, Vector3 value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncWriteSkip) { tr.localScale = value; return; }
+            try
+            {
+                Vector3 current = tr.localScale;
+                if (BitsDiffer(current.x, value.x) || BitsDiffer(current.y, value.y) || BitsDiffer(current.z, value.z)) tr.localScale = value;
+            }
+            catch (Exception ex)
+            {
+                if (IsGoneTransform(ex)) { tr.localScale = value; return; }
+                _disabled = true;
+                WarnOnce(ex.Message);
+                tr.localScale = value;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncWriteSkipLogic
+    {
+        private static bool Prepare() => NativeTransformSyncWriteSkipPerf.SharedPrepare();
+
+        private static MethodBase TargetMethod() => NativeTransformSyncWriteSkipPerf.LogicTarget;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            => NativeTransformSyncWriteSkipPerf.Apply(instructions);
+    }
+
+    // ActorTransformSync.FrameUpdate は、受信した座標サンプル（_syncData）から速度で外挿した
+    // 目標姿勢へ _renderPos / _renderRot / _renderScale を SmoothDamp（内部で Time.deltaTime の
+    // ネイティブ呼び出しを含む）で追わせ、結果を Transform へ書く。対象が止まって補間が
+    // 収束すると、三つの速度は厳密に 0、目標姿勢はサンプル値そのもの、描画状態は目標と
+    // ビット一致し、SmoothDamp の速度項は 0 になる。この状態での本体の計算は SmoothDamp の
+    // 恒等式だけで、フィールドも Transform も 1つも変わらない（書き込みは
+    // NativeTransformSyncWriteSkipPerf のラッパーが省く）。
+    //
+    // そこで全チャンネルが「サンプル・描画状態・Transform の現在値の三者がビット一致し、
+    // かつ速度が厳密に 0」のときだけ FrameUpdate 本体を丸ごと省く。判定は状態を持たず
+    // 毎フレームの現在値だけで行うので、動き出した・新しいサンプルが届いた・アニメーション
+    // など外部が Transform を動かした、のいずれも次のフレームで判定が外れて本体へ戻る。
+    // サーバは同じ呼び出し内で _serverTickPending を消費して座標を確定するため、その経路は
+    // 常に本体へ流す（この省略は参加者と、確定が済んだ後のホストで効く）。破壊済みアクター
+    // での NullReferenceException / MissingReferenceException は本体も同じ読み出しで出すので、
+    // 判定が失敗したときは本体に流して同じ例外として出る。
+    [HarmonyPatch]
+    internal static class NativeTransformSyncHoldPerf
+    {
+        private const string Feature = "transform sync hold";
+
+        private static MethodBase _target;
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static AccessTools.FieldRef<ActorTransformSync, bool> _hasData;
+        private static AccessTools.FieldRef<ActorTransformSync, bool> _serverTickPending;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderPos;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderPosCv;
+        private static AccessTools.FieldRef<ActorTransformSync, Quaternion> _renderRot;
+        private static AccessTools.FieldRef<ActorTransformSync, Quaternion> _renderRotCv;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderScale;
+        private static AccessTools.FieldRef<ActorTransformSync, Vector3> _renderScaleCv;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = NativePerfPatch.Find(typeof(ActorTransformSync), "FrameUpdate", ref _warned);
+                if (_target == null) return false;
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                _hasData = AccessTools.FieldRefAccess<ActorTransformSync, bool>("_hasData");
+                _serverTickPending = AccessTools.FieldRefAccess<ActorTransformSync, bool>("_serverTickPending");
+                _renderPos = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderPos");
+                _renderPosCv = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderPosCv");
+                _renderRot = AccessTools.FieldRefAccess<ActorTransformSync, Quaternion>("_renderRot");
+                _renderRotCv = AccessTools.FieldRefAccess<ActorTransformSync, Quaternion>("_renderRotCv");
+                _renderScale = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderScale");
+                _renderScaleCv = AccessTools.FieldRefAccess<ActorTransformSync, Vector3>("_renderScaleCv");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncHold) return true;
+            try
+            {
+                // サーバはこの呼び出しで座標を確定して同期を立てるので、その経路は本体に任せる。
+                if (_serverTickPending(__instance) && __instance.isServer) return true;
+                // 未受信時は本体へ流す。将来のゲーム更新で _hasData 判定より前に処理が
+                // 増えても、その処理を省かない（docs/specs/perf-loop/20261025-1651.md）。
+                if (!_hasData(__instance)) return true;
+                if (!IsPoseHeld(__instance)) return true;
+                return false;
+            }
+            catch (NullReferenceException)
+            {
+                return true; // 破壊済みアクター。本体も同じ例外を出すのでそのまま流す
+            }
+            catch (MissingReferenceException)
+            {
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, Feature, ex.Message);
+                return true;
+            }
+        }
+
+        // すべての有効チャンネルが「サンプル・描画状態・Transform の現在値がビット一致し、
+        // かつ速度が厳密に 0」のときだけ true。1つでも省けないチャンネルがあれば false。
+        internal static bool IsPoseHeld(ActorTransformSync instance)
+        {
+            SyncMovementData d = _syncData(instance);
+            Transform tr = instance.transform;
+            if (d.Has(SyncTransformChannel.Position))
+            {
+                if (!IsExactlyZero(d.velocity) || HasNegativeZero(d.position)) return false;
+                if (!SameVecBits(tr.position, _renderPos(instance)) || !SameVecBits(_renderPos(instance), d.position)) return false;
+                if (!IsExactlyZero(_renderPosCv(instance))) return false;
+            }
+            if (d.Has(SyncTransformChannel.Rotation))
+            {
+                if (!IsExactlyZero(d.angularVelocity)) return false;
+                Quaternion r = d.rotation;
+                if (IsNegativeZero(r.x) || IsNegativeZero(r.y) || IsNegativeZero(r.z) || IsNegativeZero(r.w)) return false;
+                if (!SameQuatBits(Quaternion.Normalize(r), r)) return false; // 正規化が1ULPでも動くなら本体はまだ状態を変える
+                if (!SameQuatBits(tr.rotation, _renderRot(instance)) || !SameQuatBits(_renderRot(instance), r)) return false;
+                Quaternion cv = _renderRotCv(instance);
+                if (cv.x != 0f || cv.y != 0f || cv.z != 0f || cv.w != 0f) return false;
+            }
+            if (d.Has(SyncTransformChannel.Scale))
+            {
+                if (!IsExactlyZero(d.scaleVelocity) || HasNegativeZero(d.scale)) return false;
+                if (!SameVecBits(tr.localScale, _renderScale(instance)) || !SameVecBits(_renderScale(instance), d.scale)) return false;
+                if (!IsExactlyZero(_renderScaleCv(instance))) return false;
+            }
+            return true;
+        }
+
+        // 速度の 0 は数値比較でよい（-0 も通す）。外挿項 velocity * num2 は符号を問わず ±0 で、
+        // 保存値の各成分に -0 がなければ position + (±0) はビット一致するため。
+        private static bool IsExactlyZero(Vector3 v) => v.x == 0f && v.y == 0f && v.z == 0f;
+
+        // -0 成分は外挿の足し算で +0 に反転する（本体が状態を変える）ので、そのときは省かない。
+        private static bool HasNegativeZero(Vector3 v) => IsNegativeZero(v.x) || IsNegativeZero(v.y) || IsNegativeZero(v.z);
+
+        private static bool IsNegativeZero(float v) => v == 0f && BitConverter.SingleToInt32Bits(v) != 0;
+
+        // Unity の == は許容差つきなので、書き込み省略ラッパーと同じビット比較を使う。
+        // a == b を先に見ることで NaN は常に「保持されていない」と扱う（本体どおり書く）。
+        private static bool SameBits(float a, float b)
+            => a == b && BitConverter.SingleToInt32Bits(a) == BitConverter.SingleToInt32Bits(b);
+
+        private static bool SameVecBits(Vector3 a, Vector3 b)
+            => SameBits(a.x, b.x) && SameBits(a.y, b.y) && SameBits(a.z, b.z);
+
+        private static bool SameQuatBits(Quaternion a, Quaternion b)
+            => SameBits(a.x, b.x) && SameBits(a.y, b.y) && SameBits(a.z, b.z) && SameBits(a.w, b.w);
     }
 
     [HarmonyPatch]
@@ -3061,49 +3521,11 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeUltChargeRpcIdlePerf
     {
-        // SkillTrigger.ChargeUltimate is the host-side feed of an Ultimate skill's charges:
-        // every damage dealt, attack hit, kill and damage taken by the owning hero calls it
-        // (OnEquip subscribes the four events for every equipped skill, server side). Its
-        // trailing broadcasts are unconditional:
-        //
-        //     RpcSetCooldownTime(0, currentUnscaledCooldownTimes[0]);
-        //     RpcSetCharge(0, currentCharges[0]);
-        //
-        // Yet the only state mutations live inside `while (num2 > 0f && currentCharges[num]
-        // < configs[num].maxCharges)`. While the ultimate already sits at max charges — its
-        // normal state for most of a run — the loop body never executes: no cooldown
-        // arithmetic, no charge gain, no InvokeCurrentConfigCharged. The two RPCs then
-        // re-broadcast values every peer already holds, once per damage event per ready
-        // ultimate, to every client.
-        //
-        // Dropping those two sends is lossless because every server-side write to
-        // currentUnscaledCooldownTimes / currentCharges is paired with a send of the written
-        // value: SetCooldownTime / SetCharge send directly, ApplyCooldownReductionWithMinimum_Imp
-        // and ApplyCooldownReductionByRatio_Imp send after their loops, the LogicUpdate refill
-        // and overage clamp go through SetCooldownTime / SetCharge, casting goes through
-        // OnCastCompleteSetCooldownTime / OnCastCompleteSetCharge, and SkillTrigger's own loop
-        // sends after mutating. Writes without a send happen only before observers exist
-        // (OnStartServer seeds the arrays; OnSerialize carries them in the spawn payload), so
-        // late joiners are covered too. On the receiving side UserCode_RpcSetCooldownTime /
-        // UserCode_RpcSetCharge merely assign the received value when !NetworkServer.active
-        // and do nothing on the host — re-receiving an identical value is a no-op. Mirror's
-        // reliable ordered channel keeps clients from missing the value that preceded any
-        // later one. SkillTrigger.ShouldTickCooldown returns false for the ultimate config, so
-        // neither side ticks it down locally; the authoritative value changes only through the
-        // paired-send paths above, which this patch does not touch.
-        //
-        // Shrinkage of configs[0].maxCharges below the current charge count (UpdateSkillBonus
-        // recompute) leaves charges >= max, so this patch skips ChargeUltimate calls in that
-        // window; the LogicUpdate overage clamp `SetCharge(i, configs[i].maxCharges)` still
-        // runs and broadcasts the corrected count exactly as in vanilla. NativeCooldownSafety
-        // pushes authority values through RpcSetCooldownTime / RpcSetCharge directly and never
-        // through ChargeUltimate, so it is unaffected. When charges are below max the prefix
-        // defers to the original: the loop's float decrement is a genuine change on every hit
-        // and must keep broadcasting, and charge-boundary crossings keep firing
-        // InvokeCurrentConfigCharged.
+        // Repeated authority values also repair stale guests. A previous RPC call is
+        // not a delivery receipt (unspawned objects / unready observers can skip it).
+        // Keep this compatibility hook and its options, but always run the native sender.
         private static MethodBase _target;
         private static bool _warned;
-        private static bool _disabled;
 
         private static bool Prepare()
         {
@@ -3113,29 +3535,7 @@ namespace SodRpg.Mod
         }
 
         private static MethodBase TargetMethod() => _target;
-
-        private static bool Prefix(SkillTrigger __instance)
-        {
-            if (!NativePerfOptions.UltChargeRpcIdle || _disabled) return true;
-            try
-            {
-                if (!Mirror.NetworkServer.active) return true; // keep the native [Server] warning
-                TriggerConfig[] configs = __instance.configs;
-                int[] charges = __instance.currentCharges;
-                if (configs == null || configs.Length == 0 || charges == null || charges.Length == 0) return true;
-                if (__instance.type != SkillType.Ultimate) return true;
-                // At max charges the native body runs zero loop iterations and only
-                // re-broadcasts the unchanged cooldown time and charge count.
-                if (charges[0] < configs[0].maxCharges) return true;
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "ultimate charge idle", ex.Message);
-                return true;
-            }
-        }
+        private static bool Prefix(SkillTrigger __instance) => true;
     }
 
     [HarmonyPatch]
@@ -3517,62 +3917,10 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeChargeRpcIdlePerf
     {
-        // AbilityTrigger.SetCharge, both ApplyCooldownReduction implementations and
-        // SkillTrigger's own reduction path all finish with an unconditional RpcSetCharge
-        // broadcast of currentCharges[configIndex] — even when the reduction never rolled
-        // a charge over and the int did not change. Clients never mutate currentCharges
-        // themselves: LogicUpdate's charge block is server-only, so a guest only receives
-        // charges through this RPC, the spawn payload (OnSerialize) or the post-spawn
-        // array RPC (RpcSyncAfterFrameDelayStates_Imp), all carrying host values over
-        // Mirror's reliable channel.
-        //
-        // Skipping a repeat is sound only while the authority's array never holds a value
-        // it has not broadcast, i.e. every server-side write to currentCharges publishes
-        // through this RPC. The game has exactly five write sites: SetCharge (the public
-        // mutator, which always ends with the RPC; LogicUpdate's refill, the cast-complete
-        // charge hook and SetChargeAll all route through it), the two
-        // ApplyCooldownReduction*_Imp loops (every touched config ends its iteration with
-        // RpcSetCharge(i, currentCharges[i])), SkillTrigger.ChargeUltimate (same trailing
-        // broadcast), and OnStartServer's start charges. OnStartServer is the one
-        // RPC-less write, and it cannot strand a participant: it fills a freshly
-        // allocated array — a new instance, which resets the tracking below — while every
-        // client is re-seeded from the new spawn payload. The mod adds no other write:
-        // NativeCooldownSafety.Normalize and ResendAuthoritative never assign charges,
-        // they re-send them through this same RPC (its delegates bind the patched method,
-        // so those resends keep the record in sync), and HostAuthority.CoopKeystones
-        // grants charges via SetCharge. The remaining writers — UserCode_RpcSetCharge,
-        // RpcSyncAfterFrameDelayStates_Imp and OnDeserialize — are guarded to non-server,
-        // so they never run on the authority. A future write site that bypasses this RPC
-        // must clear the LastSent entry for that trigger, or a participant who joined
-        // between the write and the next equal-valued send would keep the stale value.
-        //
-        // The RPC body (UserCode_RpcSetCharge) does nothing
-        // but write that int. Suppressing a repeat of the last value we sent therefore
-        // writes the identical int on every client and changes nothing else; every real
-        // charge change still broadcasts as before, spawn payload and the mod's
-        // NativeCooldownSafety resends included (the repaired value is the cooldown RPC,
-        // which this patch does not touch, and a no-change charge resend of the same int
-        // is equivalent to none). The tracking resets whenever the trigger's charge
-        // array is a different instance: Dew pools and reuses actors, OnStartServer
-        // allocates fresh arrays per spawn, and every client was re-seeded from the new
-        // spawn payload, so a previous life's last-sent values must not suppress anything.
-        private sealed class Slots
-        {
-            internal int[] Charges; // the array instance the tracked values were sent from
-            // int? so "nothing sent yet" (null) can never collide with a real charge int;
-            // the RPC parameter is a plain int and Dew does not promise it stays >= 0.
-            internal int?[] Values; // last value sent per config index; null = nothing sent yet
-        }
-
-        private static readonly ConditionalWeakTable<AbilityTrigger, Slots> LastSent =
-            new ConditionalWeakTable<AbilityTrigger, Slots>();
-
-        // Cached like the other perf patches: the project compiles as C# 9, where every
-        // method-group-to-delegate conversion allocates a fresh delegate per GetValue call.
-        private static readonly ConditionalWeakTable<AbilityTrigger, Slots>.CreateValueCallback CreateSlotsCallback = CreateSlots;
-
+        // Repeated authority values also repair stale guests. A previous RPC call is
+        // not a delivery receipt (unspawned objects / unready observers can skip it).
+        // Keep this compatibility hook and its options, but always run the native sender.
         private static MethodBase _target;
-        private static bool _disabled;
         private static bool _warned;
 
         private static bool Prepare()
@@ -3583,50 +3931,7 @@ namespace SodRpg.Mod
         }
 
         private static MethodBase TargetMethod() => _target;
-
-        private static int?[] NewValues(int count) => new int?[count];
-
-        private static Slots CreateSlots(AbilityTrigger trigger)
-        {
-            var charges = trigger.currentCharges;
-            return new Slots
-            {
-                Charges = charges,
-                Values = NewValues(charges != null ? charges.Length : 1)
-            };
-        }
-
-        private static bool Prefix(AbilityTrigger __instance, int configIndex, int charge)
-        {
-            if (_disabled) return true;
-            try
-            {
-                // Only the authority knows what it last sent; other paths keep vanilla behavior.
-                if (!Mirror.NetworkServer.active) return true;
-                if (!NativePerfOptions.ChargeRpcIdle)
-                {
-                    // Vanilla sends while OFF must not leave stale values for the next ON send.
-                    LastSent.Remove(__instance);
-                    return true;
-                }
-                var charges = __instance.currentCharges;
-                if (charges == null || (uint)configIndex >= (uint)charges.Length) return true;
-                var slots = LastSent.GetValue(__instance, CreateSlotsCallback);
-                if (!ReferenceEquals(slots.Charges, charges) || configIndex >= slots.Values.Length)
-                {
-                    slots.Charges = charges;
-                    slots.Values = NewValues(charges.Length);
-                }
-                if (slots.Values[configIndex] == charge) return false;
-                slots.Values[configIndex] = charge;
-            }
-            catch (Exception ex)
-            {
-                _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "charge rpc idle", ex.Message);
-            }
-            return true;
-        }
+        private static bool Prefix(AbilityTrigger __instance, int configIndex, int charge) => true;
     }
 
     [HarmonyPatch]
@@ -3705,6 +4010,197 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "chaos shrine hit scan", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChaosStatBonusTooltipCachePerf
+    {
+        // Se_Shrine_Chaos_StatBonus.GetCustomTooltipDescription rebuilds the chaos-shrine
+        // bonus's whole tooltip text — up to ~20 string.Format calls with as many +=
+        // concatenations and localization lookups, a few KB of garbage — on every call.
+        // UI_TooltipSection.Update re-runs every tooltip base object's OnSetup four times
+        // a second while a tooltip is open, and this effect lives for the whole run on
+        // every player, so the identical text is rebuilt ~4x/s for as long as the buff
+        // icon's tooltip stays open — on hosts and guests alike. The text is a pure
+        // function of 13 float and 10 int values (6 fields of syncedRegularChaosBonus,
+        // the corrupted bonus's fields and the current* SyncVars) plus the localization
+        // data object; snapshot them and reuse the last built string while all of them
+        // are unchanged. Same inputs, same string, so the tooltip shows exactly what
+        // vanilla shows, and a language switch replaces the data object and forces a
+        // rebuild.
+        private sealed class Entry
+        {
+            public readonly float[] floats = new float[13];
+            public readonly int[] ints = new int[10];
+            public object locale;
+            public string text;
+            public bool valid;
+        }
+
+        private static readonly ConditionalWeakTable<object, Entry> _cache = new ConditionalWeakTable<object, Entry>();
+        private static Func<object, float>[] _floatGetters;
+        private static Func<object, int>[] _intGetters;
+        private static Func<object> _localeGetter;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        // Set by the Prefix when it returned the cached string (and skipped the original), so
+        // the Postfix — which Harmony still runs — knows the inputs and result are unchanged
+        // and can skip its own reads. Per thread: tooltip updates and the game logic that
+        // changes the values live on different threads.
+        [ThreadStatic] private static bool _servedFromCache;
+
+        private static bool Prepare() => TryPrepare("Se_Shrine_Chaos_StatBonus");
+
+        // Type-name parameter, same shape as NativeChaosShrineHitScanPerf.TryPrepare: the
+        // mod never references this native class, and the tests can point the same wiring
+        // at a stand-in class exactly like the real one in the game.
+        internal static bool TryPrepare(string typeName)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(typeName);
+                if (type == null)
+                    throw new MissingMemberException(typeName + " unavailable");
+                _target = AccessTools.DeclaredMethod(type, "GetCustomTooltipDescription");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException(typeName + ".GetCustomTooltipDescription unavailable");
+                var dataProp = AccessTools.Property(typeof(DewLocalization), "data");
+                if (dataProp == null || dataProp.GetMethod == null || !dataProp.GetMethod.IsStatic)
+                    throw new MissingMemberException("DewLocalization.data unavailable");
+                _localeGetter = Expression.Lambda<Func<object>>(
+                    Expression.Convert(Expression.Property(null, dataProp), typeof(object))).Compile();
+                _floatGetters = new[]
+                {
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_maxHealthFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_armorFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_attackDamageFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_abilityPowerFlat"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_attackSpeedPercentage"),
+                    BonusReader<float>(type, "syncedRegularChaosBonus", "_abilityHasteFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_attackRangeFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_critChanceFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_fireEffectAmpFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_coldEffectAmpFlat"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_movementSpeedPercentage"),
+                    BonusReader<float>(type, "syncedCorruptedChaosBonus", "_abilityHasteFlat"),
+                    Reader<float>(type, "currentDodgeHaste"),
+                };
+                _intGetters = new[]
+                {
+                    BonusReader<int>(type, "syncedCorruptedChaosBonus", "_everyFourAttackStartIndexFlat"),
+                    Reader<int>(type, "currentDodgeAddedCharges"),
+                    Reader<int>(type, "currentAddedDarkMaxStack"),
+                    Reader<int>(type, "currentAddedLightMaxStack"),
+                    Reader<int>(type, "currentAddedMaxLevel"),
+                    Reader<int>(type, "currentAddedGemSlotQ"),
+                    Reader<int>(type, "currentAddedGemSlotW"),
+                    Reader<int>(type, "currentAddedGemSlotE"),
+                    Reader<int>(type, "currentAddedGemSlotR"),
+                    Reader<int>(type, "currentAddedGemSlotIdentity"),
+                };
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, T> Reader<T>(Type type, string fieldName)
+        {
+            var p = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Convert(p, type), fieldName), p).Compile();
+        }
+
+        private static Func<object, T> BonusReader<T>(Type effectType, string bonusField, string valueField)
+        {
+            var bonus = AccessTools.Field(effectType, bonusField);
+            if (bonus == null)
+                throw new MissingMemberException(effectType.Name + "." + bonusField + " unavailable");
+            var p = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Field(Expression.Convert(p, effectType), bonus), valueField), p).Compile();
+        }
+
+        private static bool Prefix(object __instance, ref string __result)
+        {
+            _servedFromCache = false;
+            if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache) return true;
+            try
+            {
+                Entry entry = _cache.GetOrCreateValue(__instance);
+                if (entry.valid && Matches(__instance, entry))
+                {
+                    __result = entry.text;
+                    _servedFromCache = true;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+            }
+            return true;
+        }
+
+        private static void Postfix(object __instance, string __result)
+        {
+            // Harmony runs the Postfix even when the Prefix returned the cache and skipped the
+            // original. In that case inputs and result are unchanged by definition, so the
+            // 23-value re-read and the Snapshot are skipped (they would only re-write the
+            // same values and double the reads on every cache hit).
+            if (_servedFromCache)
+            {
+                _servedFromCache = false;
+                return;
+            }
+            if (_disabled || !NativePerfOptions.ChaosStatBonusTooltipCache || __result == null) return;
+            try
+            {
+                Entry entry = _cache.GetOrCreateValue(__instance);
+                Snapshot(__instance, entry);
+                entry.text = __result;
+                entry.valid = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos stat bonus tooltip cache", ex.Message);
+            }
+        }
+
+        private static bool Matches(object instance, Entry entry)
+        {
+            for (int i = 0; i < entry.floats.Length; i++)
+            {
+                if (entry.floats[i] != _floatGetters[i](instance)) return false;
+            }
+            for (int i = 0; i < entry.ints.Length; i++)
+            {
+                if (entry.ints[i] != _intGetters[i](instance)) return false;
+            }
+            return ReferenceEquals(entry.locale, _localeGetter());
+        }
+
+        private static void Snapshot(object instance, Entry entry)
+        {
+            for (int i = 0; i < entry.floats.Length; i++)
+            {
+                entry.floats[i] = _floatGetters[i](instance);
+            }
+            for (int i = 0; i < entry.ints.Length; i++)
+            {
+                entry.ints[i] = _intGetters[i](instance);
+            }
+            entry.locale = _localeGetter();
         }
     }
 
@@ -4469,6 +4965,161 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeMidJoinLoadoutIdlePerf
+    {
+        // DewPlayer.LogicUpdate_MidJoin's tail runs every logic frame for a lobby-parked
+        // player that has rejoin data while a game is running with mid-joins allowed, and
+        // its last statement is an unconditional assignment of a fresh empty HeroLoadoutData:
+        //
+        //     Network_<selectedLoadout>k__BackingField = new HeroLoadoutData();
+        //
+        // HeroLoadoutData is a plain class, so Mirror's GeneratedSyncVarSetter compares
+        // instances by reference: the fresh empty never equals the previous frame's fresh
+        // empty, so while the player waits (midJoinWaitType is non-None for the whole
+        // boss-fight window: BeforeBossFight/FightingBoss/AfterBossFight are set by
+        // BossMonster itself) the SyncVar is re-dirtied every frame, Mirror re-serializes
+        // and re-sends identical empty-loadout bytes to every observer on every sync tick,
+        // and OnLoadoutChanged/ClientEvent_OnSelectedLoadoutChanged fire on the host each
+        // frame and on every client each received tick — all with content that never
+        // changed. The game's other writers of the same SyncVar are CmdSetHeroType_Imp
+        // (clears an invalid loadout) and CmdSetHeroLoadoutData_Imp; no other call sites
+        // exist and nothing mutates the live instance in place, so "empty over empty"
+        // is the exact shape of the idle loop.
+        //
+        // This prefix therefore skips the generated setter only when BOTH the incoming
+        // value and the field's current value are content-empty — every instance field
+        // at its constructor default (the four skill ints zero, the four star lists
+        // null-or-empty, and anything else the live type holds at its default). Anything
+        // non-empty passes
+        // untouched, the first real clear (non-empty -> empty) passes, and a null on
+        // either side passes so the native setter keeps full authority over every
+        // content change, every hook and every resync — the receiver-visible state after
+        // each call is exactly what vanilla would hold, minus the duplicate resends of
+        // data the receiver already has. The per-frame `new HeroLoadoutData()` allocation
+        // at the call site stays (gen0, one small object); the SyncVar churn, the network
+        // resync and the hook storms are what disappear. The nativeMidJoinLoadoutIdle
+        // option turns the skip off; a renamed or missing weaver property — or a type
+        // the emptiness predicate cannot be compiled from — disables the patch with one
+        // warning.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+        private static Func<object, bool> _isEmpty;
+
+        // IsEmpty is not a remembered name list: Prepare compiles one predicate from the
+        // live type's own instance fields (public and non-public — Mirror's weaver can
+        // sync a [SyncVar] the game declares non-public), so the verdict always covers
+        // exactly the fields the type holds, including a field a game update or a
+        // third-party mod adds, renames or retypes. That keeps the guarantee the old
+        // by-name shape guard was enforcing (an "empty" verdict can never ignore part of
+        // the instance) without standing down over additive drift the runtime can verify
+        // on its own: an unknown field is simply one more default the constructor state
+        // must hold, and a field the fresh constructor state leaves non-default keeps
+        // both sides non-empty, so the skip stops engaging (fail-safe) instead of
+        // skipping an assignment that changes it.
+        internal static Func<object, bool> BuildEmptyCheck(Type loadoutType)
+        {
+            var fields = loadoutType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fields.Length == 0)
+                throw new MissingFieldException(loadoutType.Name + " has no instance fields to check");
+            var typed = Expression.Parameter(loadoutType, "data");
+            // Null is deliberately NOT empty so every null transition keeps reaching the
+            // setter.
+            Expression body = loadoutType.IsValueType
+                ? Expression.Constant(true)
+                : Expression.Not(Expression.ReferenceEqual(typed, Expression.Constant(null, loadoutType)));
+            foreach (var field in fields)
+            {
+                var access = Expression.Field(typed, field);
+                Expression isEmpty;
+                if (!field.FieldType.IsValueType && typeof(ICollection).IsAssignableFrom(field.FieldType))
+                {
+                    // null OR Count == 0 — the shipped semantics of the star lists, now by
+                    // shape instead of by name (a fresh instance initializes them to empty
+                    // lists; a receiver-rebuilt one may hold nulls).
+                    isEmpty = Expression.OrElse(
+                        Expression.ReferenceEqual(access, Expression.Constant(null, field.FieldType)),
+                        Expression.Equal(
+                            Expression.Property(Expression.Convert(access, typeof(ICollection)), ICollectionCount),
+                            Expression.Constant(0)));
+                }
+                else if (field.FieldType.IsValueType)
+                {
+                    // 0 / false / default(struct) — EqualityComparer handles enums and
+                    // structs uniformly; a float default only ever stores +0, so the
+                    // comparer's 0 == -0 equivalence cannot mask a real constructor value.
+                    isEmpty = Expression.Call(ValueIsDefaultMethod.MakeGenericMethod(field.FieldType), access);
+                }
+                else
+                {
+                    isEmpty = Expression.ReferenceEqual(access, Expression.Constant(null, field.FieldType));
+                }
+                body = Expression.AndAlso(body, isEmpty);
+            }
+            var check = Expression.Lambda(body, typed);
+            var obj = Expression.Parameter(typeof(object), "value");
+            return Expression.Lambda<Func<object, bool>>(
+                Expression.Invoke(check, Expression.Convert(obj, loadoutType)), obj).Compile();
+        }
+
+        private static readonly PropertyInfo ICollectionCount =
+            typeof(ICollection).GetProperty(nameof(ICollection.Count));
+
+        private static readonly MethodInfo ValueIsDefaultMethod =
+            typeof(NativeMidJoinLoadoutIdlePerf).GetMethod(nameof(ValueIsDefault),
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+        private static bool ValueIsDefault<T>(T value) => EqualityComparer<T>.Default.Equals(value, default);
+
+        private static bool Prepare()
+        {
+            try
+            {
+                // 本体のメタデータ上の名前は括弧のまま（"Network<selectedLoadout>k__BackingField"）。
+                // 逆コンパイラが C# の識別子に使えない括弧を _003C_003E へ置き換えて表示するため、
+                // 両方の綴りを試す（後者はテスト境界の型が C# で宣言できる名前）。
+                _target = AccessTools.PropertySetter(typeof(DewPlayer),
+                    "Network<selectedLoadout>k__BackingField")
+                    ?? AccessTools.PropertySetter(typeof(DewPlayer),
+                        "Network_003CselectedLoadout_003Ek__BackingField");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("DewPlayer.Network_<selectedLoadout>k__BackingField.set");
+                _isEmpty = BuildEmptyCheck(typeof(HeroLoadoutData));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "mid-join empty loadout re-sync", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // True only when the value mirrors the HeroLoadoutData() constructor's state:
+        // every instance field the live type declares (known or foreign) sits at its
+        // default, per the compiled predicate above. Null is deliberately NOT empty so
+        // every null transition keeps reaching the setter.
+        private static bool IsEmpty(HeroLoadoutData data) => data != null && _isEmpty(data);
+
+        private static bool Prefix(DewPlayer __instance, HeroLoadoutData value)
+        {
+            if (!NativePerfOptions.MidJoinLoadoutIdle || _disabled) return true;
+            try
+            {
+                if (IsEmpty(value) && IsEmpty(__instance.selectedLoadout)) return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "mid-join empty loadout re-sync", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeEntityRotationIdlePerf
     {
         // DoRotateTowardsDesiredAngleTick runs every rendered frame for every entity whose
@@ -4905,6 +5556,100 @@ namespace SodRpg.Mod
         private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
     }
 
+    // Gem.OnStartClient は宝石がネットワーク出現するたびに全クライアント（ホストのローカル
+    // クライアントと各参加者）で走り、そのたびに Resources.Load で "WorldModels/Gem World
+    // Model" を読み直してから Instantiate する。Resources.Load は同じアセットへの 2 回目以降も
+    // ネイティブのアセット検索を通るため、敵の連続撃破などの出現の固まりで同じ検索を同じ
+    // フレームに繰り返す。Load の戻り値は同じアセットの同一インスタンスなので、最初の 1 回の
+    // 結果を静的に覚えて返すだけで同じ GameObject 参照が渡り、Instantiate・GetComponent・
+    // _worldModel への代入は本体と同じ式と順序のまま変わらない。読み込みが null のとき
+    // （アセット無し）はキャッシュせずそのまま返すので、本体と同じく後続の Instantiate が
+    // 同じ例外を出す。
+    //
+    // Prefix での丸ごと置き換えは基底の Actor.OnStartClient／DewNetworkBehaviour.OnStartClient
+    // （子の登録・OnCreate・遅延開始キュー）まで再実装することになって指紋が巨大化するため、
+    // Transpiler で ldstr＋Resources.Load<GameObject>(string) の呼び出し点だけを差し替える。
+    // Prepare は本体 IL（r1.4.1.2、実 DLL で確認）のうちパス文字列と Load 呼び出しの組が
+    // 1 組だけあることを確かめ、形が変わっていればこの修正だけを外して警告する。
+    [HarmonyPatch]
+    internal static class NativeGemWorldModelLoadPerf
+    {
+        private const string WorldModelPath = "WorldModels/Gem World Model";
+        private static GameObject _cache;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem), "OnStartClient", Type.EmptyTypes, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateCallsite(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem world model load", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int callsites = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+            {
+                if (!IsWorldModelLoad(code[i], code[i + 1])) continue;
+                callsites++;
+                code[i + 1].operand = AccessTools.Method(
+                    typeof(NativeGemWorldModelLoadPerf), nameof(LoadCachedGemWorldModel));
+            }
+            if (callsites != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem world model load",
+                    "native OnStartClient load callsite changed or already patched");
+            }
+            return code;
+        }
+
+        // 置き換えは同じ引数・同じ戻り値で受け先の値を変えないので、Load の呼び出し点
+        // （パス文字列の ldstr の直後）が 1 組あることだけを見る。呼び出し結果の流れ先まで
+        // 見る必要はない。
+        private static bool ValidateCallsite(IList<CodeInstruction> code)
+        {
+            int pairs = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+                if (IsWorldModelLoad(code[i], code[i + 1])) pairs++;
+            if (pairs == 1) return true;
+            NativePerfPatch.Warn(ref _warned, "gem world model load", "native OnStartClient load callsite changed");
+            return false;
+        }
+
+        private static bool IsWorldModelLoad(CodeInstruction literal, CodeInstruction call)
+        {
+            if (literal.opcode != OpCodes.Ldstr || !Equals(literal.operand, WorldModelPath)) return false;
+            if (!(call.operand is MethodInfo called) || called.Name != "Load"
+                || called.DeclaringType == null || called.DeclaringType.Name != "Resources") return false;
+            return called.IsGenericMethod && called.GetGenericArguments().Length == 1
+                && called.GetGenericArguments()[0] == typeof(GameObject)
+                && called.GetParameters().Length == 1
+                && called.GetParameters()[0].ParameterType == typeof(string);
+        }
+
+        internal static GameObject LoadCachedGemWorldModel(string path)
+        {
+            if (!NativePerfOptions.GemWorldModelCache) return Resources.Load<GameObject>(path);
+            GameObject cached = _cache;
+            if (cached != null) return cached;
+            cached = Resources.Load<GameObject>(path);
+            if (cached != null) _cache = cached;
+            return cached;
+        }
+    }
+
     [HarmonyPatch]
     internal static class NativeRoomStartDependencyPerf
     {
@@ -5026,6 +5771,151 @@ namespace SodRpg.Mod
             if (sorted.Count < count)
                 throw new Exception("Circular dependency detected.");
             return sorted.ToArray();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomPlayerPathableScanPerf
+    {
+        // Room.OnStartClient runs on every room load — on the host when the room spawns and
+        // on every guest from the room's spawn. Its loop fills Room.playerPathablePoints by
+        // scanning the whole scene: Dew.FindInterfacesOfType<IPlayerPathablePoint>(true) is
+        // Object.FindObjectsOfType<Transform>(true) — every Transform, active or not — plus
+        // a GetComponents interface lookup on each Transform, then every hit adds a
+        // GetComponentInParent<Actor> walk and a NavMesh.SamplePosition
+        // (Dew.GetValidAgentPosition). The only readers of the list in the whole game
+        // (decompiled Dew.Core 2026-10-25) are ActorManager's stuck checks —
+        // DoStuckCheckLogicUpdate returns before reaching them unless NetworkServer.active —
+        // and no MOD code reads the list either, so on a pure guest the scan, the component
+        // walks and the navmesh sampling build data nothing ever reads, once per room.
+        //
+        // The transpiler swaps only that one FindInterfacesOfType call for the shim below;
+        // the foreach, its GetComponentInParent body and the base wiring
+        // (DewNetworkBehaviour.OnStartClient: OnStart, the late-start queue, the start
+        // event) stay native and run unchanged — on a guest they iterate an empty array.
+        // The shim keeps the native scan running whenever NetworkServer.active (host,
+        // including host-as-client) or the option is off, passing the call site's argument
+        // through. Patching the closed generic directly is not an option: Mono shares one
+        // JITted body across reference-type instantiations, so a detour there would also
+        // intercept the game's IBanCampsNearby / IPrewarm* scans, which the host does use.
+        // The nativeRoomPlayerPathableScan option turns the skip off; a missing native
+        // method, a missing IPlayerPathablePoint, or a Room.OnStartClient that no longer
+        // holds exactly one such call disables the patch with one warning. The name-only
+        // lookups stay: the mod never references these native members, and TypeByName
+        // resolves the harness stand-ins in tests exactly like the real classes in the
+        // game (NativeBossSoulShrineScanPerf does the same).
+        private static MethodBase _target;
+        private static Type _pathablePointType;
+        private static MethodInfo _closedScan;
+        private static bool _warned;
+
+        internal static bool TryPrepare(string scanTypeName, string scanMethodName, string roomTypeName, string pointTypeName)
+        {
+            try
+            {
+                var scanType = AccessTools.TypeByName(scanTypeName);
+                if (scanType == null)
+                    throw new MissingMemberException(scanTypeName + " unavailable");
+                var definition = AccessTools.DeclaredMethod(scanType, scanMethodName, new[] { typeof(bool) });
+                if (definition == null || !definition.IsGenericMethodDefinition || !definition.IsStatic
+                    || definition.GetGenericArguments().Length != 1)
+                    throw new MissingMethodException(scanTypeName + "." + scanMethodName + "<T>(bool)");
+                _pathablePointType = AccessTools.TypeByName(pointTypeName);
+                if (_pathablePointType == null || !_pathablePointType.IsInterface)
+                    throw new MissingMemberException(pointTypeName + " unavailable");
+                var roomType = AccessTools.TypeByName(roomTypeName);
+                var onStartClient = roomType == null ? null : AccessTools.DeclaredMethod(roomType, "OnStartClient");
+                if (onStartClient == null || onStartClient.GetMethodBody() == null)
+                    throw new MissingMethodException(roomTypeName + ".OnStartClient");
+                _closedScan = definition.MakeGenericMethod(_pathablePointType);
+                _target = onStartClient;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan", ex.Message);
+                return false;
+            }
+        }
+
+        private static bool Prepare() => TryPrepare("Dew", "FindInterfacesOfType", "Room", "IPlayerPathablePoint");
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int sites = 0;
+            int site = -1;
+            Type pointType = _pathablePointType;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodInfo m) || m.Name != "FindInterfacesOfType"
+                    || !m.IsGenericMethod || m.IsGenericMethodDefinition
+                    || m.GetGenericArguments().Length != 1
+                    || m.GetGenericArguments()[0] != pointType) continue;
+                var parameters = m.GetParameters();
+                if (parameters.Length != 1 || parameters[0].ParameterType != typeof(bool)
+                    || m.ReturnType != pointType.MakeArrayType()) continue;
+                sites++;
+                site = i;
+            }
+            // The native body holds exactly one IPlayerPathablePoint scan call; any other
+            // count means the body changed shape or this transpiler already ran.
+            if (sites != 1 || site < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan",
+                    "native room start scan callsite changed or already patched");
+                return code;
+            }
+            code[site].operand = AccessTools.Method(typeof(NativeRoomPlayerPathableScanPerf), nameof(PathableScan))
+                .MakeGenericMethod(_pathablePointType);
+            return code;
+        }
+
+        // Same signature as the swapped call (bool in, point-type array out), so the IL
+        // around the site stays valid. Only a pure guest with the option on gets the
+        // empty array; the host (and the option-off path) always reaches the native scan
+        // through a delegate bound from Prepare's closed generic. The direct delegate
+        // call is deliberate: a throw from the scan itself propagates un-wrapped (no
+        // MethodInfo.Invoke / TargetInvocationException) exactly like the unpatched body,
+        // and nothing degrades — the next room runs the same native scan again instead of
+        // the host silently producing empty playerPathablePoints from then on.
+        private static T[] PathableScan<T>(bool includeInactive) where T : class
+        {
+            if (NativePerfOptions.RoomPlayerPathableScan && !Mirror.NetworkServer.active)
+                return Array.Empty<T>();
+            var scan = ClosedScan<T>.Scan;
+            if (scan == null)
+                scan = BindScan<T>();
+            return scan(includeInactive);
+        }
+
+        // The bound native scan per point-type instantiation, filled on the first room
+        // load (Prepare has resolved _closedScan by then). Held per-T so the shim's call
+        // stays a direct delegate invoke with no per-room Invoke boxing.
+        private static class ClosedScan<T> where T : class
+        {
+            internal static Func<bool, T[]> Scan;
+        }
+
+        private static Func<bool, T[]> BindScan<T>() where T : class
+        {
+            MethodInfo original = _closedScan
+                ?? throw new MissingMemberException("native FindInterfacesOfType unavailable");
+            try
+            {
+                return ClosedScan<T>.Scan = (Func<bool, T[]>)Delegate.CreateDelegate(typeof(Func<bool, T[]>), original);
+            }
+            catch (Exception ex)
+            {
+                // Binding has never failed against the game, but if it ever does the host
+                // keeps the native scan through raw reflection rather than an empty list.
+                // original is non-null here (checked above), so the scan itself is always
+                // reachable and a throw from it propagates, same as the unpatched body.
+                NativePerfPatch.Warn(ref _warned, "room player pathable scan", "binding the native scan failed: " + ex.Message);
+                return ClosedScan<T>.Scan = includeInactive => (T[])original.Invoke(null, new object[] { includeInactive });
+            }
         }
     }
 
@@ -6646,6 +7536,141 @@ namespace SodRpg.Mod
         }
     }
 
+    // MusicManager.LogicUpdate runs on the logic clock (up to 30 Hz, LogicUpdateManager.
+    // MinLogicUpdateInterval) on every client for as long as the manager exists — through
+    // gameplay and menus alike. Outside the short fade windows its tail recomputes and
+    // rewrites _activeSource.volume and _activeSource.pitch with bit-identical floats every
+    // tick, during a crossfade both sources' volumes are rewritten per tick by design, and
+    // DoCrossFade writes the crossfade's starting volume and pitch through the same two
+    // setters. A Unity AudioSource setter is a native call that re-dirties the source for
+    // the audio thread even when the value is unchanged, so the steady-state tail pays two
+    // no-op native writes per tick per client (music is effectively always in steady state;
+    // fades only run around zone and track changes).
+    // Re-pointing the writes through same-value guards keeps the property state identical:
+    // the guard writes whenever the source's cached last write differs and updates that
+    // cache on every write in every option state, so a skip always means "the source
+    // already holds exactly this value". Coherence rests on MusicManager being the only
+    // writer of these properties on these two sources — verified against the shipped
+    // r1.4.1.2 Dew.Core IL (set_volume/set_pitch occur only in LogicUpdate, 3+1, and
+    // DoCrossFade, 1+1): Play/Stop only stage the pending asset, Pause/UnPause don't touch
+    // volume or pitch, no other Dew.*/Assembly-CSharp code references the sources (the one
+    // external _source user, DewConsoleCommands, writes .time), and AudioManager.
+    // SetupAudioSource only runs on them once in Start, before the first guarded write —
+    // its fresh NaN entry makes that first guarded write unconditional. The transpiler
+    // demands the shipped shape per method (LogicUpdate 3 volume + 1 pitch stores,
+    // DoCrossFade 1 + 1); any other shape leaves that method unmodified with one warning,
+    // and the guards stay disarmed: while either method still writes the source directly
+    // the cache cannot see those writes, so until both methods are confirmed re-pointed
+    // the guards write unconditionally (exactly the unpatched behavior).
+    [HarmonyPatch]
+    internal static class NativeMusicSourceIdlePerf
+    {
+        private sealed class LastWrite
+        {
+            internal float Volume = float.NaN;
+            internal float Pitch = float.NaN;
+        }
+
+        private static readonly ConditionalWeakTable<AudioSource, LastWrite> LastWrites =
+            new ConditionalWeakTable<AudioSource, LastWrite>();
+
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+        // Flipped by the transpiler as each method's writes are re-pointed. A skip is only
+        // safe while both are set: a shape mismatch leaves that method's native writes in
+        // place, invisible to the cache, so skipping on a cache hit could then drop a
+        // needed write (the re-pointed method would believe the source already holds the
+        // value the un-re-pointed one overwrote). Both flags flip once, during Harmony's
+        // synchronous patching at startup; until then (and forever in a half-patched
+        // state) the guards write every call, which is the unpatched behavior.
+        private static volatile bool _logicPatched;
+        private static volatile bool _fadePatched;
+
+        private static bool Prepare()
+        {
+            var logic = NativePerfPatch.Find(typeof(MusicManager), nameof(MusicManager.LogicUpdate),
+                new[] { typeof(float) }, ref _warned);
+            if (logic == null) return false;
+            var crossFade = NativePerfPatch.Find(typeof(MusicManager), nameof(MusicManager.DoCrossFade),
+                new[] { typeof(DewMusicItem), typeof(float) }, ref _warned);
+            if (crossFade == null) return false;
+            _targets = new MethodBase[] { logic, crossFade };
+            return true;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static IEnumerable<CodeInstruction> Transpiler(MethodBase original,
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setVolume = AccessTools.PropertySetter(typeof(AudioSource), "volume");
+            var setPitch = AccessTools.PropertySetter(typeof(AudioSource), "pitch");
+            if (setVolume == null || setPitch == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "music source idle", "UnityEngine properties unavailable");
+                return code;
+            }
+            bool logicUpdate = original.Name == nameof(MusicManager.LogicUpdate);
+            int volumes = 0, pitches = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setVolume)) volumes++;
+                else if (code[i].Calls(setPitch)) pitches++;
+            }
+            if (volumes != (logicUpdate ? 3 : 1) || pitches != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "music source idle",
+                    "native " + original.Name + " body changed (writes " + volumes + "/" + pitches + ")");
+                return code;
+            }
+            var guardedVolume = AccessTools.Method(typeof(NativeMusicSourceIdlePerf), nameof(GuardedVolume));
+            var guardedPitch = AccessTools.Method(typeof(NativeMusicSourceIdlePerf), nameof(GuardedPitch));
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setVolume))
+                {
+                    code[i].opcode = OpCodes.Call;
+                    code[i].operand = guardedVolume;
+                }
+                else if (code[i].Calls(setPitch))
+                {
+                    code[i].opcode = OpCodes.Call;
+                    code[i].operand = guardedPitch;
+                }
+            }
+            if (logicUpdate) _logicPatched = true; else _fadePatched = true;
+            return code;
+        }
+
+        // The guards skip only while both methods' writes are re-pointed (_logicPatched/
+        // _fadePatched — see their comment) and the option is on; in every other state they
+        // write unconditionally. The cache is maintained on every write in every option
+        // state, so a skip always means the source already holds the value. The cache is
+        // updated after the native setter returns: a setter that throws (e.g. on a destroyed
+        // source) leaves the previous value cached, so the next same-value write retries
+        // instead of being skipped against a value the source never received.
+        private static void GuardedVolume(AudioSource source, float value)
+        {
+            LastWrite last = LastWrites.GetOrCreateValue(source);
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Volume == value)
+                return;
+            source.volume = value;
+            last.Volume = value;
+        }
+
+        private static void GuardedPitch(AudioSource source, float value)
+        {
+            LastWrite last = LastWrites.GetOrCreateValue(source);
+            if (_logicPatched && _fadePatched && NativePerfOptions.MusicSourceIdle
+                && last.Pitch == value)
+                return;
+            source.pitch = value;
+            last.Pitch = value;
+        }
+    }
+
     // FxAttachToEntity.UpdatePosition runs for every attached visual effect on every client
     // (the host and each guest render the effects the host spawns), throttled only to 1/160 s —
     // at 60 fps that is every frame. Its final act is an unconditional transform write:
@@ -6810,9 +7835,13 @@ namespace SodRpg.Mod
         // Unity normalizes on read — never match, so those keep writing every frame exactly
         // like the native body; only a bit-identical read-back is skipped. NaN values
         // compare unequal and are written, like in the native body. The transpiler
-        // re-points only those two call sites and
-        // demands the shipped shape (1 position write, 1 rotation write, both on Transform);
-        // any other shape leaves the method unmodified with one warning.
+        // re-points every Transform position/rotation write in the body, whichever count it
+        // finds, because wrapping a call site preserves that call's semantics no matter who
+        // authored it (a third-party transpiler may have added or duplicated writes ahead of
+        // this one — the wrapper still performs the same write except when the transform
+        // already holds the identical bits, and the extra getter read it needs is
+        // side-effect free on a live transform); a body with no Transform write at all is a
+        // shape this patch does not understand, and it stands down with one warning.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -6835,10 +7864,10 @@ namespace SodRpg.Mod
                 if (method.Name == "set_position") position++;
                 else if (method.Name == "set_rotation") rotation++;
             }
-            if (position != 1 || rotation != 1)
+            if (position + rotation == 0)
             {
                 NativePerfPatch.Warn(ref _warned, "cast telegraph idle",
-                    "native UpdatePosition body changed (writes " + position + "/" + rotation + ")");
+                    "native UpdatePosition body has no Transform position/rotation write (writes " + position + "/" + rotation + ")");
                 return code;
             }
             for (int i = 0; i < code.Count; i++)
@@ -7460,6 +8489,1526 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "gamepad rumble idle", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGemResponsibilityHitPerf
+    {
+        // Gem_C_Responsibility の被弾演出 RPC の受け口 UserCode_RpcPlayHit__Entity__Single は、
+        // ホストが被害者ごとに送るたび、それを受け取った全クライアント（ホスト自身のローカル
+        // クライアントと各参加者）で走る。本体は3つの曲線を評価した後、fxHit プレハブの子孫を
+        // GetComponentsInChildrenNonAlloc で2回（DewAudioSource と FxCameraShake）全走査して
+        // プールのリストを出し入れし、その結果へ値を書いてから FxPlayNew で再生する。
+        //
+        // fxHit はシーンに置かれないプレハブアセットで、実行中に子の構成を変える処理は本体にも
+        // この MOD にも無い（この受け口が書くのは pitchMultiplier・volumeMultiplier・amplitude・
+        // localScale の値だけで、子の追加・削除・有効化はしない）。走査は includeInactive=false
+        // （本体が呼ぶ2引数の GetComponentsInChildrenNonAlloc は bool を渡さず Unity の
+        // List だけを取るオーバーロードへ任せ、その受け手は includeInactive に false を渡す。
+        // Dew.Core.dll と UnityEngine.CoreModule.dll の IL で確認、spec と
+        // GemResponsibilityHitPerfTests に記録）で毎回同じ要素を返すだけなので、被弾ごとの
+        // 再走査とプールの出入りは無駄。Prefix は
+        // fxHit の参照が変わった最初の1回だけ本体と同じ走査で配列を作り、以後はその配列へ
+        // 同じ値を同じ順で書く。曲線の評価・各コンポーネントへの書き込み・localScale・
+        // FxPlayNew の呼び出しは本体と同じ式と順序なので、見た目も音も変わらない。
+        //
+        // Prefix が本体の丸ごとを置き換えるため、Prepare は本体 IL の形を検証する。単純な
+        // 出現回数ではなく値の流れまで見て、曲線3つが strength だけで評価されてそれぞれの
+        // ローカルに入り、pitchMultiplier・volumeMultiplier・amplitude への書き込みと
+        // localScale（Vector3.one * volumeCurve の結果）と FxPlayNew(fxHit, e) がその
+        // ローカルと fxHit フィールドから作られていること、子走査2回が bool を取らない
+        // 2引数の GetComponentsInChildrenNonAlloc（includeInactive=false の意味）で
+        // DewAudioSource・FxCameraShake それぞれに fxHit を渡して呼ばれていることを
+        // 確かめる。形が変わっていればこの修正だけを外して警告する。本体が数えていない
+        // 種類の文を追加した場合は検出できないため、その場合はゲーム更新のたびに
+        // この指紋を見直すこと。
+        private static GameObject _cachedFx;
+        private static DewAudioSource[] _cachedAudio;
+        private static FxCameraShake[] _cachedShake;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem_C_Responsibility), "UserCode_RpcPlayHit__Entity__Single",
+                new[] { typeof(Entity), typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                if (ValidateShape(PatchProcessor.GetOriginalInstructions(_target))) return true;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", "native body shape changed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                return false;
+            }
+        }
+
+        // 本体 r1.4.1.2 の UserCode_RpcPlayHit__Entity__Single の IL と同じ形かどうか。
+        // 値の流れ（どの曲線の評価結果がどの書き込みと localScale に入るか、走査と再生の
+        // 受け手が fxHit フィールドか）まで確かめるため、回数の一致に加えて命令の並びを見る。
+        // GemResponsibilityHitPerfTests が受理と拒否の見本で直接呼ぶため internal。
+        internal static bool ValidateShape(IList<CodeInstruction> code)
+        {
+            var fxHit = AccessTools.Field(typeof(Gem_C_Responsibility), nameof(Gem_C_Responsibility.fxHit));
+            var evaluate = AccessTools.Method(typeof(AnimationCurve), nameof(AnimationCurve.Evaluate),
+                new[] { typeof(float) });
+            var one = AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.one));
+            var multiply = AccessTools.Method(typeof(Vector3), "op_Multiply",
+                new[] { typeof(Vector3), typeof(float) });
+            var localScale = AccessTools.PropertySetter(typeof(Transform), nameof(Transform.localScale));
+            int evaluates = 0, audioScans = 0, shakeScans = 0, plays = 0, scales = 0, multiplies = 0,
+                pitches = 0, volumes = 0, amplitudes = 0;
+            int pitchLocal = -1, volumeLocal = -1, amplitudeLocal = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                CodeInstruction ins = code[i];
+                if (ins.Calls(evaluate)) evaluates++;
+                if (ins.opcode == OpCodes.Ldfld && ins.operand is FieldInfo load
+                    && load.DeclaringType == typeof(Gem_C_Responsibility)
+                    && (load.Name == nameof(Gem_C_Responsibility.pitchCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.volumeCurve)
+                        || load.Name == nameof(Gem_C_Responsibility.shakeAmpCurve)))
+                {
+                    // 各曲線は strength（第2引数）だけを引数に評価され、結果はローカルへ入る。
+                    if (i + 3 >= code.Count || code[i + 1].opcode != OpCodes.Ldarg_2
+                        || !code[i + 2].Calls(evaluate) || !StoresLocal(code[i + 3], out int slot))
+                        return false;
+                    if (load.Name == nameof(Gem_C_Responsibility.pitchCurve))
+                    {
+                        if (pitchLocal >= 0) return false;
+                        pitchLocal = slot;
+                    }
+                    else if (load.Name == nameof(Gem_C_Responsibility.volumeCurve))
+                    {
+                        if (volumeLocal >= 0) return false;
+                        volumeLocal = slot;
+                    }
+                    else
+                    {
+                        if (amplitudeLocal >= 0) return false;
+                        amplitudeLocal = slot;
+                    }
+                }
+                else if (ins.opcode == OpCodes.Stfld && ins.operand is FieldInfo write)
+                {
+                    // 各フィールドへは対応する曲線の評価結果が渡される（型も合わせて確かめる）。
+                    if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.pitchMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], pitchLocal)) return false;
+                        pitches++;
+                    }
+                    else if (write.DeclaringType == typeof(DewAudioSource)
+                        && write.Name == nameof(DewAudioSource.volumeMultiplier))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], volumeLocal)) return false;
+                        volumes++;
+                    }
+                    else if (write.DeclaringType == typeof(FxCameraShake)
+                        && write.Name == nameof(FxCameraShake.amplitude))
+                    {
+                        if (i < 1 || !LoadsLocal(code[i - 1], amplitudeLocal)) return false;
+                        amplitudes++;
+                    }
+                }
+                else if (ins.operand is MethodInfo called)
+                {
+                    if (called.Name == "GetComponentsInChildrenNonAlloc")
+                    {
+                        // 2引数（走査対象 + out の扱い）＝ includeInactive を渡さない形。
+                        // bool を取る3引数のほうに切り替わったら本体の意味が変わる。
+                        if (!called.IsGenericMethod || called.GetParameters().Length != 2) return false;
+                        Type scanned = called.GetGenericArguments()[0];
+                        if (scanned == typeof(DewAudioSource)) audioScans++;
+                        else if (scanned == typeof(FxCameraShake)) shakeScans++;
+                        else return false;
+                        // 走査の対象は fxHit フィールド（ldarg.0 / ldfld fxHit / ldloca / call）。
+                        if (i < 3 || !IsLdloca(code[i - 1])
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit)
+                            || code[i - 3].opcode != OpCodes.Ldarg_0) return false;
+                    }
+                    else if (called.Name == "FxPlayNew" && called.GetParameters().Length == 2)
+                    {
+                        plays++;
+                        // FxPlayNew(fxHit, e)。第2引数が strength に替わっていても弾く。
+                        if (i < 2 || code[i - 1].opcode != OpCodes.Ldarg_1
+                            || code[i - 2].opcode != OpCodes.Ldfld || !Equals(code[i - 2].operand, fxHit))
+                            return false;
+                    }
+                    else if (ins.Calls(multiply))
+                    {
+                        multiplies++;
+                        // localScale へは Vector3.one * <volumeCurve の結果> を書く。
+                        if (i < 2 || i + 1 >= code.Count || !code[i - 2].Calls(one)
+                            || !LoadsLocal(code[i - 1], volumeLocal) || !code[i + 1].Calls(localScale))
+                            return false;
+                    }
+                    else if (ins.Calls(localScale)) scales++;
+                }
+            }
+            return evaluates == 3 && audioScans == 1 && shakeScans == 1 && plays == 1 && scales == 1
+                && multiplies == 1 && pitches == 1 && volumes == 1 && amplitudes == 1
+                && pitchLocal >= 0 && volumeLocal >= 0 && amplitudeLocal >= 0
+                && pitchLocal != volumeLocal && pitchLocal != amplitudeLocal && volumeLocal != amplitudeLocal;
+        }
+
+        private static bool StoresLocal(CodeInstruction ins, out int slot)
+        {
+            slot = -1;
+            if (ins.opcode != OpCodes.Stloc_0 && ins.opcode != OpCodes.Stloc_1
+                && ins.opcode != OpCodes.Stloc_2 && ins.opcode != OpCodes.Stloc_3
+                && ins.opcode != OpCodes.Stloc_S && ins.opcode != OpCodes.Stloc) return false;
+            slot = LocalIndex(ins);
+            return slot >= 0;
+        }
+
+        private static bool LoadsLocal(CodeInstruction ins, int slot)
+            => slot >= 0
+                && (ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Ldloc_1
+                    || ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Ldloc_3
+                    || ins.opcode == OpCodes.Ldloc_S || ins.opcode == OpCodes.Ldloc)
+                && LocalIndex(ins) == slot;
+
+        private static bool IsLdloca(CodeInstruction ins)
+            => ins.opcode == OpCodes.Ldloca_S || ins.opcode == OpCodes.Ldloca;
+
+        // 短い形式（ldloc.0 など）は operand が無く、長い形式は LocalBuilder（LocalVariableInfo
+        // の派生）で届く。どちらも同じローカルの番号へ読み替える。
+        private static int LocalIndex(CodeInstruction ins)
+            => ins.operand is LocalVariableInfo local ? local.LocalIndex
+                : ins.opcode == OpCodes.Ldloc_0 || ins.opcode == OpCodes.Stloc_0 ? 0
+                : ins.opcode == OpCodes.Ldloc_1 || ins.opcode == OpCodes.Stloc_1 ? 1
+                : ins.opcode == OpCodes.Ldloc_2 || ins.opcode == OpCodes.Stloc_2 ? 2
+                : ins.opcode == OpCodes.Ldloc_3 || ins.opcode == OpCodes.Stloc_3 ? 3
+                : -1;
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Gem_C_Responsibility __instance, Entity e, float strength)
+        {
+            if (_disabled || !NativePerfOptions.GemResponsibilityHitCache) return true;
+            GameObject fx;
+            try
+            {
+                fx = __instance.fxHit;
+                if (fx == null) return true;
+                if (!ReferenceEquals(_cachedFx, fx))
+                {
+                    _cachedAudio = fx.GetComponentsInChildren<DewAudioSource>();
+                    _cachedShake = fx.GetComponentsInChildren<FxCameraShake>();
+                    _cachedFx = fx;
+                }
+                float pitchMultiplier = __instance.pitchCurve.Evaluate(strength);
+                float volumeMultiplier = __instance.volumeCurve.Evaluate(strength);
+                float amplitude = __instance.shakeAmpCurve.Evaluate(strength);
+                DewAudioSource[] audioSources = _cachedAudio;
+                for (int i = 0; i < audioSources.Length; i++)
+                {
+                    audioSources[i].pitchMultiplier = pitchMultiplier;
+                    audioSources[i].volumeMultiplier = volumeMultiplier;
+                }
+                FxCameraShake[] shakes = _cachedShake;
+                for (int i = 0; i < shakes.Length; i++) shakes[i].amplitude = amplitude;
+                fx.transform.localScale = Vector3.one * volumeMultiplier;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                _cachedFx = null;
+                _cachedAudio = null;
+                _cachedShake = null;
+                NativePerfPatch.Warn(ref _warned, "gem responsibility hit cache", ex.Message);
+                // ここまでの書き込みは冪等な同じ値の設定だけなので、本体の再実行と重なっても
+                // 結果は同じである。本体経路へ戻して本体に一からやらせる。
+                return true;
+            }
+            // FxPlayNew は try の外。この時点で本体相当の書き込みは済んでおり、ここで例外が
+            // 出たときに本体へ戻すと演出がもう1つ入る（または同じ例外がもう1回出る）。例外は
+            // そのまま伝播させ、本体が FxPlayNew の中で例外を出す場合と同じ挙動にする。
+            __instance.FxPlayNew(fx, e);
+            return false;
+        }
+    }
+
+    // TransitionManager.FrameUpdate is dispatched by LogicUpdateManager every rendered
+    // frame on every client for the whole session — gameplay and menus alike, guests
+    // included. Outside the brief fade windows (boot fade-out, scene loads, lobby returns)
+    // the steady state is state == Normal with screenFadeCg.alpha already at 0, and the
+    // shipped body then only repeats no-op work: MoveTowards(0, 0, dt) → set_alpha(0),
+    // set_blocksRaycasts(false) on a CanvasGroup nothing else writes, and SetActive(false)
+    // on an overlay that is already inactive — each Unity setter a native interop call
+    // that re-dirties the group even for an identical value. The prefix skips exactly that
+    // steady state. The skip condition reads the same two values the body reads (state and
+    // alpha), and nothing else in the shipped game references screenFadeCg (only
+    // TransitionManager touches the field; decompile + IL check r1.4.1.2), so the skipped
+    // writes would have written values the objects already hold. While a fade is running
+    // (state == Loading, or Normal with alpha still decaying from Start's initial 1f) the
+    // native body runs untouched, so every visible frame of every transition is unchanged;
+    // the skip engages only after MoveTowards has landed exactly on 0f, and FadeOut is the
+    // only way back into Loading. The body-shape check demands the shipped call multiset
+    // (r1.4.1.2, 15 calls: base FrameUpdate, 3× get_state, 2× get_alpha, set_alpha,
+    // set_blocksRaycasts, get_gameObject, SetActive, MoveTowards, get_unscaledDeltaTime,
+    // 2× GetKeyDown, TryGetNewTip); any other shape leaves the native body in place with
+    // one warning.
+    [HarmonyPatch]
+    internal static class NativeTransitionIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(TransitionManager), nameof(TransitionManager.FrameUpdate),
+                ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                // A missing field fails when Prefix is JIT-compiled, before its catch can run.
+                if (AccessTools.Field(typeof(TransitionManager), "screenFadeCg") == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "transition idle", "native screenFadeCg field unavailable");
+                    return false;
+                }
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transition idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The shipped FrameUpdate (r1.4.1.2, 150 bytes) performs exactly these 15 calls and
+        // nothing else. A body whose call multiset differs may do observable work in the
+        // steady state this patch skips, so the patch stays off instead.
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var counts = new Dictionary<string, int>();
+            foreach (var instruction in code)
+            {
+                // Every MethodBase operand counts: call/callvirt, but also newobj, ldftn and
+                // jmp — a future body that grows a lambda or a redirect is a different body.
+                if (!(instruction.operand is MethodBase method)) continue;
+                string key = method.DeclaringType?.Name + "::" + method.Name;
+                counts.TryGetValue(key, out int n);
+                counts[key] = n + 1;
+            }
+            var expected = new Dictionary<string, int>
+            {
+                ["LogicBehaviour::FrameUpdate"] = 1,
+                ["TransitionManager::get_state"] = 3,
+                ["CanvasGroup::get_alpha"] = 2,
+                ["CanvasGroup::set_alpha"] = 1,
+                ["CanvasGroup::set_blocksRaycasts"] = 1,
+                ["Component::get_gameObject"] = 1,
+                ["GameObject::SetActive"] = 1,
+                ["Mathf::MoveTowards"] = 1,
+                ["Time::get_unscaledDeltaTime"] = 1,
+                ["Input::GetKeyDown"] = 2,
+                ["TransitionManager::TryGetNewTip"] = 1,
+            };
+            if (counts.Count == expected.Count)
+            {
+                bool all = true;
+                foreach (var kv in expected)
+                    all &= counts.TryGetValue(kv.Key, out int n) && n == kv.Value;
+                if (all) return true;
+            }
+            NativePerfPatch.Warn(ref _warned, "transition idle", "native FrameUpdate body changed");
+            return false;
+        }
+
+        // Runs before the body every frame. Deciding from the two live values alone means
+        // no bookkeeping of our own can drift from the game's: the option off, a missing
+        // CanvasGroup, or any surprise all fall through to the native body.
+        private static bool Prefix(TransitionManager __instance)
+        {
+            if (_disabled || !NativePerfOptions.TransitionIdle) return true;
+            try
+            {
+                var fade = __instance.screenFadeCg;
+                if (fade == null) return true;
+                if (__instance.state != TransitionManager.StateType.Normal) return true;
+                return fade.alpha != 0f;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transition idle", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    // SkillTrigger.OnStartClient runs on every client — host's local client and each
+    // participant — for every network spawn of a skill: the run-start burst equips six
+    // SkillTriggers per hero in one frame, and reward pedestals, identity memories and
+    // room reloads of ground skills each spawn more while playing. Every one of those
+    // spawns re-runs Resources.Load<GameObject>("WorldModels/Skill World Model"), a
+    // native asset lookup, before Instantiate. Resources.Load returns the same asset
+    // instance for the same path on every call, so remembering the first result and
+    // handing it back passes the identical GameObject reference into Instantiate and
+    // leaves the Instantiate / GetComponent / _worldModel assignment untouched. A null
+    // load (asset missing) is not cached, so the native code keeps hitting the same
+    // exception it would have hit anyway.
+    //
+    // Replacing the whole method with a Prefix would mean re-implementing the base
+    // Actor.OnStartClient / DewNetworkBehaviour.OnStartClient chain (child registration,
+    // OnCreate, delayed-start queue), so the transpiler swaps only the ldstr +
+    // Resources.Load<GameObject>(string) callsite. Prepare checks the native IL has
+    // exactly one such pair; a changed shape uninstalls just this fix with one warning.
+    [HarmonyPatch]
+    internal static class NativeSkillWorldModelLoadPerf
+    {
+        private const string WorldModelPath = "WorldModels/Skill World Model";
+        private static GameObject _cache;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(SkillTrigger), "OnStartClient", Type.EmptyTypes, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateCallsite(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int callsites = 0;
+            int loadIndex = -1;
+            for (int i = 0; i + 1 < code.Count; i++)
+            {
+                if (!IsWorldModelLoad(code[i], code[i + 1])) continue;
+                callsites++;
+                loadIndex = i + 1;
+            }
+            if (callsites != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load",
+                    "native OnStartClient load callsite changed or already patched");
+                return code;
+            }
+            code[loadIndex].operand = AccessTools.Method(
+                typeof(NativeSkillWorldModelLoadPerf), nameof(LoadCachedSkillWorldModel));
+            return code;
+        }
+
+        // The replacement keeps the same argument and return value and never changes the
+        // loaded value itself, so looking for exactly one ldstr+Load pair is enough.
+        private static bool ValidateCallsite(IList<CodeInstruction> code)
+        {
+            int pairs = 0;
+            for (int i = 0; i + 1 < code.Count; i++)
+                if (IsWorldModelLoad(code[i], code[i + 1])) pairs++;
+            if (pairs == 1) return true;
+            NativePerfPatch.Warn(ref _warned, "skill world model load", "native OnStartClient load callsite changed");
+            return false;
+        }
+
+        private static bool IsWorldModelLoad(CodeInstruction literal, CodeInstruction call)
+        {
+            if (literal.opcode != OpCodes.Ldstr || !Equals(literal.operand, WorldModelPath)) return false;
+            if (!(call.operand is MethodInfo called) || called.Name != "Load"
+                || called.DeclaringType == null || called.DeclaringType.Name != "Resources") return false;
+            return called.IsGenericMethod && called.GetGenericArguments().Length == 1
+                && called.GetGenericArguments()[0] == typeof(GameObject)
+                && called.GetParameters().Length == 1
+                && called.GetParameters()[0].ParameterType == typeof(string);
+        }
+
+        internal static GameObject LoadCachedSkillWorldModel(string path)
+        {
+            if (!NativePerfOptions.SkillWorldModelCache) return Resources.Load<GameObject>(path);
+            if (path != WorldModelPath)
+            {
+                NativePerfPatch.Warn(ref _warned, "skill world model load", "unexpected resource path; bypassing cache");
+                return Resources.Load<GameObject>(path);
+            }
+            GameObject cached = _cache;
+            if (cached != null) return cached;
+            cached = Resources.Load<GameObject>(path);
+            if (cached != null) _cache = cached;
+            return cached;
+        }
+    }
+
+    // EntityAbility.OnStartClient runs again every time the client-side spawn pool hands
+    // back a reused Actor (monsters, bosses, pickups — every pooled entity): the game's
+    // registered despawn handler makes Mirror reset the identity (clientStarted cleared),
+    // so the next spawn payload re-runs OnStartClient on the same component. Its body
+    // re-subscribes _synedAbilities.Callback += OnAbilityChanged and nothing ever
+    // unsubscribes (no OnStopClient override; the pool's identity reset does not touch
+    // sync-object callbacks), so every reuse of that instance adds one more duplicate
+    // handler that lives as long as the instance itself. From then on each ability
+    // add/remove the host syncs mid-run — pedestal skill swaps via HeroSkill.EquipSkill
+    // (an unequip + equip pair), ability removal when the trigger object dies — invokes
+    // OnAbilityChanged once per past reuse, on the guest's receive path and on the host
+    // alike, re-dispatching ClientEvent_OnAbilityAdded / Removed (native StatusEffect
+    // do-ability bookkeeping) and OnLocalHeroAbilityChanged (skill button refresh) the
+    // same number of times, with the invocation list growing for the whole session.
+    // The Prefix drops every subscription of exactly that handler before
+    // the original adds one back, leaving the single subscription a fresh instance has:
+    // each subscriber still sees the same event per operation, in the same order, with
+    // the same values — only the redundant repeats disappear, and handlers added by
+    // anyone else on the same dictionary are untouched. Pure reflection on the Callback
+    // backing field (the mod never names the Mirror dictionary types here), so a native
+    // shape change skips just this fix with one warning.
+    [HarmonyPatch]
+    internal static class NativeEntityAbilitySubscribeDedup
+    {
+        private static FieldInfo _synedAbilities;
+        private static FieldInfo _callbackField;
+        private static MethodInfo _onAbilityChanged;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(EntityAbility), "OnStartClient", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _onAbilityChanged = AccessTools.DeclaredMethod(typeof(EntityAbility), "OnAbilityChanged");
+                if (_onAbilityChanged == null || _onAbilityChanged.GetMethodBody() == null)
+                    throw new MissingMethodException(typeof(EntityAbility).Name, "OnAbilityChanged");
+                _synedAbilities = AccessTools.DeclaredField(typeof(EntityAbility), "_synedAbilities");
+                if (_synedAbilities == null)
+                    throw new MissingFieldException(typeof(EntityAbility).Name, "_synedAbilities");
+                _callbackField = AccessTools.Field(_synedAbilities.FieldType, "Callback");
+                if (_callbackField == null || !typeof(Delegate).IsAssignableFrom(_callbackField.FieldType))
+                    throw new MissingFieldException(_synedAbilities.FieldType.Name, "Callback");
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity ability subscription dedup", ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Prefix(EntityAbility __instance)
+        {
+            if (!NativePerfOptions.EntityAbilitySubscribeDedup) return;
+            try
+            {
+                var dict = _synedAbilities.GetValue(__instance);
+                if (dict == null) return;
+                var current = _callbackField.GetValue(dict) as Delegate;
+                if (current == null) return;
+                var list = current.GetInvocationList();
+                Delegate result = current;
+                bool removed = false;
+                for (int i = 0; i < list.Length; i++)
+                {
+                    var existing = list[i];
+                    if (ReferenceEquals(existing.Target, __instance) && Equals(existing.Method, _onAbilityChanged))
+                    {
+                        result = Delegate.Remove(result, existing);
+                        removed = true;
+                    }
+                }
+                if (removed) _callbackField.SetValue(dict, result);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity ability subscription dedup", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityAnimationLayerWeightIdlePerf
+    {
+        // EntityAnimation reads Animator.GetLayerWeight(1) unconditionally twice per frame —
+        // once in FrameUpdateAnimations to steer the ability layer's weight toward
+        // isPlaying ? 1 : 0, and again in LateUpdate to decide whether the spine rotation fix
+        // runs. Both are external Unity ICall traffic that runs for every awake, non-sleeping
+        // entity even while nothing plays, when the weight sits at its settled value forever.
+        // The Transpiler swaps each of those two callsites (one per method, ldarg.0 appended so
+        // the replacement can see the component) for a guard that only reaches the native
+        // getter while the weight can still move.
+        //
+        // Correctness: within the game's own code, layer 1 is written by exactly two places,
+        // both inside EntityAnimation — FrameUpdateAnimations' SetLayerWeight(1,
+        // MoveTowards(actual, isPlaying ? 1 : 0, ...)) (which stops writing once it reaches
+        // that target, a fixed point of MoveTowards) and UserCode_RpcPlayAbilityAnimation's
+        // SetLayerWeight(1, 1f), always preceded by abilityAnimStatus.isPlaying = true in the
+        // same method body. While the cached value differs from the target the guard reads the
+        // real weight (the transition is live, so the getter runs exactly as often as the
+        // original) and records it; once the recorded value equals the target the weight
+        // cannot move again without the target changing first, so returning the recorded value
+        // is indistinguishable from reading it. LateUpdate runs after FrameUpdate's guard saw
+        // the same frame. A new Animator instance gets a NaN box (NaN == target is false),
+        // forcing one real read, so model swaps re-sync themselves.
+        //
+        // Writes that bypass the guard are handled by NativeEntityAnimationLayerWeightReset:
+        // the ability-animation RPC can flip isPlaying back to false before the same frame's
+        // layer-weight read (FrameUpdateAnimations clears it early on !entity.isActive, a clip
+        // no longer than one frame's deltaTime, or the walk-cancel grace), Animator.Rebind
+        // resets layer weights to the controller defaults, and assigning
+        // runtimeAnimatorController rebinds internally (InitAnimator does that on every
+        // SetupModel). Each gets a Postfix that NaNs the box (Invalidate below). GameObject
+        // disable/re-enable needs no hook: InitAnimator itself forces
+        // keepAnimatorStateOnDisable = true on the tracked animator, so its weights survive.
+        // Third-party mods writing layer 1 outside these paths would still not be seen while
+        // idle; the nativeEntityAnimLayerWeightIdle option turns the guard off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static readonly ConditionalWeakTable<Animator, StrongBox<float>> Weights =
+            new ConditionalWeakTable<Animator, StrongBox<float>>();
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(2);
+            var frame = NativePerfPatch.Find(typeof(EntityAnimation), "FrameUpdateAnimations", ref _warned);
+            if (frame != null && !frame.IsStatic) targets.Add(frame);
+            var late = NativePerfPatch.Find(typeof(EntityAnimation), "LateUpdate", ref _warned);
+            if (late != null && !late.IsStatic) targets.Add(late);
+            _targets = targets.ToArray();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var getter = AccessTools.Method(typeof(Animator), nameof(Animator.GetLayerWeight));
+            int site = -1, count = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(getter)) { site = i; count++; }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle",
+                    original.Name + ": GetLayerWeight callsite changed or already patched");
+                return code;
+            }
+            code.Insert(site, new CodeInstruction(OpCodes.Ldarg_0));
+            code[site + 1].opcode = OpCodes.Call;
+            code[site + 1].operand = AccessTools.Method(typeof(NativeEntityAnimationLayerWeightIdlePerf), nameof(GetWeight));
+            return code;
+        }
+
+        private static float GetWeight(Animator animator, int layer, EntityAnimation instance)
+        {
+            if (layer != 1 || _disabled || !NativePerfOptions.EntityAnimationLayerWeightIdle
+                || animator == null || instance == null)
+                return animator.GetLayerWeight(layer);
+            try
+            {
+                float target = instance.abilityAnimStatus.isPlaying ? 1f : 0f;
+                var box = Weights.GetValue(animator, static _ => new StrongBox<float>(float.NaN));
+                float cached = box.Value;
+                if (cached == target) return cached;
+                float actual = animator.GetLayerWeight(1);
+                box.Value = actual;
+                return actual;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight idle", ex.Message);
+                return animator.GetLayerWeight(layer);
+            }
+        }
+
+        // NaN the box (NaN equals no target) so the next guard read is a real read.
+        // Called after writes that bypass the guard; see NativeEntityAnimationLayerWeightReset.
+        internal static void Invalidate(Animator animator)
+        {
+            if (animator == null) return;
+            if (Weights.TryGetValue(animator, out var box)) box.Value = float.NaN;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityAnimationLayerWeightReset
+    {
+        // Companion to NativeEntityAnimationLayerWeightIdlePerf: the guard there trusts "the
+        // weight cannot move while the recorded value equals the target", and three paths can
+        // break that premise without going through the guard. Each gets a Postfix that calls
+        // NativeEntityAnimationLayerWeightIdlePerf.Invalidate on the affected animator, so the
+        // next guard read is a real read and the weight re-syncs (or decays) exactly like the
+        // unpatched body:
+        // - UserCode_RpcPlayAbilityAnimation writes SetLayerWeight(1, 1f) directly, and the
+        //   same frame's FrameUpdateAnimations can flip isPlaying back to false BEFORE its
+        //   layer-weight read (the decompiled body clears isPlaying early on a non-finite
+        //   elapsed/normalized time, on elapsedTime >= duration || !entity.isActive, and on
+        //   the walk-cancel grace), which would otherwise leave the real weight at 1 while the
+        //   box already matches the 0 target forever.
+        // - Animator.Rebind() resets every layer weight to the controller's defaults.
+        // - Assigning Animator.runtimeAnimatorController rebinds internally; EntityAnimation's
+        //   own InitAnimator does that on every SetupModel (model swaps included).
+        // GameObject disable/re-enable is deliberately not hooked: InitAnimator forces
+        // keepAnimatorStateOnDisable = true on exactly the animator being tracked, so its
+        // weights survive re-enabling, and Animator exposes no managed OnEnable to patch.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(3);
+            var play = FindByName(typeof(EntityAnimation),
+                "UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single");
+            if (play != null) targets.Add(play);
+            var rebind = FindByName(typeof(Animator), "Rebind");
+            if (rebind != null) targets.Add(rebind);
+            try
+            {
+                var setController = AccessTools.PropertySetter(typeof(Animator), "runtimeAnimatorController");
+                if (setController == null || setController.GetMethodBody() == null)
+                    NativePerfPatch.Warn(ref _warned, "Animator.runtimeAnimatorController", "native method unavailable");
+                else
+                    targets.Add(setController);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight reset", ex.Message);
+            }
+            _targets = targets.ToArray();
+            return _targets.Length > 0;
+        }
+
+        // The game's RpcPlayAbilityAnimation user code takes (DewAnimationClip, int, float)
+        // and Rebind comes in a public Rebind() plus private Rebind(bool) pair, so resolve
+        // both by name alone and take whichever managed overload exists.
+        private static MethodBase FindByName(Type type, string method)
+        {
+            try
+            {
+                MethodBase found = null;
+                foreach (var candidate in type.GetMethods(BindingFlags.Instance
+                         | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                {
+                    if (candidate.IsStatic || candidate.Name != method || candidate.GetMethodBody() == null)
+                        continue;
+                    found = candidate;
+                    if (candidate.GetParameters().Length > 0) break; // the parameterful overload when both exist
+                }
+                if (found == null)
+                    NativePerfPatch.Warn(ref _warned, type.Name + "." + method, "native method unavailable");
+                return found;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, type.Name + "." + method, ex.Message);
+                return null;
+            }
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(object __instance)
+        {
+            try
+            {
+                if (__instance is EntityAnimation entityAnimation)
+                    NativeEntityAnimationLayerWeightIdlePerf.Invalidate(entityAnimation.animator);
+                else if (__instance is Animator animator)
+                    NativeEntityAnimationLayerWeightIdlePerf.Invalidate(animator);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity animation layer weight reset", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityOwnerSyncVarPerf
+    {
+        // Entity.owner は Mirror 生成の SyncVar 参照で、getter は GetSyncVarNetworkBehaviour
+        // (____ownerNetId, ref _owner) を通る。この Mirror の実装はホスト（isServer）では
+        // SetSyncVarNetworkBehaviour が書いた _owner をそのまま返す O(1) だが、純クライアント
+        // （参加者）では NetworkClient.spawned の辞書引きと NetworkBehaviours[componentIndex]
+        // の配列アクセスとキャストを呼び出しごとにやり直して _owner に書き戻すだけで、
+        // 読み取りは決してキャッシュから返らない。
+        //
+        // owner はゲストでも毎フレームの経路から触られる: UI_HealthBar_Simple.LateUpdate が
+        // 表示中の簡易ヘルスバーごとに DewPlayer.local.GetTeamRelation(target) →
+        // target.owner を読み、ミニマップの項目 (UI_InGame_Map_Item_Entity.OnSetup) と
+        // 画面外インジケータの定期処理も GetTeamRelation 経由で owner を読む。MOD 側も
+        // 撃破ごとの GetRelation で読む。エンティティが多い部屋では参加者で毎フレーム
+        // 数十〜百回超の辞書引きになる（回数は推定）。
+        //
+        // Prefix は純クライアントのときだけ、解決済みの _owner が今の ____ownerNetId と
+        // 一致するならそれをそのまま返す。一致の判定は (netId, componentIndex) の比較で、
+        // netId はスポーン中の NetworkIdentity の間だけ一意（Mirror は despawn で
+        // DestroyGameObject か Reset() の netId=0 化のどちらかを必ず行う。Mirror.dll の
+        // NetworkClient.DestroyObject / NetworkIdentity.OnDestroy で確認）、componentIndex は
+        // InitializeNetworkBehaviours が NetworkBehaviours の添字と同じ値を入れるため、
+        // 一致するなら元の実装が返すオブジェクトと同一である。未解決・所有者の despawn・
+        // ID 変化のときは判定が偽になり本体に任せて解決させる（結果は本体と同じ）。
+        // ホストは対象外（本体がすでに O(1)）。設定 DreamforgeConfig の
+        // nativeEntityOwnerClientFast（既定は有効）で切れる。フィールドの形が違うときは
+        // Prepare で1回だけ警告を出してこの修正だけ外れる（fail-soft）。
+        private static Func<Entity, DewPlayer> _ownerGetter;
+        private static Func<Entity, NetworkBehaviourSyncVar> _netIdGetter;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = AccessTools.PropertyGetter(typeof(Entity), "owner");
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity owner client fast path", "Entity.owner getter unavailable");
+                return false;
+            }
+            try
+            {
+                _ownerGetter = FieldReader<DewPlayer>(AccessTools.Field(typeof(Entity), "_owner"));
+                _netIdGetter = FieldReader<NetworkBehaviourSyncVar>(AccessTools.Field(typeof(Entity), "____ownerNetId"));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity owner client fast path", ex.Message);
+                return false;
+            }
+        }
+
+        private static Func<Entity, T> FieldReader<T>(FieldInfo field)
+        {
+            if (field == null)
+                throw new MissingMemberException(typeof(Entity).Name + " owner syncvar field unavailable");
+            var p = Expression.Parameter(typeof(Entity));
+            return Expression.Lambda<Func<Entity, T>>(Expression.Field(p, field), p).Compile();
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Entity __instance, ref DewPlayer __result)
+        {
+            if (!NativePerfOptions.EntityOwnerClientFast) return true;
+            if (__instance.netIdentity == null || __instance.isServer || !__instance.isClient) return true;
+            DewPlayer cached = _ownerGetter(__instance);
+            if (cached == null) return true;
+            NetworkBehaviourSyncVar syncId = _netIdGetter(__instance);
+            if (syncId.netId == 0
+                || cached.netId != syncId.netId
+                || cached.ComponentIndex != syncId.componentIndex) return true;
+            __result = cached;
+            return false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeProjectileTargetSyncVarPerf
+    {
+        // Projectile.Network_targetEntity の getter は Entity.owner と同じ Mirror 生成の
+        // SyncVar 参照で、ホスト（isServer）では SetSyncVarNetworkBehaviour が書いた
+        // _targetEntity をそのまま返す O(1) だが、純クライアント（参加者）では
+        // NetworkClient.spawned の辞書引きと NetworkBehaviours[componentIndex] の配列
+        // アクセスとキャストを呼び出しごとにやり直す。
+        //
+        // 標的追尾（entity mode）の弾は参加者でもロジックティック（約30Hz）ごとに読む:
+        // Projectile.LogicUpdate → StandardProjectile.PositionSolver →
+        // GetTargetWorldPosition() → targetEntity で、rotationType が Target の弾は
+        // RotationSolver でもう1回読む。追尾弾は基本攻撃のほとんど（攻撃対象のある
+        // AttackProjectile）と魔物の射撃で、魔物が多い部屋では参加者で毎秒数百〜数千回、
+        // 前ティックと同じ解決を辞書からやり直す。値は OnPrepare で1回設定され
+        // OnDisable で解除されるだけで飛行中に変わらない。
+        //
+        // Prefix は純クライアントのときだけ、解決済みの _targetEntity が今の
+        // ____targetEntityNetId と一致するならそれをそのまま返す。一致の判定は
+        // (netId, componentIndex) の比較で、NativeEntityOwnerSyncVarPerf と同じ根拠で
+        // 等価である: netId は生きている NetworkIdentity の間だけ一意で、Mirror は
+        // クライアント側の削除で必ず GameObject の破壊（Unity-null 化）か Reset() による
+        // netId=0 化のどちらかを行う（Mirror.dll の NetworkClient.DestroyObject —
+        // unspawn handler 経路は Reset、生成プレハブ経路は Object.Destroy、シーン配置
+        // 経路は非アクティブ化+Reset — を確認。破壊なしの除外はホストクライアントの
+        // OnHostClientObjectDestroy だけで、isServer の除外で対象外）。
+        // componentIndex は InitializeNetworkBehaviours が NetworkBehaviours の添字と同じ
+        // 値を入れるため、一致するなら元の実装が返すオブジェクトと同一である。
+        // 標的の despawn 後は Unity-null（本体が解決して辞書にないので null）か
+        // netId=0（不一致で本体に任せる）のどちらかで、本体と同じ結果になる。
+        // 飛行中の再設定（同期での標的変更）は netId か componentIndex が変わるので
+        // 不一致になり、本体が解決する。ホストは対象外（本体がすでに O(1)）。
+        // 設定 DreamforgeConfig の nativeProjectileTargetClientFast（既定は有効）で
+        // 切れる。フィールドや getter の形が違うときは Prepare で1回だけ警告を出して
+        // この修正だけ外れる（fail-soft）。
+        private static Func<Projectile, Entity> _targetGetter;
+        private static Func<Projectile, NetworkBehaviourSyncVar> _netIdGetter;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = AccessTools.PropertyGetter(typeof(Projectile), "Network_targetEntity");
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "projectile target client fast path", "Projectile.Network_targetEntity getter unavailable");
+                return false;
+            }
+            try
+            {
+                _targetGetter = FieldReader<Entity>(AccessTools.Field(typeof(Projectile), "_targetEntity"));
+                _netIdGetter = FieldReader<NetworkBehaviourSyncVar>(AccessTools.Field(typeof(Projectile), "____targetEntityNetId"));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "projectile target client fast path", ex.Message);
+                return false;
+            }
+        }
+
+        private static Func<Projectile, T> FieldReader<T>(FieldInfo field)
+        {
+            if (field == null)
+                throw new MissingMemberException(typeof(Projectile).Name + " target syncvar field unavailable");
+            var p = Expression.Parameter(typeof(Projectile));
+            return Expression.Lambda<Func<Projectile, T>>(Expression.Field(p, field), p).Compile();
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Projectile __instance, ref Entity __result)
+        {
+            if (!NativePerfOptions.ProjectileTargetClientFast) return true;
+            if (__instance.netIdentity == null || __instance.isServer || !__instance.isClient) return true;
+            Entity cached = _targetGetter(__instance);
+            if (cached == null) return true;
+            NetworkBehaviourSyncVar syncId = _netIdGetter(__instance);
+            if (syncId.netId == 0
+                || cached.netId != syncId.netId
+                || cached.ComponentIndex != syncId.componentIndex) return true;
+            __result = cached;
+            return false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeMonsterBossPoolLogPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Monster), "SelectAbilityPool", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            if (!NativePerfOptions.BossPoolSpawnLog) return code;
+            // Native shape (r1.4.1.2 IL checked): ldarg.0 / isinst BossMonster / brfalse <after log>
+            // / [string[7] array, String.Format x2, ternaries with their own internal branches,
+            // String.Join (boxes every element), String.Concat] / Debug.Log(obj). The log only
+            // reports the picked ability pool. Making the isinst always false keeps the branch
+            // taken for every monster, so the log string is never built and the log never runs,
+            // while the branch target (AssignTriggerInstancesToCurrentPool) and the pool pick
+            // stay identical for bosses and non-bosses alike.
+            //
+            // The guarded range is located by its guard (ldarg.0 / isinst BossMonster / brfalse)
+            // and vetted by what its instructions may do — the shipped body branches inside the
+            // range (the message's ternaries), so an exact-ending match like the one this patch
+            // used before r1.4.1.2 rejects the native shape itself and disables the skip. Reads
+            // (fields, 0-argument property getters, ToString, equality operators), string
+            // assembly (String.Format/Join/Concat) and Debug.Log* calls are all it may contain;
+            // no writes to fields or statics, no allocations, no pointer stores, no control
+            // leaving the range (every branch inside stays inside or lands on its merge label,
+            // nothing outside jumps in, no ret/throw), and no local it stores may be read after
+            // the range — so skipping the range removes only diagnostics a boss spawn would
+            // otherwise print. A third-party transpiler that adds an unvetted call inside the
+            // range fails the whitelist and leaves the method untouched with one warning.
+            if (!FindBossLogGuard(code, out int isinstSite, out string reason))
+            {
+                NativePerfPatch.Warn(ref _warned, "boss pool log", reason);
+                return code;
+            }
+            code[isinstSite - 1].opcode = OpCodes.Nop;
+            code[isinstSite].opcode = OpCodes.Ldc_I4_0;
+            code[isinstSite].operand = null;
+            return code;
+        }
+
+        private static bool FindBossLogGuard(List<CodeInstruction> code, out int isinstSite, out string reason)
+        {
+            isinstSite = -1;
+            reason = null;
+            int found = -1;
+            for (int i = 1; i < code.Count - 1; i++)
+            {
+                if (code[i].opcode != OpCodes.Isinst || code[i].operand is not Type guard || guard != typeof(BossMonster)) continue;
+                if (code[i - 1].opcode != OpCodes.Ldarg_0 || code[i + 1].opcode != OpCodes.Brfalse) continue;
+                if (code[i + 1].operand is not Label skip) continue;
+                int end = -1;
+                for (int j = i + 2; j < code.Count; j++)
+                    if (code[j].labels.Contains(skip)) { end = j; break; }
+                if (end < 0) continue;
+                if (!IsLoggingOnlyRange(code, i + 2, end, out string why))
+                {
+                    if (reason == null) reason = why;
+                    continue;
+                }
+                if (found >= 0)
+                {
+                    isinstSite = -1;
+                    reason = "native [BossPool] guard block is ambiguous";
+                    return false;
+                }
+                found = i;
+                isinstSite = i;
+            }
+            if (found < 0)
+            {
+                reason ??= "native [BossPool] log guard not found";
+                return false;
+            }
+            return true;
+        }
+
+        // [start, end) が「ログ文字列の組み立てと出力」だけをしている範囲か。許すのは
+        // 読み取り（ldfld/ldsfld、引数0の get_、ToString、等値演算子）、String の文字列
+        // 組み立て、Debug の Log 系呼び出し。状態を書く命令、確保、間接書き込み、範囲の
+        // 外へ出る制御、範囲の後で読まれるローカルへの書き込みが1つでもあれば偽。
+        private static bool IsLoggingOnlyRange(List<CodeInstruction> code, int start, int end, out string why)
+        {
+            why = null;
+            int stringCalls = 0;
+            var storedLocals = new HashSet<int>();
+            for (int i = start; i < end; i++)
+            {
+                var insn = code[i];
+                if (insn.opcode == OpCodes.Ret || insn.opcode == OpCodes.Jmp || insn.opcode == OpCodes.Throw
+                    || insn.opcode == OpCodes.Rethrow || insn.opcode == OpCodes.Leave || insn.opcode == OpCodes.Leave_S
+                    || insn.opcode == OpCodes.Endfinally)
+                {
+                    why = "guarded range leaves control (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.opcode == OpCodes.Stfld || insn.opcode == OpCodes.Stsfld
+                    || insn.opcode == OpCodes.Newobj || insn.opcode == OpCodes.Calli
+                    || insn.opcode == OpCodes.Starg || insn.opcode == OpCodes.Starg_S
+                    || insn.opcode == OpCodes.Stind_Ref || insn.opcode == OpCodes.Stind_I || insn.opcode == OpCodes.Stind_I1
+                    || insn.opcode == OpCodes.Stind_I2 || insn.opcode == OpCodes.Stind_I4 || insn.opcode == OpCodes.Stind_I8
+                    || insn.opcode == OpCodes.Stind_R4 || insn.opcode == OpCodes.Stind_R8 || insn.opcode == OpCodes.Stobj
+                    || insn.opcode == OpCodes.Ldflda || insn.opcode == OpCodes.Ldsflda
+                    || insn.opcode == OpCodes.Ldftn || insn.opcode == OpCodes.Ldvirtftn)
+                {
+                    why = "guarded range writes state or takes an address (" + insn.opcode.Name + ")";
+                    return false;
+                }
+                if (insn.operand is MethodInfo method)
+                {
+                    if ((insn.opcode != OpCodes.Call && insn.opcode != OpCodes.Callvirt)
+                        || !IsLoggingCall(method, ref stringCalls))
+                    {
+                        why = "guarded range calls " + (method.DeclaringType?.Name ?? "?") + "." + method.Name;
+                        return false;
+                    }
+                    continue;
+                }
+                if (insn.opcode == OpCodes.Stloc || insn.opcode == OpCodes.Stloc_S)
+                {
+                    if (insn.operand is LocalBuilder stored) storedLocals.Add(stored.LocalIndex);
+                    continue;
+                }
+                if (insn.opcode.Value >= OpCodes.Stloc_0.Value && insn.opcode.Value <= OpCodes.Stloc_3.Value)
+                {
+                    storedLocals.Add(insn.opcode.Value - OpCodes.Stloc_0.Value);
+                    continue;
+                }
+            }
+            if (stringCalls == 0)
+            {
+                why = "guarded range assembles no string";
+                return false;
+            }
+            // 範囲の中の分岐は範囲の中（または直後の合流点）へ。外からの中への飛び込みは不可。
+            var labelIndex = new Dictionary<Label, int>();
+            for (int i = 0; i < code.Count; i++)
+                foreach (var label in code[i].labels)
+                    if (!labelIndex.ContainsKey(label)) labelIndex.Add(label, i);
+            for (int i = 0; i < code.Count; i++)
+            {
+                bool inside = i >= start && i < end;
+                if (code[i].operand is Label target && labelIndex.TryGetValue(target, out int at))
+                {
+                    if (inside ? (at < start || at > end) : (at >= start && at < end))
+                    {
+                        why = "guarded range branch crosses its boundary";
+                        return false;
+                    }
+                }
+                else if (code[i].operand is Label[] targets)
+                {
+                    foreach (var item in targets)
+                        if (labelIndex.TryGetValue(item, out int jump))
+                        {
+                            if (inside ? (jump < start || jump > end) : (jump >= start && jump < end))
+                            {
+                                why = "guarded range branch crosses its boundary";
+                                return false;
+                            }
+                        }
+                }
+            }
+            // 範囲が書いたローカルを範囲の後で読んだら、飛ばすと後続の動作が変わる。
+            for (int i = end; i < code.Count; i++)
+            {
+                int index = LocalIndex(code[i]);
+                if (index >= 0 && storedLocals.Contains(index))
+                {
+                    why = "guarded range stores a local read afterwards";
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static int LocalIndex(CodeInstruction insn)
+        {
+            if (insn.operand is LocalBuilder local
+                && (insn.opcode == OpCodes.Ldloc || insn.opcode == OpCodes.Ldloc_S
+                    || insn.opcode == OpCodes.Ldloca || insn.opcode == OpCodes.Ldloca_S))
+                return local.LocalIndex;
+            if (insn.opcode.Value >= OpCodes.Ldloc_0.Value && insn.opcode.Value <= OpCodes.Ldloc_3.Value)
+                return insn.opcode.Value - OpCodes.Ldloc_0.Value;
+            return -1;
+        }
+
+        private static bool IsLoggingCall(MethodInfo method, ref int stringCalls)
+        {
+            var declaring = method.DeclaringType;
+            if (declaring == typeof(string))
+            {
+                if (method.Name == "Format" || method.Name == "Join" || method.Name == "Concat")
+                {
+                    stringCalls++;
+                    return true;
+                }
+                return false;
+            }
+            if (declaring == typeof(Debug))
+                return method.Name.StartsWith("Log", StringComparison.Ordinal);
+            if (method.Name == "ToString" && method.GetParameters().Length == 0) return true;
+            if (method.Name.StartsWith("get_", StringComparison.Ordinal)
+                && method.GetParameters().Length == 0 && method.ReturnType != typeof(void)) return true;
+            if (method.Name == "op_Equality" || method.Name == "op_Inequality") return true;
+            return false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomPrewarmResolveOncePerf
+    {
+        // RoomMonsters.ApplyPrewarm runs on every client that receives the room's prewarm
+        // list — the RpcPrewarm broadcast at room start and the TpcReplayPrewarm a
+        // mid-join guest gets once its hero exists — and resolves every entry's prefab
+        // twice: pass one collects the resolved prefabs into the keep set handed to
+        // ReleaseInactivePoolsExcept, pass two re-resolves the exact same
+        // (assetId, ownerNetId) pairs to accumulate the SpawnManager.Prewarm counts.
+        // One resolve walks several DewResources dictionaries, Mirror's spawned-object
+        // lookup and a VariantDef computation (plus, the first time a variant is fresh,
+        // a synchronous Addressables load and a full prefab Instantiate), and the result
+        // is deterministic per entry, so pass two repeats identical work that nothing
+        // can observe. ReleaseInactivePoolsExcept and AgeAndDropInactivePools only touch
+        // SpawnManager and Fx pools, never the DewResources variant prefabs themselves,
+        // so resolving once up front and filling the keep set and the count dictionary
+        // in the same pass yields the same keep set, the same totals and the same
+        // Prewarm order (dictionary insertion order, no removals in either version).
+        // Guests run this once per room for the whole run.
+        private static Func<object, uint> _assetId, _ownerNetId;
+        private static Func<object, int> _count;
+        private static Func<uint, uint, GameObject> _resolve;
+        private static Action<HashSet<GameObject>> _releaseExcept;
+        private static Action _ageAndDrop;
+        private static Action<GameObject, int> _prewarm;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                // Name-only lookups: the mod never references these native classes, and
+                // TypeByName resolves the harness stand-ins in tests exactly like the
+                // real classes in the game (RoomPrewarmResolveOncePerfBoundary.cs
+                // reproduces the shipped signatures — static-ness included — so Prepare
+                // passes there and RoomPrewarmResolveOncePerfTests drives this Prefix
+                // against the transcribed two-loop original).
+                var monsters = AccessTools.TypeByName("RoomMonsters");
+                if (monsters == null) throw new MissingMemberException("RoomMonsters unavailable");
+                var entry = monsters.GetNestedType("PrewarmEntry");
+                if (entry == null) throw new MissingMemberException("RoomMonsters.PrewarmEntry unavailable");
+                _target = AccessTools.DeclaredMethod(monsters, "ApplyPrewarm", new[] { entry.MakeArrayType() });
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException("RoomMonsters.ApplyPrewarm unavailable");
+                _assetId = CreateEntryReader<uint>(entry, "assetId");
+                _ownerNetId = CreateEntryReader<uint>(entry, "ownerNetId");
+                _count = CreateEntryReader<int>(entry, "count");
+                _resolve = AccessTools.MethodDelegate<Func<uint, uint, GameObject>>(
+                    AccessTools.Method(monsters, "ResolveClientPrewarmPrefab", new[] { typeof(uint), typeof(uint) })
+                        ?? throw new MissingMemberException("RoomMonsters.ResolveClientPrewarmPrefab unavailable"));
+                _releaseExcept = AccessTools.MethodDelegate<Action<HashSet<GameObject>>>(
+                    AccessTools.Method(AccessTools.TypeByName("SpawnManager"), "ReleaseInactivePoolsExcept", new[] { typeof(HashSet<GameObject>) })
+                        ?? throw new MissingMemberException("SpawnManager.ReleaseInactivePoolsExcept unavailable"));
+                _ageAndDrop = AccessTools.MethodDelegate<Action>(
+                    AccessTools.Method(AccessTools.TypeByName("DewEffect"), "AgeAndDropInactivePools")
+                        ?? throw new MissingMemberException("DewEffect.AgeAndDropInactivePools unavailable"));
+                var prewarm = AccessTools.Method(AccessTools.TypeByName("SpawnManager"), "Prewarm")
+                    ?? throw new MissingMemberException("SpawnManager.Prewarm unavailable");
+                if (!prewarm.IsGenericMethodDefinition)
+                    throw new MissingMemberException("SpawnManager.Prewarm is not generic");
+                _prewarm = AccessTools.MethodDelegate<Action<GameObject, int>>(prewarm.MakeGenericMethod(typeof(GameObject)));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room monsters prewarm resolve", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, T> CreateEntryReader<T>(Type entryType, string fieldName)
+        {
+            var field = AccessTools.Field(entryType, fieldName);
+            if (field == null || field.FieldType != typeof(T))
+                throw new MissingMemberException(entryType.Name + "." + fieldName + " unavailable");
+            var instance = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, T>>(
+                Expression.Field(Expression.Convert(instance, entryType), field), instance).Compile();
+        }
+
+        private static bool Prefix(object __0)
+        {
+            if (!NativePerfOptions.RoomPrewarmResolveOnce) return true;
+            bool sideEffectsStarted = false;
+            try
+            {
+                var array = (Array)__0;
+                var keep = new HashSet<GameObject>();
+                var counts = new Dictionary<GameObject, int>();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    object entry = array.GetValue(i);
+                    GameObject prefab = _resolve(_assetId(entry), _ownerNetId(entry));
+                    if (prefab == null) continue;
+                    keep.Add(prefab);
+                    counts.TryGetValue(prefab, out int total);
+                    counts[prefab] = total + _count(entry);
+                }
+                sideEffectsStarted = true;
+                _releaseExcept(keep);
+                _ageAndDrop();
+                foreach (KeyValuePair<GameObject, int> item in counts)
+                    _prewarm(item.Key, item.Value);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room monsters prewarm resolve", ex.Message);
+                // Once pool work starts, retrying vanilla would repeat release, age and prewarm.
+                return !sideEffectsStarted;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeHeroKnockoutHealthIdlePerf
+    {
+        // While a hero is knocked out, Se_HeroKnockedOut pins its victim's health with
+        // SetHealth(0.01f) on every logic tick, and EntityStatus.LogicUpdate (priority
+        // -300, one bucket before the -200 status-effect tick) still applies healthRegen
+        // to the knocked-out hero in integer chunks. Whenever a chunk lands, the host
+        // raises the _currentHealth dirty bit (0x80) twice — the chunk write, then the
+        // pin's reset — so the next sync serializes currentHealth to every observer even
+        // though the value it carries is the same 0.01f the pin leaves between ticks:
+        // Mirror broadcasts between logic ticks, and the pin is the last write of every
+        // tick, so a chunk can never be caught mid-tick and the sent float is always the
+        // 0.01f the observers already hold. The same holds for a heal that lands inside
+        // the tick on the untargetable hero: it is transient, wiped by the pin before the
+        // tick ends, and its only wire trace is that same redundant 0.01f.
+        //
+        // This patch clears the _currentHealth dirty bit after the pin's tick, but only
+        // when the pending change is provably empty:
+        // - The observers must already hold 0.01f. The prefix re-earns the "delivered" mark
+        //   only at ticks whose entry has the bit clear — every earlier raise was consumed
+        //   by a real send, so the value at entry is exactly what the observers hold — and
+        //   whose entry value is the pin's own 0.01f. Until such a tick is seen (right
+        //   after creation, after a revive) the bit is left alone, so the knocked-out
+        //   hero's 0.01f still reaches everyone like vanilla. A mid-join observer's
+        //   baseline comes from the force-all spawn snapshot, which this patch never
+        //   touches.
+        // - The delivered mark must be fresh. Mirror's send (ClearAllDirtyBits) consumes
+        //   the dirty bits and advances NetworkBehaviour.lastSyncTime in the same step, so
+        //   a bit that is set at entry while lastSyncTime moved on since this patch's
+        //   previous look belongs to a raise that landed after that send (a health-regen
+        //   chunk of the earlier bucket, a between-ticks heal). What the observers hold is
+        //   then whatever that send carried — possibly a non-pin value — so the stale
+        //   delivered mark is dropped and the raise keeps its send; the mark is re-earned
+        //   only at the next clear-entry tick. Without this check a heal that reached the
+        //   observers between ticks would be followed by its chunk raising the bit, the
+        //   stale mark would suppress the pin's convergence, and the observers would keep
+        //   the heal's value for the rest of the knockout.
+        // - No write-back may still be waiting for its send. Mirror throttles broadcasts
+        //   by syncInterval, so a bit that is set when the pin's tick begins is not proof
+        //   of a non-pin change: it may be the previous tick's own convergence reset that
+        //   no send has consumed yet. When the postfix sees the bit clear at entry and
+        //   set at exit, it marks the effect "converging", and that mark keeps blocking
+        //   the skip until a prefix sees the bit clear again — which only a real send
+        //   produces. After a between-ticks change (a heal applied outside the tick
+        //   order) reaches the observers, the pin's reset is their only convergence back
+        //   to 0.01f, so it goes out exactly as vanilla sends it, even across runs of
+        //   send-thinned ticks.
+        // - The health must still be the pin's exact 0.01f at the end of the tick.
+        //   Anything else — a revive landing in a later bucket of the same tick, the
+        //   negative-regen kill through the LogicUpdate death check, a vanished victim —
+        //   keeps its value and its dirty bit exactly as vanilla raised them.
+        // The bit is masked through Mirror's syncVarDirtyBits property and lastSyncTime is
+        // only read, so every sync var bit, every SyncList and Mirror's own sync pacing
+        // stay untouched. The health bit is read from the Network_currentHealth setter's
+        // IL like NativeStatsRatioIdlePerf does. Host-side values, heals and the death
+        // check see exactly what vanilla computes — only identical floats stop reaching
+        // the wire (nativeHeroKnockoutHealthIdle turns the skip off).
+        //
+        // The per-effect knowledge lives in one ConditionalWeakTable entry: the two marks
+        // above, the lastSyncTime value seen at the previous tick and the current tick's
+        // entry-bit state (recorded by the prefix, read by the postfix of the same tick —
+        // Harmony's only pass-through channel is the single __state flag, so the entry
+        // observation travels with the effect, not the patch signature). The entry is
+        // created on the effect's first host-side tick and never per tick, so the steady
+        // state allocates nothing.
+        private sealed class EffectState
+        {
+            public bool Delivered;
+            public bool Converging;
+            public bool EntryClear;
+            public double LastSync;
+        }
+        private static readonly ConditionalWeakTable<object, EffectState> States =
+            new ConditionalWeakTable<object, EffectState>();
+        private static MethodBase _target;
+        private static Func<EntityStatus, float> _currentHealth;
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static Func<Mirror.NetworkBehaviour, double> _lastSync;
+        private static ulong _healthBit;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare() => TryPrepare("Se_HeroKnockedOut");
+
+        // Split out with the type name as an argument (same shape as
+        // NativeChaosShrineHitScanPerf.TryPrepare) so the tests can point the same wiring
+        // at their stand-in class and at a missing name (the fail-soft path). TypeByName
+        // like the other native patches: the mod never references this native class, and
+        // the name resolves stand-ins in tests exactly like the real class in the game.
+        internal static bool TryPrepare(string effectTypeName)
+        {
+            if (_disabled) return false;
+            if (_target != null) return true;
+            _disabled = true;
+            try
+            {
+                var effect = AccessTools.TypeByName(effectTypeName);
+                if (effect == null) throw new MissingMemberException(effectTypeName + " unavailable");
+                _target = AccessTools.DeclaredMethod(effect, "ActiveLogicUpdate", new[] { typeof(float) });
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException(effectTypeName + ".ActiveLogicUpdate unavailable");
+                var setter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentHealth");
+                if (setter == null || setter.GetMethodBody() == null)
+                    throw new MissingMemberException("EntityStatus.Network_currentHealth setter unavailable");
+                _healthBit = ExtractDirtyBit(setter);
+                if (_healthBit == 0UL) return false;
+                var getter = AccessTools.PropertyGetter(typeof(EntityStatus), "currentHealth");
+                if (getter == null) throw new MissingMemberException("EntityStatus.currentHealth getter unavailable");
+                _currentHealth = (Func<EntityStatus, float>)Delegate.CreateDelegate(
+                    typeof(Func<EntityStatus, float>), getter);
+                if (!ResolveBitAccess()) return false;
+                if (!ResolveLastSyncAccess()) return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The weaver's setter embeds its dirty bit as the call's only long constant
+        // (GeneratedSyncVarSetter(value, ref field, <bit>, null)); reading it from the IL
+        // keeps the clear mask bound to the same constant SerializeSyncVars writes.
+        private static ulong ExtractDirtyBit(System.Reflection.MethodInfo setter)
+        {
+            ulong found = 0UL;
+            int count = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(setter))
+            {
+                if (insn.opcode != OpCodes.Ldc_I8) continue;
+                found = (ulong)(long)insn.operand;
+                count++;
+            }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "native setter dirty bit shape changed");
+                return 0UL;
+            }
+            return found;
+        }
+
+        private static bool ResolveBitAccess()
+        {
+            var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            if (getter == null || setter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "Mirror syncVarDirtyBits access unavailable");
+                return false;
+            }
+            _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+            _setDirtyBits = (Action<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Action<Mirror.NetworkBehaviour, ulong>), setter);
+            return true;
+        }
+
+        // lastSyncTime is Mirror's internal field that ClearAllDirtyBits — the same call
+        // that consumes the dirty bits after a send — advances, so its movement is the
+        // "a send ran since the last look" signal. It is a field, not a property, so the
+        // compiled expression reads it without boxing (the steady state allocates
+        // nothing) the same way the other native patches compile their field readers.
+        private static bool ResolveLastSyncAccess()
+        {
+            var field = AccessTools.Field(typeof(Mirror.NetworkBehaviour), "lastSyncTime");
+            if (field == null || field.FieldType != typeof(double))
+            {
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", "Mirror lastSyncTime access unavailable");
+                return false;
+            }
+            var p = Expression.Parameter(typeof(Mirror.NetworkBehaviour), "behaviour");
+            _lastSync = Expression.Lambda<Func<Mirror.NetworkBehaviour, double>>(
+                Expression.Field(p, field), p).Compile();
+            return true;
+        }
+
+        private static bool Prefix(object __instance, out bool __state)
+        {
+            __state = false;
+            if (_disabled) return true;
+            if (!NativePerfOptions.HeroKnockoutHealthIdle)
+            {
+                // While the setting is off the patch observes nothing, so it keeps no
+                // stale knowledge either: the whole entry is dropped and re-earned from
+                // scratch when the skip is turned back on.
+                States.Remove(__instance);
+                return true;
+            }
+            try
+            {
+                var status = VictimStatus(__instance);
+                if (status == null || !status.isServer) return true;
+                var state = States.GetOrCreateValue(__instance);
+                // Sends run between logic ticks, never inside the prefix→postfix window,
+                // so reading the sync clock once here captures every send since the
+                // previous tick's look.
+                double sync = _lastSync(status);
+                bool sentSinceLastLook = sync != state.LastSync;
+                state.LastSync = sync;
+                if ((_dirtyBits(status) & _healthBit) != 0UL)
+                {
+                    state.EntryClear = false;
+                    // The pending raise may only be dropped when the observers provably
+                    // hold the pin value and no convergence from an earlier tick is still
+                    // waiting for its send. A send since the last look consumed every
+                    // raise that existed then, so this bit belongs to a later write and
+                    // what the observers hold is unknown: the delivered mark is stale.
+                    if (sentSinceLastLook) state.Delivered = false;
+                    __state = state.Delivered && !state.Converging;
+                    return true;
+                }
+                // A clear bit at entry means every earlier raise was consumed by a real
+                // send, so the convergence wait ends here. What the observers hold now is
+                // exactly the value at entry: the delivered mark is re-earned only when
+                // that value is the pin's own 0.01f (a delivered between-ticks heal
+                // leaves it off until the pin's convergence has gone out too).
+                state.EntryClear = true;
+                state.Converging = false;
+                state.Delivered = _currentHealth(status).Equals(0.01f);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+                return true;
+            }
+        }
+
+        private static void Postfix(object __instance, bool __state, bool __runOriginal)
+        {
+            if (_disabled || !__runOriginal) return;
+            try
+            {
+                var status = VictimStatus(__instance);
+                if (status == null) return;
+                bool entryClear = States.TryGetValue(__instance, out var state) && state.EntryClear;
+                if (!__state && !entryClear) return;
+                // Only the pin's exact steady value is redundant; a revive, a death or any
+                // other surprise keeps its dirty bit exactly as vanilla raised it.
+                if (!_currentHealth(status).Equals(0.01f)) return;
+                ulong bits = _dirtyBits(status);
+                if ((bits & _healthBit) == 0UL) return;
+                if (__state)
+                {
+                    _setDirtyBits(status, bits & ~_healthBit);
+                    return;
+                }
+                // Clear at entry and set at exit (entryClear implies a state entry): this
+                // raise is the pin's own write-back, the observers' only convergence back
+                // to 0.01f after a between-ticks change reached them. Remember it until a
+                // prefix sees the bit cleared by a real send; until then no tick may drop it.
+                state.Converging = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "hero knockout health idle", ex.Message);
+            }
+        }
+
+        private static EntityStatus VictimStatus(object effect)
+        {
+            var typed = effect as StatusEffect;
+            // victim is a UnityEngine.Object, so the null check must stay on the cast
+            // result, not on a cached bool.
+            var victim = typed != null ? typed.victim : null;
+            return victim != null ? victim.Status : null;
         }
     }
 }

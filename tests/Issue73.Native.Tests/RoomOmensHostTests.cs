@@ -286,7 +286,7 @@ namespace Issue73.Native.Tests
         private static Room CombatRoom()
         {
             var room = new Room();
-            room.sections.Add(new Section { monsters = new RoomMonsters { isMarkedAsCombatArea = true } });
+            room.sections.Add(new Section { monsters = new SodRpg.Mod.RoomMonsters { isMarkedAsCombatArea = true } });
             return room;
         }
 

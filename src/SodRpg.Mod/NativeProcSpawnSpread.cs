@@ -104,6 +104,12 @@ namespace SodRpg.Mod
         internal static void Tick()
         {
             if (_disabled) return;
+            // 生成の分散（Defer）もまとめ（NativeProcCoalesce.Offer）も診断の記録も
+            // NetworkServer.active のときにだけ動く。参加者ではキューが空のまま、
+            // 部屋ごとの集計もゼロのままなので、毎フレームの重いフレームの判定と
+            // 部屋の追跡は結果のない仕事である。参加者では何もせず抜け、ホストに
+            // 戻ったときは次の Tick で追跡を再開する。
+            if (!NetworkServer.active) return;
             try
             {
                 TickRoom();

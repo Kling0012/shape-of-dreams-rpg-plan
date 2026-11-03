@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SodRpg.Core.Game
 {
@@ -77,6 +78,34 @@ namespace SodRpg.Core.Game
             if (migrationVersion <= 0) throw new ArgumentOutOfRangeException(nameof(migrationVersion));
             var nodes = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
             foreach (var node in tree) nodes.Add(node.Id, node);
+            // Removed connector stars are dormant records, not migration inputs. Migrate only
+            // the current tree, then retain their saved ranks, choices and keystone slots.
+            var dormant = hero.Talents.Where(x => !nodes.ContainsKey(x.Key) && ExtendedHeroes.IsExtendedStarId(x.Key)).ToArray();
+            var dormantKeys = hero.Keystones.Where(id => id != null && !nodes.ContainsKey(id) && ExtendedHeroes.IsExtendedStarId(id)).ToArray();
+            if (dormant.Length > 0 || dormantKeys.Length > 0)
+            {
+                var active = hero.CloneAllocation();
+                foreach (var rank in dormant) { active.Talents.Remove(rank.Key); active.TalentChoices.Remove(rank.Key); }
+                foreach (string id in dormantKeys) active.RemoveKeystone(id);
+                var refund = Apply(active, tree, migrations, migrationVersion);
+                foreach (var rank in dormant)
+                {
+                    active.Talents[rank.Key] = rank.Value;
+                    if (hero.TalentChoices.TryGetValue(rank.Key, out int choice)) active.TalentChoices[rank.Key] = choice;
+                }
+                foreach (string id in dormantKeys)
+                {
+                    int empty = Array.IndexOf(active.Keystones, null);
+                    if (empty >= 0) active.Keystones[empty] = id;
+                }
+                hero.Talents.Clear();
+                foreach (var rank in active.Talents) hero.Talents.Add(rank.Key, rank.Value);
+                hero.TalentChoices.Clear();
+                foreach (var choice in active.TalentChoices) hero.TalentChoices.Add(choice.Key, choice.Value);
+                hero.CopyKeystonesFrom(active);
+                hero.AuthoredMigrationVersion = active.AuthoredMigrationVersion;
+                return refund;
+            }
             var costs = new Dictionary<string, LegacyStarMigration>(StringComparer.Ordinal);
             foreach (var rule in migrations)
             {

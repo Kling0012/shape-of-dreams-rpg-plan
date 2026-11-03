@@ -46,9 +46,14 @@ namespace SodRpg.Mod
             if (!NetworkServer.active) return;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null) return;
+            string text = JsonConvert.SerializeObject(plan);
             _bossPlan = plan;
-            _bossPlanText = JsonConvert.SerializeObject(plan);
-            settings.customData[BossKey] = _bossPlanText;
+            // Mirror records an OP_SET and re-broadcasts the full value on every indexer write,
+            // even when the text is unchanged; repeated re-saves (per boss spawn, per fallback)
+            // must not become guest traffic (same guard as ClientSession.InfinitySettings).
+            if (settings.customData.TryGetValue(BossKey, out var existing) && existing == text) return;
+            _bossPlanText = text;
+            settings.customData[BossKey] = text;
         }
 
         private static string NativeBossType(Zone zone)

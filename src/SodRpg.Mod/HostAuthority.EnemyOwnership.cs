@@ -132,9 +132,13 @@ namespace SodRpg.Mod
             return false;
         }
 
-        private static bool OwnershipConnected(DewPlayer player) => player != null && player.isHumanPlayer
-            && DewPlayer.gamePlayers.Contains(player)
+        // 2026-10-24：OwnershipConnected から所属確認（gamePlayers の List.Contains）だけを除いた条件。
+        // gamePlayers を列挙して数える側は列挙元自身の要素なので、所属確認は常に真。
+        private static bool IsCountableConnected(DewPlayer player) => player != null && player.isHumanPlayer
             && (player == DewPlayer.local || player.connectionToClient != null);
+
+        private static bool OwnershipConnected(DewPlayer player) => IsCountableConnected(player)
+            && DewPlayer.gamePlayers.Contains(player);
 
         private static bool OwnershipAlive(DewPlayer player) => OwnershipConnected(player) && player.hero != null
             && player.hero.isActive && player.hero.Status != null && player.hero.Status.isAlive && !player.hero.isKnockedOut;

@@ -147,6 +147,24 @@ internal static class Program
             enemy.takenDamageProcessor.Entries[0](ref allied, ally, enemy);
             Equal(112f, allied.currentAmount, "ally amplification");
         });
+        // The hit path gates Break on the scanned classification (#1130): a hit that arrives before
+        // the first scan must rely on the creation-time initialization, and a basic-attack swap is
+        // caught up by the next scan (up to ScanSeconds stale, same contract as the guard).
+        Check("control/break-before-first-scan", () =>
+        {
+            var host = new HostAuthority();
+            var enemy = new Entity { Relation = EntityRelation.Enemy };
+            var rt = Runtime(Melee(new Hero_Vesper()));
+            host.InitializeMeleeTraveler(rt); // 本番は Build 適用時に呼ぶ。走査を待たず近接と判定される
+            host.Hit(rt, new EventInfoDamage { actor = new AttackTrigger(), victim = enemy, damage = new DamageData(100) });
+            Equal(1, enemy.takenDamageProcessor.Entries.Count, "hit before the first scan still registers Break");
+            var swapped = Runtime(Melee(new Hero_Aurena()));
+            host.InitializeMeleeTraveler(swapped);
+            swapped.Hero.Ability.attackAbility.currentConfig.spawnedInstanceRef.asset = new AttackProjectile();
+            var other = new Entity { Relation = EntityRelation.Enemy };
+            host.Hit(swapped, new EventInfoDamage { actor = new AttackTrigger(), victim = other, damage = new DamageData(100) });
+            Equal(1, other.takenDamageProcessor.Entries.Count, "swap within the scan window keeps the last classification");
+        });
         foreach (bool japanese in new[] { true, false })
         {
             string language = japanese ? "ja" : "en";

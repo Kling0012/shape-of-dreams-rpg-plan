@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 
@@ -17,6 +18,126 @@ namespace SodRpg.Mod
     /// </summary>
     internal static class PatchMethodOwnership
     {
+        // Startup diagnostics only. Never invoke Prepare/TargetMethod(s) again to discover a target.
+        internal static Type StartupPatchClass;
+        internal static MethodBase StartupTarget;
+        private static string _startupOwner;
+        private static readonly Dictionary<Type, HashSet<MethodBase>> StartupTargets =
+            new Dictionary<Type, HashSet<MethodBase>>();
+
+        internal static void BeginStartup(string owner)
+        {
+            _startupOwner = owner;
+            StartupPatchClass = null;
+            StartupTarget = null;
+            StartupTargets.Clear();
+        }
+
+        internal static void EndStartup()
+        {
+            _startupOwner = null;
+            StartupPatchClass = null;
+            StartupTarget = null;
+            StartupTargets.Clear();
+        }
+
+        internal static void RecordStartupTarget(Type patchClass, MethodBase target)
+        {
+            if (_startupOwner == null || patchClass == null || target == null) return;
+            try
+            {
+                if (!StartupTargets.TryGetValue(patchClass, out var targets))
+                    StartupTargets.Add(patchClass, targets = new HashSet<MethodBase>());
+                targets.Add(target);
+            }
+            catch (Exception) { /* Diagnostic collection must not reject a patch. */ }
+        }
+
+        internal static string StartupForeignOwners()
+            => ForeignOwners(StartupPatchClass, _startupOwner, StartupTarget);
+
+        internal static string ForeignOwners(Type patchClass, string owner, MethodBase target = null)
+        {
+            if (string.IsNullOrEmpty(owner)) return "";
+            try
+            {
+                var targets = new HashSet<MethodBase>();
+                if (target != null) targets.Add(target);
+                else if (patchClass != null)
+                {
+                    if (StartupTargets.TryGetValue(patchClass, out var known)) targets.UnionWith(known);
+                    // Native performance patches retain the targets resolved by their existing Prepare.
+                    foreach (var field in patchClass.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                    {
+                        // Other MethodInfo fields can be helper calls, not this class's native targets.
+                        if (field.Name != "_target" && field.Name != "_targets" && field.Name != "_publish") continue;
+                        if (typeof(MethodBase).IsAssignableFrom(field.FieldType))
+                        {
+                            if (field.GetValue(null) is MethodBase resolved) targets.Add(resolved);
+                        }
+                        else if (field.FieldType == typeof(MethodBase[]))
+                        {
+                            if (field.GetValue(null) is MethodBase[] resolved) targets.UnionWith(resolved);
+                        }
+                    }
+                    var attribute = HarmonyMethodExtensions.GetMergedFromType(patchClass);
+                    if (attribute.declaringType != null && attribute.methodName != null)
+                    {
+                        var resolved = AccessTools.DeclaredMethod(attribute.declaringType, attribute.methodName, attribute.argumentTypes);
+                        if (resolved != null) targets.Add(resolved);
+                    }
+                }
+                var owners = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var original in targets)
+                {
+                    if (original == null) continue;
+                    var info = Harmony.GetPatchInfo(original);
+                    if (info == null) continue;
+                    foreach (string id in info.Owners)
+                        if (!string.IsNullOrEmpty(id) && id != owner) owners.Add(id);
+                }
+                if (owners.Count == 0) return "";
+                var sorted = new List<string>(owners);
+                sorted.Sort(StringComparer.Ordinal);
+                return " (other Harmony owners: " + string.Join(", ", sorted) + ")";
+            }
+            catch (Exception) { return ""; }
+        }
+
+        // A plain class-level target is complete without running user Prepare/TargetMethod(s).
+        // Dynamic targets and method-level annotations retain the exhaustive lookup.
+        internal static IEnumerable<MethodBase> SearchTargets(Type patchClass)
+        {
+            try
+            {
+                var attribute = HarmonyMethodExtensions.GetMergedFromType(patchClass);
+                if (attribute.declaringType != null && attribute.methodName != null
+                    && (!attribute.methodType.HasValue || attribute.methodType == MethodType.Normal))
+                {
+                    bool plain = true;
+                    foreach (var annotation in patchClass.GetCustomAttributes(true))
+                        if (annotation.GetType().FullName == typeof(HarmonyPatchAll).FullName) plain = false;
+                    foreach (var method in AccessTools.GetDeclaredMethods(patchClass))
+                    {
+                        if (method.Name == "TargetMethod" || method.Name == "TargetMethods") plain = false;
+                        foreach (var annotation in method.GetCustomAttributes(true))
+                        {
+                            string name = annotation.GetType().FullName;
+                            if (name == typeof(HarmonyPatch).FullName || name == typeof(HarmonyTargetMethod).FullName
+                                || name == typeof(HarmonyTargetMethods).FullName) plain = false;
+                        }
+                    }
+                    if (plain)
+                    {
+                        var target = AccessTools.DeclaredMethod(attribute.declaringType, attribute.methodName, attribute.argumentTypes);
+                        if (target != null) return new[] { target };
+                    }
+                }
+            }
+            catch (Exception) { /* An unrecognized declaration uses the original exhaustive lookup. */ }
+            return Harmony.GetAllPatchedMethods();
+        }
+
         /// <summary>パッチがこのクラス（またはその入れ子の型）で宣言されたかどうか。解決できないパッチは所属不明として扱う。</summary>
         internal static bool DeclaresPatch(Patch patch, Type patchClass)
         {

@@ -226,8 +226,8 @@ namespace SodRpg.Mod
                 if (e.HintId.HasValue && !_hints.Contains(e.HintId.Value)) _hints.Add(e.HintId.Value);
                 return;
             }
-            if (e.Kind != EventKind.Drop && e.Kind != EventKind.Bounty) Log.Info(e.Text);
-            // #1010: 鞄あふれの欠片への変換は通知に出さない。ログとHUDの再構築は上で済ませているので、ここで止める。
+            if (e.Kind == EventKind.Warning) Log.Info(e.Text);
+            // #1010: 鞄あふれの欠片への変換は通知に出さない。HUDの再構築は上で済ませているので、ここで止める。
             if (e.SatchelOverflowCount > 0) return;
             if (!_cfg().showToasts && e.Kind == EventKind.Drop && e.Rarity.HasValue && e.Rarity.Value < Rarity.Rare) return;
             // #1010: 画面左の通知の最大行数（0〜7、既定7）。0のときはドロップと通常の案内を出さず、
@@ -581,6 +581,9 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
             if (_s.ForbiddenGearHostNotice != null)
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.ForbiddenGearHostNotice).Append("</color></size>");
+            // 拡張旅人の宣言がホストに無いときも同じ場所に1行（ヒーローコネクタ §9）。
+            if (_s.HeroConnectorHostNotice != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.HeroConnectorHostNotice).Append("</color></size>");
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");

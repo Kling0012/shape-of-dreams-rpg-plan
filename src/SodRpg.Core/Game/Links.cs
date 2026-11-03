@@ -208,12 +208,24 @@ namespace SodRpg.Core.Game
             if (MemoryNames.TryGetValue(target, out var m)) return m;
             if (EssenceNames.TryGetValue(target, out var e)) return e;
             if (TravelerNames.TryGetValue(target, out var t)) return t;
+            // 拡張旅人とその記憶の表示名（ヒーローコネクタ §6-1・§6-6。装備・リンク・報酬の生成には入らない）。
+            if (ExtendedHeroes.TryGetMemoryName(target, out var extendedMemory)) return extendedMemory;
+            if (ExtendedHeroes.TryGet(target, out var extendedHero)) return extendedHero.Name;
             return new Txt(target, target);
         }
 
-        public static bool IsMemory(string target) => target != null && MemoryNames.ContainsKey(target);
+        public static bool IsMemory(string target) => IsBuiltinMemory(target)
+            || (target != null && ExtendedHeroes.TryGetMemoryName(target, out _));
+
+        internal static bool IsBuiltinMemory(string target) => target != null && MemoryNames.ContainsKey(target);
         public static bool IsEssence(string target) => target != null && EssenceNames.ContainsKey(Canon(target));
-        public static bool IsTraveler(string target) => target != null && TravelerNames.ContainsKey(target);
+        public static bool IsTraveler(string target)
+        {
+            if (target == null) return false;
+            if (TravelerNames.ContainsKey(target)) return true;
+            // 本体の9人と同じ扱いにする問い合わせ（§6-1）。装備・リンクの生成には登録簿を使わない。
+            return ExtendedHeroes.IsRegistered(target);
+        }
         public static bool IsKnown(string target) => IsMemory(target) || IsEssence(target) || IsTraveler(target);
 
         /// <summary>値の上限。単体は同調・守り25・記憶加速50・記憶の余韻40。2つで1.6倍、3つで2.2倍（四捨五入）。</summary>
@@ -269,7 +281,7 @@ namespace SodRpg.Core.Game
                 if (!IsKnown(t)) return false;
                 for (int j = 0; j < i; j++)
                     if (Canon(link.Requires[j]) == t) return false;
-                if (MemoryNames.ContainsKey(t)) hasMemory = true;
+                if (IsMemory(t)) hasMemory = true;
             }
             if ((link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge || link.Kind == LinkKind.MemoryDamage) && !hasMemory) return false;
             return true;
@@ -282,7 +294,7 @@ namespace SodRpg.Core.Game
             target = Canon(target);
             if (target == null) return false;
             if (TravelerNames.ContainsKey(target)) return heroKey == target || (nearbyAllyHeroes != null && nearbyAllyHeroes.Contains(target));
-            if (MemoryNames.ContainsKey(target)) return equippedMemories != null && equippedMemories.Contains(target);
+            if (IsMemory(target)) return equippedMemories != null && equippedMemories.Contains(target);
             if (EssenceNames.ContainsKey(target))
             {
                 if (equippedEssences == null) return false;

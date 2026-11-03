@@ -92,6 +92,18 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>拡張旅人の登録後に使い回しを消す（ヒーローコネクタ。レイアウトは登録後に作り直す）。</summary>
+        internal static void InvalidateLayout(string heroKey)
+        {
+            if (string.IsNullOrEmpty(heroKey)) return;
+            lock (Layouts) Layouts.Remove(heroKey);
+        }
+
+        internal static void RegisterExtendedLayout(string heroKey, HeroTreeLayout layout)
+        {
+            lock (Layouts) Layouts[heroKey] = layout;
+        }
+
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
 
@@ -186,13 +198,14 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < deep.Count; i++)
             {
                 deepIndices[i] = Add(deep[i], DeepRadius, Angle(i, deep.Count));
-                int parent = innerIndices[i * inner.Count / deep.Count];
+                // 拡張旅人（ヒーローコネクタ）は手前の星・刻印なしで奥の星だけを宣言できる。そのときの親は中心。
+                int parent = inner.Count == 0 ? 0 : innerIndices[i * inner.Count / deep.Count];
                 deepParents[i] = parent;
                 Join(parent, deepIndices[i]);
                 // The inner ring also holds the hero's keystones, which only count once chosen. A deep star whose only
                 // parent is a keystone (and the route behind it) would then need that keystone, so it also hangs off
                 // the nearest ordinary inner star. The keystone edge stays: saved builds keep their links.
-                if (nodes[parent].Talent.IsKeystone)
+                if (nodes[parent].Talent != null && nodes[parent].Talent.IsKeystone)
                 {
                     int nearest = -1;
                     float best = float.MaxValue;
@@ -215,7 +228,7 @@ namespace SodRpg.Core.Game
                 for (int j = 0; j < branch.Count; j++)
                 {
                     ordered[j] = Add(branch[j], BranchRadius + BranchStep * j, Angle(i, branches.Count));
-                    Join(j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1], ordered[j]);
+                    Join(j == 0 ? (deep.Count == 0 ? 0 : deepIndices[i * deep.Count / branches.Count]) : ordered[j - 1], ordered[j]);
                 }
                 // A route star that requires a star further along its own route could never be reached: that star is only
                 // adjacent to the route chain. Give the required star (for a list of alternatives, the nearest one) a second
@@ -224,7 +237,7 @@ namespace SodRpg.Core.Game
                 {
                     var authored = branch[j].AuthoredStar;
                     if (authored == null) continue;
-                    int entry = j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1];
+                    int entry = j == 0 ? (deep.Count == 0 ? 0 : deepIndices[i * deep.Count / branches.Count]) : ordered[j - 1];
                     for (int k = j + 1; k < branch.Count; k++)
                         if (System.Linq.Enumerable.Contains(authored.RequiredStarIds, branch[k].Id) && !neighbors[ordered[k]].Contains(entry)) Join(entry, ordered[k]);
                     for (int k = j + 1; k < branch.Count; k++)
@@ -248,18 +261,120 @@ namespace SodRpg.Core.Game
                             Join(deepParents[d], branchNodes[b][0]);
             }
             // Preserve the shipped cyclic bridge endpoints (the eighth uses the later route stars).
-            for (int i = 0; i < ring.Count; i++)
+            // 記憶ルートのない拡張旅人では branches.Count==0 となるので、この2辺は作らない。
+            if (branches.Count >= 6 && HeroSigils.IsCoreTraveler(branches[0][0].HeroKey))
             {
-                int branch = i % branches.Count;
-                int order = i < branches.Count ? 3 : 5;
-                int bridge = Add(ring[i], BranchRadius + BranchStep * order, Angle(branch + 0.5, branches.Count));
-                Join(branchNodes[branch][order], bridge);
-                Join(bridge, branchNodes[(branch + 1) % branches.Count][order]);
+                for (int i = 0; i < ring.Count; i++)
+                {
+                    int branch = i % branches.Count;
+                    int order = i < branches.Count ? 3 : 5;
+                    int bridge = Add(ring[i], BranchRadius + BranchStep * order, Angle(branch + 0.5, branches.Count));
+                    Join(branchNodes[branch][order], bridge);
+                    Join(bridge, branchNodes[(branch + 1) % branches.Count][order]);
+                }
+                // Preserve the two early direct access edges; the sector pass may move their endpoints.
+                Join(branchNodes[1][2], branchNodes[2][2]);
+                Join(branchNodes[4][2], branchNodes[5][2]);
             }
-            // Preserve the two early direct access edges; the sector pass may move their endpoints.
-            Join(branchNodes[1][2], branchNodes[2][2]);
-            Join(branchNodes[4][2], branchNodes[5][2]);
             PlaceClusters(nodes, neighbors, edges, talents, tuned);
+            return new HeroTreeLayout(nodes, edges);
+        }
+
+        internal static HeroTreeLayout CreateExtended(IReadOnlyList<TalentDef> talents,
+            IReadOnlyDictionary<string, ExtendedStarPlacement> placements, out string reason)
+        {
+            reason = null;
+            // Connector metadata identifies effects and presentation, not the shipped authored placement program.
+            var skeleton = new List<TalentDef>(talents.Count);
+            var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            bool metadata = false;
+            foreach (var talent in talents)
+            {
+                definitions.Add(talent.Id, talent);
+                // A connector may import one route effect without the shipped route chain or its deep-ring entrance.
+                // Route ids still identify effects, but do not opt into the shipped route placement program.
+                metadata |= talent.Cluster != null || talent.IsDreamRing || talent.RouteId != null;
+                var plain = talent.IsKeystone
+                    ? new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.Description)
+                    : new TalentDef(talent.Id, talent.Route, talent.Name, talent.Stat, talent.PerRank, talent.MaxRank);
+                plain.Tier = talent.Tier;
+                plain.HeroKey = talent.HeroKey;
+                skeleton.Add(plain);
+            }
+            var automatic = Create(metadata ? skeleton : talents, true, true);
+            var indices = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 1; i < automatic.Nodes.Count; i++) indices.Add(automatic.Nodes[i].Id, i);
+            var state = new Dictionary<string, int>(StringComparer.Ordinal);
+            string invalid = null;
+            bool Visit(string id)
+            {
+                if (state.TryGetValue(id, out int mark))
+                {
+                    if (mark == 1) { invalid = "cyclic requires at '" + id + "'"; return false; }
+                    return true;
+                }
+                state[id] = 1;
+                if (placements[id].Requires != null)
+                    foreach (string parent in placements[id].Requires)
+                    {
+                        if (!indices.ContainsKey(parent)) { invalid = "unknown requires id '" + parent + "'"; return false; }
+                        if (!Visit(parent)) return false;
+                    }
+                state[id] = 2;
+                return true;
+            }
+            foreach (string id in placements.Keys)
+                if (!Visit(id)) { reason = invalid; return null; }
+            var nodes = new List<HeroTreeNode>(automatic.Nodes.Count);
+            var neighbors = new List<List<int>>(automatic.Nodes.Count);
+            var edges = new List<HeroTreeEdge>();
+            foreach (var original in automatic.Nodes)
+            {
+                float x = original.X, y = original.Y;
+                if (placements.TryGetValue(original.Id, out var placement))
+                {
+                    if (placement.X.HasValue) { x = placement.X.Value; y = placement.Y.Value; }
+                    else if (placement.Ring > 0)
+                    {
+                        double radius = placement.Ring == 1 ? InnerRadius : placement.Ring == 2 ? DeepRadius
+                            : BranchRadius + (double)BranchStep * (placement.Ring - 3);
+                        double angle = (double)(placement.Angle % 360) * Math.PI / 180;
+                        x = (float)(radius * Math.Cos(angle));
+                        y = (float)(radius * Math.Sin(angle));
+                    }
+                }
+                var adjacent = new List<int>();
+                neighbors.Add(adjacent);
+                var talent = original.Talent == null ? null : definitions[original.Id];
+                nodes.Add(new HeroTreeNode(original.Id, x, y, talent == null ? original.Kind : Kind(talent), talent, adjacent));
+            }
+            void Join(int a, int b)
+            {
+                if (neighbors[a].Contains(b)) return;
+                neighbors[a].Add(b);
+                neighbors[b].Add(a);
+                edges.Add(new HeroTreeEdge(a, b));
+            }
+            // Explicit requires replace the child's automatic parents. center can preserve a root edge alongside other edges.
+            foreach (var edge in automatic.Edges)
+                if (!placements.TryGetValue(nodes[edge.B].Id, out var child) || child.Requires == null)
+                    if (edge.A != 0 || child == null || child.Center != false) Join(edge.A, edge.B);
+            foreach (var entry in placements)
+            {
+                var required = entry.Value.Requires;
+                int child = indices[entry.Key];
+                if (entry.Value.Center == true || required != null && required.Length == 0 && entry.Value.Center != false) Join(0, child);
+                if (required != null) foreach (string parent in required) Join(indices[parent], child);
+            }
+            var visited = new bool[nodes.Count];
+            var pending = new Queue<int>();
+            visited[0] = true;
+            pending.Enqueue(0);
+            while (pending.Count > 0)
+                foreach (int next in neighbors[pending.Dequeue()])
+                    if (!visited[next]) { visited[next] = true; pending.Enqueue(next); }
+            for (int i = 1; i < visited.Length; i++)
+                if (!visited[i]) { reason = "node '" + nodes[i].Id + "' is unreachable from the center"; return null; }
             return new HeroTreeLayout(nodes, edges);
         }
 
@@ -309,12 +424,29 @@ namespace SodRpg.Core.Game
             {
                 Traverse(hero, removed, keystones);
                 foreach (var allocation in hero.Talents)
-                    if (allocation.Value > 0 && allocation.Key != removedTalent
-                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated]
-                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystones))) return false;
+                {
+                    if (allocation.Value <= 0 || allocation.Key == removedTalent) continue;
+                    // 拡張旅人の星（ヒーローコネクタ §10）で、今の星図に無い割り当ては休眠: 接続判定から外す。
+                    if (!indices.TryGetValue(allocation.Key, out int allocated))
+                    {
+                        if (ExtendedHeroes.IsExtendedStarId(allocation.Key)) continue;
+                        return false;
+                    }
+                    if (!reached[allocated]
+                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystones)) return false;
+                }
                 foreach (string keystone in keystones)
-                    if (keystone != null && (!indices.TryGetValue(keystone, out int key) || !reached[key]
-                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystones))) return false;
+                {
+                    if (keystone == null) continue;
+                    // 休眠の到達刻印も同様に外す。
+                    if (!indices.TryGetValue(keystone, out int key))
+                    {
+                        if (ExtendedHeroes.IsExtendedStarId(keystone)) continue;
+                        return false;
+                    }
+                    if (!reached[key]
+                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystones)) return false;
+                }
                 return true;
             }
         }

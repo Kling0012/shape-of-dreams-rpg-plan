@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
     public static class ContentFingerprint
     {
         private static string _value;
-        private static string _capIdentity, _authoredIdentity;
+        private static string _capIdentity, _authoredIdentity, _extendedIdentity;
         private static readonly object Gate = new object();
 
         public static string Value
@@ -19,20 +19,23 @@ namespace SodRpg.Core.Game
             {
                 string caps = FractionalScopedModifiers.CapRegistryFingerprint;
                 string authored = StarClusters.AuthoredRegistryFingerprint;
+                // 拡張旅人（ヒーローコネクタ §9）: 1人以上登録されたときだけ記録に入れ、指紋を変える。
+                string extended = ExtendedHeroes.FingerprintRecord();
                 lock (Gate)
                 {
-                    if (_value == null || _capIdentity != caps || _authoredIdentity != authored)
+                    if (_value == null || _capIdentity != caps || _authoredIdentity != authored || _extendedIdentity != extended)
                     {
-                        _value = Compute(caps, authored);
+                        _value = Compute(caps, authored, extended);
                         _capIdentity = caps;
                         _authoredIdentity = authored;
+                        _extendedIdentity = extended;
                     }
                     return _value;
                 }
             }
         }
 
-        private static string Compute(string caps, string authored)
+        private static string Compute(string caps, string authored, string extended)
         {
             var ids = new List<string>();
             // Default forge values contribute no new records; stage0 tuple identity remains compatible.
@@ -92,6 +95,8 @@ namespace SodRpg.Core.Game
             for (int i = 0; i <= Content.MaxAwakenLevel; i++) ids.Add("boss-awaken:" + i + ":" + Content.AwakenPowerPctAt(i));
             ids.Add("mechanisms:v13:" + caps + "/" + authored);
             ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
+            // 拡張旅人が1人以上のときだけ足す（0人のときは既存の指紋と同じ値になる）。
+            if (extended != null) ids.Add(extended);
             ids.Sort(StringComparer.Ordinal);
             ulong hash = 1469598103934665603UL; // FNV-1a 64
             foreach (string id in ids)

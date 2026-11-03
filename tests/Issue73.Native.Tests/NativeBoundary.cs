@@ -65,6 +65,12 @@ namespace Mirror
         public bool isServer { get; set; }
         public bool isClient { get; set; }
         public ulong syncVarDirtyBits { get; set; }
+        // （#1204）実機 Mirror の NetworkBehaviour.lastSyncTime（internal double）。送信後の
+        // ClearAllDirtyBits が bit を消すのと同時に NetworkTime.localTime へ進める。
+        // NativeHeroKnockoutHealthIdlePerf が「前のtickの観察のあとに送信が走ったか」を
+        // この欄の前進で識別するため、境界にも同じ double の欄を置き、テストの Deliver
+        // （送信の模倣）が bit を消すときに一緒に進める。
+        public double lastSyncTime;
         public void SendRPCInternal(NetworkWriter writer, string rpcName) { }
         // （#876）実機 Mirror の weaver 生成セッターが呼ぶ NetworkBehaviour.GeneratedSyncVarSetter。
         // 等値（EqualityComparer<T>.Default。float では float.Equals と同じく NaN==NaN・0==-0 を
@@ -79,6 +85,20 @@ namespace Mirror
             syncVarDirtyBits |= dirtyBit;
             hook?.Invoke(value);
         }
+    }
+    // NativeEntityOwnerSyncVarPerf（リンク）が owner SyncVar の解決済み参照の一致判定で読む
+    // 本体 Mirror API。実物は netId（スポーン中の NetworkIdentity で一意、despawn で 0 化）と
+    // componentIndex（InitializeNetworkBehaviours が NetworkBehaviours の添字を入れる）の
+    // 2 フィールドの struct。テストでは Prefix を通さない（本体 Entity の owner はフィールドのため
+    // Prepare が外れる）ため、形だけ置く。
+    internal class NetworkIdentity
+    {
+        public uint netId;
+    }
+    internal struct NetworkBehaviourSyncVar
+    {
+        public uint netId;
+        public byte componentIndex;
     }
     // 同じく形検査が Mirror.NetworkWriterPool の Get・Return という名前で数えるための境界。
     // 呼び出しの有無は IL で確かめるため、中身は空でよい。
@@ -179,6 +199,10 @@ namespace Mirror
         // BossSegmentPlacement（リンク。#890 のボス予告線分の矩形・回転）が参照する本体 API。
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public const float Rad2Deg = (float)(180.0 / Math.PI);
+        // BossSegmentPlacement.RotationAroundPivot（リンク。#1153 のピボット回転行列）が参照する
+        // 本体 API。実 Unity Mathf と同じ式（float → double で Math.Cos へ、定数は同じ値）。
+        public static float Cos(float f) => (float)Math.Cos(f);
+        public const float Deg2Rad = (float)(Math.PI / 180.0);
         public static float DeltaAngle(float current, float target)
         {
             float delta = target - current;
@@ -368,7 +392,7 @@ namespace SodRpg.Mod
         public void InvokeOnKill() { }
         public void ClearPooledEventsAndProcessors() { }
     }
-    internal class Entity : Actor
+    internal partial class Entity : Actor
     {
         public uint netId;
         public bool isActive = true;
@@ -532,12 +556,12 @@ namespace SodRpg.Mod
         // NativeWeaponFxPerf が nameof(Hero.FrameUpdate) で対象を解決するための本体 API。
         public void FrameUpdate() { }
     }
-    internal sealed class HeroSkill
+    internal sealed partial class HeroSkill
     {
         public readonly Dictionary<HeroSkillLocation, SkillTrigger> Slots = new Dictionary<HeroSkillLocation, SkillTrigger>();
         public SkillTrigger GetSkill(HeroSkillLocation location) => Slots.TryGetValue(location, out var skill) ? skill : null;
     }
-    internal sealed class EntityAbility
+    internal sealed partial class EntityAbility
     {
         public Entity entity;
         public EntityAbility(Hero hero) { entity = hero; }
@@ -550,11 +574,11 @@ namespace SodRpg.Mod
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum EntityRelation { Enemy, Ally }
-    internal class TriggerConfig
+    internal partial class TriggerConfig
     {
         public int maxCharges;
     }
-    internal class AbilityTrigger : Actor
+    internal partial class AbilityTrigger : Actor
     {
         public Entity owner;
         public TriggerConfig[] configs;
@@ -586,7 +610,7 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
+    internal partial class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor
     {
         // NativePerfPatches.cs の Gem クールダウン系パッチが参照する本体 API。
@@ -597,6 +621,68 @@ namespace SodRpg.Mod
         // Shrine_Chaos.GetTargetInfo(GemLocation, Gem) の Prefix が参照する本体 API。
         public Hero owner;
         public int quality;
+    }
+    // NativeGemResponsibilityHitPerf（NativePerfPatches.cs）が typeof と Prefix で参照する本体
+    // Gem_C_Responsibility（Dew.Contents。被弾演出 RPC の受け口）の境界。Prepare の指紋検査が
+    // 読む受け口メソッドと、Prefix が書き込む字段と再生の呼び出しの形を置く（実機の基底は
+    // Gem だが、境界の Gem は sealed で、パッチは基底のメンバーを使わないため Actor から
+    // 派生させる）。GemResponsibilityHitPerfTests が Prefix を直接呼び、書き込み値と
+    // FxPlayNew の呼び出し引数が曲線の評価結果から意図どおり導かれるかを見るため、
+    // FxPlayNew は引数を記録する。曲線の既定は null 参照を避けるため空の評価（0）。
+    // fxPlayNewException は FxPlayNew の中で例外が出る場面（Prefix が try の外から呼ぶ
+    // 境界）を作るためのスイッチで、null なら普通に null を返す。
+    internal sealed class Gem_C_Responsibility : Actor
+    {
+        public GameObject fxHit;
+        // 実機と同じく fxActivateInit も持つ（拒否の見本が fxHit と同じ型の別字段で
+        // 走査の受け替えを試すのに使う）。
+        public GameObject fxActivateInit;
+        public AnimationCurve pitchCurve = new AnimationCurve(), volumeCurve = new AnimationCurve(),
+            shakeAmpCurve = new AnimationCurve();
+        internal int fxPlayNewCalls;
+        internal GameObject lastPlayedEffect;
+        internal Entity lastPlayedAttach;
+        internal Exception fxPlayNewException;
+        public GameObject FxPlayNew(GameObject effect, Entity attach)
+        {
+            fxPlayNewCalls++;
+            lastPlayedEffect = effect;
+            lastPlayedAttach = attach;
+            if (fxPlayNewException != null) throw fxPlayNewException;
+            return null;
+        }
+        private void UserCode_RpcPlayHit__Entity__Single(Entity e, float strength) { }
+    }
+    // Prefix が値を書き込む本体のエフェクト構成要素（Dew.Core。実物は MonoBehaviour 派生）。
+    // 書き込み先の字段の形だけを持つ。
+    internal class DewAudioSource : UnityEngine.Component
+    {
+        public float volumeMultiplier = 1f;
+        public float pitchMultiplier = 1f;
+    }
+    internal class FxCameraShake : UnityEngine.Component
+    {
+        public float amplitude = 3f;
+    }
+    // 実機 Dew.Core の GetComponentsNonAllocExtension のうち、この受け口が使う子走査の
+    // 拡張メソッドと同じ引数の形の見本。GemResponsibilityHitPerfTests が指紋検査
+    // （ValidateShape）に渡す IL を組み立てるときに引数の形だけを使う（実行はしない）。
+    // 本体 r1.4.1.2 の受け口は2引数のほう（includeInactive を渡さない＝ false と同じ意味）
+    // を使う。ListReturnHandle<T> は StealthRevealOverlapPerfBoundary.cs の既存の境界を使う。
+    internal static class GetComponentsNonAllocExtension
+    {
+        public static List<T> GetComponentsInChildrenNonAlloc<T>(
+            GameObject gobj, out ListReturnHandle<T> handle)
+        {
+            handle = default;
+            return null;
+        }
+        public static List<T> GetComponentsInChildrenNonAlloc<T>(
+            GameObject gobj, bool includeInactive, out ListReturnHandle<T> handle)
+        {
+            handle = default;
+            return null;
+        }
     }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
@@ -627,7 +713,7 @@ namespace SodRpg.Mod
     internal sealed class EntityVisual { public bool isSpawning; public EntityModel model; }
     internal sealed class Hero_Mist : Hero { }
     internal sealed class Ai_Q_Fleche_Dash { public void OnCancel() { } }
-    internal class EntityControl
+    internal partial class EntityControl
     {
         public Entity entity;
         // 本体の Transform。NativeEntityRotationIdlePerf の Prefix が読み、検証では向きを設定して使う。
@@ -880,7 +966,58 @@ namespace SodRpg.Mod
     internal enum AudioType : byte { UI = 0, Music = 1, SFX = 2, GameBoss = 3, GameSelf = 4, GameOtherPlayers = 7, GameOthers = 5, GameEnvironment = 6 }
     internal enum AudioSpaceType { Normal, Global }
     internal enum DewAudioRollOffType : byte { Default, Loud, Unity }
-    internal class AudioSource { public int priority { get; set; } }
+    // NativeMusicSourceIdlePerf の GuardedVolume/GuardedPitch が書き込むプロパティの受け口。
+    // 本体 AudioSource には volume・pitch の float プロパティがある（r1.4.1.2 逆コンパイル確認）。
+    // VolumeWrites/PitchWrites はガードが同値の書き込みを省いたか（省かないときに書いたか）を
+    // 検証するためだけの書き込みカウンタ。AudioManager.NextDynamicPriorityCalls と違う音源
+    // インスタンスごとの欄にしている（xUnit は既定でテストクラスを並列に走らせるので、共有の
+    // static カウンタだと同じ模倣の volume/pitch を書く別のテストクラスと数が混ざる。各テストは
+    // 自分が作った音源のカウンタだけを数えればよい）。
+    internal class AudioSource
+    {
+        public int VolumeWrites;
+        public int PitchWrites;
+        private float _volume;
+        private float _pitch;
+        public int priority { get; set; }
+        public float volume { get => _volume; set { _volume = value; VolumeWrites++; } }
+        public float pitch { get => _pitch; set { _pitch = value; PitchWrites++; } }
+    }
+    // NativeMusicSourceIdlePerf の Prepare が typeof と nameof で参照する本体型の宣言だけ。
+    // Find はゲーム内の Harmony 適用時にしか走らないので、模倣は名前と署名のみでよい
+    // （本体 Dew.Core r1.4.1.2 と同じ引数形）。
+    internal sealed class DewMusicItem { }
+    internal sealed class MusicManager
+    {
+        internal void LogicUpdate(float dt) { }
+        internal void DoCrossFade(DewMusicItem next, float fadeTime) { }
+    }
+    // NativeTransitionIdlePerf の受け口。本体 Dew.Core TransitionManager（2026-10-24 実 DLL
+    // 逆コンパイル確認）の模倣: Prepare の DeclaredMethod 探索と Prefix の読み取りに必要な宣言
+    // に加え、TransitionIdlePerfTests が本体 FrameUpdate の呼び出し multiset の見本を作るための
+    // 宣言（TryGetNewTip・blocksRaycasts）。本体の state は自動実装プロパティ、screenFadeCg は
+    // public フィールド。CanvasGroup は本体 UnityEngine.CanvasGroup の受け口。throwOnRead
+    // （null なら何もしない）は Prefix の例外経路を起こす検証用の鉤（Transform の throwOnRead
+    // と同じ扱い）。
+    internal class CanvasGroup
+    {
+        internal Exception throwOnRead;
+        private float _alpha;
+        public float alpha
+        {
+            get { if (throwOnRead != null) throw throwOnRead; return _alpha; }
+            set { _alpha = value; }
+        }
+        public bool blocksRaycasts { get; set; }
+    }
+    internal sealed class TransitionManager
+    {
+        internal enum StateType { Normal, Loading }
+        internal StateType state { get; set; }
+        internal CanvasGroup screenFadeCg;
+        internal void FrameUpdate() { }
+        internal void TryGetNewTip() { }
+    }
     internal class AudioManager
     {
         public static int NextDynamicPriorityCalls;
@@ -946,7 +1083,7 @@ namespace SodRpg.Mod
         public int updateVolumeCalls;
         public void UpdateVolume() { updateVolumeCalls++; }
     }
-    internal static class ManagerBase<T> { public static T softInstance; }
+    internal static partial class ManagerBase<T> { public static T softInstance; }
     // （#763）本体と同じ意味のカメラ角度。実物は get が public のプロパティで、セッターが
     // entityCamAngleRotation へ Euler(0, 角度, 0) を同じ式で保持する（CameraManager.cs:122-132）。
     // 角度・保持値ともシリアライズ対象外のため、境界も同じ不変だけを保つ。
@@ -1065,6 +1202,10 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> allHumanPlayers = new List<DewPlayer>();
         public string playerName;
         public uint netId;
+        // NativeEntityOwnerSyncVarPerf（リンク）の Prefix が owner SyncVar の一致判定で読む
+        // NetworkBehaviour のフィールド。実物は InitializeNetworkBehaviours が NetworkBehaviours の
+        // 添字を入れる。テストでは Prefix を通さないため形だけ。
+        public byte ComponentIndex;
         public string guid;
         public bool isHumanPlayer = true;
         public int gold, dreamDust;
@@ -1080,6 +1221,25 @@ namespace SodRpg.Mod
         public bool isEveryInfoSet;
         public string selectedSkin = "";
         public string selectedHeroType = "Hero_Mist";
+        // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が読む現在値。実機では SyncVar の
+        // 裏の字段を返す公開プロパティで、初期値は new された空のロードアウト。
+        public HeroLoadoutData selectedLoadout = new HeroLoadoutData();
+        // 実機の Mirror weaver が [SyncVar] selectedLoadout 向けに生成するセッターの模倣。
+        // 本体はクラス既定の参照等値で比べ、参照が変わるときだけ字段へ代入して dirty を
+        // 立て hook を起こす（実 DLL 逆コンパイル 2026-10-24）。境界では参照の代入と
+        // 「書いた回数」（dirty・hook の代理）だけを再現し、NativeMidJoinLoadoutIdlePerf の
+        // Prepare がこのセッターを解決できるようにする（テストでパッチを有効なまま確かめる）。
+        public HeroLoadoutData Network_003CselectedLoadout_003Ek__BackingField
+        {
+            get => selectedLoadout;
+            set
+            {
+                if (ReferenceEquals(selectedLoadout, value)) return;
+                selectedLoadout = value;
+                selectedLoadoutWrites++;
+            }
+        }
+        public int selectedLoadoutWrites;
         public readonly SyncList<string> selectedAccessories = new SyncList<string>();
         public List<string> ownedItems = new List<string>();
         public bool IsAllowedToUseItem(string itemName)
@@ -1140,6 +1300,25 @@ namespace SodRpg.Mod
         public string skillKey;
         public Func<float> valueGetter;
         internal int _id;
+    }
+    // NativeMidJoinLoadoutIdlePerf（リンク）の Prefix が同じ値かどうかを比べる本体のロードアウト。
+    // 実機ではグローバル名前空間の公開クラスで、スキル4つと星のリスト4つを持ち、Mirror の
+    // SyncVar はクラス既定の参照等値で比べる（実 DLL 逆コンパイル 2026-10-24）。本体では
+    // new されたインスタンスがそのまま代入されるため、この境界にも同じ字段の形だけを置く。
+    // 空判定はこの型の全インスタンス字段（公開・非公開とも）から実行時にコンパイルされる
+    // （字段構成が変わっても、全字段が既定値かの判定として組み立て直される）。
+    internal struct LoadoutStarItem
+    {
+        public string name;
+        public int level;
+    }
+    internal sealed class HeroLoadoutData
+    {
+        public int skillQ, skillR, skillTrait, skillMovement;
+        public List<LoadoutStarItem> cDestruction = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cLife = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cImagination = new List<LoadoutStarItem>();
+        public List<LoadoutStarItem> cFlexible = new List<LoadoutStarItem>();
     }
     // 被弾シェイク本体（実機ではグローバル名前空間 Dew.Core）。NativeDamageShakeIdlePerf の
     // Prepare が探す部位（OnClientTakeDamage・入れ子の Ad_DamageShake）と Prefix が読む公開
@@ -1587,6 +1766,9 @@ namespace SodRpg.Mod
         // ClientSession.Hello.cs と同じ保管（#510: Txt 保持＋getter で解決）。ResetHello の抽出が書く。
         private Txt _hostVersionWarning;
         public string HostVersionWarning => _hostVersionWarning?.ToString();
+        // ヒーローコネクタ（spec hero-connector §9）: ホストの宣言との不一致の1行。ResetHello の抽出が書く。
+        private Txt _heroConnectorWarning;
+        public string HeroConnectorHostNotice => _heroConnectorWarning?.ToString();
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;
@@ -1699,6 +1881,45 @@ namespace UnityEngine
         internal int childCount => children.Count;
         internal Transform GetChild(int index) => children[index];
     }
+
+    // 本体 UnityEngine.Animator の最小の受け口。NativeEntityAnimationLayerWeightIdlePerf の
+    // GetWeight が読み書きするレイヤー1の重みの実体と、読み出し回数（読み飛ばしの検証用）。
+    internal sealed class Animator
+    {
+        public int GetLayerWeightCalls;
+        // Rebind / コントローラ再設定がレイヤー1を戻す既定値（本体のコントローラ既定の代わり）。
+        public float rebindLayer1Weight;
+        private float _layer1Weight;
+        // 読み出し回数を乱さずに値を確かめるための覗き口（テスト用）。
+        public float layer1Weight => _layer1Weight;
+        public float GetLayerWeight(int layer)
+        {
+            GetLayerWeightCalls++;
+            return layer == 1 ? _layer1Weight : 0f;
+        }
+        public void SetLayerWeight(int layer, float value)
+        {
+            if (layer == 1) _layer1Weight = value;
+        }
+        // 本体 Animator.Rebind: 全レイヤーの重みをコントローラの既定へ戻す（模倣ではレイヤー1だけ）。
+        // 本体には private Rebind(bool) もあるが、模倣は public Rebind() だけで
+        // NativeEntityAnimationLayerWeightReset の FindByName が名前で拾える形にする。
+        public void Rebind()
+        {
+            _layer1Weight = rebindLayer1Weight;
+        }
+        // 本体と同じくコントローラの再設定は内部で再バインドを起こし、重みを既定へ戻す。
+        public object runtimeAnimatorController
+        {
+            get => _controller;
+            set
+            {
+                _controller = value;
+                _layer1Weight = rebindLayer1Weight;
+            }
+        }
+        private object _controller = new object();
+    }
 }
 
 // 本体 Dew.Contents Shrine_CorruptedChaos_PetalAnimator（堕落した混沌の神殿の花びら
@@ -1729,6 +1950,51 @@ internal sealed class Shrine_CorruptedChaos_PetalAnimator : UnityEngine.Componen
             transform.GetChild(i).localScale = _originalLocalScales[i]
                 * (1f + Mathf.Sin(Time.time * sin0Time + (float)i * sin0Offset) * sin0Mag
                      + Mathf.Sin(Time.time * sin1Time + (float)i * sin1Offset) * sin1Mag);
+    }
+}
+
+// 本体 Dew.Core EntityAnimation（能力アニメのレイヤー重みの制御）の模倣。
+// NativeEntityAnimationLayerWeightIdlePerf の Transpiler 対象の FrameUpdateAnimations /
+// LateUpdate が、実 DLL 逆コンパイル（decompiled/sod-decomp/Dew.Core/EntityAnimation.cs）
+// と同じ形で Animator.GetLayerWeight(1) を各1回だけ呼ぶ見本（指紋の対象はその2呼び出し）。
+// レイヤー1の重みの実体は境界の Animator 側に置き、MoveTowards の遷移と LateUpdate の
+// 分岐は本体と同じ式の転写にする。実物と同じグローバル名前空間に置く。
+internal sealed class EntityAnimation
+{
+    // 本体はネストした public struct（isPlaying を含む）。GetWeight が isPlaying だけを読む。
+    internal struct AbilityAnimationStatus
+    {
+        public bool isPlaying;
+    }
+
+    public UnityEngine.Animator animator;
+    public AbilityAnimationStatus abilityAnimStatus;
+
+    // 本体 FrameUpdateAnimations のうち GetLayerWeight(1) の呼び出しとその使い方の転写。
+    private void FrameUpdateAnimations()
+    {
+        float layerWeight = animator.GetLayerWeight(1);
+        float target = abilityAnimStatus.isPlaying ? 1f : 0f;
+        float moved = Mathf.MoveTowards(layerWeight, target, Time.deltaTime / 0.1f);
+        if (moved != layerWeight) animator.SetLayerWeight(1, moved);
+    }
+
+    // 本体 LateUpdate のうち GetLayerWeight(1) の呼び出しと分岐の転写（回転フィックスの中身は省く）。
+    private void LateUpdate()
+    {
+        if (animator.GetLayerWeight(1) > 0f)
+        {
+        }
+    }
+
+    // 本体 UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single（RPC 受信部）の
+    // うち上半身レイヤーを1にする経路の転写: isPlaying を true にしてから
+    // SetLayerWeight(1, 1f) を書く。NativeEntityAnimationLayerWeightReset の Postfix 対象。
+    // 引数（DewAnimationClip・int・float）は省いて名前だけ合わせる（Postfix は __instance しか読まない）。
+    private void UserCode_RpcPlayAbilityAnimation__DewAnimationClip__Int32__Single()
+    {
+        abilityAnimStatus.isPlaying = true;
+        animator.SetLayerWeight(1, 1f);
     }
 }
 

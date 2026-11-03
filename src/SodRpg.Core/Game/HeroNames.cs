@@ -19,7 +19,10 @@ namespace SodRpg.Core.Game
                 case "Hero_Nachia": ja = "ナキア"; break;
                 case "Hero_Aurena": ja = "アウレナ"; break;
                 case "Hero_Bismuth": ja = "ビスマス"; break;
-                default: ja = en; break;
+                // 拡張旅人（ヒーローコネクタ §6-2）は宣言の名前を使う。未登録なら型名へ落ちる。
+                default:
+                    if (ExtendedHeroes.TryGet(heroKey, out var extended)) return extended.Name;
+                    ja = en; break;
             }
             return new Txt(ja, en, LocZhGlossary.Lookup(en));
         }

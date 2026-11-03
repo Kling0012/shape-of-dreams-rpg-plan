@@ -243,8 +243,17 @@ namespace SodRpg.Core.Game
                         var def = group[i];
                         // Per-star ownership cannot borrow a different node's verified source.
                         cluster.AuthoredMemories = starMemories[i];
-                        ValidateStar(cluster, effects[i], def.LocalStarId, false, existing);
-                        var node = CreateTalent(cluster, effects[i], i + 1, def.LocalStarId);
+                        TalentDef node;
+                        try
+                        {
+                            ValidateStar(cluster, effects[i], def.LocalStarId, false, existing);
+                            node = CreateTalent(cluster, effects[i], i + 1, def.LocalStarId);
+                        }
+                        catch (Exception ex)
+                        {
+                            ex.Data["AuthoredStarId"] = def.LocalStarId;
+                            throw;
+                        }
                         node.AuthoredStar = def;
                         if (def.RetainedLegacy)
                         {

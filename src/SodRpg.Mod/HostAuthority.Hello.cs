@@ -17,8 +17,14 @@ namespace SodRpg.Mod
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _bountyCountPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
+        /// <summary>ヒーローコネクタの交換に応じる参加者（広告 heroConnector を返した相手だけ。§9）。</summary>
+        private readonly HashSet<DewPlayer> _heroConnectorPeers = new HashSet<DewPlayer>();
+        private readonly Dictionary<DewPlayer, Txt> _connectorMismatches = new Dictionary<DewPlayer, Txt>();
         private Action<DreamforgeAutocastPressureCapabilityMsg, DewPlayer> _onAutocastPressureCapability;
+        private Action<DreamforgeHeroConnectorMsg, DewPlayer> _onHeroConnector;
         internal bool AutocastPressureReady;
+        /// <summary>設定 heroConnector の反映（DreamforgeMod から）。無効なら広告も交換もしない（§6-8）。</summary>
+        internal static bool HeroConnectorEnabled = true;
 
         internal bool SupportsAutocastPressure(DewPlayer player) => _autocastPressurePeers.Contains(player);
         internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
@@ -73,6 +79,12 @@ namespace SodRpg.Mod
                 actor.CustomRpc_RegisterServerMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(nameof(DreamforgeAutocastPressureCapabilityMsg), _onAutocastPressureCapability);
             }
             catch (Exception) { }
+            try
+            {
+                if (_onHeroConnector == null) _onHeroConnector = OnHeroConnector;
+                actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHeroConnectorMsg>(nameof(DreamforgeHeroConnectorMsg), _onHeroConnector);
+            }
+            catch (Exception) { }
         }
 
         private void UnregisterHello(Actor actor)
@@ -87,6 +99,8 @@ namespace SodRpg.Mod
             UnregisterBuildInputCapability(actor);
             if (actor != null && _onAutocastPressureCapability != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(_onAutocastPressureCapability); } catch (Exception) { }
+            if (actor != null && _onHeroConnector != null)
+                try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHeroConnectorMsg>(_onHeroConnector); } catch (Exception) { }
             _helloActor = null;
             _versionMismatches.Clear();
             _helloPeers.Clear();
@@ -96,6 +110,8 @@ namespace SodRpg.Mod
             _nemesisGrudgePeers.Clear();
             _autocastPressurePeers.Clear();
             _bountyCountPeers.Clear();
+            _heroConnectorPeers.Clear();
+            _connectorMismatches.Clear();
             _stateSnapshotPeers.Clear();
             _dynamicRosterPeers.Clear();
             _stateSnapshotEpoch++;
@@ -164,12 +180,20 @@ namespace SodRpg.Mod
             else _roomOmenPeers.Remove(caller);
             if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);
             else _forbiddenSmithPeers.Remove(caller);
+            // ヒーローコネクタ（§9）: 広告を返した相手とだけ登録簿を交換する。
+            if (msg.heroConnector == 1 && _helloPeers.Contains(caller)) _heroConnectorPeers.Add(caller);
+            else
+            {
+                _heroConnectorPeers.Remove(caller);
+                if (_connectorMismatches.Remove(caller)) RebuildMismatchList();
+            }
             if (_helloPeers.Contains(caller)) _nemesisGrudgePeers[caller] = Forbidden.ClampGrudge(msg.nemesisGrudge);
             else _nemesisGrudgePeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
                 new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1,
                     stateSnapshots = 1, dynamicRoster = 1, helloSchedule = 1, killReceiptDelta = 1,
-                    autocastPressure = AutocastPressureReady ? 1 : 0 }); } catch (Exception) { }
+                    autocastPressure = AutocastPressureReady ? 1 : 0,
+                    heroConnector = HeroConnectorEnabled ? 1 : 0 }); } catch (Exception) { }
             if (newOmenPeer || msg.helloSchedule != 1) SendRoomOmenPeer(caller);
         }
 
@@ -273,10 +297,68 @@ namespace SodRpg.Mod
 
         private void OnHelloPlayerChanged(DewPlayer player) => RebuildMismatchList();
 
+        /// <summary>
+        /// 参加者 → ホスト: 拡張旅人の登録簿の一覧（§9）。広告を返した相手とだけ交換する。
+        /// 参加者の宣言のうちこのホストに無いもの・宣言の異なるものは、その旅人の星がこの部屋で
+        /// 反映されない（既存の星図検証で拒否される）ので、警告1回で伝える。プレイを止めたりはしない。
+        /// </summary>
+        private void OnHeroConnector(DreamforgeHeroConnectorMsg msg, DewPlayer caller)
+        {
+            try
+            {
+                if (!HeroConnectorEnabled || msg == null || msg.version != 1 || caller == null || !caller.isHumanPlayer
+                    || caller == DewPlayer.local || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)
+                    || !_heroConnectorPeers.Contains(caller)) return;
+                var theirs = ReadHeroConnectorList(msg);
+                if (theirs != null)
+                {
+                    var mismatched = new List<string>();
+                    foreach (var kv in theirs)
+                        if (!ExtendedHeroes.TryGet(kv.Key, out var own) || own.DeclarationHash != kv.Value)
+                            mismatched.Add(kv.Key);
+                    if (mismatched.Count > 0)
+                    {
+                        var warning = new Txt(
+                            $"{caller.playerName} の拡張旅人（{string.Join("、", mismatched)}）の宣言がこのホストと一致しないため、その旅人の星はこの部屋では反映されません。",
+                            $"{caller.playerName}'s extended travelers ({string.Join(", ", mismatched)}) do not match this host's declarations; those stars will not apply in this room.",
+                            $"{caller.playerName} 的扩展旅人（{string.Join("、", mismatched)}）的宣言与此主机不一致，其星章不会在这个房间生效。");
+                        // 警告は1回。差し引きが変わったら文を差し替える（版違いの警告と同じ作り）。
+                        if (!_connectorMismatches.TryGetValue(caller, out var previous) || previous.Ja != warning.Ja)
+                        {
+                            _connectorMismatches[caller] = warning;
+                            Log.Warn($"Host: hero connector mismatch for {caller.playerName}: {string.Join(", ", mismatched)}; those stars will be rejected by the normal allocation validation.");
+                        }
+                    }
+                    else if (_connectorMismatches.Remove(caller)) Log.Info("Host: hero connector mismatch resolved for " + caller.playerName);
+                    RebuildMismatchList();
+                }
+                // 自分の一覧を返す（参加者側で同じ照合と1行の知らせを出すため）。
+                try { _helloActor?.CustomRpc_SendMessageToClient(caller, ClientSession.CreateHeroConnectorMessage()); } catch (Exception) { }
+            }
+            catch (Exception ex) { Log.Error("Host: hero connector exchange " + ex); }
+        }
+
+        /// <summary>電文の一覧を読む。形が不正（長さ違い・空欄・多すぎ）なら null を返して何もしない。</summary>
+        private static List<KeyValuePair<string, string>> ReadHeroConnectorList(DreamforgeHeroConnectorMsg msg)
+        {
+            var heroes = msg.heroes;
+            var hashes = msg.hashes;
+            if (heroes == null || hashes == null || heroes.Length != hashes.Length || heroes.Length > 64) return null;
+            var list = new List<KeyValuePair<string, string>>(heroes.Length);
+            foreach (string key in heroes)
+                if (string.IsNullOrEmpty(key)) return null;
+            for (int i = 0; i < heroes.Length; i++)
+                list.Add(new KeyValuePair<string, string>(heroes[i], hashes[i]));
+            return list;
+        }
+
         private void RebuildMismatchList()
         {
             MismatchTexts.Clear();
             foreach (var kv in _versionMismatches)
+                if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
+                    MismatchTexts.Add(kv.Value);
+            foreach (var kv in _connectorMismatches)
                 if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
                     MismatchTexts.Add(kv.Value);
             FillMismatchScratch();

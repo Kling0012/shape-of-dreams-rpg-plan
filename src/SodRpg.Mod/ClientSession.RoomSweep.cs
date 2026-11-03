@@ -4,7 +4,8 @@ using UnityEngine;
 namespace SodRpg.Mod
 {
     // ClientSession の部分クラス。部屋遷移の完了後と遠征の終了後に 1 回だけ、
-    // 残ってしまった敵の見た目を掃除する（毎フレームは走らない）。
+    // 残ってしまった敵の見た目を掃除し、破棄済みオブジェクトを鍵に持つ静的な管理も
+    // 参照から外す（毎フレームは走らない）。
     internal sealed partial class ClientSession
     {
         // 遷移直後は本体の破棄が数フレームに分かれて進むため、少し待ってから掃除する。
@@ -23,6 +24,19 @@ namespace SodRpg.Mod
             if (_roomSweepPendingAt == 0f || Time.unscaledTime < _roomSweepPendingAt) return;
             _roomSweepPendingAt = 0f;
             SweepLeftoverVisuals();
+            SweepDestroyedBindings();
+        }
+
+        /// <summary>
+        /// 部屋の区切りで、破棄済みの Unity オブジェクトを鍵に持つ Mod 側の静的な管理から参照を切る。
+        /// シーンの解体は Actor.OnDestroyActor を経ないため、自前の掃除が必要。対象ごとに独立に fail-soft。
+        /// </summary>
+        private void SweepDestroyedBindings()
+        {
+            try { NativeDreamContent.PruneDestroyedSeeds(); }
+            catch (Exception ex) { Log.Error("Client seedling prune: " + ex.Message); }
+            try { BossShareBarBinding.PruneDestroyed(); }
+            catch (Exception ex) { Log.Error("Client boss bar binding prune: " + ex.Message); }
         }
 
         /// <summary>

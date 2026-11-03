@@ -29,6 +29,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, WaypointHeroRuntime> _waypointHeroes = new Dictionary<Hero, WaypointHeroRuntime>();
         private readonly List<Hero> _waypointHeroScratch = new List<Hero>();
         private readonly List<Hero> _waypointAddScratch = new List<Hero>();
+        private readonly List<Hero> _waypointTrackedScratch = new List<Hero>();
+        private static readonly List<Hero> EmptyHeroRoster = new List<Hero>();
         private readonly HashSet<Hero> _waypointEligibleScratch = new HashSet<Hero>();
         private readonly HashSet<Hero> _waypointKnownScratch = new HashSet<Hero>();
         private readonly List<Summon> _waypointSummonScratch = new List<Summon>();
@@ -105,9 +107,13 @@ namespace SodRpg.Mod
         private void SyncWaypointHeroes()
         {
             // Ordinary mode remains shared; Infinity receiver hooks use the authenticated owner's waypoint.
+            // 毎フレームの定期経路なので、追跡辞書を List に写してから Diff へ渡し、
+            // IEnumerable 経由の列挙子の確保（毎フレーム2個）をなくす。
             _waypointHeroScratch.Clear();
             _waypointAddScratch.Clear();
-            WaypointRoster.Diff(_waypointHeroes.Keys, _am != null ? _am.allHeroes : (IEnumerable<Hero>)Array.Empty<Hero>(),
+            _waypointTrackedScratch.Clear();
+            foreach (var kv in _waypointHeroes) _waypointTrackedScratch.Add(kv.Key);
+            WaypointRoster.Diff(_waypointTrackedScratch, _am != null ? _am.allHeroes : EmptyHeroRoster,
                 hero => hero != null && hero.isActive && hero.Status != null, _waypointAddScratch, _waypointHeroScratch,
                 _waypointEligibleScratch, _waypointKnownScratch);
             foreach (var hero in _waypointHeroScratch) RemoveWaypointHero(hero);

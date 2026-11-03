@@ -62,5 +62,22 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         internal static string ContinueRunId, ContinueCheckpointId, ContinueResumeSession;
+        // ヒーローコネクタ（spec hero-connector §9）: ClientSession.Hello.cs から抽出される ResetHello が書く。
+        SodRpg.Core.Game.Txt _heroConnectorWarning;
+        // HostAuthority.Hello.cs の応答が呼ぶ。BuildInputCapability.cs は未リンクのため同じ式の模倣。
+        internal static DreamforgeHeroConnectorMsg CreateHeroConnectorMessage()
+        {
+            var heroes = SodRpg.Core.Game.ExtendedHeroes.Registered;
+            var keys = new List<string>(heroes.Count);
+            var hashes = new List<string>(heroes.Count);
+            foreach (var hero in heroes) { keys.Add(hero.Key); hashes.Add(hero.DeclarationHash); }
+            var order = new int[heroes.Count];
+            for (int i = 0; i < order.Length; i++) order[i] = i;
+            Array.Sort(order, (a, b) => string.CompareOrdinal(keys[a], keys[b]));
+            var sortedKeys = new string[heroes.Count];
+            var sortedHashes = new string[heroes.Count];
+            for (int i = 0; i < order.Length; i++) { sortedKeys[i] = keys[order[i]]; sortedHashes[i] = hashes[order[i]]; }
+            return new DreamforgeHeroConnectorMsg { heroes = sortedKeys, hashes = sortedHashes };
+        }
     }
 }

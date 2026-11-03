@@ -44,9 +44,14 @@ namespace SodRpg.Mod
                     if (actors == null) return;
                     foreach (var hero in actors.allHeroes)
                         if (hero != null && hero.isActive && hero.currentHealth > 0f && !hero.isKnockedOut &&
-                            (hero == Owner || hero.GetRelation(Owner) == EntityRelation.Ally) &&
-                            CoopDistanceNative.Coefficient(Owner, hero) > 0f)
-                            Skill.Heal(hero.maxHealth * 0.08f * CoopDistanceNative.Coefficient(Owner, hero)).Dispatch(hero);
+                            (hero == Owner || hero.GetRelation(Owner) == EntityRelation.Ally))
+                        {
+                            // One coefficient per pair: the second call repeated the same sqrt and
+                            // tracker update within the same frame and returned the same value.
+                            float coefficient = CoopDistanceNative.Coefficient(Owner, hero);
+                            if (coefficient > 0f)
+                                Skill.Heal(hero.maxHealth * 0.08f * coefficient).Dispatch(hero);
+                        }
                 }
                 catch (Exception ex) { Fail(true, ex); Unbind(); }
             }
@@ -196,6 +201,26 @@ namespace SodRpg.Mod
         private static bool HasShelterMarker(Actor actor) => actor != null &&
             actor.GetType() == typeof(Gem_C_Quicksilver) &&
             actor.persistentSyncedData.TryGetValue(MarkerKey, out string value) && value == GemId;
+
+        /// <summary>
+        /// シーンの解体は Actor.OnDestroyActor を経ないため、遠征の終了やタイトル帰還で
+        /// 破棄されたスキルが Seedlings に残る（破棄済み SkillTrigger と Hero への参照持ち）。
+        /// 部屋の区切りで破棄済みの分だけ外す。OnDestroyActor と同じ扱い（Unbind + 削除）。
+        /// </summary>
+        internal static void PruneDestroyedSeeds()
+        {
+            if (Seedlings.Count == 0) return;
+            List<SkillTrigger> destroyed = null;
+            foreach (var pair in Seedlings)
+            {
+                if (pair.Key != null) continue;
+                pair.Value.Unbind();
+                if (destroyed == null) destroyed = new List<SkillTrigger>();
+                destroyed.Add(pair.Key);
+            }
+            if (destroyed == null) return;
+            foreach (var skill in destroyed) Seedlings.Remove(skill);
+        }
 
         internal static void StopEffects()
         {

@@ -73,6 +73,13 @@ namespace SodRpg.Mod
         [LabelText("Overflow relics: shards + Dream Dust /\n鞄からあふれた遺物で、欠片に加えてドリームダストも受け取る")]
         public bool overflowDreamDust = false;
 
+        // ヒーローコネクタ（docs/specs/hero-connector.md §6-8）。他MODが置いた宣言（dreamforge.json）の読み取り。
+        // 無効にすると走査もランタイムAPIも登録簿の交換もしない（既存の挙動に戻る）。
+        [LabelText("Hero Connector: read character mods' declarations / ヒーローコネクタ：キャラクターMODの宣言を読む")]
+        [Description("Other mods' character declarations (dreamforge.json) are loaded as extended travelers with their own star trees. Uncheck to ignore them. / "
+            + "他のMODが置いたキャラクターの宣言（dreamforge.json）を拡張旅人として読み込み、専用の星図で遊べるようにします。外すと読みません。")]
+        public bool heroConnector = true;
+
         [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
         public bool roomOmens = true;
 
@@ -151,6 +158,9 @@ namespace SodRpg.Mod
         [LabelText("Gem cooldown sync: 0.5 seconds (host) / 宝石のクールダウンを0.5秒間隔で同期（ホスト）")]
         public bool nativeGemCooldownSync = true;
 
+        [LabelText("Cache the gem world-model prefab load on every gem spawn (host and guests) /\n宝石の出現ごとのワールドモデルプレハブのロードをキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeGemWorldModelCache = true;
+
         [LabelText("Skip unused weapon FX work / 結果に影響しない武器FXの処理を省く")]
         public bool nativeWeaponFxScan = true;
 
@@ -191,6 +201,12 @@ namespace SodRpg.Mod
 
         [LabelText("Skip transform sync of stationary actors (host) / 動いていないアクターの座標同期を省く（ホスト）")]
         public bool nativeTransformSyncIdle = true;
+
+        [LabelText("Skip transform writes whose value is bit-identical to what the transform already holds (host and guests) / 同じ値の Transform 再書き込みを省く（ホストと参加者）")]
+        public bool nativeTransformSyncWriteSkip = true;
+
+        [LabelText("Skip the per-frame interpolation of a settled transform sync sample (guests) / 収束した座標同期サンプルの毎フレーム補間を省く（参加者）")]
+        public bool nativeTransformSyncHold = true;
 
         [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
         public bool nativeSleepPositionReuse = true;
@@ -234,6 +250,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged charge-count broadcasts (host) / 変わっていないチャージ数の全員への再送を省く（ホスト）")]
         public bool nativeChargeRpcIdle = true;
 
+        [LabelText("Cache the skill world-model prefab load on every skill spawn (host and guests) / スキルの出現ごとのワールドモデルプレハブのロードをキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeSkillWorldModelCache = true;
+
         [LabelText("Skip Chaos Shrine hit handling while no max-stack bonus is taken (host) / 混沌の神殿で光・闇の最大スタック強化を取っていない間、被弾ごとの処理を省く（ホスト）")]
         public bool nativeChaosShrineHitScan = true;
 
@@ -272,6 +291,9 @@ namespace SodRpg.Mod
 
         [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
         public bool nativeRoomStartDependency = true;
+
+        [LabelText("Skip the whole-scene player-pathable-point scan on room load for guests, whose game never reads the list (guests) /\n部屋読み込み時に参加者側で走るシーン全体の歩行可能地点の走査を省く（参加者のゲームではこの一覧を読まない）")]
+        public bool nativeRoomPlayerPathableScan = true;
 
         [LabelText("Allocate no closure for the per-message chat mute check / チャット受信ごとのミュート判定でクロージャを確保しない")]
         public bool nativeChatMuteCheckAlloc = true;
@@ -320,6 +342,45 @@ namespace SodRpg.Mod
 
         [LabelText("Skip the per-frame gamepad rumble-off command while no shake is active (host and guests) /\n振動が動いていないフレームに毎フレーム送っているゲームパッド振動オフのコマンドを省く（ホストと参加者）")]
         public bool nativeGamepadRumbleIdle = true;
+
+        [LabelText("Cache the Responsibility gem's hit-effect component scans on every RPC receive (host and guests) /\nGem_C_Responsibility の被弾演出RPCを受けるたびの子コンポーネント全走査をキャッシュに置き換える（ホストと参加者）")]
+        public bool nativeGemResponsibilityHitCache = true;
+
+        [LabelText("Skip unchanged music volume/pitch rewrites every logic tick (host and guests) /\nBGM の同じ音量・ピッチの毎ロジックtick再書き込みを省く（ホストと参加者）")]
+        public bool nativeMusicSourceIdle = true;
+
+        [LabelText("Skip the idle screen-fade bookkeeping every frame while no transition is active (host and guests) /\n場面転換が動いていないフレームの画面フェードの毎フレーム更新を省く（ホストと参加者）")]
+        public bool nativeTransitionIdle = true;
+
+        [LabelText("Skip the already-zero agent velocity rewrite in the movement integration (host and the local hero) /\n移動を自分で処理する実体の、すでにゼロのエージェント速度の毎フレーム再書き込みを省く（ホストと自分の英雄） /\n跳过移动整合中已为零的代理速度的每帧重写（主机与本地英雄）")]
+        public bool nativeAgentVelocityIdle = true;
+
+        [LabelText("Skip the per-frame empty-loadout re-sync while a player waits to rejoin (host) /\n途中参加の待機中に空のロードアウトを毎フレーム同期し直すのを省く（ホスト）")]
+        public bool nativeMidJoinLoadoutIdle = true;
+
+        [LabelText("Skip the settled animation layer weight reads every frame (host and guests) /\n落ち着いた能力アニメのレイヤー重みの毎フレーム読み直しを省く（ホストと参加者）")]
+        public bool nativeEntityAnimLayerWeightIdle = true;
+
+        [LabelText("Reuse the chaos-shrine bonus tooltip text while its values are unchanged (host and guests) /\n混沌の神殿の加護のツールチップ文を、値が変わらない間は使い回す（ホストと参加者）")]
+        public bool nativeChaosStatBonusTooltipCache = true;
+
+        [LabelText("Serve the cached owner reference on pure clients while the synced owner id is unchanged (guests) /\n純クライアントで、同期された所有者のIDが変わらない間は解決済みの所有者参照を使い回す（参加者） /\n纯客户端在同步的所有者ID未变化时复用已解析的所有者引用（参与者）")]
+        public bool nativeEntityOwnerClientFast = true;
+
+        [LabelText("Serve the cached homing target reference on pure clients while the synced target id is unchanged (guests) /\n純クライアントで、同期された標的のIDが変わらない間は解決済みの標的参照を使い回す（参加者） /\n纯客户端在同步的目标ID未变化时复用已解析的目标引用（参与者）")]
+        public bool nativeProjectileTargetClientFast = true;
+
+        [LabelText("Keep the entity ability-changed callback to one subscription when a pooled entity is reused (host and guests) /\nプールで再利用されたエンティティで、能力変化コールバックの購読が重複しないようにする（ホストと参加者）")]
+        public bool nativeEntityAbilitySubscribeDedup = true;
+
+        [LabelText("Skip the [BossPool] debug log built on every boss spawn (host) /\nボスが出るたびに組み立てられる [BossPool] のデバッグログを省く（ホスト）")]
+        public bool nativeBossPoolSpawnLog = true;
+
+        [LabelText("Resolve each prewarm entry's prefab once instead of twice when applying the room's prewarm list (guests) /\nルームのプリウォーム一覧を適用するとき、各項目のプレハブ解決を2回から1回に減らす（参加者）")]
+        public bool nativeRoomPrewarmResolveOnce = true;
+
+        [LabelText("Skip redundant health re-sends while a hero is knocked out (host) / 英雄が撃倒されている間の同じ体力の再送を省く（ホスト）")]
+        public bool nativeHeroKnockoutHealthIdle = true;
 
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;

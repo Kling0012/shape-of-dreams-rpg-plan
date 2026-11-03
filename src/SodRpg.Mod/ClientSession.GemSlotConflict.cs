@@ -34,6 +34,16 @@ namespace SodRpg.Mod
         // 本体UIの内部構造は実機で未確認のため、どの参照も欠けていれば何もせず、例外は握って次の周期へ回す。
         private static bool _gemSlotHudLogged, _movementGroupHealLogged;
         private float _nextGemSlotHudCheck;
+        // 見つけた移動ボタンの gem group。ボタンの親子関係は本体も Awake で永久にキャッシュするほど安定しているので、
+        // 壊れた（Unity の == null）ときだけ探し直し、毎秒の副木走査を省く。
+        private UI_InGame_SkillButton_GemGroup _movementGemGroup;
+
+        private static UI_InGame_SkillButton_GemGroup FindGemGroup(Component button)
+        {
+            return button.transform.parent != null
+                ? button.transform.parent.GetComponentInChildren<UI_InGame_SkillButton_GemGroup>(true)
+                : null;
+        }
 
         internal void TickGemSlotHudProbe()
         {
@@ -54,9 +64,17 @@ namespace SodRpg.Mod
                     // 記録用の最初の1回を過ぎたら、移動（Movement）以外のボタンの group はどこにも使わない。
                     // 親の副木を毎秒走査し続けないよう、その時点で先に飛ばす。
                     if (!log && !isMovement) continue;
-                    var group = button.transform.parent != null
-                        ? button.transform.parent.GetComponentInChildren<UI_InGame_SkillButton_GemGroup>(true)
-                        : null;
+                    UI_InGame_SkillButton_GemGroup group;
+                    if (log)
+                    {
+                        group = FindGemGroup(button);
+                        if (isMovement) _movementGemGroup = group;
+                    }
+                    else
+                    {
+                        group = _movementGemGroup;
+                        if (group == null) _movementGemGroup = group = FindGemGroup(button);
+                    }
                     if (log)
                         AppendHudPart(parts, button.skillType + ":" + (group != null && group.groups != null ? group.groups.Length.ToString() : "no-group")
                             + (group != null ? (group.gameObject.activeInHierarchy ? "" : "(hidden)") : ""));

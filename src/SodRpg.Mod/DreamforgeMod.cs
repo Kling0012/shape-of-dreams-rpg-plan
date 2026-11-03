@@ -28,6 +28,11 @@ namespace SodRpg.Mod
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
         partial void ApplyNativePerfConfig();
+        // ヒーローコネクタ（docs/specs/hero-connector.md §3-1）: MOD フォルダの dreamforge.json の走査。
+        // partial なので、このファイルだけをテストに含めた環境では呼び出しが消えてコンパイルされる。
+        partial void StartHeroConnectorScan();
+        partial void TickHeroConnectorPending();
+        partial void StopHeroConnectorScan();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -50,10 +55,12 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
+                PatchMethodOwnership.BeginStartup(harmony.Id);
                 // Native/IL/private-API checks are advisory; only actual patch installation
                 // failures can skip their own class, never unrelated features or the whole MOD.
                 try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
+                long preflightMs = startupWatch.ElapsedMilliseconds;
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
@@ -62,6 +69,7 @@ namespace SodRpg.Mod
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
+                long patchesEndMs = startupWatch.ElapsedMilliseconds;
                 stage = "resource initialization";
                 ExternalLanguages.Reload(mod?.path, Application.persistentDataPath, mod?.metadata?.modVer, config.translationDump);
                 Loc.Language = config.ResolveLanguage(ExternalLanguages.Select);
@@ -83,6 +91,10 @@ namespace SodRpg.Mod
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _session.ConfigureOverflowBonus(config.overflowDreamDust);
                 _session.ConfigureAutoSalvage(config.autoSalvageRarity);
+                // ヒーローコネクタ: 設定の反映と宣言の走査（起動時の1回。§3-1）。
+                HostAuthority.HeroConnectorEnabled = config.heroConnector;
+                _session.ConfigureHeroConnector(config.heroConnector);
+                StartHeroConnectorScan();
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
@@ -109,7 +121,9 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
                     + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
-                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupWatch.ElapsedMilliseconds} ms.");
+                long startupMs = startupWatch.ElapsedMilliseconds;
+                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupMs} ms "
+                    + $"(preflight {preflightMs} ms, patches {patchesEndMs - preflightMs} ms, resources {startupMs - patchesEndMs} ms).");
                 _originalGameplayFlag = instance.isAlteringGameplay;
                 _gameplayFlagChanged = true;
                 instance.isAlteringGameplay = true;
@@ -120,6 +134,7 @@ namespace SodRpg.Mod
                 Log.Error("Startup stopped during " + stage + ": " + ex);
                 Stop();
             }
+            finally { PatchMethodOwnership.EndStartup(); }
         }
 
         public override void OnConfigChanged()
@@ -131,6 +146,9 @@ namespace SodRpg.Mod
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             _session?.ConfigureAutoSalvage(config.autoSalvageRarity);
+            // 設定の切り替えは広告・交換・API に即座に効く。走査自体は起動時とMOD読み込みの節目だけ（境界）。
+            HostAuthority.HeroConnectorEnabled = config.heroConnector;
+            _session?.ConfigureHeroConnector(config.heroConnector);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyAutoCastCoopConfig();
@@ -219,23 +237,33 @@ namespace SodRpg.Mod
         private void Update()
         {
             if (!_running) return;
-            _perf.Frame(Time.unscaledDeltaTime);
-            _perf.Begin();
+            bool measure = _perfLogEnabled || _perfPolled;
+            if (measure)
+            {
+                _perf.Frame(Time.unscaledDeltaTime);
+                _perf.Begin();
+            }
             HandleKeys();
             LevelEssenceRuntime.Tick();
             TickAutoCastCoopConfig();
+            TickHeroConnectorPending();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
-            _perf.BeginClient();
-            _session.Tick();
-            _perf.EndClient();
+            if (measure) _perf.BeginClient();
+            _session.Tick(measure ? _perf.ClientStages : null);
+            if (measure) _perf.EndClient();
             try
             {
-                _perf.BeginHost();
+                if (measure) _perf.BeginHost();
                 // 第2段: 重いフレームから持ち越された反応弾の生成を、ホスト処理の前に捌く。
-                NativeProcSpawnSpread.Tick();
-                _host?.Tick();
-                _perf.EndHost();
+                if (measure)
+                {
+                    long stageStart = _perf.HostStages.BeginStage();
+                    try { NativeProcSpawnSpread.Tick(); }
+                    finally { _perf.HostStages.EndStage(0, stageStart); }
+                }
+                else NativeProcSpawnSpread.Tick();
+                _host?.Tick(measure ? _perf.HostStages : null);
             }
             catch (Exception ex)
             {
@@ -247,6 +275,10 @@ namespace SodRpg.Mod
                     Log.Error("Host tick: " + ex);
                 }
             }
+            finally
+            {
+                if (measure) _perf.EndHost();
+            }
             // GUILayout を使うパネルが無いときは、IMGUI のレイアウト処理（OnGUI の Layout イベント）自体を止める。
             if (_ui != null)
             {
@@ -254,15 +286,15 @@ namespace SodRpg.Mod
                 _ui.LayoutEnabled = layout;
                 useGUILayout = layout;
             }
-            _perf.EndUpdate();
+            if (measure) _perf.EndUpdate();
             // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
-            TabPerf.Enabled = _perfLogEnabled || _perfPolled;
-            if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
+            TabPerf.Enabled = measure;
+            if (measure) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
                 Debug.Log("[DreamforgeRPG] perf " + _perf.Report() + TabPerf.Report() +
-                    $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+                    $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}" + _perf.ReportSpikes());
             }
         }
 
@@ -271,7 +303,7 @@ namespace SodRpg.Mod
         // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
         private bool _perfLogEnabled;
         private float _nextPerfLog;
-        // 計測用：dreamforge_perf が一度でも呼ばれたら、GC の割り当て計測を続ける。
+        // 計測用：dreamforge_perf が一度でも呼ばれたら、処理時間と GC の計測を続ける。
         private bool _perfPolled;
 
         private void HandleKeys()
@@ -308,10 +340,11 @@ namespace SodRpg.Mod
         private void OnGUI()
         {
             if (!_running) return;
-            _perf.Begin();
+            bool measure = _perfLogEnabled || _perfPolled;
+            if (measure) _perf.Begin();
             _session?.DrawBossEffects();
             _ui.Draw();
-            _perf.EndGui();
+            if (measure) _perf.EndGui();
         }
 
         private bool _devCommands;
@@ -329,9 +362,9 @@ namespace SodRpg.Mod
         private void PerfCommand()
         {
             if (!CommandAllowed()) return;
-            _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
+            _perfPolled = true; // 以後のフレームで処理時間と GC 割り当てを測る。
             Debug.Log("[DreamforgeRPG] " + _perf.Report() + TabPerf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
-                $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+                $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}" + _perf.ReportSpikes());
         }
 
         [ConsoleCommand("Dreamforge: toggle the gear/forge tab draw caches off/on to compare dreamforge_perf results (#500)", "dreamforge_perf_nocache")]
@@ -464,6 +497,7 @@ namespace SodRpg.Mod
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
             StopNativeKillRewards();
+            StopHeroConnectorScan();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
@@ -504,6 +538,8 @@ namespace SodRpg.Mod
             int installed = 0;
             int installedInfinity = 0;
             var skipped = new List<string>();
+            var timings = new List<KeyValuePair<string, long>>();
+            var patchWatch = new System.Diagnostics.Stopwatch();
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
                 bool infinity = InfinityMode.IsNativePatch(type);
@@ -511,6 +547,9 @@ namespace SodRpg.Mod
                 bool hunter = type == typeof(InfinityHunterAdvance);
                 // The lobby start messages degrade alone as well: no Infinity switch-off for a missing message hook.
                 bool lobbyGuard = type == typeof(InfinityLobbyStartCondition);
+                bool patchClass = false;
+                PatchMethodOwnership.StartupPatchClass = type;
+                patchWatch.Restart();
                 try
                 {
                     if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
@@ -519,6 +558,7 @@ namespace SodRpg.Mod
                         if (lobbyGuard) InfinityMode.LobbyStartGuardUnavailable("Patch has no native target: " + type.FullName);
                         continue;
                     }
+                    patchClass = true;
                     var targets = harmony.CreateClassProcessor(type).Patch();
                     if (lobbyGuard && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
                     {
@@ -562,7 +602,8 @@ namespace SodRpg.Mod
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
-                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message
+                        + PatchMethodOwnership.ForeignOwners(type, harmony.Id));
                     LevelEssencePatchUnavailable(type);
                     bool earlierCopy = EarlierCopyHookIsLive(type);
                     if (hunter)
@@ -593,9 +634,20 @@ namespace SodRpg.Mod
                     try { RollBackClass(type); }
                     catch (Exception rollback) { Log.Warn("Patch class rollback failed: " + type.FullName + ": " + rollback); }
                 }
+                finally
+                {
+                    patchWatch.Stop();
+                    if (patchClass) timings.Add(new KeyValuePair<string, long>(type.FullName, patchWatch.ElapsedTicks));
+                    PatchMethodOwnership.StartupPatchClass = null;
+                }
             }
             InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+            timings.Sort((left, right) => right.Value.CompareTo(left.Value));
+            var slowest = new List<string>();
+            for (int i = 0; i < Math.Min(5, timings.Count); i++)
+                slowest.Add(timings[i].Key + " " + (timings[i].Value * 1000 / System.Diagnostics.Stopwatch.Frequency) + " ms");
+            Log.Info("Slowest patch classes (top 5): " + string.Join(", ", slowest));
         }
 
         /// <summary>
@@ -606,7 +658,7 @@ namespace SodRpg.Mod
         /// </summary>
         private bool EarlierCopyHookIsLive(Type type)
         {
-            foreach (var target in Harmony.GetAllPatchedMethods())
+            foreach (var target in PatchMethodOwnership.SearchTargets(type))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;
@@ -641,7 +693,7 @@ namespace SodRpg.Mod
 
         private bool HasInstalledClass(Type type)
         {
-            foreach (var target in harmony.GetPatchedMethods())
+            foreach (var target in PatchMethodOwnership.SearchTargets(type))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;
@@ -655,7 +707,7 @@ namespace SodRpg.Mod
         /// <summary>Remove only the patch methods declared by this class (and its nested types), leaving every other patch in place.</summary>
         private void RollBackClass(Type type)
         {
-            foreach (var target in new List<MethodBase>(harmony.GetPatchedMethods()))
+            foreach (var target in new List<MethodBase>(PatchMethodOwnership.SearchTargets(type)))
             {
                 var info = Harmony.GetPatchInfo(target);
                 if (info == null) continue;

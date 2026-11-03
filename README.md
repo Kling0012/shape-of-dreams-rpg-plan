@@ -8,6 +8,7 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 
 - 最新版と導入用 zip：[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
 - 版ごとの変更：[更新履歴（CHANGELOG）](CHANGELOG.md)
+- 旅人MODの連携：[作者向け手引き](docs/MODDING.ja.md) / [Traveler mod guide](docs/MODDING.md)
 
 ## 開発について / About development
 

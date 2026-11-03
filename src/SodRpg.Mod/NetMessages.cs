@@ -372,6 +372,22 @@ namespace SodRpg.Mod
         public int helloSchedule;
         public int killReceiptDelta;
         public int autocastPressure;
+        /// <summary>この版がヒーローコネクタ（拡張旅人の宣言の読み取り）に対応しているか（§9）。旧版は 0。</summary>
+        public int heroConnector;
+    }
+
+    /// <summary>
+    /// 参加者 → ホスト、ホスト → 参加者: 登録した拡張旅人のキーと宣言のハッシュの一覧（ヒーローコネクタ §9）。
+    /// 広告（DreamforgeBuildInputCapabilityMsg.heroConnector）を返した相手とだけ交換する。
+    /// </summary>
+    [Serializable]
+    public class DreamforgeHeroConnectorMsg
+    {
+        public int version = 1;
+        /// <summary>拡張旅人のキー（Hero_*）。ソート済み。</summary>
+        public string[] heroes;
+        /// <summary>heroes と同じ並びの宣言ハッシュ。</summary>
+        public string[] hashes;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
@@ -415,5 +431,51 @@ namespace SodRpg.Mod
     {
         public int version = 1;
         public uint heroNetId;
+    }
+
+    [Serializable]
+    public class DreamforgeSkillResyncCapabilityMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public DreamforgeSkillStateReplyMsg[] snapshots;
+    }
+
+    // Used only after the host advertises version 2. Observations never grant cast permission.
+    [Serializable]
+    public class DreamforgeSkillStateRequestMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public uint requestId;
+        public int slot;
+        public bool diagnose;
+        public string reason;
+        public DreamforgeSkillState state;
+    }
+
+    [Serializable]
+    public class DreamforgeSkillStateReplyMsg
+    {
+        public int version = 2;
+        public uint heroNetId;
+        public uint requestId;
+        public int slot;
+        public bool compared, different;
+        public DreamforgeSkillState state;
+        public string diagnostic;
+    }
+
+    [Serializable]
+    public class DreamforgeSkillState
+    {
+        public uint skillNetId, ownerNetId;
+        public int config, abilityIndex, maxCharges;
+        public bool active, configActive, casting, locksKnown, castLock, cooldownLock;
+        public bool abilityLock, validator, reservable;
+        public float mana, manaCost;
+        public int status, blockAbility, blockAbilityCancelable, blockDodge, blockDodgeCancelable;
+        public float[] cooldowns, delays;
+        public int[] charges;
     }
 }

@@ -10,6 +10,9 @@
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <!-- 実 DLL（Dew.Contents.dll）の本体 IL との突き合わせ（GemResponsibilityHitPerfTests）。
+         SodRpg.Mod.Startup.Tests と同じ版を使う。 -->
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
@@ -19,6 +22,7 @@
   <ItemGroup>
     <Compile Include="../../src/SodRpg.Mod/ExternalLanguages.cs" Link="ModUnderTest/ExternalLanguages.cs" />
     <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
+    <Compile Include="../../src/SodRpg.Mod/PerfMeter.cs" Link="ModUnderTest/PerfMeter.cs" />
     <Compile Include="../../src/SodRpg.Mod/ImeInput.cs" Link="ModUnderTest/ImeInput.cs" />
     <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
@@ -61,19 +65,27 @@
     <Compile Include="../../src/SodRpg.Mod/NetMessages.NetLite.cs" Link="ModUnderTest/NetMessages.NetLite.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.RunGrowth.cs" Link="ModUnderTest/NetMessages.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/BountyReportBatching.cs" Link="ModUnderTest/BountyReportBatching.cs" />
+    <!-- #1171: 仕掛け発動の報告の1秒間引き（Issue1171GimmickReportThrottleTests が確かめる）。 -->
+    <Compile Include="../../src/SodRpg.Mod/GimmickReportThrottle.cs" Link="ModUnderTest/GimmickReportThrottle.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeMistLifetime.cs" Link="ModUnderTest/NativeMistLifetime.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativePerfPatches.cs" Link="ModUnderTest/NativePerfPatches.cs" />
+    <Compile Include="../../src/SodRpg.Mod/PatchMethodOwnership.cs" Link="ModUnderTest/PatchMethodOwnership.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeStealthReveal.cs" Link="ModUnderTest/NativeStealthReveal.cs" />
     <Compile Include="../../src/SodRpg.Mod/AccessoryOffsetCacheKey.cs" Link="ModUnderTest/AccessoryOffsetCacheKey.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeTransformSyncIdle.cs" Link="ModUnderTest/NativeTransformSyncIdle.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeCharacterModelDisplayBounds.cs" Link="ModUnderTest/NativeCharacterModelDisplayBounds.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeLobbyAccessoryIdle.cs" Link="ModUnderTest/NativeLobbyAccessoryIdle.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.CrowdControlRecovery.cs" Link="ModUnderTest/HostAuthority.CrowdControlRecovery.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.SkillLock.cs" Link="ModUnderTest/HostAuthority.SkillLock.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NativeSkillLockRecovery.cs" Link="ModUnderTest/NativeSkillLockRecovery.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NativeCooldownSafety.cs" Link="ModUnderTest/NativeCooldownSafety.cs" />
     <Compile Include="../../src/SodRpg.Mod/BossSegmentPlacement.cs" Link="ModUnderTest/BossSegmentPlacement.cs" />
+    <!-- #1231: 旅人連携の宣言キャッシュ（HeroConnectorCacheTests が確かめる）。本体 API は HeroConnectorBoundary.cs の境界。 -->
+    <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.HeroConnector.cs" Link="ModUnderTest/DreamforgeMod.HeroConnector.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
     <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
   </ItemGroup>

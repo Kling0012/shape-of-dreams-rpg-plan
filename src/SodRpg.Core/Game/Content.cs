@@ -446,6 +446,7 @@ namespace SodRpg.Core.Game
         public EffectChannelDef EffectChannel { get; set; }
         public NativeMemoryModifierDef NativeModifier { get; set; }
         public AuthoredMechanismSpec Mechanism { get; set; }
+        internal string ConnectorEffectSource { get; set; }
         public KeystoneDefinition KeystoneDefinition { get; set; }
         /// <summary>v1.32 B：遠征を通して成長する仕組み（重要な星）。なければ null。</summary>
         public RunGrowthDef RunGrowth { get; set; }
@@ -5291,6 +5292,15 @@ namespace SodRpg.Core.Game
         {
             if (StarClusters.TryGetRegisteredTalent(heroKey, localId, out def, out bool registered)) return true;
             if (registered) { def = null; return false; }
+            // starTree の拡張旅人は登録済み監修星図がない場合だけ引く。
+            if (localId != null && ExtendedHeroes.IsExtendedStarId(localId)
+                && HeroSigils.TryGetExtendedTree(heroKey, out var extendedTree))
+            {
+                foreach (var talent in extendedTree)
+                    if (talent.Id == localId) { def = talent; return true; }
+                def = null;
+                return false;
+            }
             return TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);
         }
 

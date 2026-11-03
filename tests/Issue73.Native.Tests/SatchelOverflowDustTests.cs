@@ -87,8 +87,8 @@ namespace Issue73.Native.Tests
             var summary = Assert.Single(session.Events);
             Assert.Equal(count, summary.SatchelOverflowCount);
             Assert.Equal(expected, summary.SatchelOverflowShards);
-            Assert.Single(logs);
-            // #1010: 鞄あふれの集計はログとHUDの再構築だけを行い、画面の通知には出さない。
+            // #1010: 鞄あふれの集計はHUDの再構築だけを行う。957cc4e6 以降、Warning 以外の通知は Player.log に書かれないため、ログにも画面の通知にも出ない。
+            Assert.Empty(logs);
             Assert.Equal(0, ui.ToastCount);
             Assert.Equal(0, ui.HudDeadline);
             Assert.NotEmpty(cachedBefore.Except(profile.Run.Satchel.Select(r => r.Uid)));
@@ -99,7 +99,7 @@ namespace Issue73.Native.Tests
             Call(session, "TickSatchelOverflow");
             Assert.Equal(before + expected, profile.Material(Materials.Shard));
             Assert.Single(session.Events);
-            Assert.Single(logs);
+            Assert.Empty(logs);
             Assert.Equal(0, ui.ToastCount);
             Assert.Equal(0, Get(session, "_saveCount"));
             Assert.Empty(transport.Sent);

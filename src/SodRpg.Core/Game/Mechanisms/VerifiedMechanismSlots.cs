@@ -143,14 +143,29 @@ namespace SodRpg.Core.Game
             return StarClusters.RegistryHash(text.ToString());
         }
 
-        public static IReadOnlyList<string> ForHero(string heroKey) =>
-            heroKey != null && HeroMemories.TryGetValue(heroKey, out var memories) ? memories : Array.Empty<string>();
+        public static IReadOnlyList<string> ForHero(string heroKey)
+        {
+            if (heroKey != null && HeroMemories.TryGetValue(heroKey, out var memories)) return memories;
+            return ExtendedHeroes.TryGet(heroKey, out var external) ? external.MemoryKeys : Array.Empty<string>();
+        }
 
 
         public static bool TryGetCategory(string heroKey, string memory, out VerifiedMechanismMemoryCategory category)
         {
             category = default;
-            if (heroKey == null || !HeroMemories.ContainsKey(heroKey) || memory == null || !Memories.TryGetValue(memory, out var entry)
+            if (heroKey == null || memory == null) return false;
+            if (ExtendedHeroes.TryGet(heroKey, out var external))
+            {
+                if (!external.MemoryNames.ContainsKey(memory)) return false;
+                // Known native memories retain their verified category. Custom memories use the
+                // connector's St_D_/St_M_ slot convention; other declared memories are editable.
+                category = Memories.TryGetValue(memory, out var native) ? native.Category
+                    : memory.StartsWith("St_D_", StringComparison.Ordinal) ? VerifiedMechanismMemoryCategory.Identity
+                    : memory.StartsWith("St_M_", StringComparison.Ordinal) ? VerifiedMechanismMemoryCategory.Movement
+                    : VerifiedMechanismMemoryCategory.Normal;
+                return true;
+            }
+            if (!HeroMemories.ContainsKey(heroKey) || !Memories.TryGetValue(memory, out var entry)
                 || (entry.Owner != null ? entry.Owner != heroKey : !AuthoredStarContract.IsVerifiedCommonMemory(memory))) return false;
             category = entry.Category;
             return true;

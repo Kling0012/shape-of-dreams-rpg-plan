@@ -53,13 +53,13 @@ namespace SodRpg.Core.Game
             return notification.OwnerId == OwnerId && notification.EquipmentEpoch == EquipmentEpoch
                 && notification.ActivationId > 0 && notification.GeneratedOrigin == GeneratedOrigin.None
                 && (source != null && source.Slot != MechanismMemorySlot.Movement
-                    || string.IsNullOrEmpty(notification.SourceMemory) && notification.EventKind == MemoryEventKind.OwnedBasicAttackFired
-                    && notification.NativePayloadKind == NativePayloadKind.MainBasicAttack);
+                    || string.IsNullOrEmpty(notification.SourceMemory) && notification.IsMainBasicAttackFired);
         }
         public EquippedMechanismMemory ResolveEventSource(MemoryActivationEvent notification, bool hasOwnedSummon)
         {
             if (!Admits(notification)) return null;
-            if (notification.EventKind == MemoryEventKind.OwnedBasicAttackFired && notification.NativePayloadKind == NativePayloadKind.MainBasicAttack
+            // hasOwnedSummon is read only on this IsMainBasicAttackFired branch; the host skips its summons scan for every other notification.
+            if (notification.IsMainBasicAttackFired
                 && (!hasOwnedSummon || !string.IsNullOrEmpty(notification.SourceMemory) && notification.SourceMemory != "St_D_CircleOfLife")) return null;
             if (!string.IsNullOrEmpty(notification.SourceMemory)) return Find(notification.SourceMemory);
             // This is an equipment prerequisite for the owned fired notification, not a fabricated damage source.
@@ -246,7 +246,7 @@ namespace SodRpg.Core.Game
         {
             ChannelId = channel; OwnerId = notification.OwnerId; EquipmentEpoch = notification.EquipmentEpoch;
             SourceMemory = source.Memory; SourceInstanceId = source.InstanceId; RecipientMemory = recipient.Memory; RecipientInstanceId = recipient.InstanceId; ValueUnits = units;
-            RequiresOwnedSummon = notification.EventKind == MemoryEventKind.OwnedBasicAttackFired && notification.NativePayloadKind == NativePayloadKind.MainBasicAttack;
+            RequiresOwnedSummon = notification.IsMainBasicAttackFired;
             _origin = origin;
         }
         public bool IsCurrent(MechanismEquipment equipment)

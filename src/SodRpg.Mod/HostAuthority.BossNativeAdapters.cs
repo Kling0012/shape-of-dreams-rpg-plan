@@ -64,6 +64,7 @@ namespace SodRpg.Mod
             yield return AccessTools.DeclaredMethod(typeof(Actor), "InvokeOnCreateIfDidnt");
             // Se_U_Hysteria anchors Dew.Contents so content actors are scanned alongside Dew.Core actors.
             var assemblies = new HashSet<Assembly> { typeof(Actor).Assembly, typeof(Se_U_Hysteria).Assembly };
+            var movementCalls = new Dictionary<Module, Dictionary<int, bool>>();
             foreach (var assembly in assemblies)
                 foreach (var type in assembly.GetTypes())
                 {
@@ -77,9 +78,11 @@ namespace SodRpg.Mod
                     }
                     foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                     {
-                        if (method.IsAbstract || method.ContainsGenericParameters || method.GetMethodBody() == null
+                        if (method.IsAbstract || method.ContainsGenericParameters
                             || method.DeclaringType == typeof(Actor) && (method.Name == nameof(Actor.LogicUpdate)
                                 || method.Name == nameof(Actor.FrameUpdate) || method.Name == "InvokeOnCreateIfDidnt")) continue;
+                        var body = method.GetMethodBody();
+                        if (body == null || !MayCallMovement(method, body, movementCalls)) continue;
                         foreach (var instruction in ReadNativeBody(method))
                         {
                             if (instruction.Key != OpCodes.Call && instruction.Key != OpCodes.Callvirt) continue;
@@ -97,6 +100,88 @@ namespace SodRpg.Mod
                     }
                 }
         }
+        private static readonly OpCode[] SingleByteOpcodes = BuildOpcodes(false);
+        private static readonly OpCode[] DoubleByteOpcodes = BuildOpcodes(true);
+
+        private static OpCode[] BuildOpcodes(bool twoBytes)
+        {
+            var result = new OpCode[256];
+            foreach (var field in typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static))
+                if (field.FieldType == typeof(OpCode))
+                {
+                    var opcode = (OpCode)field.GetValue(null);
+                    if ((opcode.Size == 2) == twoBytes) result[(byte)opcode.Value] = opcode;
+                }
+            return result;
+        }
+
+        // A negative result only skips methods with no movement call token. Candidates
+        // still go through Harmony's reader below, including its malformed-body handling.
+        // Unknown opcodes, operands or tokens fall back to that same reader as well.
+        private static bool MayCallMovement(MethodInfo method, MethodBody methodBody, Dictionary<Module, Dictionary<int, bool>> cache)
+        {
+            try
+            {
+                var body = methodBody.GetILAsByteArray();
+                if (body == null) return true;
+                if (!cache.TryGetValue(method.Module, out var tokens))
+                    cache.Add(method.Module, tokens = new Dictionary<int, bool>());
+                int offset = 0;
+                while (offset < body.Length)
+                {
+                    byte first = body[offset++];
+                    var opcode = first == 0xfe ? DoubleByteOpcodes[body[offset++]] : SingleByteOpcodes[first];
+                    if (opcode.Size == 0) return true;
+                    if (opcode == OpCodes.Call || opcode == OpCodes.Callvirt)
+                    {
+                        int token = BitConverter.ToInt32(body, offset);
+                        if (!tokens.TryGetValue(token, out bool movement))
+                        {
+                            // Tokens requiring an unavailable generic context throw and use Harmony below.
+                            var called = method.Module.ResolveMethod(token) as MethodInfo;
+                            movement = called != null && (called.DeclaringType == typeof(EntityControl)
+                                    && (called.Name == nameof(EntityControl.StartDisplacement) || called.Name == nameof(EntityControl.Teleport))
+                                || called.DeclaringType == typeof(Dash)
+                                    && (called.Name == nameof(Dash.ApplyByDirection) || called.Name == nameof(Dash.ApplyByDestination))
+                                || called.DeclaringType == typeof(Actor) && called.Name == nameof(Actor.Teleport));
+                            tokens.Add(token, movement);
+                        }
+                        if (movement) return true;
+                    }
+                    int size;
+                    switch (opcode.OperandType)
+                    {
+                        case OperandType.InlineNone: size = 0; break;
+                        case OperandType.ShortInlineBrTarget:
+                        case OperandType.ShortInlineI:
+                        case OperandType.ShortInlineVar: size = 1; break;
+                        case OperandType.InlineVar: size = 2; break;
+                        case OperandType.InlineBrTarget:
+                        case OperandType.InlineField:
+                        case OperandType.InlineI:
+                        case OperandType.InlineMethod:
+                        case OperandType.InlineSig:
+                        case OperandType.InlineString:
+                        case OperandType.InlineTok:
+                        case OperandType.InlineType:
+                        case OperandType.ShortInlineR: size = 4; break;
+                        case OperandType.InlineI8:
+                        case OperandType.InlineR: size = 8; break;
+                        case OperandType.InlineSwitch:
+                            int count = BitConverter.ToInt32(body, offset);
+                            if (count < 0 || count > (body.Length - offset - 4) / 4) return true;
+                            size = 4 + count * 4;
+                            break;
+                        default: return true;
+                    }
+                    if (size > body.Length - offset) return true;
+                    offset += size;
+                }
+                return false;
+            }
+            catch (Exception) { return true; }
+        }
+
         // #247: shipped Dew.Contents methods stubbed to a single ret keep their original
         // fat-header exception table; Harmony's MethodBodyReader throws on those stale
         // clause offsets (e.g. Shrine_MorasDomain_HerPresence.SpawnRewards, try offset 78

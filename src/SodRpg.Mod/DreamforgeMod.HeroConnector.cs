@@ -1,0 +1,379 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using SodRpg.Core.Game;
+using UnityEngine;
+
+namespace SodRpg.Mod
+{
+    /// <summary>
+    /// ヒーローコネクタの走査（docs/specs/hero-connector.md §3-1, §7）。
+    /// 本体が読み込んだ有効なMODのフォルダ直下の dreamforge.json を読み、Core の登録簿（ExtendedHeroes）へ渡す。
+    /// 走査は Dreamforge の読み込み時と DewMod.onModLoadEnded の2回だけ。同じ供給元の同じ内容は再解析しても重ねて登録しない。
+    /// 遠征中は登録を変えない（§3-1）: 届いた宣言は保留し、遠征から出たら反映する。
+    /// この実装は本体の MOD API（DewMod）に依存する。検証（Issue73.Native.Tests）は
+    /// HeroConnectorBoundary.cs の形だけの境界を介してこの実ソースをコンパイルする。
+    /// DreamforgeMod.cs からの呼び出しは partial メソッド経由で、ここが無ければ呼び出し自体が消える。
+    /// </summary>
+    public partial class DreamforgeMod
+    {
+        private Action _onModLoadEnded;
+        private bool _heroConnectorStarted;
+        /// <summary>供給元 id → 宣言ファイルのパス（報告ファイル用）。</summary>
+        private static readonly Dictionary<string, string> DeclarationPathByModId = new Dictionary<string, string>(StringComparer.Ordinal);
+        /// <summary>遠征中に届いた宣言（走査とランタイムAPIの両方）。遠征から出たら反映する。</summary>
+        private static readonly List<(string ModId, string Text, bool ThroughApi)> PendingDeclarations = new List<(string ModId, string Text, bool ThroughApi)>();
+        /// <summary>供給元・経路ごとの直近の登録結果（§7 の報告の材料）。</summary>
+        private static readonly List<(bool ThroughApi, ExtendedHeroFileResult Result)> LastResults = new List<(bool ThroughApi, ExtendedHeroFileResult Result)>();
+        // Scan callbacks, pending updates, and runtime API registration run on Unity's main thread.
+        // Connector collections rely on that host/caller contract, just like LastResults.
+        // A MOD can supply different declarations through its file and the runtime API.
+        private static readonly Dictionary<(string ModId, bool ThroughApi), ConnectorDeclaration> LastDeclarations = new Dictionary<(string ModId, bool ThroughApi), ConnectorDeclaration>();
+
+        private sealed class ConnectorDeclaration
+        {
+            internal string Text;
+            internal Dictionary<string, string> Manifests;
+            internal ExtendedHeroFileResult Result;
+        }
+        private static string _connectorReportPath;
+        private static string _connectorReport;
+        private static bool _connectorReportWriteFailed;
+
+        partial void StartHeroConnectorScan()
+        {
+            if (!HostAuthority.HeroConnectorEnabled) return;
+            _connectorReportPath = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG", "connector-report.txt");
+            if (!_heroConnectorStarted)
+            {
+                _heroConnectorStarted = true;
+                _onModLoadEnded = OnModLoadEnded;
+                DewMod.onModLoadEnded += _onModLoadEnded;
+            }
+            ScanDeclarations();
+        }
+
+        partial void StopHeroConnectorScan()
+        {
+            if (!_heroConnectorStarted) return;
+            _heroConnectorStarted = false;
+            try { DewMod.onModLoadEnded -= _onModLoadEnded; } catch (Exception) { }
+        }
+
+        private void OnModLoadEnded() => ScanDeclarations();
+
+        partial void TickHeroConnectorPending()
+        {
+            if (PendingDeclarations.Count == 0 || !HostAuthority.HeroConnectorEnabled || InExpedition) return;
+            var pending = PendingDeclarations.ToArray();
+            PendingDeclarations.Clear();
+            foreach (var declaration in pending) ApplyDeclaration(declaration.ModId, declaration.Text, declaration.ThroughApi);
+        }
+
+        /// <summary>遠征中か（§3-1: 遠征中は登録簿を変えない）。</summary>
+        private static bool InExpedition => NetworkedManagerBase<GameManager>.softInstance?.runId != null;
+
+        /// <summary>有効なMODのフォルダを走査して dreamforge.json を読む（§3-1）。</summary>
+        private static void ScanDeclarations()
+        {
+            if (!HostAuthority.HeroConnectorEnabled) return;
+            var scanned = new HashSet<string>(StringComparer.Ordinal);
+            bool scanCompleted = false;
+            try
+            {
+                var instances = DewMod.loadedInstances;
+                if (instances != null)
+                    foreach (var loaded in instances)
+                    {
+                        string folder = null, modId = null;
+                        try
+                        {
+                            folder = loaded?.mod?.path;
+                            modId = loaded?.mod?.metadata?.id;
+                        }
+                        catch (Exception) { }
+                        if (string.IsNullOrEmpty(folder) || string.IsNullOrEmpty(modId)) continue;
+                        string file = Path.Combine(folder, "dreamforge.json");
+                        string text;
+                        try
+                        {
+                            if (!File.Exists(file)) continue;
+                            text = ReadConnectorFile(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warn("[Dreamforge/Connector] " + modId + ": could not read " + file + ": " + ex.Message);
+                            // 読み取りに失敗しても宣言ファイルはまだあるので、前回の結果は報告に残す。
+                            scanned.Add(modId);
+                            continue;
+                        }
+                        // A referenced starManifest can change while dreamforge.json remains identical.
+                        scanned.Add(modId);
+                        DeclarationPathByModId[modId] = file;
+                        ApplyDeclaration(modId, text);
+                    }
+                scanCompleted = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("[Dreamforge/Connector] mod folder scan failed: " + ex.Message);
+            }
+            if (scanCompleted) ForgetUnscannedConnectorResults(scanned);
+            WriteConnectorReport();
+        }
+
+        /// <summary>宣言ファイルを消した MOD・取り外した MOD の古い結果を外す。API で登録した供給元は残す。</summary>
+        private static void ForgetUnscannedConnectorResults(HashSet<string> scanned)
+        {
+            for (int i = LastResults.Count - 1; i >= 0; i--)
+            {
+                var entry = LastResults[i];
+                string source = entry.Result.SourceModId ?? "";
+                if (!entry.ThroughApi && !scanned.Contains(source)) LastResults.RemoveAt(i);
+            }
+            var stale = new List<(string ModId, bool ThroughApi)>();
+            foreach (var source in LastDeclarations.Keys)
+                if (!source.ThroughApi && !scanned.Contains(source.ModId)) stale.Add(source);
+            foreach (var source in stale) LastDeclarations.Remove(source);
+        }
+
+        /// <summary>サイズを制限して宣言とマニフェストを読む。</summary>
+        private static string ReadConnectorFile(string file)
+        {
+            // Bound the stream as well as FileInfo.Length: a file may grow between stat and read.
+            using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                if (stream.Length > ExtendedHeroes.ManifestTextLimit) throw new IOException("connector file exceeds 4 MiB");
+                using (var reader = new StreamReader(stream, new UTF8Encoding(false, true), true))
+                {
+                    var buffer = new char[8192];
+                    var text = new StringBuilder();
+                    int count;
+                    while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
+                    {
+                        if (stream.Position > ExtendedHeroes.ManifestTextLimit || text.Length + count > ExtendedHeroes.ManifestTextLimit)
+                            throw new IOException("connector text exceeds 4 MiB");
+                        text.Append(buffer, 0, count);
+                    }
+                    return text.ToString();
+                }
+            }
+        }
+
+        private static string ReadStarManifest(string modId, string relative)
+        {
+            if (string.IsNullOrWhiteSpace(relative) || relative.Length > 1024 || Path.IsPathRooted(relative)
+                || relative.IndexOf(':') >= 0 || relative[0] == '/' || relative[0] == '\\')
+                throw new IOException("starManifest must be a MOD-relative path");
+            string folder = null;
+            var instances = DewMod.loadedInstances;
+            if (instances != null)
+                foreach (var loaded in instances)
+                    if (loaded?.mod?.metadata?.id == modId) { folder = loaded.mod.path; break; }
+            if (string.IsNullOrEmpty(folder)) throw new IOException("source MOD folder is unavailable");
+            string root = Path.GetFullPath(folder);
+            string current = root;
+            // Reject traversal and links instead of following a link outside the source MOD.
+            foreach (string part in relative.Replace('\\', '/').Split('/'))
+            {
+                if (part.Length == 0 || part == "." || part == "..") throw new IOException("invalid manifest path component");
+                current = Path.Combine(current, part);
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) throw new IOException("manifest path contains a symbolic link");
+            }
+            string full = Path.GetFullPath(current);
+            if (!full.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                throw new IOException("manifest path leaves the source MOD");
+            return ReadConnectorFile(full);
+        }
+
+        private static void ApplyDeclaration(string modId, string text, bool throughApi = false)
+        {
+            if (InExpedition)
+            {
+                PendingDeclarations.Add((modId, text, throughApi));
+                return;
+            }
+            RecordConnectorResult(RegisterConnectorDeclaration(modId, text, throughApi), throughApi);
+            WriteConnectorReport();
+        }
+
+        private static ExtendedHeroFileResult RegisterConnectorDeclaration(string modId, string text, bool throughApi)
+        {
+            var source = (ModId: modId, ThroughApi: throughApi);
+            var manifests = new Dictionary<string, string>(StringComparer.Ordinal);
+            bool cacheable = true;
+            string Read(string path)
+            {
+                if (manifests.TryGetValue(path, out var content)) return content;
+                try
+                {
+                    content = ReadStarManifest(modId, path);
+                    manifests.Add(path, content);
+                    return content;
+                }
+                catch
+                {
+                    cacheable = false;
+                    throw;
+                }
+            }
+            if (LastDeclarations.TryGetValue(source, out var previous) && previous.Text == text)
+            {
+                bool unchanged = true;
+                foreach (var manifest in previous.Manifests)
+                {
+                    try { if (Read(manifest.Key) != manifest.Value) unchanged = false; }
+                    catch (Exception) { unchanged = false; }
+                }
+                if (unchanged) return previous.Result;
+            }
+            var result = ExtendedHeroes.Register(text, modId, Log.Warn, Read);
+            // A rejection is deterministic while the text and its manifests are unchanged, so cache it too:
+            // re-parsing would only repeat the same warning on every scan. A manifest read failure
+            // (cacheable=false) is the transient kind and stays uncached for the next scan to retry.
+            if (cacheable)
+                LastDeclarations[source] = new ConnectorDeclaration { Text = text, Manifests = manifests, Result = result };
+            else
+                LastDeclarations.Remove(source);
+            return result;
+        }
+
+        private static void RecordConnectorResult(ExtendedHeroFileResult result, bool throughApi)
+        {
+            for (int i = 0; i < LastResults.Count; i++)
+                if (LastResults[i].ThroughApi == throughApi && LastResults[i].Result.SourceModId == result.SourceModId)
+                {
+                    LastResults[i] = (throughApi, result);
+                    return;
+                }
+            LastResults.Add((throughApi, result));
+        }
+
+        /// <summary>ランタイムAPI（Dreamforge.Api.HeroConnector.RegisterHeroes）からの登録。走査と同じ道を通る。</summary>
+        internal static bool RegisterHeroesThroughApi(string json, string sourceModId, out string error)
+        {
+            error = null;
+            try
+            {
+                if (!HostAuthority.HeroConnectorEnabled)
+                {
+                    error = "the hero connector is disabled in Dreamforge's settings (heroConnector)";
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    error = "the declaration is empty";
+                    return false;
+                }
+                string source = string.IsNullOrEmpty(sourceModId) ? "?" : sourceModId;
+                if (InExpedition)
+                {
+                    // §8: 遠征中は保留して true を返し、error に保留の旨を入れる。
+                    PendingDeclarations.Add((source, json, true));
+                    error = "deferred: an expedition is in progress; the heroes will be registered when it ends";
+                    return true;
+                }
+                var result = RegisterConnectorDeclaration(source, json, true);
+                RecordConnectorResult(result, true);
+                WriteConnectorReport();
+                bool all = result.FileError == null;
+                foreach (var hero in result.Heroes)
+                    if (!hero.Accepted)
+                    {
+                        all = false;
+                        if (error == null) error = hero.Key + ": " + hero.Reason;
+                    }
+                if (result.FileError != null) error = result.FileError;
+                return all;
+            }
+            catch (Exception ex)
+            {
+                error = "unexpected failure: " + ex.Message;
+                return false;
+            }
+        }
+
+        /// <summary>登録簿の一覧（ランタイムAPI用）。</summary>
+        internal static string[] RegisteredHeroKeys()
+        {
+            var heroes = ExtendedHeroes.Registered;
+            var keys = new string[heroes.Count];
+            for (int i = 0; i < heroes.Count; i++) keys[i] = heroes[i].Key;
+            return keys;
+        }
+
+        /// <summary>§7 の報告文字列。</summary>
+        internal static string BuildConnectorReport()
+        {
+            var sb = new StringBuilder();
+            sb.Append("Dreamforge Hero Connector report\n");
+            sb.Append("Dreamforge version: ").Append(HostAuthority.ModVersion)
+                .Append(", hero connector apiVersion: ").Append(ExtendedHeroes.ApiVersion).Append('\n');
+            sb.Append("Registered extended travelers: ").Append(ExtendedHeroes.Registered.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+            try { sb.Append(ExtendedHeroes.Limits().Describe()); }
+            catch (Exception ex) { sb.Append("Star limits unavailable: ").Append(ex.Message).Append('\n'); }
+            sb.Append("\nDeclaration files:\n");
+            bool any = false;
+            foreach (var entry in LastResults)
+            {
+                var result = entry.Result;
+                any = true;
+                sb.Append("- ").Append(string.IsNullOrEmpty(result.SourceModId) ? "?" : result.SourceModId);
+                if (entry.ThroughApi) sb.Append(": runtime API");
+                else if (DeclarationPathByModId.TryGetValue(result.SourceModId ?? "", out string path)) sb.Append(": ").Append(path);
+                sb.Append('\n');
+                if (result.FileError != null) sb.Append("  file rejected: ").Append(result.FileError).Append('\n');
+                foreach (var hero in result.Heroes)
+                {
+                    if (hero.Accepted && hero.GenericTree)
+                        sb.Append("  generic star tree: ").Append(hero.Key).Append(" (").Append(hero.Reason).Append(")\n");
+                    else if (hero.Accepted)
+                        sb.Append("  accepted: ").Append(hero.Key).Append('\n');
+                    else
+                        sb.Append("  rejected: ").Append(hero.Key).Append(" (").Append(hero.Reason).Append(")\n");
+                }
+            }
+            if (!any) sb.Append("  (no dreamforge.json found in any enabled mod folder)\n");
+            var registered = ExtendedHeroes.Registered;
+            if (registered.Count > 0)
+            {
+                sb.Append("\nRegistered heroes:\n");
+                foreach (var hero in registered)
+                {
+                    sb.Append("- ").Append(hero.Key).Append(" (").Append(string.IsNullOrEmpty(hero.SourceModId) ? "?" : hero.SourceModId)
+                        .Append(hero.Tree != null ? ", own star tree" : ", generic star tree").Append(")\n");
+                    foreach (string warning in hero.EventWarnings) sb.Append("  warning: ").Append(warning).Append('\n');
+                }
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>報告ファイルを書き直す（§7）。書き込みに失敗しても警告1回で続ける。</summary>
+        private static void WriteConnectorReport()
+        {
+            try
+            {
+                _connectorReport = BuildConnectorReport();
+                if (_connectorReportPath == null) return;
+                File.WriteAllText(_connectorReportPath, _connectorReport, new UTF8Encoding(false));
+                _connectorReportWriteFailed = false;
+            }
+            catch (Exception ex)
+            {
+                if (!_connectorReportWriteFailed)
+                {
+                    _connectorReportWriteFailed = true;
+                    Log.Warn("[Dreamforge/Connector] could not write the report file: " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>§7 と同じ内容の文字列（ランタイムAPI用）。</summary>
+        internal static string GetConnectorReport()
+        {
+            if (_connectorReport == null) _connectorReport = BuildConnectorReport();
+            return _connectorReport;
+        }
+    }
+}

@@ -13,6 +13,12 @@ namespace SodRpg.Core.Game
         private const string DynamicSuffix = "|dynamic:";
         private const int EncodedScaleLength = 16;
 
+        // Every extra of a wave stores the same immutable scale string, and a single kill
+        // reads it through several hooks. Memoize the parse by string reference; any other
+        // reference parses normally, so results stay identical to parsing every time.
+        [ThreadStatic] private static string _scaleRawCache;
+        [ThreadStatic] private static double _scaleValueCache;
+
         public static double ScaleForBonus(double bonus) => bonus > 0 && !double.IsNaN(bonus)
             ? Math.Min(1, PressureBalance.EnemyCountAdditionalRewardBudget / bonus) : 1;
 
@@ -22,8 +28,13 @@ namespace SodRpg.Core.Game
         public static double ScaleFromActorData(IDictionary<string, string> data)
         {
             if (data == null || !data.TryGetValue(ActorScaleKey, out var value)) return 1;
-            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double scale)
-                && scale >= 0 && scale <= 1 ? scale : 1;
+            if (value != null && ReferenceEquals(value, _scaleRawCache)) return _scaleValueCache;
+            double scale = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
+                && parsed >= 0 && parsed <= 1 ? parsed : 1;
+            // Store the value before its key: a key match then never pairs with a foreign value.
+            _scaleValueCache = scale;
+            _scaleRawCache = value;
+            return scale;
         }
 
         /// <summary>

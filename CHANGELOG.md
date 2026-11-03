@@ -10,6 +10,568 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.87 — Hero Connector fixes for mixed file and runtime API registration（2026-11-02）
+
+### 不具合の修正 / Bug fixes
+- 同じMODが宣言ファイルとランタイムAPIを併用したとき、旅人連携の報告とキャッシュが上書きされる問題を直しました。星図の読み込みに失敗したときだけ次の走査で再試行し、宣言が受理されなかった結果は内容が同じあいだ保持して同じ警告を繰り返さないようにしました。 / Fixed hero connector reports and caches overwriting each other when a MOD uses both a declaration file and the runtime API. Only star-manifest read failures are retried on the next scan; rejected declarations are kept while their content is unchanged so the same warning is not repeated.
+
+---
+
+## v3.8.86 — Full star maps for traveler mods via the Hero Connector（2026-11-02）
+
+### 新機能 / New features
+- ヒーローコネクタで既存の機構・ペア連携・機構付きキーストーンを参照し、星と記憶の対応を指定できるようにしました。RunGrowth を除く Vesper と Bismuth の星を、キーストーンも含めて再現できます。外部記憶の効果に既存イベントの通知が必要な場合は、作者向け報告に注意を表示します。 / The hero connector can now reference existing mechanisms, pair combos, and typed keystones, with star and memory bindings. Vesper and Bismuth trees can be reproduced, including keystones, except for RunGrowth. The author report warns when external-memory effects need the existing event notifications.
+- ヒーローコネクタの星図に、記憶・Power の星とキーストーン、Choice、星群名、既存の仕掛けの名前参照と修飾、費用、夢の輪の属性、接続・取得条件・位置を指定する欄を追加しました。種類ごとの上限は既存9人の星図から求め、作者向けの報告に載せます。既存星図の書き出し・再登録・比較を行う道具も追加しました。コード専用の機構や、それに依存する星は理由つきで出力から除きます。従来の宣言はそのまま使えます。 / Added Hero Connector fields for memory and Power stars and keystones, choices, named clusters, references to shipped gimmicks and modifiers, costs, dream-ring attributes, connections, allocation prerequisites, and positions. Limits follow the nine shipped travelers and appear in the author report. Added a tool to export, reimport, and compare shipped trees, listing code-bound mechanisms and dependent stars omitted from the output. Existing declarations remain compatible.
+- 外部の旅人MODが `starManifest` から星群・橋・外縁・刻印・2択を持つ星図を宣言できるようにしました。不正な星は警告して除外し、読めない星図は従来形式へ戻します。 / Traveler mods can declare clustered star maps with bridges, outer regions, keystones, and choices through `starManifest`. Invalid stars are omitted with warnings, and unreadable manifests fall back to the existing tree format.
+
+### 不具合の修正 / Bug fixes
+- ヒーローコネクタで、記憶ルートの一部だけを参照する小さな星図が内部エラーになる問題を直しました。 / Fixed internal errors when small hero-connector trees reference only part of a memory route.
+- ヒーローコネクタで、別々の既存星の値と段数の最大を組み合わせると、既存のどの同種の星よりも合計が大きい星を宣言できた問題を直しました。段のある各効果と Choice の選択肢で1星の合計も検証し、上限と拒否理由を作者向け報告に載せます。 / Fixed Hero Connector declarations combining per-rank and rank maxima from different shipped stars to exceed every shipped star of the same kind. Ranked effects and choice options now also validate each star's total, with limits and rejection reasons included in the author report.
+- 旅人MODの連携報告に、同じ供給元の結果が重複して載る問題を直しました。 / Fixed duplicate results for the same source mod in the traveler connector report.
+- 星図の読み込みで不正な星を除外するとき、IDの前半が同じ別の星まで除外する問題を直しました。 / Fixed manifest validation omitting unrelated stars whose IDs share a prefix with an invalid star.
+
+---
+
+## v3.8.85 — Hero Connector for other mods' travelers, plus co-op and performance fixes（2026-11-01）
+
+### 新機能 / New features
+- ほかの MOD が足した新しい旅人を、Dreamforge の装備・星図・協力プレイで使えるようにする連携の仕組み（ヒーローコネクタ）を追加しました。MOD の作者は JSON ファイルを1つ置くだけで対応できます。作り方は [MOD 作者向けガイド](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.ja.md) にあります。 / Added the Hero Connector: travelers added by other mods can now use Dreamforge's gear, star maps and co-op. Mod authors only need to add one JSON file; see the [guide for mod authors](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/MODDING.md).
+
+### 不具合の修正 / Bug fixes
+- 協力プレイのゲストでスキルが使えないまま残る場合に備え、復旧用のチャージ再送まで省いていた処理を直しました。必殺技の充填待ちもホストへ照合し、3回の確認後も間隔を空けて再送を続けます。対応するホストとゲストでは、ホストの値と回復の結果をログに残します。 / Fixed charge deduplication suppressing recovery resends for co-op guests whose skills remain unusable. Recovery now checks ultimate charge waits with the host and continues retrying at longer intervals after three attempts. Updated hosts and guests log the host state and the observed recovery result.
+- 長く遊ぶほどメモリが増えて部屋の移動が重くなる問題について、MOD 側で破棄済みオブジェクトを参照し続けていた箇所を、部屋の区切りとホスト権限の終了時に解放するようにしました。 / For the issue where memory grew over long sessions and room changes slowed down, the MOD now releases its references to destroyed objects at room boundaries and when host authority ends.
+
+### 改善 / Improvements
+- プレイ中に Player.log へ書く行を減らし、部屋をクリアしたときなどの引っかかりを軽くしました。 / Reduced the number of lines written to Player.log during play to reduce stutters when clearing rooms and in similar situations.
+
+---
+
+## v3.8.84 — Fewer redundant summon checks on the host（2026-10-25）
+
+この版では、召喚体を連れた英雄がいるときに、ホストのゲームが結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero had summons.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 機構の装備には、戦闘中の出来事に応じて記憶の冷却時間を短くするものがあります。 / Some mechanism equipment shortens memory cooldowns in response to events during combat. これまでホストのゲームは、召喚体を連れた英雄がいると、攻撃を受けたときや敵を倒したとき、記憶を使ったときなど、こうした出来事が起きるたびに召喚体をすべて調べていました。 / Until now, while a hero had summons, the host's game went through all of that hero's summons every time such an event happened, such as taking a hit, defeating an enemy, or using a memory. 召喚体がいるかどうかで結果が変わるのは基本攻撃のときだけで、それ以外の出来事では、何度調べても結果は同じです。 / Whether summons are present only matters for basic attacks; for every other event, the result of this check is always the same. 今は、基本攻撃のときだけ召喚体を調べます。 / The game now checks summons only for basic attacks. 基本攻撃のときは、これまでどおり召喚体がいるかどうかを確かめて冷却時間を短くします。 / For basic attacks, the game still checks for summons and shortens cooldowns as before. 効果が出るのはホストのゲームだけで、連れている召喚体が多いほど効果も大きくなります。 / The benefit appears only on the host's game, and the more summons a hero has, the larger the benefit. 効果は見積もりで、実際の効果はまだ測っていません。 / This benefit is an estimate, and the actual effect has not been measured yet. 参加者のゲームには直接の効果はありません。 / There is no direct effect on co-op players' games. 冷却時間の短くなり方やゲームの動きは変わりません。 / How cooldowns are shortened and how the game behaves are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.83 — Less redundant work for knocked-out heroes and sleeping pack monsters（2026-10-25）
+
+この版では、撃倒された英雄の体力を同じ値のまま何度も送り直していた無駄と、眠っている群れのモンスターについて仲間探しを繰り返していた無駄を省きました。 / This version removes two kinds of redundant work: resending the same health value of knocked-out heroes again and again, and repeatedly searching for allies on behalf of sleeping pack monsters.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで英雄が撃倒されているあいだ、ホストのゲームはその英雄の体力を一定の値に保ち、参加者全員へ送っています。これまでは、体力が自然に回復する英雄の場合、参加者がすでに受け取っている同じ値を何度も送り直していました。今は、参加者が同じ値をすでに持っているときは送り直しません。英雄が復帰したときや死亡したとき、体力がほかの値に変わったときは、これまでどおり送ります。効果が出るのは参加者のゲームです。撃倒中の英雄1人につき、送信のたびに受け取る小さなデータ（12バイト）が1つ減ります。回復量が大きい英雄ほど効果も大きく、体力が回復しない英雄では何も変わりません。この効果は見積もりで、実際の効果はまだ測っていません。体力の値や回復、死亡の判定は変わりません。 / In co-op, while a hero is knocked out, the host's game holds that hero's health at a fixed value and sends it to all players. Until now, for heroes with natural health regeneration, it kept resending that same value even though players already had it. The game now skips the resend when players already have the same value. When the hero is revived, dies, or their health changes to any other value, it is sent as before. The benefit appears on co-op players' games: for each knocked-out hero, one small piece of data (12 bytes) is no longer received with each send. The more a hero regenerates, the larger the benefit; heroes with no regeneration are unaffected. This benefit is an estimate, and the actual effect has not been measured yet. Health values, regeneration, and death checks are unchanged.
+- 群れで行動するモンスターは、近くに仲間がいるかどうかで動きが変わります。これまでホストのゲームは、戦闘の起きていない部屋で眠っているモンスターや、ゾーンを移動しているあいだのモンスターについても、0.2秒ごとにすべてのモンスターを調べて仲間を探していました。眠っているあいだは、この結果を使う場面がありません。今は、眠っているあいだとゾーンの移動中はこの確認を省きます。目を覚ましたあと最初に攻撃を受けたときや動き出したときは、その場で確かめ直すので、眠る前の古い結果を使うことはありません。効果が出るのはホストのゲームだけです。モンスター80体のうち眠っている群れのモンスターが15体なら、1秒あたりおよそ6,000回の確認が減ります。数は見積もりで、実際の効果はまだ測っていません。参加者のゲームには直接の効果はありません。ゲームの動きは変わりません。 / Pack monsters behave differently depending on whether an ally is nearby. Until now, the host's game searched through every monster for allies every 0.2 seconds, even for monsters sleeping in rooms with no combat and for monsters during zone transitions. While a monster is asleep, that result is never used. The game now skips this check while monsters are asleep and during zone transitions. When a monster wakes up and is first hit or starts acting, the game checks again on the spot, so it never relies on a stale result from before it fell asleep. The benefit appears only on the host's game: with 80 monsters, 15 of them sleeping pack monsters, about 6,000 checks per second are removed. These numbers are estimates, and the actual effect has not been measured yet. There is no direct effect on co-op players' games. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.82 — Skip redundant per-frame Obliviax gear checks on the host（2026-10-25）
+
+この版では、Obliviax の装備を身につけた英雄がいるときに、ホストのゲームで結果の変わらない確認を繰り返していた無駄を省きました。 / This version removes redundant checks that never changed the result, which the host's game repeated while a hero was wearing Obliviax gear.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Obliviax の装備は9つの部位に分かれています。これまでホストのゲームは、この装備を身につけた英雄がいると、9つの部位のどれを身につけているかを毎フレーム確かめていました。装備を変えないかぎり、何度確かめても結果は同じです。今は、装備が変わったときに1回だけ確かめ、その結果を覚えて使います。ボスの装備を身につけた英雄が移動するたびに、頭の部位を身につけているかを確かめていた処理も、同じように覚えた結果で済ませます。装備を付け替えたときは、これまでどおり新しい装備ですぐに確かめ直します。効果が出るのはホストのゲームだけです。Obliviax の装備を身につけた英雄がいるあいだ、60fps なら1秒あたりおよそ540回の確認が減ります。1回あたりはごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。参加者のゲームには直接の効果はありません。ゲームの動きは変わりません。 / Obliviax gear is split into nine parts. Until now, while a hero was wearing this gear, the host's game checked every frame which of the nine parts the hero had on. As long as the equipment does not change, the result of this check is always the same. The game now checks only once when the equipment changes and remembers the result. The check of whether a hero wearing boss gear has the head part on, which ran each time that hero moved, now also uses the remembered result. When equipment is swapped, the game checks the new equipment right away, as before. The benefit appears only on the host's game: while a hero is wearing Obliviax gear, about 540 checks per second are removed at 60 fps. Each one is a very quick step, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. There is no direct effect on co-op players' games. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.81 — Skip redundant position-sync calculations for characters standing still in co-op（2026-10-25）
+
+この版では、協力プレイでキャラクターの位置を合わせる処理から、結果の変わらない無駄な計算を省きました。 / This version removes redundant calculations that never changed the result from the processing that keeps character positions in sync in co-op.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイでは、プレイヤーや敵などのキャラクターが画面上でなめらかに動くように、ゲームが毎フレーム、ホストから届いた位置へ向けて表示の位置を少しずつ近づけています。これまでは、キャラクターが止まって表示の位置が届いた位置に完全に追いついたあとも、同じ計算を毎フレーム続けていました。追いついたあとは、計算しても位置は1つも変わりません。今は、止まっていて表示が届いた位置とぴったり重なり、どの向きにも動いていないキャラクターについては、この計算を省きます。キャラクターが動き出したときや、新しい位置が届いたとき、ほかの理由で位置が変わったときは、次のフレームからこれまでどおり計算します。効果が出るのは主に参加者のゲームで、止まっているキャラクター1体ごとに、毎フレームの計算が簡単な確認1回に置き換わります。1体あたりはごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。キャラクターの動きや見え方は変わりません。 / In co-op, so that players, enemies, and other characters move smoothly on screen, the game moves each character's displayed position a little closer every frame toward the position received from the host. Until now, it kept doing this same calculation every frame even after a character had stopped and its displayed position had fully caught up. Once it has caught up, the calculation changes nothing. The game now skips this calculation for characters that are standing still, whose displayed position exactly matches the received position, and that are not moving in any way. When a character starts moving, a new position arrives, or its position changes for any other reason, the calculation resumes from the next frame as before. The benefit appears mainly on co-op players' games: for each character standing still, the per-frame calculation is replaced by one simple check. Each one is a very quick step, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. How characters move and look is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.80 — Skip resending unchanged no-load reports in co-op（2026-10-25）
+
+この版では、協力プレイの参加者のゲームがホストへ送る報告から、結果の変わらない無駄な送信を省きました。 / This version removes redundant sends that never changed the result from the reports that co-op players' games send to the host.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの参加者のゲームは、自動で使うスキルの負荷がどれくらいかを、1秒に1回ホストへ知らせています。これまでは負荷がまったく無いときも、「負荷なし」という同じ報告を毎秒送り直していました。ホストにとっては、負荷なしの報告が届いても届かなくても結果は同じです。今は、負荷なしが続いているあいだは送り直しません。最初の1回は負荷なしでも送り、負荷があるときはこれまでどおり毎秒送ります。負荷が変われば、次の1秒の区切りでホストに届きます。ふだんの協力プレイでは負荷なしの時間が多く、そのあいだ参加者のゲームでは1秒に1回の送信が、ホストのゲームでは1秒に1回の受け取りが減ります。1回あたりはごく短い処理と数十バイトほどの小さな通信なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。ゲームの動きは変わりません。 / On co-op players' games, the game tells the host once per second how heavily skills used automatically are loading it. Until now, even when there was no load at all, it sent the same "no load" report again every second. For the host, the result is the same whether that "no load" report arrives or not. The game no longer resends it while there is still no load. The first report is still sent even when there is no load, and while there is load, the report is sent every second as before. When the load changes, the host receives it at the next one-second mark. In normal co-op play there is usually no load, and during that time each player's game sends one less message per second, and the host's game receives one less. Each one is a very quick step and a small message of a few dozen bytes at most, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. How the game behaves is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.79 — Removes redundant player checks from difficulty scaling on the host（2026-10-25）
+
+この版では、参加人数に合わせて難易度を変える処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the processing that adjusts difficulty to the number of players.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ホストのゲームは、参加人数に合わせて難易度を変えるときに、参加しているプレイヤーを1人ずつ確かめます。これまでは1人確かめるたびに、そのプレイヤーが参加者の一覧に入っているかを一覧の最初から調べ直していました。確かめているのは一覧から取り出したプレイヤーなので、答えは必ず「入っている」です。今はこの調べ直しをしません。この処理は、表示をそろえるために1秒に4回ほど動き、敵が出るたびにも動きます。1回あたりに減るのは数十回のごく短い処理なので、体感できるほどの効果はないと考えています。数は見積もりで、実際の効果もまだ測っていません。この処理はホストのゲームだけで動くので、効果が出るのもホストだけです。難易度の決まり方は変わりません。 / When the host's game adjusts difficulty to the number of players, it goes through the players in the game one by one. Until now, for each player it checked again, from the start of the player list, whether that player was in the list. The player had just been taken from that same list, so the answer was always yes. The game no longer repeats this check. This processing runs about 4 times per second to keep the display in sync, and also whenever an enemy appears. Each run saves only a few dozen very quick steps, so the benefit is not expected to be noticeable. These numbers are estimates, and the actual effect has not been measured yet. This processing runs only on the host's game, so only the host benefits. How difficulty is decided is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.78 — Lighter homing projectiles for co-op players and lighter enemy defeats for hosts（2026-10-25）
+
+この版では、追尾する弾の処理と敵を倒したときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from how homing projectiles are handled and from what the game does when an enemy is defeated.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 基本攻撃のほとんどや魔物の射撃のように、狙った相手を追いかける弾があります。協力プレイの参加者のゲームでは、こうした弾が飛んでいるあいだ、狙っている相手を1秒に約30回、毎回最初から調べ直していました。飛んでいる途中で狙う相手は変わらないので、今は一度調べた結果を使い回します。魔物の多い戦闘で追尾する弾が数十発飛んでいると、この調べ直しを1秒に数百回から数千回減らせる見込みです。1回あたりはごく短い処理なので、効果は小さいと考えています。数は見積もりで、実際の効果もまだ測っていません。弾の飛び方や当たり方は変わりません。 / Many projectiles home in on a target, including most basic attacks and monster shots. On co-op players' games, while such a projectile was in flight, the game looked up its target from scratch about 30 times per second. The target does not change mid-flight, so the game now reuses the result it already found. In fights with many monsters and dozens of homing projectiles in the air, this should remove several hundred to several thousand lookups per second. Each lookup is very quick, so the benefit is expected to be small. These numbers are estimates, and the actual effect has not been measured yet. How projectiles fly and hit is unchanged.
+- ホストのゲームでは、敵を1体倒すたびに、ミニボスの報酬にだけ関わる値を読み出していました。今はミニボスを倒したときだけ読み出します。ミニボスは部屋に数体しかいないので、ほとんどの撃破でこの処理を省けます。敵の数が増える圧迫モードでは撃破の回数が多いぶん、効果も大きくなります。1回あたりはごく短い処理で、数は見積もり、実際の効果もまだ測っていません。この処理はホストのゲームだけで動くので、効果が出るのもホストだけです。ミニボスの報酬は変わりません。 / On the host's game, every time an enemy was defeated, the game read a value that only matters for mini-boss rewards. It now reads that value only when a mini-boss is defeated. Rooms have only a few mini-bosses, so almost every defeat now skips this step. Pressure mode adds extra enemies and therefore more defeats, so the benefit is larger there. Each step saved is very quick; these numbers are estimates, and the actual effect has not been measured yet. This step runs only on the host's game, so only the host benefits. Mini-boss rewards are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.77 — Lighter room preparation when entering a room（2026-10-25）
+
+この版では、新しい部屋に入るときの準備処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the preparation the game does when you enter a new room.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 新しい部屋に入ったときと、協力プレイに途中から参加したときに、ゲームはその部屋に出る敵などを前もって準備します。これまでは準備する項目ごとに、同じ調べものを2回していました。今は1回で済ませます。項目が数十件ある部屋では、この調べものを数百回から千回あまり減らせる見込みです。そのため、部屋に入るときの負荷が少し減ると考えています。数は見積もりで、実際の効果もまだ測っていません。準備する内容と順番は変わらないので、部屋に出る敵や遊び方も変わりません。 / When you enter a new room, or join a co-op game partway through, the game gets the enemies and other things that room needs ready ahead of time. Until now, it looked up the same information twice for every item it prepared. It now looks each one up only once. In rooms with dozens of items, this should remove several hundred to just over a thousand of these lookups, so entering a room should put slightly less load on the game. These numbers are estimates, and the actual effect has not been measured yet. The game still prepares the same things in the same order, so the enemies in each room and the way the game plays are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.76 — Lighter skill editing screen at the Shrine of Chaos（2026-10-25）
+
+この版では、混沌の祠でスキルを編集する画面から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the skill editing screen at the Shrine of Chaos.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 混沌の祠でスキルを編集する画面では、スキルボタンごとにエッセンス枠の表示を出しています。スキルによってエッセンス枠の数が違うと、画面を開いているあいだ、この表示の文章をボタンが切り替わるたびに作り直していました。60fps なら1秒に約240回です。今は一度作った文章を覚えておき、内容が変わるときだけ作り直します。この画面を開いているあいだ、ゲームの負荷が少し減る見込みです。ただし画面を開く時間は短いので、効果はその場面に限られます。数は見積もりで、実際の効果もまだ測っていません。この画面はホストと参加者がそれぞれ自分のゲームで開くので、どちらにも効きます。画面に表示される内容は変わりません。 / On the skill editing screen at the Shrine of Chaos, each skill button shows its essence slot information. When skills had different numbers of essence slots, the game rebuilt this text every time it moved from one button to the next while the screen was open, about 240 times per second at 60 fps. The game now remembers text it has already built and only rebuilds it when the content changes. The game should be under slightly less load while this screen is open. The screen is usually open only briefly, so the benefit is limited to that moment. These numbers are estimates, and the actual effect has not been measured yet. The host and co-op players each open this screen in their own game, so the change applies to both. What the screen displays is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.75 — Lighter boss spawns on the host（2026-10-25）
+
+この版では、ボスが現れるときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from what happens when a boss appears.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボスが1体現れるたびに、ホストのゲームは開発用の記録を組み立てて書き出していました。プレイには使わない記録なので、今は書き出しません。無限モードのようにボスが続けて何体も現れる場面で、ホストのゲームの引っかかりが少し減る見込みです。実際の効果はまだ測っていません。どのボスが現れるか、ボスの技や強さは変わりません。参加者のゲームの負荷も変わりません。 / Each time a boss appeared, the host's game built and wrote out a developer log. That log is not used in play, so the game no longer writes it. When many bosses appear in quick succession, as in Infinity mode, the host's game should stutter a little less. The actual effect has not been measured yet. Which bosses appear, and their abilities and strength, are unchanged. The load on co-op players' games is also unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.74 — Lighter essence slot overflow checks on the host（2026-10-25）
+
+この版では、エッセンス枠からあふれたエッセンスを確かめる処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from checking for essences that overflow their slots.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ホストのゲームは、スキルのエッセンス枠からあふれたエッセンスがないかを、ヒーロー1人につき1秒に6回確かめています。この確認のたびに小さな一時データを作っては捨てており、その数はヒーロー1人あたり1秒に約12個でした（4人なら約48個）。今はその半分の約6個（4人なら約24個）で済みます。ホストのゲームで後片付けの処理が起きる回数がわずかに減る見込みですが、目に見えるほどの差ではありません。数は見積もりで、実際の効果もまだ測っていません。エッセンスの付き方・外れ方と、参加者への通信は変わりません。 / The host's game checks each hero's skill essence slots for overflowing essences six times per second. Each check created and threw away small pieces of temporary data, about 12 per hero per second (about 48 with four players). It now needs only about half as many, around 6 per hero per second (about 24 with four players). Cleanup work on the host's game should run slightly less often, though the difference is too small to notice. These numbers are estimates, and the actual effect has not been measured yet. How essences are equipped and removed, and communication with co-op players, are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.73 — Lighter Pressure mode kill rewards and Infinity mode boss plan syncing（2026-10-25）
+
+この版では、圧迫モードで敵を倒したときの報酬の計算と、無限モードのボス戦の予定の送信から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from kill rewards in Pressure mode and from sending the boss plan in Infinity mode.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 圧迫モードで追加の敵を1体倒すたびに、ホストのゲームは同じ報酬倍率を最大6回読み直していました。今は1回だけ読みます。敵を次々に倒す圧迫モードの部屋では、ホストのゲームが少し軽くなる見込みです。ただ、1回ごとの節約は小さいので効果は控えめで、実際の効果もまだ測っていません。参加者のゲームの負荷は変わりません。報酬の量も変わりません。 / In Pressure mode, each time an extra enemy was defeated, the host's game re-read the same reward multiplier up to six times. The game now reads it only once. The host's game should run a little lighter in Pressure mode rooms where enemies fall in quick succession, though each saving is tiny, so the effect is modest and has not been measured yet. The load on co-op players' games is unchanged, and so are the rewards.
+- 無限モードでは、同じボスがまた現れたときなど、ボス戦の予定の中身が変わっていなくても、ホストが同じ内容を参加者へ送り直していました。今は中身が変わったときだけ送ります。参加者のゲームとホストの通信がわずかに軽くなる見込みです。ただ、もともと起きる回数は少なく、実際の効果もまだ測っていません。ボス戦の内容は変わりません。 / In Infinity mode, the host re-sent the boss plan to co-op players even when its contents had not changed, such as when the same boss appeared again. The host now sends it only when the contents change. Co-op players' games and the host's networking should run slightly lighter, though this happened rarely to begin with and the actual effect has not been measured yet. Boss battles are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.72 — Lighter skill swaps, waypoint tracking, and owner lookups（2026-10-25）
+
+この版では、スキルの付け替え、道標の受け持ちの確認、キャラクターの持ち主の確認で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from skill swaps, waypoint tracking, and looking up who owns each character.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 一度消えてまた現れたキャラクターでは、能力の変化を知らせる処理が、現れた回数だけ重ねて登録されていました。そのため、スキルを付け替えるたびに同じ処理が何度も走り、遊ぶ時間が長くなるほど回数が増えていました（長く遊ぶと数十回に達することもあると見ています）。今は何度現れても1回だけ処理します。ホストと参加者のどちらでも、長く遊んだときのスキルの付け替えが少し軽くなる見込みですが、実際の効果はまだ測っていません。スキルや能力の働きは変わりません。 / For characters that disappeared and later reappeared, the handler that reacts to ability changes was registered again each time they came back. As a result, every skill swap ran the same work many times over, and the count kept growing the longer you played (it may reach dozens in long sessions, by our estimate). The game now runs it only once, no matter how many times a character reappears. Both the host's and co-op players' games should handle skill swaps a little more lightly in long sessions, though the actual effect has not been measured yet. Skills and abilities work the same as before.
+- 道標を受け持つヒーローを毎フレーム確かめるとき、ホストのゲームは毎回小さな一時データを作っては捨てていました（60fps なら1秒に約120個）。今はこの一時データを作りません。ホストのゲームで後片付けの処理が起きる回数がわずかに減る見込みですが、目に見えるほどの差ではなく、実際の効果もまだ測っていません。道標の動きと参加者への通信は変わりません。 / When checking every frame which heroes the waypoints should track, the host's game created and threw away small pieces of temporary data each time (about 120 per second at 60fps). The game no longer creates them. Cleanup work on the host's game should run slightly less often, though the difference is too small to notice and has not been measured yet. Waypoint behavior and communication with co-op players are unchanged.
+- 協力プレイの参加者のゲームは、体力バー・ミニマップ・画面外の目印などでキャラクターの持ち主を確かめるたびに、毎回一から探し直していました。今は、持ち主が変わらない間は前に見つけた結果を使います。敵や味方が多い部屋で参加者のゲームが少し軽くなる見込みですが、1回ごとの節約は小さく効果は控えめで、実際の効果もまだ測っていません。表示と動作は変わりません。 / In co-op, players' games looked up each character's owner from scratch every time it was needed, for health bars, the minimap, off-screen markers, and so on. The game now reuses the earlier result as long as the owner stays the same. Co-op players' games should run a little lighter in rooms with many characters, though each saving is tiny, so the effect is modest and has not been measured yet. Display and behavior are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.71 — Lighter position sync, ability animations, gimmick reports, and room omens（2026-10-25）
+
+この版では、キャラクターの位置の同期、能力アニメーション、仕掛けの発動の知らせ、部屋の兆しによる敵の強化で、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from character position syncing, ability animations, gimmick trigger reports, and room omens that empower enemies.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- キャラクターが立ち止まって動きが落ち着いた後も、ゲームは同じ位置・向き・大きさを毎回書き直していました。今は、すでに同じ値になっているときは書き直しを省きます。キャラクターが動いたときやワープしたときは、これまでどおり新しい位置を反映します。ホストと参加者のどちらでも、止まっているキャラクターが多い場面でゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。キャラクターの動きと見た目は変わりません。 / Even after a character stopped and settled, the game kept rewriting the same position, rotation, and scale every time. The game now skips the rewrite when the values are already the same. When a character moves or warps, its new position is applied as before. Both the host's and co-op players' games should run a little lighter when many characters are standing still, though the actual effect has not been measured yet. Character movement and appearance are unchanged.
+- 能力のアニメーションを再生していないキャラクターでも、ゲームはその混ぜ具合を毎フレーム2回読み直していました。今は、アニメーションの切り替わりが落ち着いている間は読み直しを省きます。能力を使い始めたときや終わったときの切り替わりは、これまでどおり毎フレーム追いかけます。ホストと参加者のどちらでも、戦闘中のゲームが少し軽くなる見込みですが、1回ごとの節約は小さく効果は控えめで、実際の効果もまだ測っていません。アニメーションの見た目とタイミングは変わりません。 / Even for characters not playing an ability animation, the game re-read how strongly that animation was blended twice every frame. The game now skips this while the animation has settled. Transitions when an ability starts or ends are still followed every frame as before. Both the host's and co-op players' games should run a little lighter in combat, though each saving is tiny, so the effect is modest and has not been measured yet. Animation appearance and timing are unchanged.
+- 協力プレイで仕掛けや組コンボが発動し続ける戦闘では、ホストが発動の知らせを参加者へ毎フレーム送っていました（60fps なら1秒に最大60通）。今は1秒に1回にまとめて送ります。キャラクターが抜ける直前には、まだ送っていない分をすぐに送ります。参加者のゲームとホストの通信が少し軽くなる見込みですが、実際の効果はまだ測っていません。数えられる発動の合計は変わりませんが、仕掛けを発動させる依頼の進み具合は、最大1秒遅れて反映されることがあります。 / In co-op battles where gimmicks and combos keep triggering, the host sent trigger reports to co-op players every frame (up to 60 per second at 60fps). The host now bundles them into one report per second. Any unsent reports are sent right away just before a character leaves. Co-op players' games and the host's networking should run a little lighter, though the actual effect has not been measured yet. The total number of triggers counted is unchanged, but progress on bounties for triggering gimmicks may show up to one second later.
+- 「昂る敵」「頑強な敵」の兆しが出た部屋では、敵に補正を乗せるとき、パーティー全体で共通の倍率を敵1体ごとに計算し直していました。今は敵がまとめて出てくるたびに1回だけ計算します。こうした部屋で敵が出てくるときのホストのゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。敵の強さと兆しの効果は変わりません。 / In rooms with the Restless Enemies or Sturdy Enemies omen, the game recalculated the party-wide multiplier for every single enemy when applying the omen's bonus. It now calculates it once per group of enemies that appear. The host's game should run a little lighter when enemies appear in these rooms, though the actual effect has not been measured yet. Enemy strength and the omen's effect are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.70 — Lighter Chaos Shrine blessing tooltip（2026-10-25）
+
+この版では、混沌の神殿の加護の説明文を表示しているときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from showing the Chaos Shrine blessing's tooltip.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 混沌の神殿の加護の説明文は、ツールチップを表示している間、1秒に4回作り直されていました。内容が同じでも、毎回すべての文を一から組み立てていました。今は、加護の値と言語が変わらない間は、前に作った説明文を使い回します。加護を選び直したときや言語を切り替えたときは、これまでどおり新しい説明文を作ります。ホストと参加者のどちらでも、ツールチップを表示している間のゲームが少し軽くなる見込みですが、表示中だけの処理なので効果は小さく、実際の効果もまだ測っていません。説明文の内容と見た目は変わりません。 / While its tooltip is shown, the Chaos Shrine blessing's description was rebuilt four times per second. Even when nothing had changed, the whole text was assembled from scratch each time. The game now reuses the description it already built as long as the blessing's values and the language stay the same. Choosing a new blessing or switching languages still builds a fresh description as before. Both the host's and co-op players' games should run a little lighter while the tooltip is shown, though this only happens while it is displayed, so the effect is small and has not been measured yet. The description's content and appearance are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.69 — Lighter training stack updates and room loading for co-op players（2026-10-25）
+
+この版では、協力プレイの参加者側で、鍛錬スタックの更新を受け取るときと部屋を読み込むときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from co-op players receiving training stack updates and loading rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの参加者は、鍛錬スタックが変わるたびにホストから知らせを受け取ります。これまでは受け取るたびに、内容を読み取るための一時的なデータを何個も作っていました。今はそれらを作らずに読み取ります。スタックが増え続ける長い冒険で参加者のゲームが少し軽くなる見込みですが、知らせはもともと頻繁には届かないため効果は小さく、実際の効果もまだ測っていません。鍛錬スタックの数え方と表示は変わりません。 / In co-op, players receive an update from the host each time their training stacks change. Until now, each update created several pieces of temporary data just to read it. The game now reads updates without creating them. Co-op players' games should run a little lighter on long runs where stacks keep growing, though updates were never frequent, so the effect is small and has not been measured yet. How training stacks are counted and displayed is unchanged.
+- 協力プレイの参加者のゲームは、部屋を読み込むたびに、部屋全体から歩ける地点を探し出していました。この一覧はホストだけが使うもので、参加者側では使われていませんでした。今は参加者側でこの探索を省きます。部屋を移るときの参加者のゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。ホスト側の動きと、部屋での遊び方は変わりません。 / In co-op, players' games searched the whole room for walkable spots every time a room loaded. That list is only used by the host and was never used on the joining players' side. The game now skips this search for joining players. Co-op players' games should run a little lighter when moving between rooms, though the actual effect has not been measured yet. The host's behavior and how rooms play are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.68 — Lighter gem slot checks and co-op dividend handling（2026-10-25）
+
+この版では、ジェム枠の表示と、協力プレイで参加者が配当を受け取るときの処理から、結果の変わらない無駄な処理を省きました。 / This version removes redundant work that never changed the result from the gem slot display and from co-op players receiving dividends.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ゲームは、移動ボタンのジェム枠の表示が消えていないかを毎秒確かめています。これまでは確かめるたびに、ジェム枠の表示を毎回探し直していました。今は一度見つけた表示を使い回し、画面が作り直されたときだけ探し直します。確かめる処理が少し軽くなる見込みですが、実際の効果はまだ測っていません。ジェム枠が消えたときに表示し直す動きは変わりません。 / The game checks every second that the gem slot display on the movement button has not disappeared. Until now, it searched for that display again on every check. The game now reuses the display it found and only searches again when the screen is rebuilt. These checks should run a little lighter, though the actual effect has not been measured yet. Gem slots that disappear are still shown again as before.
+- 協力プレイの参加者は、夢の圧が効いた戦闘で敵が倒されるたびに配当を受け取ります。これまでは受け取るたびに、通知のための余分なデータを作っていました。今はその余分なデータを作りません。敵を続けて倒す場面で、参加者のゲームが少し軽くなる見込みですが、実際の効果はまだ測っていません。配当の受け取り方と、通知の内容や順番は変わりません。 / In co-op, players receive a dividend each time an enemy is defeated in a fight affected by dream pressure. Until now, each dividend created extra data just for its notification. The game no longer creates that extra data. Co-op players' games should run a little lighter when enemies are defeated one after another, though the actual effect has not been measured yet. How dividends are received and the content and order of notifications are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.67 — Maintenance update with no gameplay changes（2026-10-25）
+
+この版では、プレイヤーから見える変化はありません。今後の修正に備えて、開発用の確認を足しただけの版です。 / This version has no changes players will notice. It only adds a development-side check to prepare for future fixes.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版の内容 / What's in this version
+
+- 今回は新機能も不具合の修正もありません。ボス戦の攻撃予告などの見た目、ゲームの遊び方、協力プレイでの見え方は変わりません。 / There are no new features or bug fixes this time. Boss attack warnings and other visuals, gameplay, and how things show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.66 — Lighter skill appearances（2026-10-25）
+
+この版では、スキルが出てくるときの処理から、結果の変わらない探し直しを省きました。 / This version removes repeated lookups that could not change anything from skill appearances.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- スキルが出てくるたびに、ホストと参加者全員のゲームが、スキルの見た目のデータを毎回探し直していました。今は最初に見つけたデータを使い回します。スキルが出てくる瞬間の処理が少し軽くなる見込みですが、実際の効果はまだ測っていません。スキルの見た目、出てくるタイミング、協力プレイでの見え方は変わりません。 / Every time a skill appeared, the host and every co-op player looked up the skill's model data again. The game now reuses the data it found the first time. The moment a skill appears should run a little lighter, though the actual effect has not been measured yet. How skills look, when they appear, and how they show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.65 — Lighter drawing of boss attack warnings（2026-10-25）
+
+この版では、ボスの攻撃予告を描くときの処理から、結果の変わらない回り道を省きました。 / This version removes roundabout work from drawing boss attack warnings without changing how they look.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボス戦で地面に出る攻撃予告（輪、扇形、帯、放射状の線、矢印など）は、細かい線の組み合わせで描いています。これまでは線を1本描くたびに、向きを合わせる計算を回り道の方法でやり直していました。予告がたくさん並ぶ場面では、画面を描くたびに数百本から千本を超える線でこの回り道が重なっていました。今は、同じ向きをより少ない手間で直接求めます。予告が多く並ぶボス戦ほど画面の描画が少し軽くなる見込みです。ただし実際の効果はまだ測っていません。ホストと参加者のどちらのゲームにも効きます。予告の形、位置、向き、太さは変わりません。 / During boss fights, the attack warnings drawn on the ground (rings, fan shapes, bands, radiating lines, arrows, and so on) are built from many small line pieces. Until now, the game redid the calculation that sets each piece's direction in a roundabout way, once for every piece. When many warnings were on screen, that extra work added up across hundreds to over a thousand pieces each time the screen was drawn. The game now works out the same direction directly, with less work. Drawing should run a little lighter in boss fights with many warnings on screen, though the actual effect has not been measured yet. This applies to both the host and co-op players. The shape, position, direction, and thickness of the warnings are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.64 — Lighter movement handling and gem appearances（2026-10-24）
+
+この版では、敵や仲間の移動の処理と、宝石が出てくるときの処理から、結果の変わらないやり直しを省きました。 / This version removes repeated work that could not change anything from movement handling and from gem appearances.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 移動を受け持つ側のゲームは、受け持つ相手が止まっていても、その動きの速さを毎フレーム「止まっている」と書き直していました。ホストではモンスター、召喚したもの、NPC がこの対象で、参加者では自分の英雄が対象です。今は、すでに止まっている相手には書き直しを省きます。止まっている相手が多い場面ほど処理が少し軽くなる見込みですが、体感できるほどの差は出ない見込みです。動いている間はほとんど変わりません。動き方、止まる位置、止まるタイミングは変わりません。 / The game handling movement kept rewriting a stopped speed every frame, even for things that were already standing still. On the host this covers monsters, summons, and NPCs; for co-op players it covers their own hero. The game now skips that rewrite for anything that is already stopped. It should run a little lighter when many things are standing still, though the difference is unlikely to be noticeable. Little changes while things are moving. How things move, where they stop, and when they stop are unchanged.
+- 宝石が出てくるたびに、ホストと参加者全員のゲームが宝石の見た目のデータを毎回探し直していました。敵を続けて倒して宝石がまとめて出ると、同じ探し直しが同じ瞬間に何度も重なっていました。今は最初に見つけたデータを使い回します。宝石がまとめて出る瞬間の処理が少し軽くなる見込みですが、体感できるほどの差は出ない見込みです。宝石の見た目と出てくるタイミング、協力プレイでの見え方は変わりません。 / Every time a gem appeared, the host and every co-op player looked up the gem's model data again. When several gems dropped at once, for example after defeating enemies in quick succession, the same lookup was repeated many times in the same moment. The game now reuses the data it found the first time. Moments when many gems appear at once should run a little lighter, though the difference is unlikely to be noticeable. How gems look, when they appear, and how they show up in co-op are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.63 — Lighter host checks during Infinity runs（2026-10-24）
+
+この版では、Infinity の遠征中に、結果が変わらない進行の確認をホストが毎フレームやり直していた処理を省きました。 / This version removes progress checks that the host repeated every frame during Infinity runs even though they could not change anything.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Infinity の遠征中、ホストは選んだ内容が反映された後も、全員がそろったかの確認と、倒した敵の記録の見直しを毎フレームやり直していました。ところが、その結果を受けて何かが起きるのは、次へ進む切り替わりの短い間だけでした。遠征のほとんどを占める戦闘中や選択待ちの間は、確認しても何も起きないのに、そのたびに全員の分と記録の全部を見直していました。今は、何も起きない間はこの確認を省きます。ホストの処理が少し軽くなる見込みです。倒した敵が多い戦闘ほど効きますが、体感できるほどの差は出ない見込みです。参加者の側は変わりません。次へ進むタイミングと、他の人を待つ流れ、選んだ内容の効き方は変わりません。 / During Infinity runs, after a choice had been applied, the host kept re-checking every frame whether all players were ready and re-reviewing its records of defeated enemies. Those checks only matter during the short moment of moving on to the next stage. For most of a run, during fights and while waiting for a choice, the host went through every player and every record each frame even though nothing could happen. The game now skips these checks while they cannot lead to anything. The host should run a little lighter. It helps more in fights with many defeated enemies, though the difference is unlikely to be noticeable. Nothing changes for co-op players. When the run moves on, how it waits for other players, and how choices take effect are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.62 — Lighter co-op while a player waits to join mid-game（2026-10-24）
+
+この版では、協力プレイで途中参加を待っている人がいる間、変わらない情報を毎フレーム送り直していた処理を省きました。 / This version removes data that co-op games kept resending every frame while a player was waiting to join mid-game.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、途中から参加し直す人が入れる時を待っている間、ホストは中身の変わらない空の装備選択を毎フレーム書き直し、参加者全員へ送り直していました。ボス戦の間ずっと待つことが多いため、待ち時間が長いほど無駄が積み重なっていました。受け取った参加者の側でも、そのたびに同じ更新の処理が走っていました。今は中身が空のまま変わらないときは送り直しません。ホストと参加者の両方で、待っている人がいる間の処理と通信が少し軽くなる見込みです。待ち時間が長いほど効きますが、体感できるほどの差は出ない見込みです。一人で遊ぶときは変わりません。途中参加の流れと、装備の選び方・反映のされ方は変わりません。 / In co-op, while a player was waiting for a chance to rejoin mid-game, the host rewrote the same empty loadout selection every frame and resent it to every player. Because the wait often lasts through an entire boss fight, the waste added up the longer it went on, and every player who received it ran the same update each time. The game now stops resending the loadout while it stays empty and unchanged. Both the host and co-op players should run a little lighter, with less network traffic, while someone is waiting. The longer the wait, the more this helps, though the difference is unlikely to be noticeable. Nothing changes in solo play. How mid-game joining works, and how loadouts are chosen and applied, is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.61 — Lighter Responsibility hit effects, keystone damage, equip screen, and Seedling Seed healing（2026-10-24）
+
+この版では、責任の宝石の被弾演出、刻印のダメージ計算、宝石の装着画面、芽吹きの種の回復で、同じ処理を繰り返していた部分をまとめました。 / This version trims repeated work in Responsibility gem hit effects, keystone damage calculations, the gem equip screen, and Seedling Seed healing.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 責任の宝石の被弾演出は、届くたびに、音と画面の揺れに使う部品を演出の中から毎回探し直していました。ホストと参加者の両方で起きていました。今は最初の1回だけ探して、以後はその結果を使い回します。ホストと参加者の両方で、処理がごくわずかに軽くなる見込みです。体感できるほどの差は出ない見込みです。被弾演出の見た目、音、画面の揺れは変わりません。 / Each time a Responsibility gem hit effect arrived, the game searched the effect again for the parts that drive its sound and screen shake. This happened on both the host and co-op players. The game now searches once and reuses the result. Both the host and co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. How the hit effect looks, sounds, and shakes the screen is unchanged.
+- 刻印を持って戦うとき、ホストはダメージを計算するたびに、同じ下準備を毎回作り直していました。今は1つを作り置きして使い回します。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。与えるダメージは変わりません。 / When fighting with keystones, the host rebuilt the same setup for every damage calculation. It now builds it once and reuses it. The host should run very slightly lighter. Nothing changes for co-op players. Damage dealt is unchanged.
+- 宝石の装着画面を開いている間、回避の列を並べる処理は、毎フレーム同じ位置を何度も読み直していました。今は1回だけ読んで使い回します。装着画面を開いている間の処理がごくわずかに軽くなる見込みです。画面を閉じているときは変わりません。列の並び方は変わりません。 / While the gem equip screen was open, the code that lays out the dodge row re-read the same positions several times every frame. It now reads them once. The game should run very slightly lighter while the equip screen is open. Nothing changes while it is closed. How the rows are arranged is unchanged.
+- 芽吹きの種が5体倒すごとに味方を回復するとき、ホストは味方1人ごとに同じ距離の計算を2回していました。今は1回で済ませます。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。回復する相手と回復量は変わりません。 / When the Seedling Seed heals allies every 5 kills, the host calculated the same distance twice for each ally. It now calculates it once. The host should run very slightly lighter. Nothing changes for co-op players. Who gets healed and by how much is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.60 — Skip idle work in screen fades and Sacrifice shields（2026-10-24）
+
+この版では、画面の暗転と犠牲のシールドで、何もしない間も繰り返していた処理を省きました。 / This version removes work that screen fades and Sacrifice shields repeated even when nothing was happening.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 場面転換のときの画面の暗転は、暗転が明けて画面が落ち着いた後も、毎フレーム同じ表示の設定を書き直していました。ホストと参加者の両方で起きていました。今は暗転していない間はこの書き直しを省きます。ホストと参加者の両方で、処理がごくわずかに軽くなる見込みです。体感できるほどの差は出ない見込みです。暗転の見え方と画面の切り替わり方は変わりません。 / Even after a scene-transition fade had cleared, the game kept rewriting the same display settings for it every frame. This happened on both the host and co-op players. The game now skips the rewrite while no fade is in progress. Both the host and co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. How fades look and how scenes switch are unchanged.
+- ホストは、犠牲で得るシールドを渡す予定が無いときも、渡すための準備を毎回繰り返していました。今は渡す予定があるときだけ準備します。ホストの処理がごくわずかに軽くなる見込みです。参加者の側は変わりません。シールドの付き方は変わりません。 / The host kept preparing to hand out Sacrifice shields even when none were due. It now prepares only when a shield is actually due. The host should run very slightly lighter. Nothing changes for co-op players. How shields are granted is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.59 — Co-op players skip an unused per-frame task（2026-10-24）
+
+この版では、参加者の側で毎フレーム空回りしていた処理を省きました。 / This version removes work that co-op players' games repeated every frame for no effect.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 攻撃で追加の弾が出るとき、ゲームは弾がまとめて出ないように、出るタイミングを散らしています。この処理はホストでしか働きませんが、参加者の側でも毎フレーム動いていました。今は参加者の側ではこの処理を省きます。参加者の処理がごくわずかに軽くなる見込みですが、体感できるほどの差はほぼ出ない見込みです。ホストの側は変わりません。追加の弾が出るタイミング、見た目、当たり方は変わりません。 / When attacks spawn extra projectiles, the game staggers their timing so they don't all appear at once. This only does anything on the host, but it also ran every frame on co-op players. Co-op players now skip it. Co-op players should run very slightly lighter, though the difference is unlikely to be noticeable. Nothing changes on the host. When extra projectiles appear, how they look, and how they hit are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.58 — Less wasted work in music, hits, and skill recovery（2026-10-24）
+
+この版では、BGM の再生、攻撃の命中、スキルの再同期などで繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated in music playback, attack hits, skill resyncs, and more.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- BGM は、フェードが終わって音量と高さが変わらない間も、同じ音量と高さを音源に書き直し続けていました。ホストと参加者の両方で起きていました。今は値が変わらないときは書き直しません。ホストと参加者の両方で、ごくわずかに処理が軽くなる見込みです。BGM の聞こえ方とフェードは変わりません。 / Music kept rewriting the same volume and pitch to its audio source even after a fade had finished and nothing was changing. This happened on both the host and co-op players. The game now skips the write when the values are unchanged. Both the host and co-op players should run very slightly lighter. How music sounds and fades is unchanged.
+- 参加者のスキルが使えなくなったときの復旧処理で、ホストはスキルのクールダウンとチャージを同じ値のまま2回送っていました。今は1回目が届けば2回目を送りません。復旧のときの通信が少なくなる見込みです。この復旧はめったに起きないため、普段の通信は変わりません。クールダウンとチャージの値は変わりません。 / When recovering a co-op player whose skills had become unusable, the host sent the same skill cooldown and charge values twice. The game now skips the second send when the first one goes through. Recovery should use less network traffic. This recovery is rare, so everyday traffic is unchanged. Cooldown and charge values are unchanged.
+- 参加者の側では、スキルや攻撃が終わるたびに、ホストでしか使わない会心の記録を片付ける処理が毎回走っていました。今は参加者の側ではこの処理を省きます。攻撃の多い戦闘では、参加者の処理がわずかに軽くなる見込みです。会心の出方は変わりません。 / On co-op players, each time a skill or attack ended, the game cleared critical-hit records that only the host uses. Co-op players now skip this. In attack-heavy fights, co-op players should run slightly lighter. Critical hits are unchanged.
+- 攻撃が当たるたびに、ゲームはホスト側で、弱点の仕掛け（Weakspot）が発動しないと決まっている命中まで調べていました。会心の命中や、自分の基本攻撃の命中などです。今はこうした命中ではこの調べを省きます。戦闘中はホストの処理が軽くなる見込みです。弱点の仕掛けの発動条件と発動率は変わりません。 / Each time an attack landed, the host ran extra checks for the Weakspot gimmick even on hits that could never trigger it, such as critical hits and your own basic attacks. The game now skips these checks for such hits. Fights should run lighter on the host. When Weakspot triggers and how often are unchanged.
+- 動的難易度は、接続しているプレイヤーの数を、命中や撃破のたびに数え直していました。そのたびに、一人ずつ一覧にいるかを確かめ直していました。今はこの確かめ直しを省きます。人数が多い協力プレイの戦闘では、ホストの処理が軽くなる見込みです。参加者の側は変わりません。人数の数え方と難易度は変わりません。 / Dynamic difficulty recounted connected players on hits, kills, and more, and each time it rechecked that every player was on the list. The game now skips that recheck. Co-op fights with more players should run lighter on the host. Nothing changes for co-op players. How players are counted and the difficulty itself are unchanged.
+- 近接の旅人の攻撃が当たるたびに、ゲームはホスト側で、崩しを付けるために基本攻撃が近接かどうかを毎回確かめ直していました。今は定期的に確かめた結果を使います。近接の旅人が多く当てる戦闘では、ホストの処理が軽くなる見込みです。崩しの付き方は変わりません。ただし基本攻撃を近接と遠距離で入れ替えた直後は、最大0.25秒だけ、入れ替える前の種類で崩しが決まります。 / Each time a melee traveler's attack landed, the host rechecked whether the basic attack was melee before applying Break. The game now reuses the result of a regular check. Fights where melee travelers land many hits should run lighter on the host. How Break is applied is unchanged, except that for up to 0.25 seconds after swapping a basic attack between melee and ranged, Break still follows the previous attack type.
+- 記憶が発動するたびに、ゲームはホスト側で、ほとんどの場合使わない発動の情報まで組み立てていました。今は使うときだけ組み立てます。攻撃を連打する戦闘では、ホストの処理がわずかに軽くなる見込みです。記憶の効果は変わりません。 / Each time a memory activated, the host built activation data that went unused in most cases. The game now builds it only when it is needed. Fights with rapid attacks should run slightly lighter on the host. Memory effects are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.57 — Lighter gamepad rumble and regular-enemy hit handling（2026-10-24）
+
+この版では、ゲームパッドの振動と通常の敵への攻撃で繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated for gamepad rumble and for hits on regular enemies.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- コントローラーがつながっていると、ゲームは振動していないときも毎フレーム「振動を止める」指示をコントローラーに送り直していました。キーボードとマウスで遊んでいるときも同じで、ホストと参加者の両方で起きていました。今は振動が止まっている間、この指示を送り直しません。振動していない間は処理が軽くなる見込みです。振動が続く戦闘中は、軽くなりません。振動の強さとタイミングは変わりません。 / With a controller connected, the game sent a "stop rumble" command to it every frame, even when nothing was vibrating. This also happened while playing with keyboard and mouse, on both the host and co-op players. The game no longer resends it while the rumble is already stopped. The game should run lighter while nothing is vibrating. During fights with constant rumble, there is no gain. Rumble strength and timing are unchanged.
+- 通常の敵に攻撃が当たるたびに、ゲームはホスト側でボスにしか使わない確認まで毎回行っていました。敵の状態を定期的に見直すときも、この確認を敵の数だけ繰り返していました。今は相手がボスでなければこの確認を省き、定期的な見直しでは1回だけ行います。攻撃が多い戦闘や敵の多い部屋では、ホストの処理が軽くなる見込みです。ボス戦の挙動と、通常の敵とボスへのダメージは変わりません。 / Each time an attack hit a regular enemy, the host also ran a check that only matters for bosses. The periodic review of enemies also repeated this check once per enemy. The game now skips it when the target is not a boss, and runs it only once per review. Fights with many hits and rooms with many enemies should run lighter on the host. Boss fights and damage to regular enemies and bosses are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.56 — Lighter host load during the White Night domain（2026-10-24）
 
 この版では、白夜の領域が出ているボス戦で毎フレーム繰り返していた無駄な処理を省きました。 / This version removes wasted work repeated every frame during boss fights with the White Night domain.

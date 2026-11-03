@@ -10,6 +10,33 @@ namespace UnityEngine.AI
     internal class NavMeshAgent
     {
         public ObstacleAvoidanceType obstacleAvoidanceType { get; set; }
+        // NativeAgentVelocityIdlePerf の差し替え先 SetVelocity が読み書きする本体 API の形
+        // （実機 NavMeshAgent.velocity。実機の getter/setter はどちらもネイティブ呼び出し）。
+        // AgentVelocityIdlePerfTests が等価性を検証できるよう、この模倣では setter の呼ばれた
+        // 回数を数え、getter が例外を出す切り替え（実機のネイティブ呼び出しの失敗に対応）を
+        // 持たせる。
+        private Vector3 _velocity;
+        public Vector3 velocity
+        {
+            get
+            {
+                if (throwOnVelocityGet) throw new System.InvalidOperationException("velocity getter failed");
+                return _velocity;
+            }
+            set { _velocity = value; velocityWrites++; }
+        }
+        internal int velocityWrites;
+        internal bool throwOnVelocityGet;
+    }
+
+    // NativeAgentVelocityIdlePerf の Transpiler に渡す IL の見本。WriteVelocityOnce は実機の
+    // DoMovementProcessorFrameUpdate と同じ形（NavMeshAgent の set_velocity の呼び出しが
+    // ちょうど1か所）、WriteVelocityTwice は呼び出しが2か所に増えた拒否の見本
+    // （FxCastTelegraph.UpdatePositionTwoSites と同じ使い方。実行はせず、IL の取り出しだけ）。
+    internal static class AgentVelocityIlSamples
+    {
+        public static void WriteVelocityOnce(NavMeshAgent agent) { agent.velocity = Vector3.zero; }
+        public static void WriteVelocityTwice(NavMeshAgent agent) { agent.velocity = Vector3.zero; agent.velocity = Vector3.zero; }
     }
 }
 namespace UnityEngine
@@ -42,6 +69,38 @@ namespace UnityEngine
     {
         public Transform transform;
         public bool activeSelf { get; set; }
+        // NativeGemResponsibilityHitPerf の Prefix が初回だけ走らせる子走査の受け口。
+        // 実機と同じ includeInactive=false の意味。境界では子を children に置いた要素の
+        // うち T に当たるものを返し、走査回数も数える（GemResponsibilityHitPerfTests が
+        // キャッシュで再走査が起きないことの検証に使う）。
+        internal readonly System.Collections.Generic.List<Component> children
+            = new System.Collections.Generic.List<Component>();
+        internal int componentScans;
+        public T[] GetComponentsInChildren<T>() where T : Component
+        {
+            componentScans++;
+            System.Collections.Generic.List<T> found = null;
+            foreach (Component child in children)
+                if (child is T typed) (found ??= new System.Collections.Generic.List<T>()).Add(typed);
+            return found?.ToArray() ?? new T[0];
+        }
+    }
+    // NativeSkillWorldModelLoadPerf と NativeGemWorldModelLoadPerf が初回の読み込みと
+    // 設定無効時のフォールバックで呼ぶ本体 Resources.Load の境界。prefab 参照は中身を
+    // 読まないので、返す値（next。既定は null）と呼ばれた回数・パス（loads）の記録だけを持つ。
+    // SkillWorldModelLoadPerfTests と GemWorldModelLoadPerfTests がこの記録で、
+    // キャッシュが Load を呼ばずに同じ参照を返すこと・null を保持しないこと・
+    // 設定無効時に毎回呼ぶことを確かめる。
+    internal static class Resources
+    {
+        internal static GameObject next;
+        internal static readonly System.Collections.Generic.List<string> loads
+            = new System.Collections.Generic.List<string>();
+        public static T Load<T>(string path)
+        {
+            loads.Add(path);
+            return next is T typed ? typed : default;
+        }
     }
     // NativeCustomRpcDispatchPerf がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
     // 検証では何を記録したか見られるように、呼ばれた例外をため込むだけ。
@@ -100,6 +159,16 @@ namespace SodRpg.Mod
             transform.position = targetPosition;
             transform.position = targetPosition;
             transform.rotation = targetRotation;
+        }
+
+        // Transform の位置・向きの書き込みを1つも持たない形（本体の形が変わった/
+        // 他MODの Transpiler が書き込みを除去した後に Dreamforge が当たる場合の模倣）。
+        internal void UpdatePositionNoSites()
+        {
+            if (followPosition || followRotation)
+            {
+                targetPosition = default;
+            }
         }
     }
 
@@ -330,11 +399,60 @@ namespace SodRpg.Mod
         public Vector3 position, velocity;
         public Quaternion rotation;
         public Vector3 angularVelocity, scale, scaleVelocity;
+        // チャンネルの有無を確かめる本体 API。NativeTransformSyncWriteSkipPerf の
+        // ValidateBody はこのメソッドを名前で解決して IL 命令で呼び出し回数を数える
+        // （実機の FrameUpdate / LogicUpdate は3回使う）。中身は本体と同じ channels の
+        // ビット判定で、テストから実行しても同じ意味で動く。
+        public bool Has(SyncTransformChannel channel) => (channels & channel) != SyncTransformChannel.None;
     }
     internal class ActorTransformSync
     {
         private SyncMovementData _syncData;
         public SyncMovementData Network_syncData { get => _syncData; set => _syncData = value; }
+        // NativeTransformSyncHoldPerf（収束姿勢の FrameUpdate 省略）が読む本体側の状態と
+        // 受け口。TransformSyncHoldPerfTests がこの欄へ収束状態を作り、判定と Prefix の
+        // 分岐（保持・速度・-0・NaN・Transform との不一致・cv・サーバ確定・未受信・例外）を
+        // 直接確かめる。isServer は NetworkBehaviour、transform は Component の受け口で、
+        // isServer はサーバ確定経路の境界テストのために書き替えられる。
+        internal bool _hasData;
+        internal bool _serverTickPending;
+        internal Vector3 _renderPos, _renderPosCv, _renderScale, _renderScaleCv;
+        internal Quaternion _renderRot, _renderRotCv;
+        public bool isServer { get; set; }
+        public Transform transform = new Transform();
+        public void FrameUpdate() { }
+    }
+
+    // NativeTransformSyncWriteSkipPerf の ValidateBody / Apply に渡す IL の見本。
+    // WritesLikeShippedUpdate は本体 Dew.Core r1.4.1.2 の FrameUpdate / LogicUpdate と
+    // 同じ書き込みの形（SyncMovementData.Has が3つ、Transform への set_position /
+    // set_rotation / set_localScale が各1つ。docs/specs/perf-loop/20261025-0353.md で
+    // 実 DLL の IL を確認）。SecondPositionWrite は set_position を2つに増やした拒否の
+    // 見本、TwoHasCalls は Has の呼び出しを2つに減らした拒否の見本
+    // （どちらも実行はせず、IL の取り出しだけに使う）。
+    internal static class TransformSyncWriteSkipIlShapes
+    {
+        internal static void WritesLikeShippedUpdate(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            if (data.Has(SyncTransformChannel.Scale)) tr.localScale = data.scale;
+        }
+
+        internal static void SecondPositionWrite(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            if (data.Has(SyncTransformChannel.Scale)) tr.localScale = data.scale;
+            tr.position = data.position;
+        }
+
+        internal static void TwoHasCalls(Transform tr, SyncMovementData data)
+        {
+            if (data.Has(SyncTransformChannel.Position)) tr.position = data.position;
+            if (data.Has(SyncTransformChannel.Rotation)) tr.rotation = data.rotation;
+            tr.localScale = data.scale;
+        }
     }
 
     // NativePerfPatches.cs の DreamforgeMod 部分が設定を読むための最小限の形。
@@ -344,17 +462,19 @@ namespace SodRpg.Mod
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
-            nativeGemCooldownSync = true,
+            nativeGemCooldownSync = true, nativeGemWorldModelCache = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
             nativeGuestPublishLimit = true,
             nativeAttachFaceIdle = true, nativeAttachFaceSharedVerts = true,
             nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
+            nativeTransformSyncWriteSkip = true,
+            nativeTransformSyncHold = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCastIndicatorLine = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativeStatsRatioIdle = true, nativePositionSyncIdle = true,
-            nativeChargeRpcIdle = true,
+            nativeChargeRpcIdle = true, nativeSkillWorldModelCache = true,
             nativeProjectileIdleRpc = true,
             nativeCustomRpcDispatch = true,
             nativeSampleUpdateIdle = true,
@@ -363,6 +483,7 @@ namespace SodRpg.Mod
             nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
             nativeRoomStartDependency = true,
+            nativeRoomPlayerPathableScan = true,
             nativeChatMuteCheckAlloc = true,
             nativeProxyPositionIdle = true,
             nativePickupIdle = true,
@@ -384,14 +505,27 @@ namespace SodRpg.Mod
             nativeChaosPetalIdle = true,
             nativeGibsRestSkip = true,
             nativeGamepadRumbleIdle = true,
+            nativeGemResponsibilityHitCache = true,
+            nativeMusicSourceIdle = true,
+            nativeTransitionIdle = true,
+            nativeAgentVelocityIdle = true,
+            nativeMidJoinLoadoutIdle = true,
+            nativeEntityAnimLayerWeightIdle = true,
+            nativeChaosStatBonusTooltipCache = true,
+            nativeEntityOwnerClientFast = true,
+            nativeProjectileTargetClientFast = true,
+            nativeEntityAbilitySubscribeDedup = true,
+            nativeBossPoolSpawnLog = true,
+            nativeRoomPrewarmResolveOnce = true,
+            nativeHeroKnockoutHealthIdle = true,
             nativeBossSoulShrineScan = true,
             guestSkillLockRecovery = true;
         // #1050: 抽出した記録タブの描画（DrawAutoSalvageSettings）が読む設定。既定値は本物と同じ。
         public AutoSalvageRarity autoSalvageRarity = AutoSalvageRarity.None;
         public int toastMaxLines = 7;
     }
-    // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
-    internal static class NativeSkillLockRecovery { internal static bool Enabled = true; }
+    // （#1123 以降）NativeSkillLockRecovery は本物（リンク）がコンパイルされるため、
+    // ここに Enabled だけの模倣は置かない。
     public partial class DreamforgeMod
     {
         internal DreamforgeConfig config = new DreamforgeConfig();
@@ -408,9 +542,32 @@ namespace SodRpg.Mod
     // 読む 4 つの公開効果プレハブ字段と、Prepare が探す weaver 送信メソッドの名前と引数の形
     // だけを置く（中身は呼ばれないので空）。実機の受信側 UserCode_* は対応する字段が null の
     // とき最初に return する（実 DLL 逆コンパイルで確認済み）。
+    // NativeProjectileTargetSyncVarPerf（リンク）の Prefix もこの境界に対して動く。Prepare が
+    // Network_targetEntity の getter と _targetEntity・____targetEntityNetId の 2 字段を実物と
+    // 同じ名前で解決し、ProjectileTargetSyncVarPerfTests が Prefix を直接呼ぶ。実機の
+    // isClient は netIdentity.isClient。実機の Network_targetEntity getter は
+    // GetSyncVarNetworkBehaviour の辞書引きを呼び出しごとにやり直すが、境界の getter は
+    // 解決済みの _targetEntity をそのまま返す（その辞書引きの置き換えこそがこのパッチ）。
     internal class Projectile
     {
         public struct EntityHit { }
+
+        // Prefix が読む NetworkBehaviour 継承面。
+        // ProjectileIdleRpcPerfTests が typeof(Projectile).GetFields() を GameObject 設定で
+        // 回すため、フィールドではなくプロパティにして列挙対象外にする。
+        public Mirror.NetworkIdentity netIdentity { get; set; }
+        public bool isServer { get; set; }
+        public bool isClient { get; set; }
+
+        // NativeProjectileTargetSyncVarPerf の Prepare と Prefix が読む標的 SyncVar の対
+        // （実物の weaver 生成の私有字段と同じ名前）。公開字段にすると同じく
+        // ProjectileIdleRpcPerfTests の GetFields() 列挙で GameObject を詰められるため、
+        // 列挙対象外の内部可視性にする（AccessTools.Field は内部字段も解決する）。
+        internal Entity _targetEntity;
+        internal Mirror.NetworkBehaviourSyncVar ____targetEntityNetId;
+        // Prepare の AccessTools.PropertyGetter の解決先。本体の中身（辞書引きからの解決）は
+        // Prefix の差し替え対象のため、境界では Prefix と同じ解決済み参照を返すだけ。
+        internal Entity Network_targetEntity => _targetEntity;
 
         public GameObject effectOnFly;
         public GameObject effectOnEntity;

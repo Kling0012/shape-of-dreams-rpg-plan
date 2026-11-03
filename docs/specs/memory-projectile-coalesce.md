@@ -686,3 +686,144 @@ Spawn 後に変更される参照、別の公開個体の RPC が渡す netId、
 - `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python3 tools/test_changed.py --base HEAD`：終了コード0。今回の仕様書1ファイルを対象にし、関連テストは0件だった。既定の比較元は `--list` で確認したところ41ファイルの差分とビルド定義の変更を含み、892クラスの全件実行を選んだ。全体のスイートを避ける指示に従い、既定の比較元での実行は未実行とした。
 
 実行中のプレハブ監査と親の繰り上げ公開、協力プレイ・途中参加・専用サーバ、同フレーム・同鍵で6個以上生成する場面の再現、RPC の受信と実績への影響、生成数・通信量・粒子の実測は未実行。このマシンにはゲームのアセットと実行環境がない。リポジトリ全体の追加のテストと遅いスイートも未実行で、パイプラインに残す。
+
+## 16. 発生源の参照の調査
+
+2026-10-23、公開された別個体から非公開弾を参照する通信と、ゲストの受け手を調べた。現時点では案Cを推奨する。ダメージ弾への適用を見送り、束0の基盤を登録0件で残す。型・生成元・caster・owner が一致しても、個体に保存した集計値、子孫集合、具象型の状態、生成通知の時点まで一致するとは限らない。案Bは元個体の参照を保ちやすいが、後からの公開で補えない処理があり、命中弾などの追加公開によって削減も減る。
+
+この節の案A・B・Cは既存の型分類A・B・Cとは別である。案Aは通信中の参照を同フレーム・同鍵の公開済み代表へ差し替える案、案Bは参照される元弾を通信より先に公開する案、案Cはダメージ弾への適用を取りやめる案を指す。サーバの全個体・命中・ダメージ・通知・乱数を維持し、ゲストへの公開だけを減らすという前提で比較した。今回はA・Bを実装していない。
+
+### 16.1 資料と確認範囲
+
+`/home/wang/dev/sod-gamedata/decompiled/sod-decomp` の Dew.Core・Dew.UI・Mirror と、提供された Managed 内の `Dew.Contents.dll`、MOD の `src/SodRpg.Mod` を用いた。根拠は以下に挙げる型・メソッドの本文と、生成された serializer・受信ハンドラである。逆コンパイルした本文はリポジトリに含めない。
+
+Contents は `/tmp/memco-rpcref-contents` に抽出した。全体抽出は終了コード70で、23メソッドが復元エラーになった。出力済みの必要な型は読めたが、全体の復元成功や全受け手の審査完了とは扱わない。復元失敗には `Ai_D_FrostTouch_FrostProjectile.OnComplete`、`Ai_R_Fireball.Explode`、`Se_M_Endure.OnCreate` などが含まれる。
+
+### 16.2 発生源を送る経路
+
+Mirror の `WriteNetworkBehaviour` は netId と ComponentIndex を書く。`ReadNetworkBehaviour<T>` は、その netId が受信側の spawned に無ければ null を返す。送信元 manager・Entity・Hero の observer と、payload に入る弾の observer は別である。弾の公開を抑えても、別個体からの通知はそのまま送られる。
+
+| 送信元・payload | 書かれる参照と発生源 | ゲストの受信条件・注意点 |
+|---|---|---|
+| ClientEventManager（以下CEM）`InvokeOnTakeDamage` / EventInfoDamage | actor、victim。DamageData の actor は弾の `Damage` から `this` が設定される | victim だけを確認し、actor=null でも OnTakeDamage を呼ぶ。damage 内の値と発生源の参照は別 |
+| CEM `InvokeOnDeath` / EventInfoKill | actor、victim。`SetLastAttacker(this)` から死亡時の actor へ引き継ぐ | victim だけを確認し、actor=null でも OnDeath を呼ぶ |
+| CEM `InvokeOnTakeHeal`・`InvokeOnTakeManaHeal` / EventInfoHeal | actor、target、ReactionChain 内の Actor リスト。Actor の回復処理は発生源を `this` にする | target だけを確認する。actor の欠落で通知全体は落ちない |
+| CEM `InvokeOnTakeShield` / EventInfoShield | statusEffect、target、ReactionChain 内の Actor リスト。直接の actor 欄はない | statusEffect と target の両方を確認する。非公開弾は chain や StatusEffect の親を通じて関係する |
+| CEM `InvokeOnGetManaSpent` / EventInfoSpentMana | actor、entity | entity だけを確認する |
+| CEM `InvokeOnAttackMissed`・`InvokeOnAttackHit` | actor、attacker、victim | victim だけを確認する。attacker と発生源 actor を混同しない |
+| CEM `InvokeOnDamageNegated`・`InvokeOnDamageNegatedByShield` | actor、victim。前者には BasicEffect 欄もある | victim だけを確認する。この版の BasicEffect writer は空、reader は null で、本体のフィールドは送られない |
+| CEM `InvokeOnApplyElemental` / EventInfoApplyElemental | actor、victim、属性・追加スタック。Actor の付与通知は actor=`this` | actor と victim の両方を確認するため、actor=null なら OnApplyElemental 自体が呼ばれない |
+| CEM `InvokeOnCastComplete` / EventInfoCast | instance、trigger、configIndex、CastInfo | instance と trigger の両方を確認する。CastInfo の caster・target は Entity で、候補の AbilityInstance 弾を直接入れる欄ではない |
+| Entity `NotifyEntityDeathToClients` / EventInfoKill | CEM と同じ actor、victim | 受信で virtual な OnDeath(info) を呼ぶ。EntityEvent_OnDeath を再発火する経路とは別 |
+| Hero `RpcInvokeOnKillOrAssist` / EventInfoKill | CEM と同じ actor、victim | ClientHeroEvent_OnKillOrAssist を呼ぶ。actor=null を除外しない |
+| Se_HeroKnockedOut `RpcInvokeKnockedOut` / EventInfoKill | Hero の `_lastAttacker` から actor を設定 | ClientHeroEvent_OnKnockedOut に payload を渡し、CEM.OnHeroKnockedOut には Hero を渡す。後者だけを見て発生源参照が無いとは言えない |
+
+これらの CEM 戦闘RPCは channel 0、includeOwner=true で送る。Actor の生成物には ElementalStatusEffect などもあり、属性ダメージの発生源が常に元弾になるわけではない。個々の発生源設定と親の選択を確認する必要がある。
+
+`GeneratedNetworkCode._Write_EventInfoHeal` と `_Write_EventInfoShield` は `_Write_ReactionChain` を通じて `_actors` の各 Actor を送る。EventInfoDamage の chain は、調査対象の同 serializer では送られない。ReactionChain は型だけの判定に加え、`DidReact` の個体一致判定、`Equals` の要素と順序の比較を持つ。代表に置き換えても型が同じというだけでは、これらの意味を保てない。ただし今回読んだゲスト購読者で、受信した chain を具体的に消費する箇所は未確認である。
+
+#### SyncVar と生成後の参照変更
+
+| フィールド・書き込み先 | 候補弾との関係 | 読み手への影響・確認範囲 |
+|---|---|---|
+| `Actor._parentActor` | 任意の Actor を参照でき、公開された子が非公開弾を親にできる | 祖先探索、firstEntity、子の一覧、生成通知に関係する。14.2は Spawn 時の参照先公開を扱うが、Spawn 後の変更を扱わない |
+| `AbilityInstance._info`・`_gem` | CastInfo は caster・target が Entity、Gem は生成元の系統に関係する | caster・target 自体が候補弾になる欄ではない。構造体内参照は受信時に読み取られ、後からの自動解決と同一視できない |
+| `Ai_Q_IncendiaryRounds_Attack.attackInstance` | AbilityInstance 型の SyncVar で、弾を直接参照できる | OnCreate で Projectile なら飛翔FXを追加する。参照先が未公開ならこの処理が落ちる。後から getter で解決しても OnCreate は再実行されない。対象記憶弾と実際に組み合わされるかは未確認 |
+| `StatusEffect._victim`、`AbilityTrigger._owner`・currentPassiveEffect、`Entity._owner`、攻撃trigger、`Projectile._targetEntity`、Gem の owner 等 | Entity・DewPlayer・StatusEffect・AbilityTrigger 等の型制約がある | これらすべてを「弾を直接参照する欄」とは扱わない。公開された StatusEffect や trigger の親参照は別途確認する |
+
+専用の NetworkBehaviour SyncVar getter は保持した netId から後で解決できる。ただし受信時の OnChanged hook や OnCreate まで再実行する保証はない。`ActorManager.serverActor` も Actor 参照を同期するが、通常のダメージ弾を指すという根拠にはしない。
+
+#### DewEffect の全員送信
+
+RPC以外にも、`DewNetworkBehaviour.FxPlayNetworked` 等から `DewEffect` の NetworkMessage を送る経路がある。PlayEffectMessage、PlayPositionedEffectMessage、PlayAttachedEffectMessage、PlayCastEffectMessage、StopEffectMessage、ApplySpeedMultiplierToEffectMessage は、parent の NetworkIdentity と pathId を送る。送信は `NetworkServer.SendToAll` で、弾自身の observer を使わない。既定は channel 0、sendToReadyOnly=false である。
+
+受信側の `HandleEffectMessage` は parent=null ならログを出して戻る。`ResolvePathById` は parent の gameObject、fxPathTable、Transform 階層を使う。再生処理は assetId、skin variant、他プレイヤー向けの調整も読む。通常再生の isNew は解決したFXの Transform 位置・回転を使い、位置指定の再生はメッセージの position・rotation を使う。停止と速度変更は、その親個体の特定FXを操作する。
+
+案Aで parent を代表にすると、FXの配置・状態・停止対象まで同じとは限らない。明示位置を維持できる再生と、個体の状態を操作する停止を一括で同値とは扱えない。案Bでこれらの参照も公開条件にすると、外れ弾でもFXを親に持つ通信によって公開され得る。RPCだけの保護では、この経路は残る。
+
+### 16.3 ゲストの受け手が読む情報
+
+表の「非依存」は本文を読んだハンドラの発生源参照に限る。未読の購読先まで影響なしとする意味ではない。caster は主に CastInfo、owner は firstEntity 等から読み、生成元は parentActor・祖先探索で調べる。これらを一つの「同じプレイヤー」という条件へまとめない。
+
+| 分類・受け手 | 参照先から読む情報 | 非公開化・案Aの判断 |
+|---|---|---|
+| 実績：`DewPersistentGameObserver.AchOnKillLastHit`・AchOnDealDamage・AchOnDoHeal | actor の存在、local Hero との同一性・子孫関係 | actor=null で callback が除外される。同じ祖先と帰属を持つ代表なら、この絞り込み自体は保ち得る |
+| 実績：`ACH_M_M_M_MONSTER_KILL` | actor・parentActor の個体、AddData/TryGetData/RemoveData の tracker、childrenInNetwork、CastComplete の instance と通知時点 | 個体または祖先へ討伐数を保存し、instance 以下を走査して16体以上か判定する。型・親・caster・owner の一致だけでは一般の同値を証明できない。同じ root tracker に集約される場合まで必ず誤集計するとは断定しない |
+| 実績：`ACH_ETERNAL_REST`・`ACH_THE_CYCLE_OF_REBIRTH`・`ACH_TASTE_OF_THEIR_OWN_MEDICINE` | AttackProjectile/MeleeAttackInstance、特定ボスなどの型と祖先型 | 同じ型・祖先を受信時まで保てる代表なら成立し得る。actor=null では helper の除外や型判定が変わる |
+| 実績：`ACH_THEYRE_JUST_BIG_CATS` | victim の型、actor の ILightingActor 実装または `Ai_Q_Fleche_Dash.empoweredWithLightning` | 具象個体の強化状態を読む例。現在の鍵にこの SyncVar は入らない。ただし Fleche Dash が今回の対象束に含まれるという確認ではない |
+| 実績：`ACH_GO_WITH_THE_FLOW`・`ACH_MASTER_OF_EVASION` | actor.firstEntity、Monster 型、owner、敵対関係 | 前者の被ダメージ callback は actor の null guard を持たず、後者は持つ。通知が届くだけでは同じ結果にならない |
+| 実績：`ACH_PRAISE_THE_SUN`・`ACH_SHIELD_BATTERY`・`ACH_OVERFLOWING_HEALS` | firstEntity、生存、owner、敵対関係、祖先 `Se_R_DangerousTheory` 等。属性・量は payload も読む | 帰属と祖先を保つ必要がある。Overflowing Heals の callback に actor の null guard はない |
+| 実績：`ACH_TRUE_SUPPORT`・`ACH_HORNS_FEATHERS_AND_GOLD`・`ACH_SHOOT_FOR_THE_MOON` | helper の発生源帰属、回復先個体・体力・量、victim と Hero の位置 | True Support の時間辞書は target 個体をキーにする。Shoot for the Moon の距離は元弾の位置ではない。payload の victim・target は変更しない |
+| 実績：`ACH_BARE_SKIN_SUPREMACY` | statusEffect の祖先、target、finalAmount | actor 欄だけの対応では足りず、公開された StatusEffect の親系統も保つ必要がある |
+| 実績：`ACH_THOUSAND_THUNDERS`・`ACH_ANGER_MANAGEMENT_PROFESSIONAL`・`ACH_SIBLING_FIGHT` | 読んだ処理は attacker/victim、会心・強度・免疫・関係、victim に保存する時刻 | actor に非依存。attacker/victim と通知を保つことが前提 |
+| 実績：`ACH_MASTER_OF_HAMMER` | Hero の ClientActorEvent_OnCreate、生成された Vesper の mace 型と回数 | RPCの参照保護だけでは、非公開中の生成通知を補えない。今回の候補型への直接の反例とは確認していない |
+| 統計：`StatisticsManager` | 戦闘不能の actor.firstEntity が Monster か、敵の種別 | actor=null で敵種別の死亡集計が抜ける。KillOrAssist の読んだモンスター集計は victim を読む |
+| 統計・解析：`InGameAnalyticsManager` | 戦闘不能の actor.GetType().Name、ダメージの local Hero への帰属 | actor=null なら原因が Unknown になり、ダメージの集計対象も変わる |
+| 結果集計：`GameResultManager` | actor と firstEntity の型、ダメージ・回復等 | StartTrackingLazy 等は OnStartServer から入る。サーバ直接イベントで集計し結果をRPCで送るため、ゲストCEMの欠落が最終結果表を直接変えるとはしない |
+| UI：`UI_DamageNumberGroup`・`DewDamageNumberRenderer`・`UI_DamageNumberText` | focusedEntity との同一性・子孫関係、actor の型、ElementalStatusEffect、祖先Gem | MineOnly、重要度、表示や数値のマージに関係する。表示位置は victim/target の Visual 等で、読んだ処理は元弾の位置を使わない |
+| UI：`FloatingWindowManager`・`EditSkillManager`・`InGameUIManager` | 読んだ damage handler は victim・DOT 等 | そのハンドラは actor に非依存 |
+| UI：`EntityGroundMarker`・`UI_InGame_KnockedOutIndicator` | 戦闘不能通知による可視性更新・canvas 有効化 | 読んだ callback は actor に非依存 |
+| 演出：`FeedbackManager`・`CameraManager` | actor の focusedEntity への帰属、DOT・会心、victim、量 | CameraManager は自分の子孫からの被害なら強度を0.1倍にする。actor=null で揺れ・overlay の強さが変わり得る |
+| 演出：`FlavourManager` | ElementalStatusEffect 型、ignoreAssists 時の祖先 Hero と isOwned | 同じ型と帰属が必要。KillOrAssist 側の読んだ判定は victim。PlayKillFeedback 後段全体は未確認 |
+| 演出：`Mon_RedMan.OnDeath`・`Mon_RedGiant.OnDeath` | actor.firstEntity.transform.position | 死亡演出の向きを決める。元弾自身の位置ではない。RedMan の読んだ本文には actor の null guard がなく、RedGiant にはある |
+| 演出：DewEffect の各 HandleEffectMessage | parent の asset・階層・FX個体・Transform・現在の状態 | parent=null で処理が落ちる。代表への一般置換は、型と帰属の一致だけでは成立しない |
+| ゲーム状態：`AbilityInstance.DestroyWatchCallback` | 通知を契機に自身の active を確認して Destroy | obj.actor は読まない。Actor.Destroy はクライアントでは処理しない |
+| ゲーム状態：`Se_FishScales.ClientHeroEventOnKnockedOut` | SetAmount(0) | obj.actor は読まない。別のサーバ直接ダメージ処理の発生源参照と区別する |
+| MOD：`ClientSession.OnDeath` | victim Monster の netId、所有・関係・レベル等を使う CaptureNativeKill | info.actor は読まない。victim と死亡通知が届くことが前提 |
+| MOD：`HostAuthority` と各 partial | サーバの Entity/Actor 直接イベント、同期的な命中スコープ | 現行のCEM登録ブロックは空。解除コードだけを根拠にゲスト購読者へ数えない。サーバ側 EventInfo を変更してはならない |
+| MOD：`NativeEnemyHitDamageScope` | CEM damage の受信中にFX向けの一時情報を保持 | 弾を公開せず、actor を差し替えず、通常の通知を補わない |
+
+実績の多くは型や帰属だけを読むが、実績の全系統がその条件だけで成立するわけではない。`ACH_M_M_M_MONSTER_KILL` の tracker の帰属・寿命・集計時点と、生成通知の受け手が残る。ここでいう不成立は「現在の鍵だけを根拠にした一般適用が成立しない」という判断であり、同じ親を持つ対象弾のあらゆる場面で差が出るという主張ではない。
+
+Entity の追加 OnDeath override も確認した。BossPolaris・PrimusAeron・BossMaw・AmbushSpawner・SpiderWarrior・UnstableRat・PitchBlackOre の読んだ固有処理はサーバ条件の内側だった。Scavenger・VikingWarrior・Ink Archer・DarkMoon は自身の表示を変更し、MisticIceVein の固有本文は空だった。これらの確認範囲では、追加のゲスト側 actor 読み取りは見つからなかった。`RoomMod_Artifact`、`Se_E_LizardlyBlessing`、`CurseStatusEffect` の該当購読もサーバ経路であり、ゲストの発生源差し替えによるゲーム状態変化の例には数えない。
+
+### 16.4 案の比較と推奨
+
+| 案 | 成立する範囲・利点 | 不成立または未証明の条件 | 削減の見込み |
+|---|---|---|---|
+| A：代表へ差し替え | 型・共通祖先・firstEntity・owner・caster だけを読む受け手は、値と有効期間を保てれば成立し得る | tracker と子孫走査、生成通知、具象フィールド、ReactionChain の個体一致、FX個体・位置・停止対象は追加条件が必要。現在の鍵だけでの一括適用は認められない | 追加公開を避けられる可能性はあるが、成立する型・受け手を未確定のため、実績値は無い |
+| B：元弾を先に公開 | 元の型・netId・同一性・同期値を保ちやすい | 遅れた生成通知、公開前のローカルdata、失われたhookを自動では補えない。依存先・寿命・接続別の順序・Spawn後SyncVar・DewEffectを扱う必要がある | 命中・回復・死亡原因・chain・公開子の親・FXの親等として参照された弾は公開する。削減はそれらに該当しない個体へ限られる |
+| C：ダメージ弾への適用を取りやめ | 通常公開を保ち、結果不変を未証明の条件に依存させない。束0の監査・繰り上げ公開の基盤は残せる | ゲストの公開数削減は得られない | 登録0件、今回の削減実績0 |
+
+現時点ではCを推奨する。Aの審査は参照先の型と帰属だけでは終わらず、Bは削減対象を減らしながら生成・同期・寿命の順序を追加で管理する必要がある。対象型を登録する根拠としてはいずれも不足している。将来A・Bを採る場合も、`referencesReviewed` や生成通知・一覧の意味の審査を省く理由にはしない。
+
+案Bの上限は個体の集合で表せる。同フレーム・同鍵の全個体をG、当初公開する最大5個をP、参照や依存先の保護のため追加公開する個体をRとすると、最終公開数は `|P ∪ R|`、公開を省ける数は `|G \ (P ∪ R)|` である。上限は `max(|G| − 5, 0)` だが、全弾が参照を要求されれば削減は0になる。外れ弾でもFXや子の親になればRへ入るため、単純に外れ率を掛けた見積もりにはしない。途中参加と接続ごとの公開状況も別途考慮する。命中率・Rの比率・通信量は未計測であり、Spawn数の削減をそのまま通信バイト数の削減率とはしない。
+
+### 16.5 A・Bを実装する場合の差し込み先
+
+#### 書き込み前の処理
+
+1. CEM の各 `InvokeOn…` の送信wrapperで、`GeneratedNetworkCode._Write_EventInfo…` を呼ぶ前が候補になる。Aでは送信用の値だけを複製して承認済みの参照を変更する。Bでは元個体自身と依存先を公開する。サーバの元EventInfo、`_lastAttacker`、親子関係、共有の ReactionChain._actors を書き換えない。
+2. `_Write_EventInfoKill` は CEM・Entity死亡・Hero撃破/アシスト・戦闘不能で共用される。CEMだけのpatchでは足りない。共通writerを使う場合は用途を限定する送信スコープが必要で、同名の GeneratedNetworkCode がアセンブリごとに存在する点も確認する。Heal/Shield は `_Write_ReactionChain` と Actor リストの書き込みまで扱う。
+3. Spawn時は既存の `NativeGuestPublishLimit.PreparePublication` を利用できる。ただし現在の処理は「送信するActorの参照先」を調べるもので、RPCが参照する非公開個体自身を公開する入口の追加が要る。依存先を祖先順に処理し、必要な接続の observing / observers の両方を本来の AddObserver 経路で整える。
+4. Spawn後のSyncVar変更は、各 `SerializeSyncVars` と構造体writerが参照を書く前に保護する必要がある。初回SpawnのPrefixだけでは覆えない。受信後のgetterによる解決を、hookやOnCreateの復元の代わりにしない。
+5. DewEffect は parent の `WriteNetworkIdentity` と `SendToAll` の前に別途処理する。RPC用の変更はここには効かない。位置指定の再生、親の現在位置からの再生、停止・速度変更の同値条件を分ける。未準備接続も送信対象に含むAPIなので、readyなRPC observerと同じ集合だと仮定しない。
+
+`WriteNetworkBehaviour` 全体を無条件で置換する方法は採らない。Command・TargetRpc・SyncVar・host内の処理まで巻き込むうえ、同じActor参照でも用途ごとの意味が違う。`Actor.CustomRpc_SendMessageToAllClients<T>` のJSON文字列や独自同期形式も、標準writerだけで覆えるとは限らない。
+
+#### Mirror の実送信経路と順序
+
+調査対象の ClientRpc は引数をwriterへ書いてから `NetworkBehaviour.SendRPCInternal` に入り、送信元identityのobserverを走査して `NetworkConnectionToClient.BufferRpc` に積む。接続のUpdateや容量超過で `FlushRpcs` が動き、その後通常の送信batchへ入る。`SendRPCInternal` 到達時にはpayloadが既にバイト列なので、そこだけをpatchして型付きのactorを差し替えることはできない。`NetworkServer.SendToReadyObservers` だけのpatchもこのRPC経路を覆わない。
+
+Spawn は `ShowForConnection → SendSpawnMessage → conn.Send` を通る。`conn.Send` は即時のtransport送信ではなく、通常のbatchへの追加である。依存先のSpawn、参照先自身のSpawn、参照するRPCの順を、各接続で成立させる必要がある。`NetworkClient.ApplySpawnPayload` は initialState を復元した後に spawned へ登録するので、依存先を後回しにしない。
+
+Destroy/UnSpawn のメッセージも通常batchへ入り、`NetworkServer.DestroyObject` 本文にはRPC bufferのflushが無い。一方、ゲームの `Dew.Destroy → EnqueueDestroy → StepDestroy` は cleanup の後に0.35秒のRpcWaitを置き、さらに各 `ICleanup.canDestroy` を確認してからUnSpawn等へ進む。Actor の cleanup は isActive をfalseにし、canDestroyは子のnetwork一覧とdestroy lockも確認する。したがって「命中直後に必ずDestroyがRPCを追い越す」とは言えない。固定時間の待機だけで全経路の送信順を証明したとも扱わず、Bでは公開時のinactive状態と、RPCを読む時点まで同じ個体を参照できる条件を確認する必要がある。
+
+Aにも代表の寿命の問題がある。現在の `NativeGuestPublishLimit.Slot` は鍵・フレームのstamp・個数だけを持ち、代表Actorを保存していない。実装するなら、非公開個体から元フレーム・鍵の公開代表への対応と、その代表が破棄・プール再利用された世代の識別が必要になる。次フレームのslot再利用や、既に失われた代表に付け替えてはならない。代表を残すためサーバの寿命を変える方法は、子孫集計などへ影響するため、結果不変の根拠には使えない。
+
+#### 受け入れの条件と境界
+
+- Aを採る型は、全受け手が読む値・個体data・子孫集合・通知時点まで同値である根拠を示す。型とownerだけが一致する場合を合格にしない。
+- Bを採る型は、元弾と依存先が対象接続で先に公開され、遅れたOnCreate・inactive時の初期化・参照の寿命を含めて結果が変わらない根拠を示す。命中弾を追加公開したのに、常に公開数5個と報告しない。
+- 読めない形や送信時の例外では公開制限だけを止め、通常公開へ戻す方針を保つ。戦闘通知、サーバの弾、ゲーム全体やMOD全体を停止して回避しない。
+- Cを採る現状は登録0件を保つ。今回の調査を登録許可と扱わず、コード・登録表・設定・changelog・テストファイルを変更しない。
+
+### 16.6 未確認と今回の検証
+
+未確認は、全生成・破棄通知の購読先とActorManagerの全消費側、Contentsの復元失敗23メソッド、独自JSON・persistentSyncedDataの参照形式、受信したReactionChainを読む具体的なゲスト購読者、SpawnMessage.parentActorNetIdのゲーム側利用全体である。前掲の個別型が今回の候補弾と実際に組み合わされるか、DewEffectのプレハブ配線全体、FlavourManagerの後段全体も未確認として残す。検索で見つかっただけの箇所を、影響なしとは判定していない。
+
+今回確認したのは、CEMの送受信、各EventInfoのserializer、追加の死亡・撃破・戦闘不能通知、前掲の受け手、DewEffect、SyncVarの参照、Mirrorのbuffer・Spawn・Destroy経路、MODの購読と公開制限の基盤である。15節は別履歴の記録を復元して接続したもので、15.4のビルド・テスト結果を今回の実行結果には数えない。
+
+文書の検査は `yomiyasu_lint.py`、`yomiyasu_check.py run` による原文との差分点検、`git diff --check` を実行した。初回lintはerror 0件・warn 2件で、「版」という表現の候補を見直した。diffとstatusで仕様書だけの追記であることも確認した。文章検査の実行は、通信の同値性や実機動作の確認を意味しない。
+
+今回の変更は仕様書だけで、A・Bの実装、ビルド、生成チェック、既存テスト、関連テスト選択、全体の遅いスイートは未実行。コードと生成物を変更していないため、今回は文書の検査を行う。ゲームの実行環境が無いため、実機・協力プレイ・途中参加・専用サーバ、同フレーム同鍵で6個以上生成した際の受信順、実績の達成可否、Profiler、命中率・公開数・通信量・粒子の実測も未実行である。実機確認だけのIssueは作成しない。

@@ -34,6 +34,17 @@ namespace SodRpg.Mod
             }
             catch (Exception ex) { Log.Warn("Boss share bar binding ignored; native bar retained: " + ex.Message); }
         }
+
+        /// <summary>
+        /// 描画（showEnemyOwnershipMarks が無効の間は DrawBossShareBars の整理が走らない）と
+        /// シーンをまたいで、破棄されたバーの束縛が Bars に残る。部屋の区切りで破棄済みの分を
+        /// 外す。判定は描画側の破棄と同じ（Item か Enemy が Unity 破棄済み）。
+        /// </summary>
+        internal static void PruneDestroyed()
+        {
+            for (int i = Bars.Count - 1; i >= 0; i--)
+                if (Bars[i].Item == null || Bars[i].Enemy == null) Bars.RemoveAt(i);
+        }
     }
 
     internal sealed partial class DreamforgeUi

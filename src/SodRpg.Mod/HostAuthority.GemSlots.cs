@@ -236,8 +236,16 @@ namespace SodRpg.Mod
                 // high-index gem can overflow even if applying this build did not shrink a cap.
                 if (observed != decision.Target) return;
                 _gemOverflow.Clear();
-                foreach (var kv in skill.gems)
-                    if (kv.Key.skill == loc && kv.Key.index >= decision.Target && kv.Value != null) _gemOverflow.Add(kv);
+                // Enumerate keys only: the wrapper's pair enumerator builds a LINQ iterator plus a
+                // boxed dictionary enumerator on every call, and this scan runs six times per hero
+                // per second (Identity/Movement here, Q/W/E/R in LevelGemSlots). Key order equals
+                // pair order and keys are unique, so the sorted drop sequence is unchanged.
+                foreach (var key in skill.gems.Keys)
+                {
+                    if (key.skill != loc || key.index < decision.Target) continue;
+                    if (!skill.gems.TryGetValue(key, out var gem) || gem == null) continue;
+                    _gemOverflow.Add(new KeyValuePair<GemLocation, Gem>(key, gem));
+                }
                 _gemOverflow.Sort(GemIndexDescending);
                 var dropAt = skill.hero != null ? skill.hero.position : default(Vector3);
                 foreach (var slot in _gemOverflow) skill.UnequipGem(slot.Key, dropAt);

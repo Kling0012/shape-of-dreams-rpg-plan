@@ -133,10 +133,12 @@ namespace SodRpg.Mod
             catch (Exception ex) { Fail(ref _abilitiesFailed, "ability references", ex); }
         }
 
-        internal static void ResendSkill(AbilityTrigger skill)
+        // Returns true when the full-array RPC went out. The caller then skips the
+        // per-index resends of the same sanitized values (NativeCooldownSafety.ResendAuthoritative).
+        internal static bool ResendSkill(AbilityTrigger skill)
         {
             skill.SetDirty();
-            ResendArrays(skill);
+            bool arraysSent = ResendArrays(skill);
             if (!_configFailed)
             {
                 try
@@ -146,15 +148,16 @@ namespace SodRpg.Mod
                 }
                 catch (Exception ex) { Fail(ref _configFailed, "config RPC", ex); }
             }
-            if (_locksFailed) return;
+            if (_locksFailed) return arraysSent;
             try
             {
                 if (CastLocks == null || CooldownLocks == null || QueueLock == null)
-                { Fail(ref _locksFailed, "config locks"); return; }
+                { Fail(ref _locksFailed, "config locks"); return arraysSent; }
                 ResendLocks(CastLocks(skill));
                 ResendLocks(CooldownLocks(skill));
             }
             catch (Exception ex) { Fail(ref _locksFailed, "config locks", ex); }
+            return arraysSent;
         }
 
         private static void ResendLocks(SyncList<bool> list)
@@ -165,18 +168,18 @@ namespace SodRpg.Mod
                 QueueLock(list, SyncList<bool>.Operation.OP_SET, i, list[i], list[i], true);
         }
 
-        private static void ResendArrays(AbilityTrigger skill)
+        private static bool ResendArrays(AbilityTrigger skill)
         {
-            if (_arraysFailed) return;
+            if (_arraysFailed) return false;
             try
             {
-                if (ArrayRpc == null) { Fail(ref _arraysFailed, "array RPC"); return; }
+                if (ArrayRpc == null) { Fail(ref _arraysFailed, "array RPC"); return false; }
                 int count = skill.configs?.Length ?? 0;
                 var times = skill.currentUnscaledCooldownTimes;
                 var charges = skill.currentCharges;
                 var delays = skill.currentMinimumDelays;
                 if (count == 0 || times == null || charges == null || delays == null
-                    || times.Length != count || charges.Length != count || delays.Length != count) return;
+                    || times.Length != count || charges.Length != count || delays.Length != count) return false;
                 // Rare recovery only; the native full-array RPC also repairs a guest's array lengths.
                 var safeTimes = new float[count];
                 var safeCharges = new int[count];
@@ -188,8 +191,9 @@ namespace SodRpg.Mod
                     safeDelays[i] = SafeTime(delays[i]);
                 }
                 ArrayRpc(skill, safeTimes, safeCharges, safeDelays);
+                return true;
             }
-            catch (Exception ex) { Fail(ref _arraysFailed, "array RPC", ex); }
+            catch (Exception ex) { Fail(ref _arraysFailed, "array RPC", ex); return false; }
         }
 
         private static float SafeTime(float value) => value >= 0f && !float.IsInfinity(value) ? value : 0f;
@@ -216,6 +220,74 @@ namespace SodRpg.Mod
                 text.Append(']');
             }
             catch (Exception ex) { Fail(ref _diagnosticFailed, "instance diagnostics", ex); }
+        }
+
+        // Allocations are confined to rate-limited requests/replies, never the scan path.
+        internal static DreamforgeSkillState Capture(Hero hero, SkillTrigger skill)
+        {
+            var state = new DreamforgeSkillState
+            {
+                mana = hero.currentMana,
+                status = Convert.ToInt32(hero.Status?.basicEffectMask ?? 0),
+                blockAbility = Convert.ToInt32(hero.Control?.Network_blockAbility),
+                blockAbilityCancelable = Convert.ToInt32(hero.Control?.Network_blockAbilityCancelable),
+                blockDodge = Convert.ToInt32(hero.Control?.Network_blockDodge),
+                blockDodgeCancelable = Convert.ToInt32(hero.Control?.Network_blockDodgeCancelable),
+                config = -1,
+            };
+            if (skill == null) return state;
+            state.skillNetId = skill.netId;
+            state.ownerNetId = skill.owner == null ? 0 : skill.owner.netId;
+            state.active = skill.isActive;
+            state.config = skill.currentConfigIndex;
+            state.abilityIndex = skill.abilityIndex;
+            state.casting = skill.Network_isCasting;
+            state.cooldowns = skill.currentUnscaledCooldownTimes == null ? null : (float[])skill.currentUnscaledCooldownTimes.Clone();
+            state.charges = skill.currentCharges == null ? null : (int[])skill.currentCharges.Clone();
+            state.delays = skill.currentMinimumDelays == null ? null : (float[])skill.currentMinimumDelays.Clone();
+            int index = state.config;
+            if (skill.configs == null || index < 0 || index >= skill.configs.Length || skill.configs[index] == null) return state;
+            var config = skill.configs[index];
+            state.configActive = config.isActive;
+            state.maxCharges = config.maxCharges;
+            state.manaCost = config.manaCost;
+            state.locksKnown = TryLocks(skill, index, out state.castLock, out state.cooldownLock);
+            if (hero.Ability != null && state.abilityIndex >= 0 && state.abilityIndex < 6)
+                state.abilityLock = hero.Ability.IsAbilityCastLocked(state.abilityIndex);
+            state.validator = config.selfValidator.Evaluate(hero);
+            if (state.locksKnown && skill.owner != null && state.charges != null && index < state.charges.Length
+                && state.delays != null && index < state.delays.Length)
+                state.reservable = skill.CanBeReserved();
+            return state;
+        }
+
+        internal static bool Different(DreamforgeSkillState a, DreamforgeSkillState b)
+        {
+            if (a == null || b == null) return true;
+            if (a.skillNetId != b.skillNetId || a.ownerNetId != b.ownerNetId || a.config != b.config
+                || a.abilityIndex != b.abilityIndex || a.active != b.active || a.configActive != b.configActive
+                || a.maxCharges != b.maxCharges || a.casting != b.casting || a.locksKnown != b.locksKnown
+                || a.castLock != b.castLock || a.cooldownLock != b.cooldownLock || a.abilityLock != b.abilityLock
+                || a.validator != b.validator || a.reservable != b.reservable || a.mana != b.mana
+                || a.manaCost != b.manaCost || a.status != b.status || a.blockAbility != b.blockAbility
+                || a.blockAbilityCancelable != b.blockAbilityCancelable || a.blockDodge != b.blockDodge
+                || a.blockDodgeCancelable != b.blockDodgeCancelable) return true;
+            return !Same(a.charges, b.charges) || !Same(a.cooldowns, b.cooldowns) || !Same(a.delays, b.delays);
+        }
+
+        private static bool Same<T>(T[] a, T[] b)
+        {
+            if (a == null || b == null) return a == null && b == null;
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (!Equals(a[i], b[i])) return false;
+            return true;
+        }
+
+        internal static string Diagnostic(Hero hero, SkillTrigger skill, int slot)
+        {
+            try { return Describe(hero, skill, slot); }
+            catch (Exception ex) { Fail(ref _snapshotFailed, "state diagnostics", ex); return "unavailable"; }
         }
 
         internal static void LogSnapshot(Hero hero, SkillTrigger skill, int slot, string prefix)

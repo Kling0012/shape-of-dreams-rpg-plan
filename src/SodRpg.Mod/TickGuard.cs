@@ -51,5 +51,31 @@ namespace SodRpg.Mod
                 }
             }
         }
+
+        public void Run(float now, PerfMeter.TickTimings timings, int offset)
+        {
+            timings.SetSteps(_steps);
+            for (int i = 0; i < _steps.Length; i++)
+            {
+                long stageStart = timings.BeginStage();
+                try
+                {
+                    _steps[i]();
+                }
+                catch (Exception ex)
+                {
+                    // Log at most once per interval per step so a persistent fault does not flood the log every frame.
+                    if (now >= _nextLogAt[i])
+                    {
+                        _nextLogAt[i] = now + _logInterval;
+                        _error("(" + _names[i] + "): " + ex);
+                    }
+                }
+                finally
+                {
+                    timings.EndStage(offset + i, stageStart);
+                }
+            }
+        }
     }
 }

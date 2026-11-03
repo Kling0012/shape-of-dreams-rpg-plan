@@ -196,24 +196,27 @@ namespace SodRpg.Mod
                         Log.Error("C11 SacrificeShield stopped; native sacrifice remains unchanged. " + ex);
                     }
             }
-            foreach (var award in _sacrificeShields.TakePendingForHostUpdate())
-            {
-                SacrificeBinding binding = null;
-                foreach (var candidate in _sacrificeBindings.Values)
-                    if (candidate.Owner.Hero.GetInstanceID() == award.OwnerId) { binding = candidate; break; }
-                if (binding == null) throw new InvalidOperationException("C11 award has no current host binding.");
-                try
+            // TakePendingForHostUpdate allocates its result list on every call; skip it on the common
+            // tick with nothing pending instead of building an empty list each host tick.
+            if (_sacrificeShields.PendingCount > 0)
+                foreach (var award in _sacrificeShields.TakePendingForHostUpdate())
                 {
-                    float amount = SupportStats.AmplifyShield(award.RawAmount, SupportPower(binding.Owner, Stat.ShieldPower));
-                    AwardModShield(binding.Owner, binding.Owner.Hero, ModShieldPoolKind.Ordinary, amount,
-                        award.DurationSeconds, award.SourceMemory, binding.ShieldEpoch, award.NewAwardCapRatio);
+                    SacrificeBinding binding = null;
+                    foreach (var candidate in _sacrificeBindings.Values)
+                        if (candidate.Owner.Hero.GetInstanceID() == award.OwnerId) { binding = candidate; break; }
+                    if (binding == null) throw new InvalidOperationException("C11 award has no current host binding.");
+                    try
+                    {
+                        float amount = SupportStats.AmplifyShield(award.RawAmount, SupportPower(binding.Owner, Stat.ShieldPower));
+                        AwardModShield(binding.Owner, binding.Owner.Hero, ModShieldPoolKind.Ordinary, amount,
+                            award.DurationSeconds, award.SourceMemory, binding.ShieldEpoch, award.NewAwardCapRatio);
+                    }
+                    catch (Exception ex)
+                    {
+                        StopSacrificeShield(binding.Owner.Hero);
+                        Log.Error("C11 SacrificeShield stopped; native sacrifice remains unchanged. " + ex);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    StopSacrificeShield(binding.Owner.Hero);
-                    Log.Error("C11 SacrificeShield stopped; native sacrifice remains unchanged. " + ex);
-                }
-            }
         }
 
         internal void StopSacrificeShield(Hero hero)

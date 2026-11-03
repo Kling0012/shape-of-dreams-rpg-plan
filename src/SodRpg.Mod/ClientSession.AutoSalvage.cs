@@ -16,8 +16,14 @@ namespace SodRpg.Mod
         private Rarity? _autoSalvageBelow;
         private readonly List<string> _autoSalvageQueue = new List<string>();
         private readonly List<PendingTrade> _autoSalvagePrepared = new List<PendingTrade>();
-        // 自動分解で始めた取引の識別子。成功の案内を画面に出さずログにだけ残すために使う。
-        private readonly HashSet<long> _autoSalvageTokens = new HashSet<long>();
+        // 自動分解の応答を送信単位に結び付け、成功の案内をログ1行にまとめる。
+        private sealed class AutoSalvageLogBatch
+        {
+            public int Remaining;
+            public int Items;
+            public long Dust;
+        }
+        private readonly Dictionary<long, AutoSalvageLogBatch> _autoSalvageTokens = new Dictionary<long, AutoSalvageLogBatch>();
         // 最初の候補が入ってから送るまでの猶予（秒）。ドロップがフレームに分かれて届く戦闘中に
         // 確認付き保存（SaveNow(true)）が毎フレーム走って引っかかりの原因にならないよう、1回にまとめる。
         private const float AutoSalvageGraceSeconds = 0.5f;
@@ -91,9 +97,12 @@ namespace SodRpg.Mod
                     return;
                 }
                 durable = true;
+                // 同期的に応答が戻っても、最初の1件で集計を閉じないよう全件を先に登録する。
+                var batch = new AutoSalvageLogBatch { Remaining = _autoSalvagePrepared.Count };
+                for (int i = 0; i < _autoSalvagePrepared.Count; i++)
+                    _autoSalvageTokens.Add(_autoSalvagePrepared[i].Token, batch);
                 for (int i = 0; i < _autoSalvagePrepared.Count; i++)
                 {
-                    _autoSalvageTokens.Add(_autoSalvagePrepared[i].Token);
                     attempted++;
                     string error = SendDurableTrade(_autoSalvagePrepared[i]);
                     if (error != null) Log.Info("Auto salvage: " + error);
@@ -108,7 +117,7 @@ namespace SodRpg.Mod
                 int rollbackFrom = durable ? attempted : 0;
                 for (int i = rollbackFrom; i < _autoSalvagePrepared.Count; i++)
                 {
-                    _autoSalvageTokens.Remove(_autoSalvagePrepared[i].Token);
+                    CompleteAutoSalvageLog(_autoSalvagePrepared[i].Token);
                     RestoreSalvageTrade(_trades.Complete(_autoSalvagePrepared[i].Token, false));
                 }
                 if (rollbackFrom < _autoSalvagePrepared.Count)
@@ -121,11 +130,37 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>画面の通知に出さず、ログと保存の予約だけ行う（#1010 の自動分解の成功案内）。</summary>
-        private void EmitLogOnly(GameEvent e)
+        /// <summary>画面の通知に出さず、成功を集計して保存を予約する。</summary>
+        private void EmitLogOnly(long token, long paid)
         {
             _dirty = true;
-            Log.Info(e.Text);
+            if (_autoSalvageTokens.TryGetValue(token, out var batch))
+            {
+                batch.Items++;
+                batch.Dust += paid;
+            }
+        }
+
+        private void CompleteAutoSalvageLog(long token)
+        {
+            if (!_autoSalvageTokens.TryGetValue(token, out var batch)) return;
+            _autoSalvageTokens.Remove(token);
+            if (--batch.Remaining != 0 || batch.Items == 0) return;
+            Log.Info($"Auto salvage: {batch.Items} items, +{batch.Dust} Dream Dust");
+            batch.Items = 0;
+            batch.Dust = 0;
+        }
+
+        private void FlushAutoSalvageLogs()
+        {
+            // 終了時は、応答待ちを残していても既に成功した分を記録する。
+            foreach (var batch in _autoSalvageTokens.Values)
+            {
+                if (batch.Items == 0) continue;
+                Log.Info($"Auto salvage: {batch.Items} items, +{batch.Dust} Dream Dust");
+                batch.Items = 0;
+                batch.Dust = 0;
+            }
         }
     }
 }

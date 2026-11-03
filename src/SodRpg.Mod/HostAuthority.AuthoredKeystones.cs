@@ -51,6 +51,10 @@ namespace SodRpg.Mod
         }
         private readonly Dictionary<Hero, AuthoredKeystoneBinding> _authoredKeystones = new Dictionary<Hero, AuthoredKeystoneBinding>();
         private long _authoredKeystoneEpoch;
+        // 上限なしの KeystoneCaps は不変（get のみ、消費側も読むだけ）なので、被弾・発動ごとの変換で
+        // 毎回 new せず1個を共有する。TransformAuthoredMemoryDamage／ApplyAuthoredFinalNativeDamage／
+        // TransformAuthoredGeneratedDamage の3経路から使う。
+        private static readonly KeystoneCaps UnlimitedKeystoneCaps = new KeystoneCaps(decimal.MaxValue);
 
         internal void ConfigureAuthoredKeystone(Hero hero, Build build)
         {
@@ -193,7 +197,7 @@ namespace SodRpg.Mod
             var build = hero != null && _runtimes.TryGetValue(hero, out var owner) ? owner.Powers.Build : null;
             decimal basis = (decimal)percent / StarDamageScaling.Multiplier(build?.SpentStarPoints ?? 0);
             return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.StarMemoryDamage, basis,
-                new KeystoneCaps(decimal.MaxValue)), memory, null, KeystoneSourceKind.NativeMemory).Value;
+                UnlimitedKeystoneCaps), memory, null, KeystoneSourceKind.NativeMemory).Value;
         }
 
         internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target)
@@ -211,7 +215,7 @@ namespace SodRpg.Mod
             if (family != null && family.Depth == 1 && family.Actor == actor && family.Victim == target
                 && family.Memory == identity.SourceMemory) effectId = family.EffectId;
             var payload = new KeystonePayload(KeystoneLayer.NativeDamage, (decimal)damage.currentAmount,
-                new KeystoneCaps(decimal.MaxValue), effectId: effectId);
+                UnlimitedKeystoneCaps, effectId: effectId);
             var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind);
             float ratio = (float)(result.Value / payload.Value);
             if (ratio < 1f) damage.ApplyReduction(1f - ratio);
@@ -263,7 +267,7 @@ namespace SodRpg.Mod
         {
             if (amount <= 0 || !_authoredKeystones.ContainsKey(hero)) return amount;
             return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.GeneratedDamage, (decimal)amount,
-                new KeystoneCaps(decimal.MaxValue), effect: effect, effectId: effectId), source, null, KeystoneSourceKind.Generated).Value;
+                UnlimitedKeystoneCaps, effect: effect, effectId: effectId), source, null, KeystoneSourceKind.Generated).Value;
         }
     }
 }

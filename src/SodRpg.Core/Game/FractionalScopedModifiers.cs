@@ -162,11 +162,14 @@ namespace SodRpg.Core.Game
             }
         }
         private static bool NativeKind(LinkKind kind) => kind == LinkKind.MemoryDamage || kind == LinkKind.MemoryHaste;
-        public static int NativeCapValueMilli(string profileId) => Profiles.TryGetValue(profileId ?? "", out var profile)
+
+        private static bool TryGetNativeProfile(string id, out NativeStarCapProfile profile) =>
+            Profiles.TryGetValue(id ?? "", out profile) || ExtendedHeroes.TryGetNativeCapProfile(id, out profile);
+        public static int NativeCapValueMilli(string profileId) => TryGetNativeProfile(profileId, out var profile)
             ? profile.Maximum.ValueMilli : throw new ArgumentException("Unknown native star cap profile.", nameof(profileId));
         public static bool ValidNativeEntry(NativeMemoryModifierEntry entry) => entry != null && Links.IsMemory(entry.Memory)
             && !entry.Memory.StartsWith("St_M_", StringComparison.Ordinal)
-            && Profiles.TryGetValue(entry.CapProfileId ?? "", out var profile) && profile.Kind == entry.Kind
+            && TryGetNativeProfile(entry.CapProfileId, out var profile) && profile.Kind == entry.Kind
             && entry.ValueMilli > 0 && entry.ValueMilli <= (StarDamageScaling.IsDamage(entry.Kind)
                 ? StarDamageScaling.ScaleMilli(profile.Maximum.ValueMilli, StarProgression.MaxSpendablePoints) : profile.Maximum.ValueMilli);
         public static float NativePercent(IReadOnlyList<NativeMemoryModifierEntry> entries, string memory, LinkKind kind)
@@ -433,7 +436,7 @@ namespace SodRpg.Core.Game
 
         public static string Describe(NativeMemoryModifierDef modifier)
         {
-            var cap = Profiles[modifier.CapProfileId];
+            if (!TryGetNativeProfile(modifier.CapProfileId, out var cap)) throw new InvalidOperationException("Unknown native cap profile.");
             string value = (modifier.Value.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string maximum = (cap.Maximum.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(modifier.Memory);
@@ -477,7 +480,7 @@ namespace SodRpg.Core.Game
                 var n = talent.NativeModifier;
                 if (!Links.IsMemory(n.Memory) || n.Memory != talent.RouteMemory || n.Memory.StartsWith("St_M_", StringComparison.Ordinal)
                     || !NativeKind(n.Kind) || n.Value.Units <= 0
-                    || !Profiles.TryGetValue(n.CapProfileId ?? "", out var profile) || profile.Kind != n.Kind
+                    || !TryGetNativeProfile(n.CapProfileId, out var profile) || profile.Kind != n.Kind
                     || talent.LinkPerRank != null || talent.Gimmick != null || m != null || talent.PerRank != 0 || talent.IsPowerNode)
                     throw new InvalidOperationException("Invalid native star modifier or undeclared cap profile: " + talent.Id);
             }
@@ -618,7 +621,7 @@ namespace SodRpg.Core.Game
             }
             foreach (var e in native.Values)
             {
-                e.ValueMilli = Math.Min(e.ValueMilli, Profiles[e.CapProfileId].Maximum.ValueMilli);
+                e.ValueMilli = Math.Min(e.ValueMilli, NativeCapValueMilli(e.CapProfileId));
                 if (StarDamageScaling.IsDamage(e.Kind)) e.ValueMilli = StarDamageScaling.ScaleMilli(e.ValueMilli, build.SpentStarPoints);
                 build.NativeModifiers.Add(e);
             }

@@ -5,13 +5,8 @@ using Xunit;
 namespace Issue73.Native.Tests
 {
     /// <summary>
-    /// （#841）満チャージのウルトの無意味なチャージ再送を省く NativeUltChargeRpcIdlePerf の検証。
-    /// 境界（NativeBoundary.cs）の SkillTrigger が Prefix の読む欄（configs・currentCharges・type）
-    /// を持つため、判定は実ソースの Prefix を反射で直接呼んで確かめる。本体 ChargeUltimate の
-    /// 状態変化は currentCharges[0] &lt; configs[0].maxCharges のループ内でだけ起きるので、
-    /// 本体を省く（false）のは「設定 ON・サーバ上・Ultimate・チャージ数が maxCharges 以上」が
-    /// すべて揃ったときだけ。それ以外（チャージ中・Normal・サーバでない・configs か charges が
-    /// null か空・設定 OFF・例外後の _disabled）はすべて true で元の処理を通す。
+    /// 満チャージの Ultimate も、本体の権威値の再通知を通す。
+    /// ホストの値だけからゲストの受信状態を判断して省略しない。
     /// </summary>
     public sealed class UltChargeRpcIdlePerfTests
     {
@@ -25,12 +20,10 @@ namespace Issue73.Native.Tests
                 currentCharges = new[] { charges },
             };
 
-        // Prefix の静的欄（_disabled・_warned）は例外で一度立つと戻らないので毎回初期化し、
-        // 設定とサーバ状態はテストごとに並べ替える。呼び出し時点の値を返すので finally で戻す。
+        // 設定とサーバ状態を呼び出し前の値へ戻す。
         private static (bool Option, bool Server) Arm(bool server = true, bool option = true)
         {
             var saved = (Option: NativePerfOptions.UltChargeRpcIdle, Server: Mirror.NetworkServer.active);
-            typeof(NativeUltChargeRpcIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
             typeof(NativeUltChargeRpcIdlePerf).GetField("_warned", Hidden).SetValue(null, false);
             NativePerfOptions.UltChargeRpcIdle = option;
             Mirror.NetworkServer.active = server;
@@ -41,20 +34,19 @@ namespace Issue73.Native.Tests
         {
             NativePerfOptions.UltChargeRpcIdle = saved.Option;
             Mirror.NetworkServer.active = saved.Server;
-            typeof(NativeUltChargeRpcIdlePerf).GetField("_disabled", Hidden).SetValue(null, false);
         }
 
         private static bool RunPrefix(SkillTrigger skill)
             => (bool)typeof(NativeUltChargeRpcIdlePerf).GetMethod("Prefix", Hidden).Invoke(null, new object[] { skill });
 
         [Fact]
-        public void PrefixSkipsOnlyUltimatesAlreadyAtMaxCharges()
+        public void PrefixKeepsUltimatesAlreadyAtMaxCharges()
         {
             var saved = Arm();
             try
             {
-                Assert.False(RunPrefix(Ultimate(3, 3))); // ちょうど満チャージ → 再送だけの本体を省く
-                Assert.False(RunPrefix(Ultimate(2, 5))); // 上限が縮んで超過した窓も同じ省く判定
+                Assert.True(RunPrefix(Ultimate(3, 3))); // 満チャージでも本体の再通知を通す
+                Assert.True(RunPrefix(Ultimate(2, 5))); // 上限超過でも本体へ
                 Assert.True(RunPrefix(Ultimate(3, 2)));  // 1つ足りない → ループに実変化があるので本体
                 Assert.True(RunPrefix(Ultimate(3, 0)));  // 空からの充電も本体
             }
@@ -115,24 +107,22 @@ namespace Issue73.Native.Tests
             {
                 Assert.True(RunPrefix(Ultimate(3, 3))); // 設定 OFF なら満チャージでも本体
                 NativePerfOptions.UltChargeRpcIdle = true;
-                Assert.False(RunPrefix(Ultimate(3, 3))); // ON に戻すと省く
+                Assert.True(RunPrefix(Ultimate(3, 3))); // ON に戻しても本体へ
             }
             finally { Restore(saved); }
         }
 
-        // Prefix 内の例外は本体を止めない: その呼び出しは本体に戻し、警告を1回出し、以降の呼び出しを
-        // 全て本体へ戻す（_disabled）。configs[0] が null だと maxCharges 読み取りで例外になる。
+        // 壊れた config の扱いも本体へ戻す。
         [Fact]
-        public void AnExceptionInsideThePrefixLatchesBackToTheOriginal()
+        public void ABrokenConfigStillDefersToTheOriginal()
         {
             var saved = Arm();
             try
             {
                 var broken = Ultimate(3, 3);
                 broken.configs = new TriggerConfig[] { null };
-                Assert.True(RunPrefix(broken)); // 例外の起きた呼び出し自体は本体に戻す
-                Assert.Contains(Log.Warnings, w => w.Contains("ultimate charge idle"));
-                Assert.True(RunPrefix(Ultimate(3, 3))); // 例外後は満チャージでも本体
+                Assert.True(RunPrefix(broken)); // Prefix は config を読まず本体へ戻す
+                Assert.True(RunPrefix(Ultimate(3, 3))); // 満チャージも本体へ
                 Assert.True(RunPrefix(broken));
             }
             finally { Restore(saved); }

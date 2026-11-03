@@ -379,6 +379,39 @@ namespace SodRpg.Mod
             for (int i = _bossRenderCount; i < _bossRenderVisuals.Length; i++) _bossRenderVisuals[i] = null;
         }
 
+#if DEBUG
+        private static Func<int> _bossGuiClipCount;
+        private static bool _bossGuiClipCountResolved;
+
+        private static void AssertBossGuiContext()
+        {
+            System.Diagnostics.Debug.Assert(GUI.matrix.isIdentity,
+                "Boss effect segments require an identity GUI.matrix base.");
+            try
+            {
+                // Resolve once; invoking the cached delegate allocates nothing per Repaint.
+                if (!_bossGuiClipCountResolved)
+                {
+                    _bossGuiClipCountResolved = true;
+                    var method = typeof(GUI).Assembly.GetType("UnityEngine.GUIClip", true)
+                        .GetMethod("Internal_GetCount", System.Reflection.BindingFlags.Static
+                            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                            null, Type.EmptyTypes, null);
+                    if (method == null) throw new MissingMethodException("UnityEngine.GUIClip", "Internal_GetCount");
+                    _bossGuiClipCount = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), method);
+                }
+                if (_bossGuiClipCount != null)
+                    System.Diagnostics.Debug.Assert(_bossGuiClipCount() == 0,
+                        "Boss effect segments require the root GUI clip; do not draw inside a group or scroll view.");
+            }
+            catch (Exception ex)
+            {
+                _bossGuiClipCount = null;
+                Log.Warn("Boss effect GUI clip diagnostic unavailable; drawing continues: " + ex.Message);
+            }
+        }
+#endif
+
         internal void DrawBossEffects()
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -397,6 +430,11 @@ namespace SodRpg.Mod
             var oldMatrix = GUI.matrix;
             // This world projection must not inherit the inventory UI's logical-canvas transform.
             GUI.matrix = Matrix4x4.identity;
+#if DEBUG
+            // Check the drawing base installed above, not the caller's oldMatrix.
+            // Only the clip-depth assertion checks the inherited GUI context.
+            AssertBossGuiContext();
+#endif
             for (int visualIndex = 0; visualIndex < _bossRenderCount; visualIndex++)
                 {
                     var visual = _bossRenderVisuals[visualIndex];
@@ -573,7 +611,18 @@ namespace SodRpg.Mod
             _bossSegmentsLeft--;
             if (!BossSegmentPlacement.TryPlace(a, b, width, _bossScreenWidth, _bossScreenHeight,
                 out var pivot, out float angle, out var rect)) return;
-            GUIUtility.RotateAroundPivot(angle, pivot);
+            // GUIUtility.RotateAroundPivot spends two TRS passes, two matrix multiplies, a GUI.matrix
+            // read-back, an Unclip of the pivot and two extra native matrix writes per segment. With the
+            // identity base this tail assumes (installed by DrawBossEffects, restored below) and the root
+            // full-screen clip the mod's OnGUI entry holds, the same translate·rotate·untranslate matrix
+            // is composed from sincos in BossSegmentPlacement.RotationAroundPivot (pinned by the test
+            // project, which compiles that file); assigning it costs a single native write and the drawn
+            // pixels are unchanged.
+            var rotation = BossSegmentPlacement.RotationAroundPivot(angle, pivot);
+            var rotated = Matrix4x4.identity;
+            rotated.m00 = rotation.M00; rotated.m01 = rotation.M01; rotated.m03 = rotation.M03;
+            rotated.m10 = rotation.M10; rotated.m11 = rotation.M11; rotated.m13 = rotation.M13;
+            GUI.matrix = rotated;
             GUI.DrawTexture(rect, _bossWhiteTexture);
             GUI.matrix = Matrix4x4.identity; // the base installed by DrawBossEffects; reading GUI.matrix back per line was a native call
         }

@@ -91,7 +91,10 @@ namespace SodRpg.Mod
     internal static class Log
     {
         internal static readonly List<string> Warnings = new List<string>();
-        internal static void Info(string message) { }
+        // Info messages are recorded so a test can assert the room diagnostics
+        // log stayed silent (the production code only logs, never reads them).
+        internal static readonly List<string> Infos = new List<string>();
+        internal static void Info(string message) => Infos.Add(message);
         internal static void Warn(string message) => Warnings.Add(message);
         internal static void Error(string message) { }
     }
