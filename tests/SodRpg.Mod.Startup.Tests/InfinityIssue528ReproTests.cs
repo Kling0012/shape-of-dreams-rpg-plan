@@ -9,8 +9,8 @@ namespace SodRpg.Mod.Startup.Tests
         /// <summary>
         /// 準備の門（Shrine_PrimusDoor）がボスのノードを直接読み込む純白ゾーンでは、
         /// TryEnterBoss を呼ぶのは TickNative だけ。保存待ち（HostInfinitySaveHoldSatisfied は
-        /// 保存失敗時 最大30秒）の間にボスが倒れても、onRoomClear は BossDue の撃破を観測できない。
-        /// 保存待ちが解除された後の Tick で、取りこぼした撃破が回収され魂の処理待ちへ進むこと。
+        /// 保存失敗時 最大30秒）の間も、到着・撃破・魂の出現と消滅を観測する。
+        /// 保存待ちの間に魂の回収が終わっても、区間の選択へ進めること。
         /// </summary>
         [Fact]
         public void PureWhiteBossKilledWhileSaveHoldBlocksTickStillReachesSoulFinish()
@@ -32,20 +32,14 @@ namespace SodRpg.Mod.Startup.Tests
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             Assert.Equal(WorldNodeType.ExitBoss, zone.currentNode.type);
 
-            // 保存待ちが成立しない間、TickNative は ExitBoss 分岐の TryEnterBoss に届かない。
+            // 保存待ちでも、実際に着いたボス部屋と撃破は観測する。
             ClientSession.HostInfinitySaveHoldSatisfied = false;
             InfinityMode.Tick();
-            Assert.Equal(InfinityPhase.BossDue, state.Phase);
+            Assert.Equal(InfinityPhase.BossFight, state.Phase);
+            Assert.False(InfinityMode.CanAdvance);
 
-            // その間にボスが倒れる: onRoomClear の ObserveBossClear は BossFight でしか受理されず、
-            // 撃破は捨てられる。
             room.didClearRoom = true;
             InfinityMode.OnRoomClear(room);
-            Assert.Equal(InfinityPhase.BossDue, state.Phase);
-
-            // 保存待ちが解除された後の Tick で、死亡済みのボス部屋から WaitingSoulFinish に進むこと。
-            ClientSession.HostInfinitySaveHoldSatisfied = true;
-            InfinityMode.Tick();
             Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
 
             // 魂を出して回収し、区間の選択画面（AwaitingChoice）まで到達すること。
@@ -57,6 +51,11 @@ namespace SodRpg.Mod.Startup.Tests
             NetworkedManagerBase<ActorManager>.softInstance.RemoveActor(soul);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
+            Assert.False(InfinityMode.CanAdvance);
+            ClientSession.HostInfinitySaveHoldSatisfied = true;
+            InfinityMode.Tick();
+            Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
+            Assert.True(InfinityMode.CanAdvance);
             Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
             DewResources.Zones.Clear();
         }

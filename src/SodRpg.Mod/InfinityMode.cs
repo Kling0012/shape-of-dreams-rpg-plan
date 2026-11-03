@@ -614,7 +614,7 @@ namespace SodRpg.Mod
             var state = State;
             if (zone == null || state == null) return;
             RegisterAcks();
-            if (!NativeSaveAgreement || !ClientSession.HostInfinitySaveHoldSatisfied) return;
+            if (!NativeSaveAgreement) return;
             if (zone.isInAnyTransition) return;
             if (!CurrentZoneMatches(zone.currentZone, state.FixedZoneId))
             { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
@@ -624,24 +624,27 @@ namespace SodRpg.Mod
             { DisableFeature("Infinity combat-clear counter exhausted."); return; }
             if (zone.currentNode.type == WorldNodeType.ExitBoss)
             {
-                // The pure-white preparation gate (Shrine_PrimusDoor) loads the boss node
-                // directly, bypassing RouteTravel: arriving there makes this graph's boss the
-                // cycle boss (finale graphs are due on arrival) and starts the fight.
+                // Commit boss entry only after native travel actually reaches an active room.
+                // This also covers the pure-white gate (Shrine_PrimusDoor), which loads the boss
+                // directly; finale graphs promote that boss without inventing combat clears.
                 var beforeArrival = state.Phase;
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
-                // A clear callback can arrive while save/transition/activity guards still hold BossDue.
+                // A clear callback can arrive while transition/activity guards still hold BossDue.
                 if (room.didClearRoom) state.ObserveBossClear();
                 if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
+                // Native soul selection continues while the profile writer is pending. Observe
+                // its lifetime now; otherwise a soul consumed during that hold is lost forever.
                 bool soul = (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish)
                     && HasActiveBossSoul();
                 var before = state.Phase;
                 bool seen = state.SoulObserved;
                 state.ObserveSoul(soul, room.didClearRoom, Rift_RoomExit.instance != null && !Rift_RoomExit.instance.isLocked);
                 if (before != state.Phase || seen != state.SoulObserved) ClientSession.PersistHostInfinityState();
-                if (state.Phase == InfinityPhase.AwaitingChoice) ClientSession.OpenHostInfinityChoice();
+                if (state.Phase == InfinityPhase.AwaitingChoice && ClientSession.HostInfinitySaveHoldSatisfied)
+                    ClientSession.OpenHostInfinityChoice();
             }
-            else if (state.Phase == InfinityPhase.Exploring
+            else if (ClientSession.HostInfinitySaveHoldSatisfied && state.Phase == InfinityPhase.Exploring
                 && room.didClearRoom && !HasNextRoom(zone))
             {
                 var choice = CurrentChoice;
@@ -691,11 +694,8 @@ namespace SodRpg.Mod
                 return false;
             }
             ClearPendingTravel();
-            if (state.Phase == InfinityPhase.BossDue && zone.nodes[to].type == WorldNodeType.ExitBoss)
-            {
-                if (!state.TryEnterBoss()) return false;
-                ClientSession.PersistHostInfinityState();
-            }
+            // Native travel interrupts can still cancel or redirect this request. Keep BossDue
+            // until TickNative observes the active boss room, so a cancelled move can be retried.
             return true;
         }
 
