@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using SodRpg.Core.Internal;
 
 namespace SodRpg.Core.Game
@@ -16,6 +17,9 @@ namespace SodRpg.Core.Game
             Name = name;
             Melee = melee;
             MemoryNames = memoryNames;
+            var memoryKeys = memoryNames.Keys.ToArray();
+            Array.Sort(memoryKeys, StringComparer.Ordinal);
+            MemoryKeys = Array.AsReadOnly(memoryKeys);
             Tree = tree;
             DeclarationHash = declarationHash;
         }
@@ -28,10 +32,13 @@ namespace SodRpg.Core.Game
         public bool Melee { get; }
         /// <summary>その旅人の記憶（St_*）の表示名。装備・リンク・報酬の生成には入らない。</summary>
         public IReadOnlyDictionary<string, Txt> MemoryNames { get; }
+        internal IReadOnlyList<string> MemoryKeys { get; }
         /// <summary>宣言から作った星図。汎用ツリー（Content.Talents）のままのとき null。</summary>
         public IReadOnlyList<TalentDef> Tree { get; }
         /// <summary>宣言の旅人部分の正規化JSONのハッシュ。協力の照合と指紋に使う。</summary>
         public string DeclarationHash { get; }
+        /// <summary>受理した星図で、外部MODのイベント通知が必要になる記憶。</summary>
+        public IReadOnlyList<string> EventWarnings { get; internal set; } = Array.Empty<string>();
     }
 
     internal sealed class ExtendedStarPlacement
@@ -175,6 +182,7 @@ namespace SodRpg.Core.Game
                     .Append(" / ").Append(ScopedTotals[kv.Key].ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("  named shipped gimmicks (read-only references):\n");
             foreach (var kv in Gimmicks) sb.Append("    ").Append(kv.Key).Append('\n');
+            ExtendedHeroes.DescribeAuthoredEffectReferences(sb);
             return sb.ToString();
         }
     }
@@ -184,7 +192,7 @@ namespace SodRpg.Core.Game
     /// Unity にも本体の型にも依存しない。登録は Mod 側の走査とランタイムAPI（Dreamforge.Api.HeroConnector）から。
     /// 1つの宣言の失敗はほかの宣言・Dreamforge 本体に広げない（fail-soft、§4）。
     /// </summary>
-    public static class ExtendedHeroes
+    public static partial class ExtendedHeroes
     {
         public const int ApiVersion = 1;
 
@@ -193,6 +201,7 @@ namespace SodRpg.Core.Game
         private static readonly Dictionary<string, ExtendedHeroDef> HeroesByKey = new Dictionary<string, ExtendedHeroDef>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Txt> MemoryNames = new Dictionary<string, Txt>(StringComparer.Ordinal);
         private static ExtendedStarLimits limits;
+        private static string limitsFingerprint;
 
         /// <summary>登録済みの拡張旅人（受け入れ順）。</summary>
         public static IReadOnlyList<ExtendedHeroDef> Registered
@@ -224,12 +233,17 @@ namespace SodRpg.Core.Game
         /// <summary>星IDが拡張旅人の星（"x." 始まり）か。休眠割り当ての判定に使う（§10）。</summary>
         public static bool IsExtendedStarId(string starId) => starId != null && starId.Length > 2 && starId[0] == 'x' && starId[1] == '.';
 
-        /// <summary>§5 の上限。既存9人の星から一度だけ求める。</summary>
+        /// <summary>§5 の上限。既存9人の星から求め、登録内容が変われば再計算する。</summary>
         public static ExtendedStarLimits Limits()
         {
             lock (RegistryLock)
             {
-                if (limits == null) limits = ComputeLimits();
+                string fingerprint = StarClusters.AuthoredRegistryFingerprint;
+                if (limits == null || limitsFingerprint != fingerprint)
+                {
+                    limits = ComputeLimits();
+                    limitsFingerprint = fingerprint;
+                }
                 return limits;
             }
         }
@@ -397,123 +411,160 @@ namespace SodRpg.Core.Game
         /// 同じ key がすでに同じ内容で登録済みのときは、重ねて登録せず受理として返す（走査2回目）。
         /// </summary>
         public static ExtendedHeroFileResult Register(string json, string sourceModId, Action<string> warn)
+            => Register(json, sourceModId, warn, null);
+
+        /// <summary>The host supplies a bounded, MOD-relative file reader for optional star manifests.</summary>
+        public static ExtendedHeroFileResult Register(string json, string sourceModId, Action<string> warn,
+            Func<string, string> readManifest)
         {
             var result = new ExtendedHeroFileResult { SourceModId = sourceModId };
             try
             {
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    result.FileError = "the file is empty";
-                    Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
-                    return result;
-                }
+                if (string.IsNullOrWhiteSpace(json)) throw new FormatException("the file is empty");
+                if (json.Length > ManifestTextLimit)
+                    throw new FormatException("the declaration exceeds the connector text limit");
                 object parsed;
                 try { parsed = Json.ParseConnector(json); }
-                catch (Exception ex)
-                {
-                    result.FileError = "not readable as JSON: " + ex.Message;
-                    Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
-                    return result;
-                }
+                catch (Exception ex) { throw new FormatException("not readable as JSON: " + ex.Message); }
                 if (!(parsed is JsonObject root))
-                {
-                    result.FileError = "the top level must be a JSON object";
-                    Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
-                    return result;
-                }
+                    throw new FormatException("the top level must be a JSON object");
                 if (!root.TryGet("dreamforgeApi", out var apiObj) || !(apiObj is long api) || api != ApiVersion)
-                {
-                    result.FileError = "unsupported dreamforgeApi " + Describe(apiObj) + " (this Dreamforge reads version " + ApiVersion + ")";
-                    Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
-                    return result;
-                }
+                    throw new FormatException("unsupported dreamforgeApi " + Describe(apiObj)
+                        + " (this Dreamforge reads version " + ApiVersion + ")");
                 if (!root.TryGet("heroes", out var heroesObj) || !(heroesObj is List<object> heroes))
-                {
-                    result.FileError = "heroes must be an array";
-                    Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
-                    return result;
-                }
+                    throw new FormatException("heroes must be an array");
                 foreach (var entry in heroes)
-                    result.Heroes.Add(RegisterHero(entry, result.SourceModId, warn));
+                    result.Heroes.Add(RegisterHero(entry, result.SourceModId, warn, readManifest));
             }
             catch (Exception ex)
             {
-                // ここへ来るのはこの実装自身の不具合。宣言1つの失敗で止まらないのが約束なので、記録して返す。
-                result.FileError = result.FileError ?? ("unexpected failure: " + ex.Message);
+                result.FileError = ex is FormatException ? ex.Message : "unexpected failure: " + ex.Message;
                 Warn(warn, result.SourceModId, null, "rejected: " + result.FileError);
             }
             return result;
         }
 
-        private static ExtendedHeroResult RegisterHero(object entry, string sourceModId, Action<string> warn)
+        private static ExtendedHeroResult RegisterHero(object entry, string sourceModId, Action<string> warn,
+            Func<string, string> readManifest)
         {
             var outcome = new ExtendedHeroResult();
+            var provisionalMemories = new List<string>();
             try
             {
-                if (!(entry is JsonObject hero))
-                    return Rejected(outcome, warn, "a hero entry must be a JSON object");
+                if (!(entry is JsonObject hero)) return Rejected(outcome, warn, "a hero entry must be a JSON object");
                 if (!hero.TryGet("key", out var keyObj) || !(keyObj is string key) || !ValidHeroKey(key))
                     return Rejected(outcome, warn, "invalid key: expected a Hero_ subclass type name (alphanumeric and _, up to 64 chars)");
                 outcome.Key = key;
-                if (HeroSigils.IsCoreTraveler(key))
-                    return Rejected(outcome, warn, "key " + key + " is one of the nine shipped travelers");
+                if (HeroSigils.IsCoreTraveler(key)) return Rejected(outcome, warn, "key " + key + " is one of the nine shipped travelers");
+                bool hasManifest = hero.TryGet("starManifest", out var manifestPath) && manifestPath != null;
                 string declarationHash = StarClusters.RegistryHash(Json.Write(hero));
-                lock (RegistryLock)
+                ExtendedHeroDef previous;
+                lock (RegistryLock) HeroesByKey.TryGetValue(key, out previous);
+                if (previous != null && !hasManifest && previous.DeclarationHash == declarationHash)
                 {
-                    if (HeroesByKey.TryGetValue(key, out var existing))
-                    {
-                        if (existing.DeclarationHash == declarationHash)
-                        {
-                            outcome.Accepted = true; // 同じ内容の再読み（走査2回目）。何もしない。
-                            outcome.DeclarationHash = declarationHash;
-                            return outcome;
-                        }
-                        return Rejected(outcome, warn, "key " + key + " is already declared by " + existing.SourceModId
-                            + "; the first declaration wins");
-                    }
+                    outcome.Accepted = true;
+                    outcome.DeclarationHash = declarationHash;
+                    return outcome;
                 }
+                if (previous != null && (!hasManifest || previous.SourceModId != sourceModId))
+                    return Rejected(outcome, warn, "key " + key + " is already declared by " + previous.SourceModId + "; the first declaration wins");
                 if (!TryReadText(hero, "name", null, out var name) || name == null)
                 {
-                    string fallback = key.StartsWith("Hero_", StringComparison.Ordinal) ? key.Substring(5) : key;
-                    name = new Txt(fallback, fallback, null);
+                    string fallback = key.Substring(5);
+                    name = new Txt(fallback, fallback, hasManifest ? fallback : null);
                 }
                 bool melee = hero.TryGet("melee", out var meleeObj) && meleeObj is bool b && b;
                 var memories = new Dictionary<string, Txt>(StringComparer.Ordinal);
                 if (hero.TryGet("memories", out var memoriesObj) && memoriesObj is List<object> memoryList)
-                    foreach (var memory in memoryList)
-                        ReadMemory(memory, memories, warn, key);
-                // Names survive a rejected tree and are needed while typed effects validate the declaration.
-                lock (RegistryLock)
-                    foreach (var memory in memories) if (!MemoryNames.ContainsKey(memory.Key)) MemoryNames.Add(memory.Key, memory.Value);
+                    foreach (var memory in memoryList) ReadMemory(memory, memories, warn, key);
+                if (previous == null)
+                    lock (RegistryLock)
+                        foreach (var memory in memories)
+                            if (!MemoryNames.ContainsKey(memory.Key))
+                            {
+                                MemoryNames.Add(memory.Key, memory.Value);
+                                provisionalMemories.Add(memory.Key);
+                            }
                 var tree = ReadTree(hero, key, memories, out var layout, out string treeReason);
-                if (treeReason != null)
+                var provisional = new ExtendedHeroDef(key, sourceModId, name, melee, memories, tree, declarationHash);
+                // Authored ownership requires a registered traveler. Publish its identity before validating its tree.
+                if (previous == null)
+                    lock (RegistryLock) HeroesByKey.Add(key, provisional);
+                try
                 {
-                    outcome.GenericTree = true;
-                    outcome.Reason = treeReason;
-                    Warn(warn, sourceModId, key, "star tree rejected; the traveler falls back to the generic tree: " + treeReason);
+                    if (hasManifest)
+                    {
+                        try
+                        {
+                            if (!(manifestPath is string path) || readManifest == null)
+                                throw new FormatException("starManifest requires a relative path and a loaded source MOD folder");
+                            var shipped = new ManifestShippedIndex();
+                            var baseline = CreateManifestRoutes(key, memories, shipped);
+                            var manifest = ReadManifest(readManifest(path), key, memories, baseline, sourceModId, warn, shipped, out var registry);
+                            if (manifest.Count == 0) throw new FormatException("no valid authored stars remain");
+                            var generated = registry.TreeFor(key);
+                            declarationHash = StarClusters.RegistryHash(ManifestDeclaration(hero) + "|starManifest|" + ManifestAcceptedFingerprint(generated) + "|routes|" + ManifestRouteFingerprint(baseline));
+                            if (previous == null)
+                            {
+                                StarClusters.RegisterAuthored(key, manifest, baseline, registry);
+                            }
+                            tree = generated;
+                            layout = null;
+                            treeReason = null;
+                        }
+                        catch (Exception ex)
+                        {
+                            Warn(warn, sourceModId, key, "starManifest rejected; using starTree: " + ex.Message);
+                            declarationHash = StarClusters.RegistryHash(Json.Write(hero));
+                        }
+                    }
+                    if (previous != null)
+                    {
+                        if (previous.DeclarationHash != declarationHash)
+                            return Rejected(outcome, warn, "key already has a different declaration; the first declaration wins");
+                        outcome.Accepted = true;
+                        outcome.DeclarationHash = declarationHash;
+                        return outcome;
+                    }
+                    var def = new ExtendedHeroDef(key, sourceModId, name, melee, memories, tree, declarationHash);
+                    if (tree != null && tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t })
+                        .Any(t => t.Gimmick != null || t.Mechanism != null || t.EffectChannel != null || t.KeystoneDefinition != null))
+                        def.EventWarnings = memories.Keys.Where(m => !Links.IsBuiltinMemory(m))
+                            .Select(m => m + ": external memory accepted; mechanisms require the mod to deliver the existing cast, hit, kill and owned-attack events. Custom damage/summon paths may not deliver them; affected effects then do not activate.")
+                            .ToArray();
+                    lock (RegistryLock)
+                    {
+                        HeroesByKey[key] = def;
+                        HeroesInOrder.Add(def);
+                        IndexAuthoredEffects(def);
+                    }
+                    if (treeReason != null)
+                    {
+                        outcome.GenericTree = true;
+                        outcome.Reason = treeReason;
+                        Warn(warn, sourceModId, key, "star tree rejected; using the generic tree: " + treeReason);
+                    }
+                    if (tree != null && !StarClusters.TryGetRegisteredTree(key, out _))
+                    {
+                        HeroSigils.RegisterExtendedTree(key, tree);
+                        if (layout != null) HeroTreeLayout.RegisterExtendedLayout(key, layout);
+                    }
+                    outcome.Accepted = true;
+                    outcome.DeclarationHash = declarationHash;
+                    return outcome;
                 }
-                var def = new ExtendedHeroDef(key, sourceModId, name, melee, memories, tree, declarationHash);
-                lock (RegistryLock)
+                catch
                 {
-                    // 二重登録は上で抜けたが、同じファイル内で同じ key を2つ書いた場合のためにもう一度見る。
-                    if (HeroesByKey.ContainsKey(key))
-                        return Rejected(outcome, warn, "key " + key + " is declared twice in this file; the first entry wins");
-                    HeroesByKey.Add(key, def);
-                    HeroesInOrder.Add(def);
-                    foreach (var kv in memories) if (!MemoryNames.ContainsKey(kv.Key)) MemoryNames.Add(kv.Key, kv.Value);
+                    if (previous == null) lock (RegistryLock) HeroesByKey.Remove(key);
+                    throw;
                 }
-                if (tree != null)
-                {
-                    HeroSigils.RegisterExtendedTree(key, tree);
-                    if (layout != null) HeroTreeLayout.RegisterExtendedLayout(key, layout);
-                }
-                outcome.Accepted = true;
-                outcome.DeclarationHash = declarationHash;
-                return outcome;
             }
-            catch (Exception ex)
+            catch (Exception ex) { return Rejected(outcome, warn, "unexpected failure: " + ex.Message); }
+            finally
             {
-                return Rejected(outcome, warn, "unexpected failure: " + ex.Message);
+                if (!outcome.Accepted)
+                    lock (RegistryLock)
+                        foreach (string memory in provisionalMemories) MemoryNames.Remove(memory);
             }
         }
 
@@ -590,6 +641,7 @@ namespace SodRpg.Core.Game
             var built = new List<TalentDef>(nodes.Count);
             var placements = new Dictionary<string, ExtendedStarPlacement>(StringComparer.Ordinal);
             var clusters = ReadClusters(tree, heroKey, limits);
+            var bindings = ReadEffectBindings(tree, heroKey, memories);
             string prefix = "x." + heroKey + ".";
             bool customLayout = false;
             int normalStars = 0, keystones = 0, choices = 0;
@@ -599,7 +651,7 @@ namespace SodRpg.Core.Game
                 if (!node.TryGet("id", out var idObj) || !(idObj is string id) || !ValidNodeId(id))
                     throw new FormatException("invalid node id (expected [a-z0-9_], up to 32 chars)");
                 if (!ids.Add(id)) throw new FormatException("duplicate node id '" + id + "'");
-                var talent = ReadNode(node, prefix + id, heroKey, memories, limits, clusters, false);
+                var talent = ReadNode(node, prefix + id, heroKey, memories, limits, clusters, false, bindings);
                 if (talent.IsKeystone) keystones++; else normalStars++;
                 if (talent.IsChoice) choices++;
                 var placement = new ExtendedStarPlacement();
@@ -655,8 +707,10 @@ namespace SodRpg.Core.Game
             ValidateExtendedPrerequisites(built);
             ValidateExtendedEffects(built);
             FractionalScopedModifiers.ValidateTree(built);
-            // Cluster and dream-ring metadata are rendered by the existing presentation, with connector edges/positions.
-            if (customLayout || clusters.Count > 0 || built.Exists(t => t.IsDreamRing))
+            if (built.Any(t => t.Mechanism != null || t.KeystoneDefinition != null || t.EffectChannel != null
+                || t.Choices.Any(o => o.Mechanism != null || o.EffectChannel != null))) ValidateEffectBindings(built, bindings);
+            // Keep connector route effects out of the shipped route layout, which requires deep-ring entrance stars.
+            if (customLayout || clusters.Count > 0 || built.Exists(t => t.IsDreamRing || t.RouteId != null))
             {
                 layout = HeroTreeLayout.CreateExtended(built, placements, out reason);
                 if (layout == null) return null;
@@ -687,36 +741,37 @@ namespace SodRpg.Core.Game
         }
 
         private static TalentDef ReadNode(JsonObject node, string id, string heroKey, IReadOnlyDictionary<string, Txt> memories,
-            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option)
+            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option, EffectBindings bindings, int? parentRankCost = null)
         {
-            try { return ReadNodeCore(node, id, heroKey, memories, limits, clusters, option); }
+            try { return ReadNodeCore(node, id, heroKey, memories, limits, clusters, option, bindings, parentRankCost); }
             catch (Exception error) { throw new FormatException("node '" + id + "': " + error.Message, error); }
         }
 
         private static TalentDef ReadNodeCore(JsonObject node, string id, string heroKey, IReadOnlyDictionary<string, Txt> memories,
-            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option)
+            ExtendedStarLimits limits, Dictionary<string, StarClusterDef> clusters, bool option, EffectBindings bindings, int? parentRankCost)
         {
             TryReadText(node, "name", id.Substring(id.LastIndexOf('.') + 1), out var name);
             name = name ?? new Txt(id, id, id);
             bool keystone = ReadBool(node, "keystone"), dreamRing = ReadBool(node, "isDreamRing");
             int tier = ReadInteger(node, "tier", 1, 1, 2);
-            int rankCost = ReadInteger(node, "rankCost", keystone ? Content.KeystoneCost : 1, 1, limits.RankCostMax);
+            int rankCost = ReadInteger(node, "rankCost", parentRankCost ?? (keystone ? Content.KeystoneCost : 1), 1, limits.RankCostMax);
             bool choice = node.TryGet("choices", out var choicesObj);
+            bool authoredEffect = node.TryGet("authoredEffect", out var authoredObj);
             bool hasStat = node.TryGet("stat", out var statObj), hasPower = node.TryGet("power", out var powerObj);
             bool hasLink = node.TryGet("link", out var linkObj), hasNative = node.TryGet("nativeModifier", out var nativeObj);
             bool hasScoped = node.TryGet("scopedModifier", out var scopedObj), hasBoost = node.TryGet("gimmickBoost", out var boostObj);
             bool hasParam = node.TryGet("gimmickParam", out var paramObj), hasGimmick = node.TryGet("gimmick", out var gimmickObj);
             int effects = (hasStat ? 1 : 0) + (hasPower ? 1 : 0) + (hasLink ? 1 : 0) + (hasNative ? 1 : 0)
-                + (hasScoped ? 1 : 0) + (hasBoost ? 1 : 0) + (hasParam ? 1 : 0) + (choice ? 1 : 0);
+                + (hasScoped ? 1 : 0) + (hasBoost ? 1 : 0) + (hasParam ? 1 : 0) + (choice ? 1 : 0) + (authoredEffect ? 1 : 0);
             if (effects != 1 && !(effects == 0 && hasGimmick))
                 throw new FormatException("specify one effect or choices (a named gimmick may accompany stat, link or power)");
-            if (hasGimmick && (choice || hasNative || hasScoped || hasBoost || hasParam || keystone))
+            if (hasGimmick && (choice || hasNative || hasScoped || hasBoost || hasParam || keystone || authoredEffect))
                 throw new FormatException("a named gimmick cannot accompany this effect");
             if (option && (choice || keystone || node.TryGet("id", out _) || node.TryGet("cluster", out _)
                 || node.TryGet("requires", out _) || node.TryGet("position", out _) || node.TryGet("center", out _)
                 || node.TryGet("requiredStars", out _) || node.TryGet("requiredAnyStars", out _)))
                 throw new FormatException("a choice option cannot declare a choice, keystone, id, cluster, requires or position");
-            if (keystone && (!hasStat && !hasPower || option)) throw new FormatException("keystones require stat or power");
+            if (keystone && (!hasStat && !hasPower && !authoredEffect || option)) throw new FormatException("keystones require stat or power");
             string memory = null;
             if (node.TryGet("memory", out var memoryObj)) memory = ReadMemoryReference(memoryObj, memories);
             if ((hasLink || hasNative || hasScoped || hasBoost || hasParam || hasGimmick) && memory == null)
@@ -724,7 +779,15 @@ namespace SodRpg.Core.Game
             int maxRank = keystone ? 1 : ReadInteger(node, "maxRank", null, 1, limits.RanksMax);
             TalentDef talent;
             ClusterStarKind inferred;
-            if (choice)
+            if (authoredEffect)
+            {
+                if (node.TryGet("perRank", out _) || node.TryGet("value", out _)) throw new FormatException("authoredEffect values are read-only");
+                talent = ReadAuthoredEffect(authoredObj, id, name, maxRank, rankCost, keystone, bindings);
+                if (memory != null && memory != talent.RouteMemory) throw new FormatException("authoredEffect memory must agree with effectBindings.memories");
+                memory = talent.RouteMemory;
+                inferred = keystone ? ClusterStarKind.Keystone : ClusterStarKind.Notable;
+            }
+            else if (choice)
             {
                 if (!(choicesObj is List<object> options) || options.Count < 2 || options.Count > limits.OptionsPerChoiceMax)
                     throw new FormatException("choices requires 2.." + limits.OptionsPerChoiceMax + " non-choice options");
@@ -732,7 +795,7 @@ namespace SodRpg.Core.Game
                 foreach (var entry in options)
                 {
                     if (!(entry is JsonObject definition)) throw new FormatException("a choice option must be an object");
-                    var selected = ReadNode(definition, id, heroKey, memories, limits, clusters, true);
+                    var selected = ReadNode(definition, id, heroKey, memories, limits, clusters, true, bindings, rankCost);
                     if (selected.MaxRank != maxRank) throw new FormatException("choice options must have the parent's maxRank");
                     if (definition.TryGet("rankCost", out _) && selected.RankCost != rankCost) throw new FormatException("choice options must use the parent rankCost");
                     selected.RankCost = rankCost;
@@ -740,6 +803,16 @@ namespace SodRpg.Core.Game
                     choices.Add(selected);
                 }
                 talent = new TalentDef(id, Line.Offense, name, default(Stat), 0, maxRank) { Choices = choices.AsReadOnly() };
+                var prerequisites = choices.Where(t => t.AuthoredStar != null).Select(t => t.AuthoredStar).ToArray();
+                if (prerequisites.Length > 0)
+                {
+                    var alternatives = prerequisites.Where(t => t.RequiredAnyStarIds.Count > 0).Select(t => t.RequiredAnyStarIds).ToArray();
+                    if (alternatives.Any(a => !new HashSet<string>(a, StringComparer.Ordinal).SetEquals(alternatives[0])))
+                        throw new FormatException("choice authored effects require the same alternative prerequisites");
+                    talent.AuthoredStar = new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true,
+                        RequiredStarIds = prerequisites.SelectMany(t => t.RequiredStarIds).Distinct(StringComparer.Ordinal).ToArray(),
+                        RequiredAnyStarIds = alternatives.FirstOrDefault() ?? Array.Empty<string>() };
+                }
                 inferred = ClusterStarKind.Choice;
             }
             else if (hasStat || hasPower)
@@ -852,11 +925,27 @@ namespace SodRpg.Core.Game
             if (node.TryGet("requiredStars", out var allObj) || node.TryGet("requiredAnyStars", out _))
             {
                 string prefix = "x." + heroKey + ".";
+                var original = talent.AuthoredStar;
+                var any = node.TryGet("requiredAnyStars", out var anyObj) ? ReadIds(anyObj, prefix, "requiredAnyStars") : original?.RequiredAnyStarIds ?? Array.Empty<string>();
+                if (original?.RequiredAnyStarIds.Count > 0 && !new HashSet<string>(original.RequiredAnyStarIds, StringComparer.Ordinal).SetEquals(any))
+                    throw new FormatException("authoredEffect cannot change its alternative prerequisites");
                 talent.AuthoredStar = new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true,
-                    RequiredStarIds = allObj == null ? Array.Empty<string>() : ReadIds(allObj, prefix, "requiredStars"),
-                    RequiredAnyStarIds = node.TryGet("requiredAnyStars", out var anyObj) ? ReadIds(anyObj, prefix, "requiredAnyStars") : Array.Empty<string>() };
+                    RequiredStarIds = (original?.RequiredStarIds ?? Array.Empty<string>()).Concat(allObj == null ? Array.Empty<string>() : ReadIds(allObj, prefix, "requiredStars")).Distinct(StringComparer.Ordinal).ToArray(),
+                    RequiredAnyStarIds = any };
+            }
+            if (talent.Mechanism?.Bridge != null)
+            {
+                talent.AuthoredStar = talent.AuthoredStar ?? new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true };
+                talent.AuthoredStar.Region = ClusterRegion.Bridge(id);
+            }
+            if (authoredEffect && talent.KeystoneDefinition != null)
+            {
+                talent.AuthoredStar = talent.AuthoredStar ?? new AuthoredStarDef { HeroKey = heroKey, LocalStarId = id, RetainedLegacy = true };
+                talent.AuthoredStar.RequiredStarIds = System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Concat(
+                    talent.AuthoredStar.RequiredStarIds, talent.KeystoneDefinition.Prerequisites)).ToArray();
             }
             talent.HeroKey = heroKey;
+            if (talent.AuthoredStar != null) talent.AuthoredStar.HeroKey = heroKey;
             talent.Tier = tier;
             talent.RankCost = rankCost;
             talent.RouteMemory = memory;
@@ -872,12 +961,14 @@ namespace SodRpg.Core.Game
             var starKind = explicitKind ? ReadEnum<ClusterStarKind>(kindObj, "kind") : inferred;
             if (starKind != inferred && !(hasLink && starKind == ClusterStarKind.Notable))
                 throw new FormatException("kind does not match the effect");
+            var sourceStar = talent.ClusterStar;
             if (cluster != null || choice || explicitKind || option)
                 talent.ClusterStar = new ClusterStarDef { Kind = starKind, Name = name, Memory = memory,
-                    Amount = talent.LinkPerRank?.Value ?? (talent.GimmickBoost > 0 ? talent.GimmickBoost : talent.GimmickParameter.HasValue ? talent.GimmickParamAmount : keystone && hasPower ? talent.PowerValue : talent.PerRank),
-                    Param = talent.GimmickParameter ?? talent.ScopedModifier?.Param ?? default,
+                    Amount = sourceStar?.Amount ?? talent.LinkPerRank?.Value ?? (talent.GimmickBoost > 0 ? talent.GimmickBoost : talent.GimmickParameter.HasValue ? talent.GimmickParamAmount : keystone && hasPower ? talent.PowerValue : talent.PerRank),
+                    Param = sourceStar?.Param ?? talent.GimmickParameter ?? talent.ScopedModifier?.Param ?? default,
                     Power = keystone ? talent.Power : talent.RankPower, Stat = talent.Stat, MaxRank = maxRank, RankCost = rankCost,
                     NativeModifier = talent.NativeModifier, ScopedModifier = talent.ScopedModifier, Gimmick = talent.Gimmick,
+                    Mechanism = talent.Mechanism, KeystoneDefinition = talent.KeystoneDefinition, EffectChannel = talent.EffectChannel,
                     Options = choice ? new List<ClusterStarDef>(System.Linq.Enumerable.Select(talent.Choices, t => t.ClusterStar)) : null };
             if (talent.IsChoice)
                 foreach (var selected in talent.Choices) { selected.Cluster = cluster; selected.ClusterOrder = talent.ClusterOrder; }

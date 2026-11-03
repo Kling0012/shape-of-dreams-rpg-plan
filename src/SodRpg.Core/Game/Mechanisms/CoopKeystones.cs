@@ -27,6 +27,7 @@ namespace SodRpg.Core.Game
 
         public static bool TryKind(string id, out CoopKeystoneKind kind)
         {
+            id = ExtendedHeroes.ConnectorEffectSource(id) ?? id;
             for (int i = 0; i <= (int)CoopKeystoneKind.SharedCrystalField; i++)
                 if (Id((CoopKeystoneKind)i) == id) { kind = (CoopKeystoneKind)i; return true; }
             kind = default; return false;

@@ -406,15 +406,16 @@ namespace SodRpg.Core.Game
                                 h.Talents[t.Key] = (int)System.Math.Min(removed.MaxRank, removedRank);
                             else if (t.Value is long dormantRank && dormantRank > 0 && ExtendedHeroes.IsExtendedStarId(t.Key))
                                 // 拡張旅人の星（ヒーローコネクタ §10）: 今の星図に無くても記録は消さない（効果なし・ポイント未使用）。
-                                h.Talents[t.Key] = (int)dormantRank;
+                                h.Talents[t.Key] = (int)Math.Min(int.MaxValue, dormantRank);
                             else
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
                     }
                     if (hj.TryGet("talentChoices", out object choicesObj) && choicesObj is JsonObject choices)
                         foreach (var choice in choices.Properties)
-                            if (h.Talents.ContainsKey(choice.Key) && Content.TryGetTalent(kv.Key, choice.Key, out var def)
-                                && def.IsChoice && choice.Value is long option && option >= 0 && option < def.Choices.Count)
+                            if (h.Talents.ContainsKey(choice.Key) && choice.Value is long option && option >= 0
+                                && (Content.TryGetTalent(kv.Key, choice.Key, out var def) && def.IsChoice && option < def.Choices.Count
+                                    || !Content.TryGetTalent(kv.Key, choice.Key, out _) && ExtendedHeroes.IsExtendedStarId(choice.Key) && option < 2))
                                 h.TalentChoices[choice.Key] = (int)option;
                     if (!HeroSigils.HasTree(kv.Key))
                     {

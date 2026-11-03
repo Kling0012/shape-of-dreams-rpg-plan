@@ -10,6 +10,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.87 — Hero Connector fixes for mixed file and runtime API registration（2026-11-02）
+
+### 不具合の修正 / Bug fixes
+- 同じMODが宣言ファイルとランタイムAPIを併用したとき、旅人連携の報告とキャッシュが上書きされる問題を直しました。星図の読み込みに失敗したときだけ次の走査で再試行し、宣言が受理されなかった結果は内容が同じあいだ保持して同じ警告を繰り返さないようにしました。 / Fixed hero connector reports and caches overwriting each other when a MOD uses both a declaration file and the runtime API. Only star-manifest read failures are retried on the next scan; rejected declarations are kept while their content is unchanged so the same warning is not repeated.
+
+---
+
+## v3.8.86 — Full star maps for traveler mods via the Hero Connector（2026-11-02）
+
+### 新機能 / New features
+- ヒーローコネクタで既存の機構・ペア連携・機構付きキーストーンを参照し、星と記憶の対応を指定できるようにしました。RunGrowth を除く Vesper と Bismuth の星を、キーストーンも含めて再現できます。外部記憶の効果に既存イベントの通知が必要な場合は、作者向け報告に注意を表示します。 / The hero connector can now reference existing mechanisms, pair combos, and typed keystones, with star and memory bindings. Vesper and Bismuth trees can be reproduced, including keystones, except for RunGrowth. The author report warns when external-memory effects need the existing event notifications.
+- ヒーローコネクタの星図に、記憶・Power の星とキーストーン、Choice、星群名、既存の仕掛けの名前参照と修飾、費用、夢の輪の属性、接続・取得条件・位置を指定する欄を追加しました。種類ごとの上限は既存9人の星図から求め、作者向けの報告に載せます。既存星図の書き出し・再登録・比較を行う道具も追加しました。コード専用の機構や、それに依存する星は理由つきで出力から除きます。従来の宣言はそのまま使えます。 / Added Hero Connector fields for memory and Power stars and keystones, choices, named clusters, references to shipped gimmicks and modifiers, costs, dream-ring attributes, connections, allocation prerequisites, and positions. Limits follow the nine shipped travelers and appear in the author report. Added a tool to export, reimport, and compare shipped trees, listing code-bound mechanisms and dependent stars omitted from the output. Existing declarations remain compatible.
+- 外部の旅人MODが `starManifest` から星群・橋・外縁・刻印・2択を持つ星図を宣言できるようにしました。不正な星は警告して除外し、読めない星図は従来形式へ戻します。 / Traveler mods can declare clustered star maps with bridges, outer regions, keystones, and choices through `starManifest`. Invalid stars are omitted with warnings, and unreadable manifests fall back to the existing tree format.
+
+### 不具合の修正 / Bug fixes
+- ヒーローコネクタで、記憶ルートの一部だけを参照する小さな星図が内部エラーになる問題を直しました。 / Fixed internal errors when small hero-connector trees reference only part of a memory route.
+- ヒーローコネクタで、別々の既存星の値と段数の最大を組み合わせると、既存のどの同種の星よりも合計が大きい星を宣言できた問題を直しました。段のある各効果と Choice の選択肢で1星の合計も検証し、上限と拒否理由を作者向け報告に載せます。 / Fixed Hero Connector declarations combining per-rank and rank maxima from different shipped stars to exceed every shipped star of the same kind. Ranked effects and choice options now also validate each star's total, with limits and rejection reasons included in the author report.
+- 旅人MODの連携報告に、同じ供給元の結果が重複して載る問題を直しました。 / Fixed duplicate results for the same source mod in the traveler connector report.
+- 星図の読み込みで不正な星を除外するとき、IDの前半が同じ別の星まで除外する問題を直しました。 / Fixed manifest validation omitting unrelated stars whose IDs share a prefix with an invalid star.
+
+---
+
 ## v3.8.85 — Hero Connector for other mods' travelers, plus co-op and performance fixes（2026-11-01）
 
 ### 新機能 / New features
